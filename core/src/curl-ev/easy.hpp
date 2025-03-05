@@ -24,6 +24,8 @@
 
 #include <userver/clients/http/local_stats.hpp>
 
+#include <curl-ev/form_mime.hpp> ////////////////////////////////////////////////////////////////////////////////////
+
 USERVER_NAMESPACE_BEGIN
 
 namespace engine::ev {
@@ -396,6 +398,8 @@ public:
 
     void set_http_post(std::unique_ptr<form> form);
     void set_http_post(std::unique_ptr<form> form, std::error_code& ec);
+
+    void set_http_post(std::unique_ptr<form_mime> mime) { } ////////////////////////////////////////////////////////////////
 
     IMPLEMENT_CURL_OPTION_STRING(set_referer, native::CURLOPT_REFERER);
     IMPLEMENT_CURL_OPTION_STRING(set_user_agent, native::CURLOPT_USERAGENT);

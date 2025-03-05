@@ -53,7 +53,7 @@ public:
 
     [[nodiscard]] const char* name() const noexcept override { return "curl-form"; }
 
-    [[nodiscard]] std::string message(int cond) const override {
+/*     [[nodiscard]] std::string message(int cond) const override {
         switch (static_cast<FormErrorCode>(cond)) {
             case FormErrorCode::kSuccess:
                 return "no error";
@@ -74,7 +74,7 @@ public:
             default:
                 return "unknown CURLFORMcode";
         }
-    }
+    } */
 };
 
 class UrlErrorCategory final : public std::error_category {
@@ -164,10 +164,10 @@ const std::error_category& GetShareCategory() noexcept {
     return kShareCategory;
 }
 
-const std::error_category& GetFormCategory() noexcept {
+/* const std::error_category& GetFormCategory() noexcept {
     static const FormErrorCategory kFormCategory;
     return kFormCategory;
-}
+} */
 
 const std::error_category& GetUrlCategory() noexcept {
     static const UrlErrorCategory kUrlCategory;
