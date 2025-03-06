@@ -1,5 +1,6 @@
 /** @file curl-ev/easy_mime.hpp
-        curl-ev: upgrade wrapper for integrating libcurl with libev applications
+        curl-ev: upgrade curl-ev/easy.hpp wrapper for integrating libcurl with libev applications
+                         Copyright (c) 2013 Oliver Kuckertz <oliver.kuckertz@mologie.de>
         Copyright (c) 2025 Taras Litvinenko <taraslitvinenko@yandex.kz>
         See COPYING for license information.
 
@@ -44,7 +45,7 @@ easy_mime::easy_mime(native::CURL* easy, native::curl_mime* mime, multi* multi) 
 }
 
 easy_mime::~easy_mime() {
-    if(easy_handle_) {
+    if (easy_handle_) {
         native::curl_easy_cleanup(easy_handle_);
         easy_handle_ = nullptr;
     }
@@ -54,10 +55,10 @@ std::shared_ptr<const easy_mime> easy_mime::create_easy_mime_blocking() {
     //impl::CurlGlobal::Init();
     
     auto* handle = native::curl_easy_init();
-    if(!handle) { throw std::bad_alloc(); }
+    if (!handle) { throw std::bad_alloc(); }
 
     auto* mime = native::curl_mime_init(handle);
-    if(!mime) { throw std::bad_alloc(); }
+    if (!mime) { throw std::bad_alloc(); }
     
     return std::make_shared<const easy_mime>(handle, mime, nullptr);
 }
@@ -76,7 +77,7 @@ void easy_mime::async_perform(handler_type handler) {
     LOG_TRACE() << "easy_mime::async_perform start " << this;
     size_t request_num = ++request_counter_;
 
-    if(multi_handle_) {
+    if (multi_handle_) {
         multi_handle_->GetThreadControl().RunInEvLoopAsync(
             [self = shared_from_this(), this, handler = std::move(handler), request_num]() mutable {
                 return do_ev_async_perform(handler, request_num);
@@ -91,7 +92,7 @@ void easy_mime::async_perform(handler_type handler) {
 using BusyMarker = utils::statistics::BusyMarker;
 
 void easy_mime::do_ev_async_perform(handler_type handler, size_t request_num) {
-    if(request_num <= cancelled_request_max_) {
+    if (request_num <= cancelled_request_max_) {
         LOG_DEBUG() << "async_perform requests allready canceled";
         return;
     }
@@ -99,7 +100,7 @@ void easy_mime::do_ev_async_perform(handler_type handler, size_t request_num) {
     LOG_TRACE() << "easy_mime::do_ev_async_perform start " << this;
     mark_start_performing();
 
-    if(!multi_handle_) 
+    if (!multi_handle_) 
         std::runtime_error("Attempt to perform async. Operation without assigning a multi object.");
     
     BusyMarker busy(multi_handle_->Statistics().get_busy_storage());
@@ -119,9 +120,9 @@ void easy_mime::do_ev_async_perform(handler_type handler, size_t request_num) {
 }
 
 void easy_mime::do_ev_cancel(size_t request_num) {
-    if(cancelled_request_max_ < request_num) 
+    if (cancelled_request_max_ < request_num) 
         cancelled_request_max_ = request_num;
-    if(multi_registered_) {
+    if (multi_registered_) {
         BusyMarker busy(multi_handle_->Statistics().get_busy_storage());
         handle_completion(std::make_error_code(std::errc::operation_canceled));
         multi_handle_->remove(this);
@@ -129,7 +130,7 @@ void easy_mime::do_ev_cancel(size_t request_num) {
 }
 
 void easy_mime::mark_start_performing() {
-    if(start_performing_ts_ == time_point())
+    if (start_performing_ts_ == time_point())
         start_performing_ts_ = std::chrono::steady_clock::now();
 }
 
@@ -152,6 +153,16 @@ void easy_mime::cancel() {
 void easy_mime::cancel(size_t request_num) {
     if(multi_handle_) 
         multi_handle_->GetThreadControl().RunInEvLoopSync([this, request_num] { do_ev_cancel(request_num); });
+}
+
+std::error_code easy_mime::rate_limit_error() const {
+    return rate_limit_error_;
+}
+
+easy_mime::time_point::duration easy_mime::time_to_start() const {
+    if (start_performing_ts_ != time_point{}) 
+        return start_performing_ts_ - construct_ts_;
+    return {};
 }
 
 void easy_mime::add_header(std::string_view name, std::string_view value, 
@@ -212,6 +223,18 @@ void easy_mime::set_xferinfo_function(xferfunc_callback_t xferfunc_callback) {
 
 }
 
+void easy_mime::set_xferinfo_data(void* ptr) {
+
+}
+
+void easy_mime::set_opensocket_function(opensocket_callback_t opensocket_callback) {
+
+}
+
+void easy_mime::set_opensocket_data(void* ptr) {
+
+}
+
 void easy_mime::set_url(std::string_view url) {
     std::error_code ec;
     set_url(url, ec);
@@ -244,7 +267,7 @@ void easy_mime::set_http_post(std::unique_ptr<form_mime> mime) {
 
 void easy_mime::set_http_post(std::unique_ptr<form_mime> mime, std::error_code& ec) {
     form_mime_ = std::move(mime);
-    if(form_mime_) {
+    if (form_mime_) {
         ec = std::error_code{static_cast<errc::EasyErrorCode>(
             native::curl_easy_setopt(easy_handle_, native::CURLOPT_MIMEPOST, form_mime_->native_mime())
         )};
@@ -256,8 +279,18 @@ void easy_mime::set_http_post(std::unique_ptr<form_mime> mime, std::error_code& 
 }
 
 // protected getters
-void easy_mime::get_effective_url(std::error_code& ec) {
+std::string_view easy_mime::get_effective_url() {
+    std::error_code ec;
+    auto result = get_effective_url(ec);
+    throw(ec, "get_effective_url");
+}
 
+std::string_view easy_mime::get_effective_url(std::error_code& ec) {
+    char* result = nullptr;
+    ec = std::error_code{static_cast<errc::EasyErrorCode>(
+        native::curl_easy_getinfo(easy_handle_, native::CURLINFO_EFFECTIVE_URL, &result)
+    )};
+    return result ? result : std::string_view{};
 }
 
 // private static
@@ -267,11 +300,34 @@ native::curl_socket_t easy_mime::open_socket(void* clientp, native::curlsocktype
 
     native::curl_socket_t socket = -1;
 
-    if(multi_handle) {
+    if (multi_handle) {
         std::error_code ec;
-        //auto url = self->get_effective_url(ec);
+        auto url = self->get_effective_url(ec);
+        if (ec || url.empty()) {
+            LOG_DEBUG() << "Cannot get effective url: " << ec;
+            UASSERT_MSG(false, "Cannot get effective url: " + ec.message());
+        }
 
+        multi_handle->CheckRateLimit(url.data(), self->rate_limit_error_);
+        if (self->rate_limit_error_) {
+            multi_handle->Statistics().mark_socket_ratelimited();
+            return CURL_SOCKET_BAD;
+        } else {
+            LOG_TRACE() << "not throttled";
+        } 
+    } else {
+        LOG_TRACE() << "skip throttle check";
     }
+
+    if (purpose == native::CURLSOCKTYPE_IPCXN && address->socktype == SOCK_STREAM) {
+        socket = self->open_tcp_socket(address);
+        if (socket != -1 && multi_handle) {
+            multi_handle->Statistics().mark_open_socket();
+            self->mark_open_socket();
+        }
+        return socket;
+    }
+    return CURL_SOCKET_BAD;
 }
 
 int easy_mime::close_socket(void* clientp, native::curl_socket_t item) noexcept {
@@ -279,13 +335,73 @@ int easy_mime::close_socket(void* clientp, native::curl_socket_t item) noexcept 
     multi_handle->UnbindEasySocket(item);
 
     int result = close(item);
-    if(result == -1) {
+    if (result == -1) {
         const auto old_errno = errno;
-        LOG_ERROR() << "close() failed with error: " << utils::strerror(old_errno);
+        LOG_ERROR() << "close(2) failed with error: " << utils::strerror(old_errno);
     }
 
     multi_handle->Statistics().mark_close_socket();
     return 0;
+}
+
+int easy_mime::seek_function(void* instream, native::curl_off_t offset, int origin) noexcept {
+    easy_mime* self = static_cast<easy_mime*>(instream);
+
+    std::ios::seekdir dir = std::ios::beg;
+
+    switch (origin) {
+        case SEEK_SET:
+            dir = std::ios::beg;
+            break;
+        case SEEK_CUR:
+            dir = std::ios::cur;
+            break;
+        case SEEK_END:
+            dir = std::ios::end;
+            break;
+        default:
+            return CURL_SEEKFUNC_FAIL;
+    }
+
+    if (!self->source_->seekg(offset, dir)) 
+        return CURL_SEEKFUNC_FAIL;
+
+    return CURL_SEEKFUNC_OK;
+}
+
+size_t easy_mime::read_runction(char* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
+    easy_mime* self = static_cast<easy_mime*>(userdata);
+    std::streamsize actual_size = static_cast<std::streamsize>(size * nmemb);
+
+    if (!self->source_)
+        return CURL_READFUNC_ABORT;
+
+    if (!self->source_->eof())
+        return 0; 
+
+    std::streamsize result = self->source_->readsome(static_cast<char*>(ptr), actual_size);
+
+    if (!*self->source_)
+        return CURL_READFUNC_ABORT;
+
+    return static_cast<size_t>(result);
+}
+
+size_t easy_mime::write_function(char* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
+    easy_mime* self = static_cast<easy_mime*>(userdata);
+    size_t actual_size = size * nmemb;
+
+    if(!actual_size)
+        return 0;
+
+    try {
+        self->sink_->append(ptr, actual_size);
+    } catch (const std::exception& ex) {
+        LOG_LIMITED_WARNING() << "write function failed: " << ex;
+        return 0;
+    }
+
+    return actual_size;
 }
 
 size_t easy_mime::xfer_function(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
@@ -294,11 +410,27 @@ size_t easy_mime::xfer_function(void* clinetp, native::curl_off_t dltotal, nativ
     try {
         return self->progress_callback_(dltotal, dlnow, ultotal, ulnow) ? 0 : 1;
     } catch (const std::exception& ex) {
-        LOG_LIMITED_WARNING() << "Progress callback failed: " << ex;
+        LOG_LIMITED_WARNING() << "progress callback failed: " << ex;
         return 1;
     }
 }
 
+native::curl_socket_t easy_mime::open_tcp_socket(struct native::curl_sockaddr* address) noexcept {
+    std::error_code ec;
+
+    LOG_TRACE() << "easy_mime::open_tcp_socket family = " << address->family;
+    int fd = socket(address->family, address->socktype, address->protocol);
+    if (fd == -1) {
+        const auto old_errno = errno;
+        LOG_ERROR() << "socket(2) failed with error: " << utils::strerror(old_errno);
+        return CURL_SOCKET_BAD;
+    }
+
+    if (multi_handle_) 
+        multi_handle_->BindEasySocket(*this, fd);
+
+    return fd;
+}
 
 } // namespace curl
 
