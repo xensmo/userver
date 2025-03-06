@@ -26,6 +26,8 @@ public:
     inline native::curl_mime*       native_mime() { return mime_; }
     inline native::curl_mimepart*   native_part() { return part_; }
 
+    inline void init_curl_mime(native::curl_mime* mime) { mime_ = mime; }
+
     // contents
 public:
     void add_content(std::string_view key, std::string_view content);

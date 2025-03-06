@@ -10,7 +10,9 @@
 #include <string_view>
 #include <system_error>
 
-#include <curl-ev/easy.hpp>
+//#include <curl-ev/easy.hpp>
+
+#include <curl-ev/easy_mime.hpp>
 #include <curl-ev/error_code.hpp>
 #include <curl-ev/multi.hpp>
 #include <curl-ev/socket_info.hpp>
@@ -45,7 +47,9 @@ const char* GetSetterName(native::CURLMoption option) {
 
 }  // namespace
 
-using easy_set_type = std::set<easy*>;
+//using easy_set_type = std::set<easy*>;
+using easy_set_type = std::set<easy_mime*>;
+
 using BusyMarker = utils::statistics::BusyMarker;
 
 class multi::Impl final {
@@ -91,7 +95,8 @@ multi::multi(engine::ev::ThreadControl& thread_control, const std::shared_ptr<Co
 multi::~multi() {
     while (!pimpl_->easy_handles_.empty()) {
         auto it = pimpl_->easy_handles_.begin();
-        easy* easy_handle = *it;
+        //easy* easy_handle = *it;
+        easy_mime* easy_handle = *it;
         easy_handle->cancel();
     }
 
@@ -104,15 +109,29 @@ multi::~multi() {
     }
 }
 
-void multi::add(easy* easy_handle) {
+/* void multi::add(easy* easy_handle) {
+    pimpl_->easy_handles_.insert(easy_handle);
+    add_handle(easy_handle->native_handle());
+} */
+
+/* void multi::remove(easy* easy_handle) {
+    auto it = pimpl_->easy_handles_.find(easy_handle);
+
+    if (it != pimpl_->easy_handles_.end()) {
+        pimpl_->easy_handles_.erase(it);
+        remove_handle(easy_handle->native_handle());
+    }
+} */
+
+void multi::add(easy_mime* easy_handle) {
     pimpl_->easy_handles_.insert(easy_handle);
     add_handle(easy_handle->native_handle());
 }
 
-void multi::remove(easy* easy_handle) {
+void multi::remove(easy_mime* easy_handle) {
     auto it = pimpl_->easy_handles_.find(easy_handle);
 
-    if (it != pimpl_->easy_handles_.end()) {
+    if(it != pimpl_->easy_handles_.end()) {
         pimpl_->easy_handles_.erase(it);
         remove_handle(easy_handle->native_handle());
     }
@@ -237,7 +256,8 @@ void multi::process_messages() {
 
     while ((msg = native::curl_multi_info_read(handle_, &msgs_left))) {
         if (msg->msg == native::CURLMSG_DONE) {
-            easy* easy_handle = easy::from_native(msg->easy_handle);
+            //easy* easy_handle = easy::from_native(msg->easy_handle);
+            easy_mime* easy_handle = easy_mime::from_native(msg->easy_handle);
             std::error_code ec;
 
             if (msg->data.result != native::CURLE_OK) {
