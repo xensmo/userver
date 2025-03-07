@@ -2,7 +2,8 @@
 
 #include <memory>
 
-#include <curl-ev/easy.hpp>
+//#include <curl-ev/easy.hpp>
+#include <curl-ev/easy_mime.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -14,7 +15,8 @@ namespace clients::http::impl {
 
 class EasyWrapper final {
 public:
-    EasyWrapper(std::shared_ptr<curl::easy>&& easy, Client& client);
+    //EasyWrapper(std::shared_ptr<curl::easy>&& easy, Client& client);
+    EasyWrapper(std::shared_ptr<curl::easy_mime>&& easy, Client& client);
 
     EasyWrapper(const EasyWrapper&) = delete;
     EasyWrapper(EasyWrapper&&) noexcept;
@@ -23,11 +25,15 @@ public:
 
     ~EasyWrapper();
 
-    curl::easy& Easy();
-    const curl::easy& Easy() const;
+    //curl::easy& Easy();
+    //const curl::easy& Easy() const;
+
+    inline curl::easy_mime& Easy() { return *easy_; }
+    inline const curl::easy_mime& Easy() const { return *easy_; };
 
 private:
-    std::shared_ptr<curl::easy> easy_;
+    //std::shared_ptr<curl::easy> easy_;
+    std::shared_ptr<curl::easy_mime> easy_;
     Client& client_;
 };
 

@@ -17,11 +17,7 @@
 #include <curl-ev/error_code.hpp>
 #include <curl-ev/multi.hpp>
 #include <curl-ev/share.hpp>
-//#include <curl-ev/string_list.hpp>
 //#include <curl-ev/wrappers.hpp>
-
-#include <fmt/compile.h>
-#include <fmt/format.h>
 
 #include <engine/ev/thread_control.hpp>
 #include <server/net/listener_impl.hpp>
@@ -63,6 +59,18 @@ std::shared_ptr<const easy_mime> easy_mime::create_easy_mime_blocking() {
     return std::make_shared<const easy_mime>(handle, mime, nullptr);
 }
 
+std::shared_ptr<easy_mime> easy_mime::get_bound_blocking(multi& multi_handle) const {
+    auto* cloned_easy = native::curl_easy_duphandle(easy_handle_);
+    if (!cloned_easy)
+        throw std::bad_alloc();
+
+    auto* cloned_mime = form_mime_->native_mime();
+    if (!cloned_mime)
+        throw std::bad_alloc();
+
+    return std::make_shared<easy_mime>(cloned_easy, cloned_mime, multi_handle);
+}
+
 easy_mime* easy_mime::from_native(native::CURL* native_easy) {
     easy_mime* easy_handle = nullptr;
     native::curl_easy_getinfo(native_easy, native::CURLINFO_PRIVATE, easy_handle);
@@ -71,6 +79,51 @@ easy_mime* easy_mime::from_native(native::CURL* native_easy) {
 
 engine::ev::ThreadControl& easy_mime::get_thread_control() {
     return multi_handle_->GetThreadControl();
+}
+
+void easy_mime::perform() {
+
+}
+
+void easy_mime::perform(std::error_code& ec) {
+
+}
+
+void easy_mime::async_perform(handler_type handler) {
+
+}
+
+void easy_mime::cancel() {
+
+}
+
+void easy_mime::reset() {
+    LOG_TRACE() << "easy_mime::reset start " << this;
+
+    orig_url_str_.clear();
+    std::string{}.swap(post_fields_);
+    form_mime_.reset();
+
+    if (headers_)
+        headers_->clear();
+    if (proxy_headers_)
+        proxy_headers_->clear();
+    if (http200_aliases_)
+        http200_aliases_->clear();
+    if (resolved_hosts_)
+
+    share_.reset();
+
+    retries_counter_ = 0;
+    sockets_opened_ = 0;
+    rate_limit_error_.clear();
+
+
+    UASSERT(!multi_registered_);
+    native::curl_easy_reset(easy_handle_);
+    //set_private(this);
+
+    LOG_TRACE() << "easy_mime::reset finished " << this;    
 }
 
 void easy_mime::async_perform(handler_type handler) {
@@ -108,9 +161,12 @@ void easy_mime::do_ev_async_perform(handler_type handler, size_t request_num) {
     cancel(request_num - 1);
 
     // open sock func & data
+    set_opensocket_function(&easy_mime::open_socket);
+    set_opensocket_data(this);
     
-
     // close sock func & data
+    set_closesocket_function(&easy_mime::close_socket);
+    set_closesocket_data(multi_handle_);
 
     handler_ = std::move(handler);
     multi_registered_ = true;
@@ -179,18 +235,12 @@ void easy_mime::add_header(std::string_view name, std::string_view value, detail
 
 }
 
-void easy_mime::add_header(std::string_view name, std::string_view value, std::error_code& ec, detail_dha dha) {
-
-}
-
 void easy_mime::add_header(const std::string& header) {
-    std::error_code ec;
-    add_header(header, ec);
-    throw(ec, "add_header");
-}
-
-void easy_mime::add_header(const std::string& header, std::error_code& ec) {
+    if (!headers_)
+        headers_ = std::make_shared<string_list>();
     
+    headers_->add(header);
+    detail::set_curl_opt("add_header", easy_handle_, native::CURLOPT_HTTPHEADER, headers_->native_handle());
 }
 
 // setters
@@ -207,90 +257,62 @@ void easy_mime::unset_progress_callback() {
     set_xferinfo_data(nullptr);
 }
 
-void easy_mime::set_no_progress(bool state) {
-    std::error_code ec;
-    set_no_progress(state, ec);
-    throw(ec, "set_no_progress");
-}
+// cURL Opt setters
 
-void easy_mime::set_no_progress(bool state, std::error_code& ec) {
-    ec = std::error_code{static_cast<errc::EasyErrorCode>(
-        native::curl_easy_setopt(easy_handle_, native::CURLOPT_NOPROGRESS, state)
-    )};
+void easy_mime::set_no_progress(bool state) {
+    detail::set_curl_opt("set_no_progress", easy_handle_, native::CURLOPT_NOPROGRESS, state);
 }
 
 void easy_mime::set_xferinfo_function(xferfunc_callback_t xferfunc_callback) {
-
+    detail::set_curl_opt("set_xferinfo_function", easy_handle_, native::CURLOPT_XFERINFOFUNCTION, xferfunc_callback);
 }
 
 void easy_mime::set_xferinfo_data(void* ptr) {
-
+    detail::set_curl_opt("set_xferinfo_data", easy_handle_, native::CURLOPT_XFERINFODATA, ptr);
 }
 
 void easy_mime::set_opensocket_function(opensocket_callback_t opensocket_callback) {
-
+    detail::set_curl_opt("set_opensocket_function", easy_handle_, native::CURLOPT_OPENSOCKETFUNCTION, opensocket_callback);
 }
 
 void easy_mime::set_opensocket_data(void* ptr) {
+    detail::set_curl_opt("set_opensocket_data", easy_handle_, native::CURLOPT_OPENSOCKETDATA, ptr);
+}
 
+void easy_mime::set_closesocket_function(closesocket_callback_t closesocket_callback) {
+    detail::set_curl_opt("set_closesocket_function", easy_handle_, native::CURLOPT_CLOSESOCKETFUNCTION, closesocket_callback);
+}
+
+void easy_mime::set_closesocket_data(void* ptr) {
+    detail::set_curl_opt("set_closesocket_data", easy_handle_, native::CURLOPT_CLOSESOCKETDATA, ptr);
 }
 
 void easy_mime::set_url(std::string_view url) {
-    std::error_code ec;
-    set_url(url, ec);
-    throw(ec, "set_url");
+    detail::set_curl_opt("set_url", easy_handle_, native::CURLOPT_URL, url.data());
 }
 
-void easy_mime::set_url(std::string_view url, std::error_code ec) {
-    ec = std::error_code{static_cast<errc::EasyErrorCode>(
-        native::curl_easy_setopt(easy_handle_, native::CURLOPT_URL, url.data())
-    )};
+void easy_mime::set_headers(std::shared_ptr<string_list> headers) {
+    headers_ = std::move(headers);
+
+    if (headers_)
+        detail::set_curl_opt("set_headers", easy_handle_, native::CURLOPT_HTTPHEADER, headers_->native_handle());
+    else
+        detail::set_curl_opt("set_headers", easy_handle_, native::CURLOPT_HTTPHEADER, NULL);
 }
 
 void easy_mime::set_http_version(long version) {
-    std::error_code ec;
-    set_http_version(version, ec);
-    throw(ec, "set_http_version");
+    detail::set_curl_opt("set_http_version", easy_handle_, native::CURLOPT_HTTP_VERSION, version);
 }
 
-void easy_mime::set_http_version(long version, std::error_code ec) {
-    ec = std::error_code{static_cast<errc::EasyErrorCode>(
-        native::curl_easy_setopt(easy_handle_, native::CURLOPT_HTTP_VERSION, version)
-    )};
-}
-
-void easy_mime::set_http_post(std::unique_ptr<form_mime> mime) {
-    std::error_code ec;
-    set_http_post(std::move(mime), ec);
-    throw(ec, "set_http_post");
-}
-
-void easy_mime::set_http_post(std::unique_ptr<form_mime> mime, std::error_code& ec) {
+/* void easy_mime::set_http_post(std::unique_ptr<form_mime> mime) {
     form_mime_ = std::move(mime);
-    if (form_mime_) {
-        ec = std::error_code{static_cast<errc::EasyErrorCode>(
-            native::curl_easy_setopt(easy_handle_, native::CURLOPT_MIMEPOST, form_mime_->native_mime())
-        )};
-    } else {
-        ec = std::error_code{static_cast<errc::EasyErrorCode>(
-            native::curl_easy_setopt(easy_handle_, native::CURLOPT_MIMEPOST, NULL)
-        )};
-    }
-}
+    if (form_mime_)
+        detail::set_curl_opt("set_http_post", easy_handle_, native::CURLOPT_MIMEPOST, form_mime_->native_mime());
+} */
 
 // protected getters
-std::string_view easy_mime::get_effective_url() {
-    std::error_code ec;
-    auto result = get_effective_url(ec);
-    throw(ec, "get_effective_url");
-}
-
 std::string_view easy_mime::get_effective_url(std::error_code& ec) {
-    char* result = nullptr;
-    ec = std::error_code{static_cast<errc::EasyErrorCode>(
-        native::curl_easy_getinfo(easy_handle_, native::CURLINFO_EFFECTIVE_URL, &result)
-    )};
-    return result ? result : std::string_view{};
+    return detail::get_curl_opt_info(easy_handle_, native::CURLINFO_EFFECTIVE_URL, ec);
 }
 
 // private static
