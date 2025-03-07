@@ -46,51 +46,59 @@ namespace detail {
     enum class duplicate_header_action  { kAdd, kSkip, kReplace };
 
     namespace _ec {
-        template <typename _Handle, typename _OptName, typename _OptType>
-            inline void set_curl_opt(_Handle handle, _OptName name, _OptType arg, std::error_code& ec) {
-                ec = std::error_code {static_cast<errc::EasyErrorCode>(
-                    native::curl_easy_setopt(handle, name, arg)
-                )};
-            }
+        template <typename _Handle>
+        inline void set_curl_opt(_Handle handle, native::CURLoption opt, bool state, std::error_code& ec) {
+            ec = std::error_code {static_cast<errc::EasyErrorCode>(
+                native::curl_easy_setopt(handle, opt, state ? 1L : 0L)
+            )};
+        }
 
-        template <typename _Handle, typename _OptName>
-            inline void set_curl_opt(_Handle handle, _OptName name, bool state, std::error_code& ec) {
-                ec = std::error_code {static_cast<errc::EasyErrorCode>(
-                    native::curl_easy_setopt(handle, name, state ? 1L : 0L)
-                )};
-            }    
+        template <typename _Handle, typename _OptType>
+        inline void set_curl_opt(_Handle handle, native::CURLoption opt, _OptType arg, std::error_code& ec) {
+            ec = std::error_code {static_cast<errc::EasyErrorCode>(
+                native::curl_easy_setopt(handle, opt, arg)
+            )};
+        }
     }
 
     template <typename _Handle, typename _InfoName>
-        inline std::string_view get_curl_opt_info(_Handle handle, _InfoName name, std::error_code& ec) {
-            char* result = nullptr;
-            ec = std::error_code{static_cast<errc::EasyErrorCode>(
-                native::curl_easy_getinfo(handle, name, &result)
-            )};
-            return result ? result : std::string_view{};
-        }
+    inline std::string_view get_curl_opt_info(_Handle handle, _InfoName name, std::error_code& ec) {
+        char* result = nullptr;
+        ec = std::error_code{static_cast<errc::EasyErrorCode>(
+            native::curl_easy_getinfo(handle, name, &result)
+        )};
+        return result ? result : std::string_view{};
+    }
 
-    template <typename _Handle, typename _InfoName, typename _InfoType>
-        inline std::string_view get_curl_opt_info(std::string_view func, _Handle handle, _InfoName name) {
-            std::error_code ec;
-            auto result = _ec::get_curl_opt_info(handle, name, ec);
-            throw(ec, func);
-            return result;
-        }
+/*     template <typename _Handle, typename _InfoName, typename _InfoType>
+    inline std::string_view get_curl_opt_info(std::string_view func, _Handle handle, _InfoName name) {
+        std::error_code ec;
+        auto result = _ec::get_curl_opt_info(handle, name, ec);
+        throw(ec, func);
+        return result;
+    } */
 
-    template <typename _Handle, typename _OptName, typename _OptType>
-        inline void set_curl_opt(std::string_view func, _Handle handle, _OptName name, _OptType arg) {
-            std::error_code ec;
-            _ec::set_curl_opt(handle, name, arg, ec);
-            throw(ec, func);
-        }
+    template <typename _Handle>
+    inline void set_curl_opt(std::string_view name, _Handle handle, native::CURLoption opt, bool state) {
+        std::error_code ec;
+        _ec::set_curl_opt(handle, opt, state, ec);
+        throw(ec, name);
+    }
 
-    template <typename _Handle, typename _OptName>
-        inline void set_curl_opt(std::string_view func, _Handle handle, _OptName name, bool state) {
-            std::error_code ec;
-            _ec::set_curl_opt(handle, name, state, ec);
-            throw(ec, func);
-        }
+    template <typename _Handle, typename _OptType>
+    inline void set_curl_opt(std::string_view name, _Handle handle, native::CURLoption opt, _OptType arg) {
+        std::error_code ec;
+        _ec::set_curl_opt(handle, opt, arg, ec);
+        throw(ec, name);
+    }
+
+    template <typename _Handle, typename _OptType>
+    inline std::error_code set_curl_opt(_Handle handle, native::CURLoption opt, _OptType arg) {
+        std::error_code ec = std::error_code {static_cast<errc::EasyErrorCode>(
+            native::curl_easy_setopt(handle, opt, arg)
+        )};
+        return ec;
+    }
 
     bool is_header_matching_name(std::string_view header, std::string_view name) {
         return header.size() > name.size() && utils::StrIcaseEqual()(header.substr(0, name.size()), name) &&
@@ -158,14 +166,20 @@ public:
     using time_point = std::chrono::steady_clock::time_point;
     using handler_type = std::function<void(std::error_code err)>;
     
-    using progress_callback_t = std::function<bool( native::curl_off_t dltotal, native::curl_off_t dlnow,
+    using progress_function_t = std::function<bool( native::curl_off_t dltotal, native::curl_off_t dlnow,
         native::curl_off_t ultotal, native::curl_off_t ulnow)>;
     
-    using xferfunc_callback_t = std::function<size_t(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
-        native::curl_off_t ultotal, native::curl_off_t ulnow)>;
+    using xfer_function_t = int (*)(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
+        native::curl_off_t ultotal, native::curl_off_t ulnow);
 
-    using opensocket_callback_t = std::function<native::curl_socket_t(void* clientp, native::curlsocktype purpose, struct native::curl_sockaddr* address)>;
-    using closesocket_callback_t = std::function<int(void* clientp, native::curl_socket_t item)>;
+    using opensocket_function_t = native::curl_socket_t (*)(void* clientp, native::curlsocktype purpose, struct native::curl_sockaddr* address);
+    using closesocket_function_t = int (*)(void* clientp, native::curl_socket_t item);
+
+    using write_function_t = size_t (*)(char* ptr, size_t size, size_t nmemb, void* userdata);
+    using read_function_t = std::size_t (*)(void* ptr, size_t size, size_t nmemb, void* userdata);
+
+    using seek_function_t = int (*)(void* instream, native::curl_off_t offset, int origin);
+    using sockopt_function_t = int (*)(void* clientp, native::curl_socket_t curlfd, native::curlsocktype purpose);
 
     void perform();
     void perform(std::error_code& ec);
@@ -175,7 +189,7 @@ public:
 
 // public sys
     void handle_completion(const std::error_code& ec);
-    void set_progress_callback(progress_callback_t progress_callback);
+    void set_progress_callback(progress_function_t func);
     void unset_progress_callback();
 
 // public static     
@@ -208,12 +222,28 @@ public:
 
 public:
 /// cURL Opt setters
+    void set_verbose(bool state);
+    void set_header(bool state);
     void set_no_progress(bool state);
-    void set_xferinfo_function(xferfunc_callback_t xferfunc_callback);
+    void set_no_signal(bool state);
+    void set_wildcard_match(bool state);
+
+    void set_source(std::shared_ptr<std::istream> source);
+    void set_sink(std::string* sink);
+
+    void set_write_function(write_function_t func, std::error_code& ec);
+    void set_write_data(void* ptr, std::error_code& ec);
+    void set_read_function(read_function_t func, std::error_code& ec);
+    void set_read_data(void* ptr, std::error_code& ec);
+    void set_seek_function(seek_function_t func, std::error_code& ec);
+    void set_seek_data(void* ptr, std::error_code& ec);
+    void set_sockopt_function(sockopt_function_t func);
+    void set_sockopt_data(void* ptr);
+    void set_xferinfo_function(xfer_function_t func);
     void set_xferinfo_data(void* ptr);
-    void set_opensocket_function(opensocket_callback_t opensocket_callback);
+    void set_opensocket_function(opensocket_function_t func);
     void set_opensocket_data(void* ptr);
-    void set_closesocket_function(closesocket_callback_t closesocket_callback);
+    void set_closesocket_function(closesocket_function_t func);
     void set_closesocket_data(void* ptr);
     
     void set_url(std::string_view url);
@@ -238,15 +268,19 @@ private:
     static native::curl_socket_t open_socket(void* clientp, native::curlsocktype purpose, struct native::curl_sockaddr* address) noexcept;
     static int close_socket(void* clientp, native::curl_socket_t item) noexcept;
     static int seek_function(void* instream, native::curl_off_t offset, int origin) noexcept;
-    static size_t read_runction(char* ptr, size_t size, size_t nmemb, void* userdata) noexcept;
+    static size_t read_runction(void* ptr, size_t size, size_t nmemb, void* userdata) noexcept;
     static size_t write_function(char* ptr, size_t size, size_t nmemb, void* userdata) noexcept;
-    static size_t xfer_function(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
+    static int xfer_function(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
         native::curl_off_t ultotal, native::curl_off_t ulnow) noexcept;
 
     native::curl_socket_t open_tcp_socket(struct native::curl_sockaddr* address) noexcept;
 
 protected:
     engine::ev::ThreadControl& get_thread_control();
+
+// cURL protected
+    void set_source(std::shared_ptr<std::istream> source, std::error_code& ec);
+    void set_sink(std::string* sink, std::error_code& ec);
     
 // do_ev_* methods run in libev thread
     void do_ev_async_perform(handler_type handler, size_t request_num);
@@ -283,7 +317,7 @@ protected:
     std::shared_ptr<string_list>    resolved_hosts_         { nullptr };
 
     handler_type                    handler_;
-    progress_callback_t             progress_callback_;
+    progress_function_t             progress_function_;
 
     std::error_code                 rate_limit_error_;
 

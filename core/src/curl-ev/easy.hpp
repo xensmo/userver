@@ -242,33 +242,33 @@ public:
 
     // behavior options
 
-    IMPLEMENT_CURL_OPTION_BOOLEAN(set_verbose, native::CURLOPT_VERBOSE);
-    IMPLEMENT_CURL_OPTION_BOOLEAN(set_header, native::CURLOPT_HEADER);
-    IMPLEMENT_CURL_OPTION_BOOLEAN(set_no_progress, native::CURLOPT_NOPROGRESS);
-    IMPLEMENT_CURL_OPTION_BOOLEAN(set_no_signal, native::CURLOPT_NOSIGNAL);
-    IMPLEMENT_CURL_OPTION_BOOLEAN(set_wildcard_match, native::CURLOPT_WILDCARDMATCH);
+    //IMPLEMENT_CURL_OPTION_BOOLEAN(set_verbose, native::CURLOPT_VERBOSE);
+    //IMPLEMENT_CURL_OPTION_BOOLEAN(set_header, native::CURLOPT_HEADER);
+    //IMPLEMENT_CURL_OPTION_BOOLEAN(set_no_progress, native::CURLOPT_NOPROGRESS);
+    //IMPLEMENT_CURL_OPTION_BOOLEAN(set_no_signal, native::CURLOPT_NOSIGNAL);
+    //IMPLEMENT_CURL_OPTION_BOOLEAN(set_wildcard_match, native::CURLOPT_WILDCARDMATCH);
 
     // callback options
 
-    using write_function_t = size_t (*)(char* ptr, size_t size, size_t nmemb, void* userdata);
-    IMPLEMENT_CURL_OPTION(set_write_function, native::CURLOPT_WRITEFUNCTION, write_function_t);
-    IMPLEMENT_CURL_OPTION(set_write_data, native::CURLOPT_WRITEDATA, void*);
-    using read_function_t = size_t (*)(void* ptr, size_t size, size_t nmemb, void* userdata);
-    IMPLEMENT_CURL_OPTION(set_read_function, native::CURLOPT_READFUNCTION, read_function_t);
-    IMPLEMENT_CURL_OPTION(set_read_data, native::CURLOPT_READDATA, void*);
-    using seek_function_t = int (*)(void* instream, native::curl_off_t offset, int origin);
-    IMPLEMENT_CURL_OPTION(set_seek_function, native::CURLOPT_SEEKFUNCTION, seek_function_t);
-    IMPLEMENT_CURL_OPTION(set_seek_data, native::CURLOPT_SEEKDATA, void*);
-    using sockopt_function_t = int (*)(void* clientp, native::curl_socket_t curlfd, native::curlsocktype purpose);
-    IMPLEMENT_CURL_OPTION(set_sockopt_function, native::CURLOPT_SOCKOPTFUNCTION, sockopt_function_t);
-    IMPLEMENT_CURL_OPTION(set_sockopt_data, native::CURLOPT_SOCKOPTDATA, void*);
-    using opensocket_function_t =
-        native::curl_socket_t (*)(void* clientp, native::curlsocktype purpose, struct native::curl_sockaddr* address);
-    IMPLEMENT_CURL_OPTION(set_opensocket_function, native::CURLOPT_OPENSOCKETFUNCTION, opensocket_function_t);
-    IMPLEMENT_CURL_OPTION(set_opensocket_data, native::CURLOPT_OPENSOCKETDATA, void*);
-    using closesocket_function_t = int (*)(void* clientp, native::curl_socket_t item);
-    IMPLEMENT_CURL_OPTION(set_closesocket_function, native::CURLOPT_CLOSESOCKETFUNCTION, closesocket_function_t);
-    IMPLEMENT_CURL_OPTION(set_closesocket_data, native::CURLOPT_CLOSESOCKETDATA, void*);
+    //using write_function_t = size_t (*)(char* ptr, size_t size, size_t nmemb, void* userdata);
+    //IMPLEMENT_CURL_OPTION(set_write_function, native::CURLOPT_WRITEFUNCTION, write_function_t);
+    //IMPLEMENT_CURL_OPTION(set_write_data, native::CURLOPT_WRITEDATA, void*);
+    //using read_function_t = size_t (*)(void* ptr, size_t size, size_t nmemb, void* userdata);
+    //IMPLEMENT_CURL_OPTION(set_read_function, native::CURLOPT_READFUNCTION, read_function_t);
+    //IMPLEMENT_CURL_OPTION(set_read_data, native::CURLOPT_READDATA, void*);
+    //using seek_function_t = int (*)(void* instream, native::curl_off_t offset, int origin);
+    //IMPLEMENT_CURL_OPTION(set_seek_function, native::CURLOPT_SEEKFUNCTION, seek_function_t);
+    //IMPLEMENT_CURL_OPTION(set_seek_data, native::CURLOPT_SEEKDATA, void*);
+    //using sockopt_function_t = int (*)(void* clientp, native::curl_socket_t curlfd, native::curlsocktype purpose);
+    //IMPLEMENT_CURL_OPTION(set_sockopt_function, native::CURLOPT_SOCKOPTFUNCTION, sockopt_function_t);
+    //IMPLEMENT_CURL_OPTION(set_sockopt_data, native::CURLOPT_SOCKOPTDATA, void*);
+    //using opensocket_function_t =
+    //    native::curl_socket_t (*)(void* clientp, native::curlsocktype purpose, struct native::curl_sockaddr* address);
+    //IMPLEMENT_CURL_OPTION(set_opensocket_function, native::CURLOPT_OPENSOCKETFUNCTION, opensocket_function_t);
+    //IMPLEMENT_CURL_OPTION(set_opensocket_data, native::CURLOPT_OPENSOCKETDATA, void*);
+    //using closesocket_function_t = int (*)(void* clientp, native::curl_socket_t item);
+    //IMPLEMENT_CURL_OPTION(set_closesocket_function, native::CURLOPT_CLOSESOCKETFUNCTION, closesocket_function_t);
+    //IMPLEMENT_CURL_OPTION(set_closesocket_data, native::CURLOPT_CLOSESOCKETDATA, void*);
     IMPLEMENT_CURL_OPTION(set_progress_data, native::CURLOPT_PROGRESSDATA, void*);
     using xferinfo_function_t = int (*)(
         void* clientp,

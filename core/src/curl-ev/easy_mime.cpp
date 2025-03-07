@@ -240,12 +240,12 @@ void easy_mime::add_header(const std::string& header) {
         headers_ = std::make_shared<string_list>();
     
     headers_->add(header);
-    detail::set_curl_opt("add_header", easy_handle_, native::CURLOPT_HTTPHEADER, headers_->native_handle());
+    //detail::set_curl_opt("add_header", easy_handle_, native::CURLOPT_HTTPHEADER, headers_->native_handle());
 }
 
 // setters
-void easy_mime::set_progress_callback(progress_callback_t progress_callback) {
-    progress_callback_ = progress_callback;
+void easy_mime::set_progress_callback(progress_function_t func) {
+    progress_function_ = std::move(func);
     set_no_progress(false);
     set_xferinfo_function(&easy_mime::xfer_function);
     set_xferinfo_data(this);
@@ -258,29 +258,94 @@ void easy_mime::unset_progress_callback() {
 }
 
 // cURL Opt setters
+void easy_mime::set_verbose(bool state) {
+    detail::set_curl_opt("set_verbose", easy_handle_, native::CURLOPT_VERBOSE, state);
+}
+
+void easy_mime::set_header(bool state) {
+    detail::set_curl_opt("set_header", easy_handle_, native::CURLOPT_HEADER, state);
+}
 
 void easy_mime::set_no_progress(bool state) {
     detail::set_curl_opt("set_no_progress", easy_handle_, native::CURLOPT_NOPROGRESS, state);
 }
 
-void easy_mime::set_xferinfo_function(xferfunc_callback_t xferfunc_callback) {
-    detail::set_curl_opt("set_xferinfo_function", easy_handle_, native::CURLOPT_XFERINFOFUNCTION, xferfunc_callback);
+void easy_mime::set_no_signal(bool state) {
+    detail::set_curl_opt("set_no_signal", easy_handle_, native::CURLOPT_NOSIGNAL, state);
+}
+
+void easy_mime::set_wildcard_match(bool state) {
+    detail::set_curl_opt("set_wildcard_match", easy_handle_, native::CURLOPT_WILDCARDMATCH, state);
+}
+
+void easy_mime::set_source(std::shared_ptr<std::istream> source) {
+    std::error_code ec;
+    set_source(std::move(source), ec);
+    throw(ec, "set_source");
+}
+
+void easy_mime::set_sink(std::string* sink) {
+    std::error_code ec;
+    set_sink(sink, ec);
+    throw(ec, "set_sink");
+}
+
+void easy_mime::set_write_function(write_function_t func, std::error_code& ec) {
+    ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_WRITEFUNCTION, func);
+    throw(ec, "set_write_function");
+}
+
+void easy_mime::set_write_data(void* ptr, std::error_code& ec) {
+    ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_WRITEDATA, ptr);
+    throw(ec, "set_write_data");
+}
+
+void easy_mime::set_read_function(read_function_t func, std::error_code& ec) {
+    ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_READFUNCTION, func);
+    throw(ec, "set_read_function");
+}
+
+void easy_mime::set_read_data(void* ptr, std::error_code& ec) {
+    ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_READDATA, ptr);
+    throw(ec, "set_read_data");
+}
+
+void easy_mime::set_seek_function(seek_function_t func, std::error_code& ec) {
+    ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_SEEKFUNCTION, func);
+    throw(ec, "set_seek_function");
+}
+
+void easy_mime::set_seek_data(void* ptr, std::error_code& ec) {
+    ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_SEEKDATA, ptr);
+    throw(ec, "set_seek_data");
+}
+
+void easy_mime::set_sockopt_function(sockopt_function_t func) {
+    detail::set_curl_opt("set_sockopt_function", easy_handle_, native::CURLOPT_SOCKOPTFUNCTION, func);
+}
+
+void easy_mime::set_sockopt_data(void* ptr) {
+    detail::set_curl_opt("set_sockopt_data", easy_handle_, native::CURLOPT_SOCKOPTDATA, ptr);
+}
+
+void easy_mime::set_xferinfo_function(xfer_function_t func) {
+    detail::set_curl_opt("set_xferinfo_function", easy_handle_, native::CURLOPT_XFERINFOFUNCTION, func);
 }
 
 void easy_mime::set_xferinfo_data(void* ptr) {
     detail::set_curl_opt("set_xferinfo_data", easy_handle_, native::CURLOPT_XFERINFODATA, ptr);
 }
 
-void easy_mime::set_opensocket_function(opensocket_callback_t opensocket_callback) {
-    detail::set_curl_opt("set_opensocket_function", easy_handle_, native::CURLOPT_OPENSOCKETFUNCTION, opensocket_callback);
+void easy_mime::set_opensocket_function(opensocket_function_t func) {
+    detail::set_curl_opt("set_opensocket_function", easy_handle_, native::CURLOPT_OPENSOCKETFUNCTION, func);
 }
 
 void easy_mime::set_opensocket_data(void* ptr) {
     detail::set_curl_opt("set_opensocket_data", easy_handle_, native::CURLOPT_OPENSOCKETDATA, ptr);
 }
 
-void easy_mime::set_closesocket_function(closesocket_callback_t closesocket_callback) {
-    detail::set_curl_opt("set_closesocket_function", easy_handle_, native::CURLOPT_CLOSESOCKETFUNCTION, closesocket_callback);
+void easy_mime::set_closesocket_function(closesocket_function_t func) {
+    detail::set_curl_opt("set_closesocket_function", easy_handle_, native::CURLOPT_CLOSESOCKETFUNCTION, func);
 }
 
 void easy_mime::set_closesocket_data(void* ptr) {
@@ -309,6 +374,25 @@ void easy_mime::set_http_version(long version) {
     if (form_mime_)
         detail::set_curl_opt("set_http_post", easy_handle_, native::CURLOPT_MIMEPOST, form_mime_->native_mime());
 } */
+
+// cURL protected setters
+void easy_mime::set_source(std::shared_ptr<std::istream> source, std::error_code& ec) {
+    source_ = std::move(source);
+    set_read_function(&easy_mime::read_runction, ec);
+    if (!ec)
+        set_read_data(this, ec);
+    if (!ec)
+        set_seek_function(&easy_mime::seek_function, ec);
+    if (!ec)
+        set_seek_data(this, ec);
+}
+
+void easy_mime::set_sink(std::string* sink, std::error_code& ec) {
+    sink_ = sink;
+    set_write_function(&easy_mime::write_function, ec);
+    if (!ec)
+        set_write_data(this, ec);
+}
 
 // protected getters
 std::string_view easy_mime::get_effective_url(std::error_code& ec) {
@@ -391,7 +475,7 @@ int easy_mime::seek_function(void* instream, native::curl_off_t offset, int orig
     return CURL_SEEKFUNC_OK;
 }
 
-size_t easy_mime::read_runction(char* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
+size_t easy_mime::read_runction(void* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
     easy_mime* self = static_cast<easy_mime*>(userdata);
     std::streamsize actual_size = static_cast<std::streamsize>(size * nmemb);
 
@@ -426,11 +510,11 @@ size_t easy_mime::write_function(char* ptr, size_t size, size_t nmemb, void* use
     return actual_size;
 }
 
-size_t easy_mime::xfer_function(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
+int easy_mime::xfer_function(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
         native::curl_off_t ultotal, native::curl_off_t ulnow) noexcept {
     easy_mime* self = static_cast<easy_mime*>(clinetp);
     try {
-        return self->progress_callback_(dltotal, dlnow, ultotal, ulnow) ? 0 : 1;
+        return self->progress_function_(dltotal, dlnow, ultotal, ulnow) ? 0 : 1;
     } catch (const std::exception& ex) {
         LOG_LIMITED_WARNING() << "progress callback failed: " << ex;
         return 1;
