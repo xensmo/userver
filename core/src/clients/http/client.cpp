@@ -114,7 +114,6 @@ Request Client::CreateRequest() {
     auto request = [this] {
         auto easy = TryDequeueIdle();
         if (easy) {
-//auto idx = FindMultiIndex(easy->GetMulti());
             auto idx = FindMultiIndex(easy->get_multi());
             auto wrapper = impl::EasyWrapper{std::move(easy), *this};
             return Request{
@@ -130,7 +129,6 @@ Request Client::CreateRequest() {
 
             try {
                 auto wrapper = engine::AsyncNoSpan(fs_task_processor_, [this, &multi] {
-//return impl::EasyWrapper{easy_.Get()->GetBoundBlocking(*multi), *this};
                                    return impl::EasyWrapper { easy_.Get()->get_bound_blocking(*multi), *this };
                                }).Get();
                 return Request{
@@ -186,12 +184,8 @@ std::string Client::GetProxy() const { return proxy_.ReadCopy(); }
 
 void Client::SetDnsResolver(clients::dns::Resolver* resolver) { resolver_ = resolver; }
 
-/* void Client::ReinitEasy() {
-    easy_.Set(utils::CriticalAsync(fs_task_processor_, "http_easy_reinit", &curl::easy::CreateBlocking).Get());
-} */
-
 void Client::ReinitEasy() {
-    easy_.Set(utils::CriticalAsync(fs_task_processor_, "http_easy_reinit", &curl::easy_mime::create_easy_mime_blocking).Get());
+    easy_.Set(utils::CriticalAsync(fs_task_processor_, "http_easy_reinit", &curl::easy::create_easy_blocking()).Get());
 }
 
 InstanceStatistics Client::GetMultiStatistics(size_t n) const {
@@ -231,7 +225,7 @@ void Client::SetDestinationMetricsAutoMaxSize(size_t max_size) { destination_sta
 
 const DestinationStatistics& Client::GetDestinationStatistics() const { return *destination_statistics_; }
 
-/* void Client::PushIdleEasy(std::shared_ptr<curl::easy>&& easy) noexcept {
+void Client::PushIdleEasy(std::shared_ptr<curl::easy>&& easy) noexcept {
     try {
         easy->reset();
         idle_queue_->enqueue(std::move(easy));
@@ -240,29 +234,13 @@ const DestinationStatistics& Client::GetDestinationStatistics() const { return *
     }
 
     DecPending();
-} */
+}
 
-/* std::shared_ptr<curl::easy> Client::TryDequeueIdle() noexcept {
+std::shared_ptr<curl::easy> Client::TryDequeueIdle() noexcept {
     std::shared_ptr<curl::easy> result;
     if (!idle_queue_->try_dequeue(result)) {
         return {};
     }
-    return result;
-} */
-
-void Client::PushIdleEasy(std::shared_ptr<curl::easy_mime>&& easy) noexcept {
-    try {
-        easy->reset();
-        idle_queue_->enqueue(std::move(easy));
-    } catch (const std::exception& ex) {
-        LOG_ERROR() << "push idle easy failed with error: " << ex;
-    }
-}
-
-std::shared_ptr<curl::easy_mime> Client::TryDequeueIdle() noexcept {
-    std::shared_ptr<curl::easy_mime> result;
-    if (!idle_queue_->try_dequeue(result)) 
-        return {};
     return result;
 }
 

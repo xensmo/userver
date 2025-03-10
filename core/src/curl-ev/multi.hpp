@@ -42,11 +42,8 @@ public:
 
     inline native::CURLM* native_handle() { return handle_; }
 
-//void add(easy* easy_handle);
-//void remove(easy* easy_handle);
-
-    void add(easy_mime* easy_handle);
-    void remove(easy_mime* easy_handle);
+    void add(easy* easy_handle);
+    void remove(easy* easy_handle);
 
     void BindEasySocket(easy&, native::curl_socket_t);
     void UnbindEasySocket(native::curl_socket_t);

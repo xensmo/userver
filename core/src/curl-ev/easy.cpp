@@ -36,12 +36,12 @@ USERVER_NAMESPACE_BEGIN
 namespace curl {
 namespace {
 
-bool IsHeaderMatchingName(std::string_view header, std::string_view name) {
+/* bool IsHeaderMatchingName(std::string_view header, std::string_view name) {
     return header.size() > name.size() && utils::StrIcaseEqual()(header.substr(0, name.size()), name) &&
            (header[name.size()] == ':' || header[name.size()] == ';');
-}
+} */
 
-std::optional<std::string_view>
+/* std::optional<std::string_view>
 FindHeaderByNameImpl(const std::shared_ptr<string_list>& headers, std::string_view name) {
     if (!headers) return std::nullopt;
     auto result = headers->FindIf([name](std::string_view header) { return IsHeaderMatchingName(header, name); });
@@ -50,9 +50,9 @@ FindHeaderByNameImpl(const std::shared_ptr<string_list>& headers, std::string_vi
         while (!result->empty() && result->front() == ' ') result->remove_prefix(1);
     }
     return result;
-}
+} */
 
-fmt::memory_buffer CreateHeaderBuffer(std::string_view name, std::string_view value, easy::EmptyHeaderAction action) {
+/* fmt::memory_buffer CreateHeaderBuffer(std::string_view name, std::string_view value, easy::EmptyHeaderAction action) {
     fmt::memory_buffer buf;
 
     if (action == easy::EmptyHeaderAction::kSend && value.empty()) {
@@ -64,9 +64,9 @@ fmt::memory_buffer CreateHeaderBuffer(std::string_view name, std::string_view va
     buf.push_back('\0');
 
     return buf;
-}
+} */
 
-bool AddHeaderDoSkip(
+/* bool AddHeaderDoSkip(
     const std::shared_ptr<string_list>& headers,
     std::string_view name,
     easy::DuplicateHeaderAction action
@@ -76,9 +76,9 @@ bool AddHeaderDoSkip(
     }
 
     return false;
-}
+} */
 
-bool AddHeaderDoReplace(
+/* bool AddHeaderDoReplace(
     const std::shared_ptr<string_list>& headers,
     const fmt::memory_buffer& buf,
     std::string_view name,
@@ -93,28 +93,28 @@ bool AddHeaderDoReplace(
     }
 
     return false;
-}
+} */
 
 }  // namespace
 
-using BusyMarker = utils::statistics::BusyMarker;
+//using BusyMarker = utils::statistics::BusyMarker;
 
-easy::easy(native::CURL* easy_handle, multi* multi_handle)
+/* easy::easy(native::CURL* easy_handle, multi* multi_handle)
     : handle_(easy_handle), multi_(multi_handle), construct_ts_(std::chrono::steady_clock::now()) {
     UASSERT(handle_);
     set_private(this);
-}
+} */
 
-easy::~easy() {
+/* easy::~easy() {
     cancel();
 
     if (handle_) {
         native::curl_easy_cleanup(handle_);
         handle_ = nullptr;
     }
-}
+} */
 
-std::shared_ptr<const easy> easy::CreateBlocking() {
+/* std::shared_ptr<const easy> easy::CreateBlocking() {
     impl::CurlGlobal::Init();
 
     // Note: curl_easy_init() is blocking.
@@ -124,9 +124,9 @@ std::shared_ptr<const easy> easy::CreateBlocking() {
     }
 
     return std::make_shared<const easy>(handle, nullptr);
-}
+} */
 
-std::shared_ptr<easy> easy::GetBoundBlocking(multi& multi_handle) const {
+/* std::shared_ptr<easy> easy::GetBoundBlocking(multi& multi_handle) const {
     // Note: curl_easy_init() is blocking.
     auto* cloned = native::curl_easy_duphandle(handle_);
     if (!cloned) {
@@ -134,17 +134,17 @@ std::shared_ptr<easy> easy::GetBoundBlocking(multi& multi_handle) const {
     }
 
     return std::make_shared<easy>(cloned, &multi_handle);
-}
+} */
 
-easy* easy::from_native(native::CURL* native_easy) {
+/* easy* easy::from_native(native::CURL* native_easy) {
     easy* easy_handle = nullptr;
     native::curl_easy_getinfo(native_easy, native::CURLINFO_PRIVATE, &easy_handle);
     return easy_handle;
-}
+} */
 
-engine::ev::ThreadControl& easy::GetThreadControl() { return multi_->GetThreadControl(); }
+//engine::ev::ThreadControl& easy::GetThreadControl() { return multi_->GetThreadControl(); }
 
-void easy::async_perform(handler_type handler) {
+/* void easy::async_perform(handler_type handler) {
     LOG_TRACE() << "easy::async_perform start " << this;
     size_t request_num = ++request_counter_;
     if (multi_) {
@@ -157,9 +157,9 @@ void easy::async_perform(handler_type handler) {
         throw std::runtime_error("no multi!");
     }
     LOG_TRACE() << "easy::async_perform finished " << this;
-}
+} */
 
-void easy::do_ev_async_perform(handler_type handler, size_t request_num) {
+/* void easy::do_ev_async_perform(handler_type handler, size_t request_num) {
     if (request_num <= cancelled_request_max_) {
         LOG_DEBUG() << "already cancelled";
         return;
@@ -197,17 +197,17 @@ void easy::do_ev_async_perform(handler_type handler, size_t request_num) {
     // this function.
     LOG_TRACE() << "easy::do_ev_async_perform before multi_->add() " << this;
     multi_->add(this);
-}
+} */
 
-void easy::cancel() { cancel(request_counter_); }
+//void easy::cancel() { cancel(request_counter_); }
 
-void easy::cancel(size_t request_num) {
+/* void easy::cancel(size_t request_num) {
     if (multi_) {
         multi_->GetThreadControl().RunInEvLoopSync([this, request_num] { do_ev_cancel(request_num); });
     }
-}
+} */
 
-void easy::do_ev_cancel(size_t request_num) {
+/* void easy::do_ev_cancel(size_t request_num) {
     // RunInEvLoopAsync(do_ev_async_perform) and RunInEvLoopSync(do_ev_cancel) are
     // not synchronized. So we need to count last cancelled request to prevent its
     // execution in do_ev_async_perform().
@@ -218,7 +218,7 @@ void easy::do_ev_cancel(size_t request_num) {
         handle_completion(std::make_error_code(std::errc::operation_canceled));
         multi_->remove(this);
     }
-}
+} */
 
 void easy::reset() {
     LOG_TRACE() << "easy::reset start " << this;
@@ -282,7 +282,7 @@ void easy::set_sink(std::string* sink) {
     throw_error(ec, "set_sink");
 }
 
-size_t easy::header_function(void*, size_t size, size_t nmemb, void*) { return size * nmemb; }
+//size_t easy::header_function(void*, size_t size, size_t nmemb, void*) { return size * nmemb; }
 
 void easy::set_sink(std::string* sink, std::error_code& ec) {
     sink_ = sink;
@@ -532,13 +532,13 @@ void easy::set_http200_aliases(std::shared_ptr<string_list> http200_aliases, std
     }
 }
 
-void easy::add_resolve(const std::string& host, const std::string& port, const std::string& addr) {
+/* void easy::add_resolve(const std::string& host, const std::string& port, const std::string& addr) {
     std::error_code ec;
     add_resolve(host, port, addr, ec);
     throw_error(ec, "add_resolve");
-}
+} */
 
-void easy::add_resolve(const std::string& host, const std::string& port, const std::string& addr, std::error_code& ec) {
+/* void easy::add_resolve(const std::string& host, const std::string& port, const std::string& addr, std::error_code& ec) {
     if (!resolved_hosts_) {
         resolved_hosts_ = std::make_shared<string_list>();
     }
@@ -561,15 +561,15 @@ void easy::add_resolve(const std::string& host, const std::string& port, const s
     ec = std::error_code{static_cast<errc::EasyErrorCode>(
         native::curl_easy_setopt(handle_, native::CURLOPT_RESOLVE, resolved_hosts_->native_handle())
     )};
-}
+} */
 
-void easy::set_resolves(std::shared_ptr<string_list> resolved_hosts) {
+/* void easy::set_resolves(std::shared_ptr<string_list> resolved_hosts) {
     std::error_code ec;
     set_resolves(std::move(resolved_hosts), ec);
     throw_error(ec, "set_resolves");
-}
+} */
 
-void easy::set_resolves(std::shared_ptr<string_list> resolved_hosts, std::error_code& ec) {
+/* void easy::set_resolves(std::shared_ptr<string_list> resolved_hosts, std::error_code& ec) {
     resolved_hosts_ = std::move(resolved_hosts);
 
     if (resolved_hosts_) {
@@ -580,15 +580,15 @@ void easy::set_resolves(std::shared_ptr<string_list> resolved_hosts, std::error_
         ec = std::error_code{
             static_cast<errc::EasyErrorCode>(native::curl_easy_setopt(handle_, native::CURLOPT_RESOLVE, NULL))};
     }
-}
+} */
 
-void easy::set_share(std::shared_ptr<share> share) {
+/* void easy::set_share(std::shared_ptr<share> share) {
     std::error_code ec;
     set_share(std::move(share), ec);
     throw_error(ec, "set_share");
-}
+} */
 
-void easy::set_share(std::shared_ptr<share> share, std::error_code& ec) {
+/* void easy::set_share(std::shared_ptr<share> share, std::error_code& ec) {
     share_ = std::move(share);
 
     if (share) {
@@ -599,19 +599,19 @@ void easy::set_share(std::shared_ptr<share> share, std::error_code& ec) {
         ec = std::error_code{
             static_cast<errc::EasyErrorCode>(native::curl_easy_setopt(handle_, native::CURLOPT_SHARE, NULL))};
     }
-}
+} */
 
-bool easy::has_post_data() const { return !post_fields_.empty() || form_; }
+//bool easy::has_post_data() const { return !post_fields_.empty() || form_; }
 
-const std::string& easy::get_post_data() const { return post_fields_; }
+//onst std::string& easy::get_post_data() const { return post_fields_; }
 
-std::string easy::extract_post_data() {
+/* std::string easy::extract_post_data() {
     auto data = std::move(post_fields_);
     set_post_fields({});
     return data;
-}
+} */
 
-void easy::handle_completion(const std::error_code& err) {
+/* void easy::handle_completion(const std::error_code& err) {
     LOG_TRACE() << "easy::handle_completion easy=" << this;
 
     multi_registered_ = false;
@@ -623,12 +623,12 @@ void easy::handle_completion(const std::error_code& err) {
      * Request::on_retry and Request::on_completed. All user code is executed in
      * coro context.
      */
-    handler(err);
-}
+    //handler(err);
+//} */
 
-void easy::mark_retry() { ++retries_count_; }
+//void easy::mark_retry() { ++retries_count_; }
 
-clients::http::LocalStats easy::get_local_stats() {
+/* clients::http::LocalStats easy::get_local_stats() {
     clients::http::LocalStats stats;
 
     stats.open_socket_count = sockets_opened_;
@@ -637,18 +637,18 @@ clients::http::LocalStats easy::get_local_stats() {
     stats.time_to_process = std::chrono::microseconds(get_total_time_usec());
 
     return stats;
-}
+} */
 
-std::error_code easy::rate_limit_error() const { return rate_limit_error_; }
+//std::error_code easy::rate_limit_error() const { return rate_limit_error_; }
 
-easy::time_point::duration easy::time_to_start() const {
+/* easy::time_point::duration easy::time_to_start() const {
     if (start_performing_ts_ != time_point{}) {
         return start_performing_ts_ - construct_ts_;
     }
     return {};
-}
+} */
 
-native::curl_socket_t easy::open_tcp_socket(native::curl_sockaddr* address) {
+/* native::curl_socket_t easy::open_tcp_socket(native::curl_sockaddr* address) {
     std::error_code ec;
 
     LOG_TRACE() << "open_tcp_socket family=" << address->family;
@@ -661,9 +661,9 @@ native::curl_socket_t easy::open_tcp_socket(native::curl_sockaddr* address) {
     }
     if (multi_) multi_->BindEasySocket(*this, fd);
     return fd;
-}
+} */
 
-size_t easy::write_function(char* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
+/* size_t easy::write_function(char* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
     easy* self = static_cast<easy*>(userdata);
     size_t actual_size = size * nmemb;
 
@@ -679,9 +679,9 @@ size_t easy::write_function(char* ptr, size_t size, size_t nmemb, void* userdata
     }
 
     return actual_size;
-}
+} */
 
-size_t easy::read_function(void* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
+/* size_t easy::read_function(void* ptr, size_t size, size_t nmemb, void* userdata) noexcept {
     // FIXME readsome doesn't work with TFTP (see cURL docs)
 
     easy* self = static_cast<easy*>(userdata);
@@ -700,9 +700,9 @@ size_t easy::read_function(void* ptr, size_t size, size_t nmemb, void* userdata)
     } else {
         return static_cast<size_t>(chars_stored);
     }
-}
+} */
 
-int easy::seek_function(void* instream, native::curl_off_t offset, int origin) noexcept {
+/* int easy::seek_function(void* instream, native::curl_off_t offset, int origin) noexcept {
     // TODO we could allow the user to define an offset which this library
     // should consider as position zero for uploading chunks of the file
     // alternatively do tellg() on the source stream when it is first passed to
@@ -734,9 +734,9 @@ int easy::seek_function(void* instream, native::curl_off_t offset, int origin) n
     } else {
         return CURL_SEEKFUNC_OK;
     }
-}
+} */
 
-int easy::xferinfo_function(
+/* int easy::xferinfo_function(
     void* clientp,
     native::curl_off_t dltotal,
     native::curl_off_t dlnow,
@@ -750,9 +750,9 @@ int easy::xferinfo_function(
         LOG_LIMITED_WARNING() << "Progress callback failed: " << ex;
         return 1;
     }
-}
+} */
 
-native::curl_socket_t
+/* native::curl_socket_t
 easy::opensocket(void* clientp, native::curlsocktype purpose, struct native::curl_sockaddr* address) noexcept {
     easy* self = static_cast<easy*>(clientp);
     multi* multi_handle = self->multi_;
@@ -789,9 +789,9 @@ easy::opensocket(void* clientp, native::curlsocktype purpose, struct native::cur
 
     // unknown or invalid socket type
     return CURL_SOCKET_BAD;
-}
+} */
 
-int easy::closesocket(void* clientp, native::curl_socket_t item) noexcept {
+/* int easy::closesocket(void* clientp, native::curl_socket_t item) noexcept {
     auto* multi_handle = static_cast<multi*>(clientp);
     multi_handle->UnbindEasySocket(item);
 
@@ -803,7 +803,7 @@ int easy::closesocket(void* clientp, native::curl_socket_t item) noexcept {
 
     multi_handle->Statistics().mark_close_socket();
     return 0;
-}
+} */
 
 }  // namespace curl
 

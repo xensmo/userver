@@ -30,8 +30,7 @@ class TracingManagerBase;
 }  // namespace tracing
 
 namespace curl {
-//class easy;
-class easy_mime;
+class easy;
 class multi;
 class ConnectRateLimiter;
 }  // namespace curl
@@ -138,11 +137,9 @@ private:
     void IncPending() noexcept { ++pending_tasks_; }
     void DecPending() noexcept { --pending_tasks_; }
     
-//void PushIdleEasy(std::shared_ptr<curl::easy>&& easy) noexcept;
-    void PushIdleEasy(std::shared_ptr<curl::easy_mime>&& easy) noexcept;
+    void PushIdleEasy(std::shared_ptr<curl::easy>&& easy) noexcept;
 
-//std::shared_ptr<curl::easy> TryDequeueIdle() noexcept;
-    std::shared_ptr<curl::easy_mime> TryDequeueIdle() noexcept;
+    std::shared_ptr<curl::easy> TryDequeueIdle() noexcept;
 
     std::atomic<std::size_t> pending_tasks_{0};
 
@@ -157,8 +154,7 @@ private:
     static constexpr size_t kIdleQueueSize = 616;
     static constexpr size_t kIdleQueueAlignment = 8;
     using IdleQueueTraits = moodycamel::ConcurrentQueueDefaultTraits;
-//using IdleQueueValue = std::shared_ptr<curl::easy>;
-    using IdleQueueValue = std::shared_ptr<curl::easy_mime>;
+    using IdleQueueValue = std::shared_ptr<curl::easy>;
     using IdleQueue = moodycamel::ConcurrentQueue<IdleQueueValue, IdleQueueTraits>;
     utils::FastPimpl<IdleQueue, kIdleQueueSize, kIdleQueueAlignment> idle_queue_;
 
@@ -166,8 +162,7 @@ private:
     std::optional<std::string> user_agent_;
     rcu::Variable<std::string> proxy_;
 
-//utils::SwappingSmart<const curl::easy> easy_;
-    utils::SwappingSmart<const curl::easy_mime> easy_;
+    utils::SwappingSmart<const curl::easy> easy_;
     utils::PeriodicTask easy_reinit_task_;
 
     // Testsuite support
