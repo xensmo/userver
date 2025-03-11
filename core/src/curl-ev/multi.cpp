@@ -10,9 +10,7 @@
 #include <string_view>
 #include <system_error>
 
-//#include <curl-ev/easy.hpp>
-
-#include <curl-ev/easy_mime.hpp>
+#include <curl-ev/easy.hpp>
 #include <curl-ev/error_code.hpp>
 #include <curl-ev/multi.hpp>
 #include <curl-ev/socket_info.hpp>

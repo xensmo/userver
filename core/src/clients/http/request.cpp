@@ -492,10 +492,10 @@ Request Request::get(std::string url) && { return std::move(this->get(std::move(
 Request& Request::head(std::string url) & { return head().url(std::move(url)); }
 Request Request::head(std::string url) && { return std::move(this->head(std::move(url))); }
 
-Request& Request::post(std::string url, Form&& form) & { return this->url(std::move(url)).form(std::move(form)); }
-Request Request::post(std::string url, Form&& form) && {
-    return std::move(this->post(std::move(url), std::move(form)));
-}
+//Request& Request::post(std::string url, Form&& form) & { return this->url(std::move(url)).form(std::move(form)); }
+//Request Request::post(std::string url, Form&& form) && {
+//    return std::move(this->post(std::move(url), std::move(form)));
+//}
 
 Request& Request::post(std::string url, std::string data) & {
     return this->url(std::move(url)).data(std::move(data)).post();

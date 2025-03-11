@@ -23,7 +23,6 @@
 
 #include <curl-ev/mime.hpp>
 #include <curl-ev/ratelimit.hpp>
-#include <curl-ev/string_list.hpp>
 #include <curl-ev/url.hpp>
 
 #include <fmt/compile.h>
@@ -40,6 +39,7 @@ namespace engine::ev {
 namespace curl {
 class multi;
 class share;
+class string_list;
 
 namespace detail {
     enum class empty_header_action      { kSend, kDoNotSend };
@@ -110,7 +110,14 @@ namespace detail {
  *********************************************************************/ 
 class easy final : public std::enable_shared_from_this<easy> {
 public:
-    easy(native::CURL* easy_handle, native::curl_mime* mime_ptr, multi* multi_ptr);
+    explicit easy(native::CURL* easy_handle, native::curl_mime* mime_ptr, multi* multi_ptr);
+
+    easy(const easy& rhs) = delete;
+    easy(easy&& rhs) noexcept = default;
+
+    easy& operator= (const easy& rhs) noexcept = default;
+    easy& operator= (easy&& rhs) noexcept = default;
+
     ~easy();
 
 public: 
@@ -118,7 +125,7 @@ public:
     using handler_type = std::function<void(std::error_code err)>;
     
     // * this function unused, use async_perform() 
-    [[maybe_unused]] [[noreturn]] void perform(){}
+    [[maybe_unused]] void perform(){}
 
     void async_perform(handler_type handler);
     void cancel();
@@ -166,190 +173,192 @@ public:
     void add_resolve(const std::string& host, const std::string& port, const std::string& addr);
     void add_http200_alias(const std::string& http200_alias);
 
-    std::optional<std::string_view> find_header_by_name(std::string_view name);
+    std::optional<std::string_view> find_header_by_name(std::string_view name) const;
 
 public:
 /// cURL Opt setters
-    [[noreturn]] void set_verbose(bool state);
-    [[noreturn]] void set_header(bool state);
-    [[noreturn]] void set_no_progress(bool state);
-    [[noreturn]] void set_no_signal(bool state);
-    [[noreturn]] void set_wildcard_match(bool state);
-    [[noreturn]] void set_post(bool state);
+    void set_verbose(bool state);
+    void set_header(bool state);
+    void set_no_progress(bool state);
+    void set_no_signal(bool state);
+    void set_wildcard_match(bool state);
+    void set_post(bool state);
 
-    [[noreturn]] void set_source(std::shared_ptr<std::istream> source);
-    [[noreturn]] void set_sink(std::string* sink);
-    [[noreturn]] void set_private(void* ptr);
-    [[noreturn]] void set_custom_request(std::string_view sv);
-    [[noreturn]] void set_new_directory_perms(long perms);
-    [[noreturn]] void set_new_file_perms(long perms);
+    void set_source(std::shared_ptr<std::istream> source);
+    void set_sink(std::string* sink);
+    void set_private(void* ptr);
+    void set_custom_request(const std::string& str);
+    void set_new_directory_perms(long perms);
+    void set_new_file_perms(long perms);
 
-    [[noreturn]] void set_url(std::string&& url_str, std::error_code& ec);
-    [[noreturn]] void set_progress_data(void* ptr);
+    void set_url(std::string&& url_str, std::error_code& ec);
+    void set_progress_data(void* ptr);
 
-    [[noreturn]] void set_error_buffer(char* buffer);
-    [[noreturn]] void set_stderr(FILE* file);
-    [[noreturn]] void set_fail_on_error(bool state);
+    void set_error_buffer(char* buffer);
+    void set_stderr(FILE* file);
+    void set_fail_on_error(bool state);
 
     void set_mimepost(std::unique_ptr<mime> mime_ptr);
     
 // * puplic http setters @fn set_* @return none
-    [[noreturn]] void set_http_proxy_tunnel(bool state);
-    [[noreturn]] void set_socks5_gsapi_nec(bool state);
-    [[noreturn]] void set_tcp_no_delay(bool state);
-    [[noreturn]] void set_tcp_keep_alive(bool state);
-    [[noreturn]] void set_auto_referrer(bool state);
-    [[noreturn]] void set_follow_location(bool state);
-    [[noreturn]] void set_unrestricted_auth(bool state);
-    [[noreturn]] void set_protocols(long value);
-    [[noreturn]] void set_max_redirs(long value);
-    [[noreturn]] void set_post_redir(long value);
-    [[noreturn]] void set_post_field_size(long value);
-    [[noreturn]] void set_proxy_port(long value);
-    [[noreturn]] void set_proxy_type(long value);
-    [[noreturn]] void set_local_port(long value);
-    [[noreturn]] void set_local_port_range(long value);
-    [[noreturn]] void set_dns_cache_timeout(long value);
-    [[noreturn]] void set_buffer_size(long value);
-    [[noreturn]] void set_port(long value);
-    [[noreturn]] void set_address_scope(long value);
-    [[noreturn]] void set_tcp_keep_idle(long value);
-    [[noreturn]] void set_tcp_keep_intvl(long value);
-    [[noreturn]] void set_connect_to(native::curl_slist* slist);
-    [[noreturn]] void set_post_field_size_large(native::curl_off_t value);
-    [[noreturn]] void set_post_fields(void* ptr);
-    [[noreturn]] void set_post_fields(std::string&& post_fields);
-    [[noreturn]] void set_proxy(std::string_view sv);
-    [[noreturn]] void set_interface(std::string_view sv);
-    [[noreturn]] void set_unix_socket_path(std::string_view sv);
-    [[noreturn]] void set_no_proxy(std::string_view sv);
-    [[noreturn]] void set_accept_encoding(std::string_view sv);
-    [[noreturn]] void set_transfer_encoding(std::string_view sv);
-    [[noreturn]] void set_referer(std::string_view sv);
-    [[noreturn]] void set_user_agent(std::string_view sv);
-    [[noreturn]] void set_redir_protocols_str(std::string_view sv);
-    [[noreturn]] void set_headers(std::shared_ptr<string_list> headers);
-    [[noreturn]] void set_http200_aliases(std::shared_ptr<string_list> http200_aliases);
+    void set_http_proxy_tunnel(bool state);
+    void set_socks5_gsapi_nec(bool state);
+    void set_tcp_no_delay(bool state);
+    void set_tcp_keep_alive(bool state);
+    void set_auto_referrer(bool state);
+    void set_follow_location(bool state);
+    void set_unrestricted_auth(bool state);
+    void set_max_redirs(long value);
+    void set_post_redir(long value);
+    void set_post_field_size(long value);
+    void set_proxy_port(long value);
+    void set_proxy_type(long value);
+    void set_local_port(long value);
+    void set_local_port_range(long value);
+    void set_dns_cache_timeout(long value);
+    void set_buffer_size(long value);
+    void set_port(long value);
+    void set_address_scope(long value);
+    void set_tcp_keep_idle(long value);
+    void set_tcp_keep_intvl(long value);
+    void set_connect_to(native::curl_slist* slist);
+    void set_post_field_size_large(native::curl_off_t value);
+    void set_post_fields(void* ptr);
+    void set_post_fields(std::string&& post_fields);
+    void set_proxy(std::string_view sv);
+    void set_interface(std::string_view sv);
+    void set_unix_socket_path(std::string_view sv);
+    void set_no_proxy(std::string_view sv);
+    void set_accept_encoding(const std::string& str);
+    void set_transfer_encoding(std::string_view sv);
+    void set_referer(std::string_view sv);
+    void set_user_agent(std::string_view sv);
+    void set_protocols_str(const std::string& str);
+    void set_redir_protocols_str(const std::string& str);
+    void set_headers(std::shared_ptr<string_list> headers);
+    void set_http200_aliases(std::shared_ptr<string_list> http200_aliases);
 
 // * puplic auth setters @fn set_* @return none
-    [[noreturn]] void set_tls_auth_type(long value);
-    [[noreturn]] void set_tls_auth_user(std::string_view sv);
-    [[noreturn]] void set_tls_auth_password(std::string_view sv);
-    [[noreturn]] void set_netrc_file(std::string_view sv);
-    [[noreturn]] void set_user(std::string_view sv);
-    [[noreturn]] void set_password(std::string_view sv);
-    [[noreturn]] void set_proxy_user(std::string_view sv);
-    [[noreturn]] void set_proxy_password(std::string_view sv);
-    [[noreturn]] void set_netrc(detail::netrc_t netrc);
-    [[noreturn]] void set_http_auth(detail::httpauth_t httpauth, bool auth_only);
-    [[noreturn]] void set_proxy_auth(detail::proxyauth_t proxyauth);
+    void set_tls_auth_type(long value);
+    void set_tls_auth_user(std::string_view sv);
+    void set_tls_auth_password(std::string_view sv);
+    void set_netrc_file(std::string_view sv);
+    void set_user(std::string_view sv);
+    void set_password(std::string_view sv);
+    void set_proxy_user(std::string_view sv);
+    void set_proxy_password(std::string_view sv);
+    void set_netrc(detail::netrc_t netrc);
+    void set_http_auth(detail::httpauth_t httpauth, bool auth_only);
+    void set_proxy_auth(detail::proxyauth_t proxyauth);
 
 // * puplic protocol setters @fn set_* @return none
-    [[noreturn]] void set_transfer_text(bool state);
-    [[noreturn]] void set_transfer_mode(bool state);
-    [[noreturn]] void set_crlf(bool state);
-    [[noreturn]] void set_file_time(bool state);
-    [[noreturn]] void set_upload(bool state);
-    [[noreturn]] void set_no_body(bool state);
-    [[noreturn]] void set_ignore_content_length(bool state);
-    [[noreturn]] void set_http_content_decoding(bool state);
-    [[noreturn]] void set_http_transfer_decoding(bool state);
-    [[noreturn]] void set_http_get(bool state);
-    [[noreturn]] void set_cookie_session(bool state);
-    [[noreturn]] void set_resume_from(long value);
-    [[noreturn]] void set_in_file_size(long value);
-    [[noreturn]] void set_max_file_size(long value);
-    [[noreturn]] void set_time_value(long value);
-    [[noreturn]] void set_resume_from_large(native::curl_off_t value);
-    [[noreturn]] void set_in_file_size_large(native::curl_off_t value);
-    [[noreturn]] void set_max_file_size_large(native::curl_off_t value);
-    [[noreturn]] void set_range(std::string_view sv);
-    [[noreturn]] void set_cookie_list(std::string_view sv);
-    [[noreturn]] void set_cookie(std::string_view sv);
-    [[noreturn]] void set_cookie_file(std::string_view sv);
-    [[noreturn]] void set_cookie_jar(std::string_view sv);
-    [[noreturn]] void set_http_version(detail::http_version_t version);
-    [[noreturn]] void set_time_condition(detail::time_condition_t condition);
+    void set_transfer_text(bool state);
+    void set_transfer_mode(bool state);
+    void set_crlf(bool state);
+    void set_file_time(bool state);
+    void set_upload(bool state);
+    void set_no_body(bool state);
+    void set_ignore_content_length(bool state);
+    void set_http_content_decoding(bool state);
+    void set_http_transfer_decoding(bool state);
+    void set_http_get(bool state);
+    void set_cookie_session(bool state);
+    void set_resume_from(long value);
+    void set_in_file_size(long value);
+    void set_max_file_size(long value);
+    void set_time_value(long value);
+    void set_resume_from_large(native::curl_off_t value);
+    void set_in_file_size_large(native::curl_off_t value);
+    void set_max_file_size_large(native::curl_off_t value);
+    void set_range(std::string_view sv);
+    void set_cookie_list(std::string_view sv);
+    void set_cookie(std::string_view sv);
+    void set_cookie_file(std::string_view sv);
+    void set_cookie_jar(std::string_view sv);
+    void set_http_version(detail::http_version_t version);
+    void set_time_condition(detail::time_condition_t condition);
 
 // * puplic connection setters @fn set_* @return none
-    [[noreturn]] void set_fresh_connect(bool state);
-    [[noreturn]] void set_forbit_reuse(bool state);
-    [[noreturn]] void set_connect_only(bool state);
-    [[noreturn]] void set_timeout(long timeout);
-    [[noreturn]] void set_timeout_ms(long timeout);
-    [[noreturn]] void set_low_speed_limit(long limit);
-    [[noreturn]] void set_low_speed_time(long time);
-    [[noreturn]] void set_max_connects(long connects);
-    [[noreturn]] void set_connect_timeout(long timeout);
-    [[noreturn]] void set_connect_timeout_ms(long timeout);
-    [[noreturn]] void set_accept_timeout_ms(long timeout);
-    [[noreturn]] void set_max_send_speed_large(native::curl_off_t large);
-    [[noreturn]] void set_max_recv_speed_large(native::curl_off_t large);
-    [[noreturn]] void set_dns_servers(std::string_view sv);
-    [[noreturn]] void set_ip_resolve(detail::ip_resolve_t resolve);
-    [[noreturn]] void set_resolves(std::shared_ptr<string_list> resolved_hosts);
+    void set_fresh_connect(bool state);
+    void set_forbit_reuse(bool state);
+    void set_connect_only(bool state);
+    void set_timeout(long timeout);
+    void set_timeout_ms(long timeout);
+    void set_low_speed_limit(long limit);
+    void set_low_speed_time(long time);
+    void set_max_connects(long connects);
+    void set_connect_timeout(long timeout);
+    void set_connect_timeout_ms(long timeout);
+    void set_accept_timeout_ms(long timeout);
+    void set_max_send_speed_large(native::curl_off_t large);
+    void set_max_recv_speed_large(native::curl_off_t large);
+    void set_dns_servers(std::string_view sv);
+    void set_ip_resolve(detail::ip_resolve_t resolve);
+    void set_resolves(std::shared_ptr<string_list> resolved_hosts);
 
 // * puplic ssh setters @fn set_* @return none
-    [[noreturn]] void set_ssh_auth_types(long types);
-    [[noreturn]] void set_ssh_host_public_key_md5(std::string_view sv);
-    [[noreturn]] void set_ssh_public_key_file(std::string_view sv);
-    [[noreturn]] void set_ssh_private_key_file(std::string_view sv);
-    [[noreturn]] void set_ssh_known_hosts(std::string_view sv);
-    [[noreturn]] void set_ssh_key_function(void* ptr); // !TODO ssh key callback ?
-    [[noreturn]] void set_ssh_key_data(void* ptr);
+    void set_ssh_auth_types(long types);
+    void set_ssh_host_public_key_md5(std::string_view sv);
+    void set_ssh_public_key_file(std::string_view sv);
+    void set_ssh_private_key_file(std::string_view sv);
+    void set_ssh_known_hosts(std::string_view sv);
+    void set_ssh_key_function(void* ptr); // !TODO ssh key callback ?
+    void set_ssh_key_data(void* ptr);
 
 // * ssl and security setters @fn set_* @return none
-    [[noreturn]] void set_ssl_cert(std::string_view sv);
-    [[noreturn]] void set_ssl_cert_type(std::string_view sv);
-    [[noreturn]] void set_ssl_key(std::string_view sv);
-    [[noreturn]] void set_ssl_key_type(std::string_view sv);
-    [[noreturn]] void set_ssl_key_passwd(std::string_view sv);
-    [[noreturn]] void set_ssl_engine(std::string_view sv);
-    [[noreturn]] void set_ssl_engine_default(std::string_view sv);
-    [[noreturn]] void set_ca_info(std::string_view sv);
-    [[noreturn]] void set_ca_file(std::string_view sv);
-    [[noreturn]] void set_crl_file(std::string_view sv);
-    [[noreturn]] void set_issuer_cert(std::string_view sv);
-    [[noreturn]] void set_ssl_cipher_list(std::string_view sv);
-    [[noreturn]] void set_krb_level(std::string_view sv);
-    [[noreturn]] void set_ssl_options(long options);
-    [[noreturn]] void set_gssapi_delegation(long arg);
-    [[noreturn]] void set_cert_info(bool state);
-    [[noreturn]] void set_ssl_session_id_cache(bool state);
-    [[noreturn]] void set_ssl_verify_peer(bool state);
-    [[noreturn]] void set_ssl_verify_host(bool state);
-    [[noreturn]] void set_ssl_version(detail::ssl_version_t version);
-    [[noreturn]] void set_use_ssl(detail::use_ssl_t ssl);
+    void set_ssl_cert(std::string_view sv);
+    void set_ssl_cert_type(std::string_view sv);
+    void set_ssl_key(std::string_view sv);
+    void set_ssl_key_type(std::string_view sv);
+    void set_ssl_key_passwd(std::string_view sv);
+    void set_ssl_engine(std::string_view sv);
+    void set_ssl_engine_default(std::string_view sv);
+    void set_ca_info(std::string_view sv);
+    void set_ca_file(std::string_view sv);
+    void set_crl_file(std::string_view sv);
+    void set_issuer_cert(std::string_view sv);
+    void set_ssl_cipher_list(std::string_view sv);
+    void set_krb_level(std::string_view sv);
+    void set_ssl_options(long options);
+    void set_gssapi_delegation(long arg);
+    void set_cert_info(bool state);
+    void set_ssl_session_id_cache(bool state);
+    void set_ssl_verify_peer(bool state);
+    void set_ssl_verify_host(bool state);
+    void set_ssl_version(detail::ssl_version_t version);
+    void set_use_ssl(detail::use_ssl_t ssl);
     
 #if LIBCURL_VERSION_NUM >= 0x074700    
-    [[noreturn]] void set_ssl_cert_blob_copy(std::string_view sv);
-    [[noreturn]] void set_ssl_cert_blob_no_copy(std::string_view sv);
-    [[noreturn]] void set_ssl_key_blob_copy(std::string_view sv);
-    [[noreturn]] void set_ssl_key_blob_no_copy(std::string_view sv);
+    void set_ssl_cert_blob_copy(std::string_view sv);
+    void set_ssl_cert_blob_no_copy(std::string_view sv);
+    void set_ssl_key_blob_copy(std::string_view sv);
+    void set_ssl_key_blob_no_copy(std::string_view sv);
 
     static constexpr bool is_set_ssl_cert_blob_available = true;
     static constexpr bool is_set_ssl_key_blob_available = true;
 #endif
 
 #if LIBCURL_VERSION_NUM >= 0x074D00
-    [[noreturn]] void set_ca_info_blob_copy(std::string_view sv);
-    [[noreturn]] void set_ca_info_blob_no_copy(std::string_view sv);
+    void set_ca_info_blob_copy(std::string_view sv);
+    void set_ca_info_blob_no_copy(std::string_view sv);
     
     static constexpr bool is_set_ca_info_blob_available = true;
 #endif
 
     // this deprecated function use set_mimepost()    
-    [[deprecated("Use set_mimepost())")]] [[noreturn]] 
+    [[deprecated("Use set_mimepost())")]] [[noreturn]]
     void set_http_post(void*);
     // this deprecated function
-    [[deprecated("Serves no purpose anymore")]] [[noreturn]] 
+    [[deprecated("Serves no purpose anymore")]] [[noreturn]]
     void set_random_file(std::string_view); // CURLOPT_RANDOM_FILE
     // this deprecated function
-    [[deprecated("Serves no purpose anymore")]] [[noreturn]] 
+    [[deprecated("Serves no purpose anymore")]] [[noreturn]]
     void set_egd_socket(std::string_view);  // CURLOPT_EGDSOCKET
     // this deprecated function
     [[deprecated("Use set_redir_protocols_str()")]] [[noreturn]]
     void set_redir_protocols(long); // CURLOPT_REDIR_PROTOCOLS
+    [[deprecated("Use set_protocols_str()")]] [[noreturn]]
+    void set_protocols(long); // CURLOPT_PROTOCOLS
 
 // * puplic callback function @fn set_* @return none  
     using progress_function_t = std::function<bool( native::curl_off_t dltotal, native::curl_off_t dlnow,
@@ -358,50 +367,50 @@ public:
     void unset_progress_callback();    
 
     using header_function_t = size_t (*)(void* ptr, size_t size, size_t nmemb, void* userdata);
-    [[noreturn]] void set_header_function(header_function_t func);
-    [[noreturn]] void set_header_data(void* ptr);
+    void set_header_function(header_function_t func);
+    void set_header_data(void* ptr);
 
     using debug_function_t = int (*)(native::CURL*, native::curl_infotype, char*, size_t, void*);
-    [[noreturn]] void set_debug_function(debug_function_t func);
-    [[noreturn]] void set_debug_data(void* ptr);
+    void set_debug_function(debug_function_t func);
+    void set_debug_data(void* ptr);
 
     using interleave_function_t = size_t (*)(void* ptr, size_t size, size_t nmemb, void* userdata);
-    [[noreturn]] void set_interleave_function(interleave_function_t func);
-    [[noreturn]] void set_interleave_data(void* ptr);
+    void set_interleave_function(interleave_function_t func);
+    void set_interleave_data(void* ptr);
       
     using write_function_t = size_t (*)(char* ptr, size_t size, size_t nmemb, void* userdata);
-    [[noreturn]] void set_write_function(write_function_t func, std::error_code& ec);
-    [[noreturn]] void set_write_data(void* ptr, std::error_code& ec);
+    void set_write_function(write_function_t func, std::error_code& ec);
+    void set_write_data(void* ptr, std::error_code& ec);
 
     using read_function_t = std::size_t (*)(void* ptr, size_t size, size_t nmemb, void* userdata);
-    [[noreturn]] void set_read_function(read_function_t func, std::error_code& ec);
-    [[noreturn]] void set_read_data(void* ptr, std::error_code& ec);
+    void set_read_function(read_function_t func, std::error_code& ec);
+    void set_read_data(void* ptr, std::error_code& ec);
 
     using seek_function_t = int (*)(void* instream, native::curl_off_t offset, int origin);
-    [[noreturn]] void set_seek_function(seek_function_t func, std::error_code& ec);
-    [[noreturn]] void set_seek_data(void* ptr, std::error_code& ec);
+    void set_seek_function(seek_function_t func, std::error_code& ec);
+    void set_seek_data(void* ptr, std::error_code& ec);
 
     using sockopt_function_t = int (*)(void* clientp, native::curl_socket_t curlfd, native::curlsocktype purpose);
-    [[noreturn]] void set_sockopt_function(sockopt_function_t func);
-    [[noreturn]] void set_sockopt_data(void* ptr);
+    void set_sockopt_function(sockopt_function_t func);
+    void set_sockopt_data(void* ptr);
 
     using xfer_function_t = int (*)(void* clinetp, native::curl_off_t dltotal, native::curl_off_t dlnow,
         native::curl_off_t ultotal, native::curl_off_t ulnow);
-    [[noreturn]] void set_xferinfo_function(xfer_function_t func);
-    [[noreturn]] void set_xferinfo_data(void* ptr);
+    void set_xferinfo_function(xfer_function_t func);
+    void set_xferinfo_data(void* ptr);
 
     using opensocket_function_t = native::curl_socket_t (*)(void* clientp, 
         native::curlsocktype purpose, struct native::curl_sockaddr* address);
-    [[noreturn]] void set_opensocket_function(opensocket_function_t func);
-    [[noreturn]] void set_opensocket_data(void* ptr);
+    void set_opensocket_function(opensocket_function_t func);
+    void set_opensocket_data(void* ptr);
 
     using closesocket_function_t = int (*)(void* clientp, native::curl_socket_t item);
-    [[noreturn]] void set_closesocket_function(closesocket_function_t func);
-    [[noreturn]] void set_closesocket_data(void* ptr);
+    void set_closesocket_function(closesocket_function_t func);
+    void set_closesocket_data(void* ptr);
     
     using ssl_ctx_function_t = native::CURLcode (*)(native::CURL* curl, void* sslctx, void* parm);
-    [[noreturn]] void set_ssl_ctx_function(ssl_ctx_function_t func, std::error_code& ec);
-    [[noreturn]] void set_ssl_ctx_data(void* ptr, std::error_code& ec);
+    void set_ssl_ctx_function(ssl_ctx_function_t func, std::error_code& ec);
+    void set_ssl_ctx_data(void* ptr, std::error_code& ec);
 
 // * getters @fn get_* @return std::shared_ptr<easy>
     [[nodiscard]] std::shared_ptr<easy> get_bound_blocking(multi& multi_handle) const;
@@ -464,18 +473,11 @@ public:
     [[nodiscard]] long get_retry_after_sec();           // return native::curl_off_t ?
 
 // public deprecated getters
-    [[deprecated("Use get_scheme()")]] [[noreturn]] 
+    [[deprecated("Use get_scheme()")]] [[noreturn]]
     void get_protocol(); // CURLINFO_PROTOCOL
 
     engine::ev::ThreadControl& get_thread_control();
     
-private:
-    easy(const easy& rhs) = delete;
-    easy(easy&& rhs) = delete;
-
-    easy& operator= (const easy& rhs) = delete;
-    easy& operator= (easy&& rhs) = delete;
-
 private:
 // private static
     static native::curl_socket_t open_socket(void* clientp, native::curlsocktype purpose, struct native::curl_sockaddr* address) noexcept;

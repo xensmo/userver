@@ -275,8 +275,9 @@ void RequestState::ca(crypto::Certificate cert) {
         ca_ = std::move(cert);
         std::error_code ec;
         easy().set_ssl_ctx_function(&RequestState::on_certificate_request, ec);
-        if (!ec)
-            easy().set_ssl_ctx_data(this, ec);
+        UASSERT(!ec);
+        easy().set_ssl_ctx_data(this, ec);
+        UASSERT(!ec);
     }
 }
 
@@ -325,8 +326,9 @@ void RequestState::client_key_cert(crypto::PrivateKey pkey, crypto::Certificate 
 
         std::error_code ec;
         easy().set_ssl_ctx_function(&RequestState::on_certificate_request, ec);
-        if (!ec)
-            easy().set_ssl_ctx_data(this, ec);
+        UASSERT(!ec);
+        easy().set_ssl_ctx_data(this, ec);
+        UASSERT(!ec);
     }
 }
 
@@ -683,8 +685,10 @@ RequestState::async_perform_stream(const std::shared_ptr<Queue>& queue, utils::i
 
     std::error_code ec;
     easy().set_write_function(&RequestState::StreamWriteFunction, ec);
-    if (!ec)
-        easy().set_write_data(this, ec);
+    UASSERT(!ec);
+    easy().set_write_data(this, ec);
+    UASSERT(!ec);
+    
     // Force no retries
     retry_.retries = 1;
 

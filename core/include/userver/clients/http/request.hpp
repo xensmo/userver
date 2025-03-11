@@ -112,8 +112,9 @@ public:
     Request& post(std::string url, std::string data = {}) &;
     Request post(std::string url, std::string data = {}) &&;
     /// POST request with url and multipart/form-data
-    Request& post(std::string url, Form&& form) &;
-    Request post(std::string url, Form&& form) &&;
+    ////////////////////////////////////////////!
+    [[deprecated("Use post_mime(), this function no call effect")]] Request& post(std::string url, Form&& form) &;
+    [[deprecated("Use post_mime(), this function no call effect")]] Request post(std::string url, Form&& form) &&;
     /// PUT request
     Request& put() &;
     Request put() &&;
@@ -149,6 +150,7 @@ public:
     Request& data(std::string data) &;
     Request data(std::string data) &&;
     /// form for POST request
+    //////////////////////////////////////////////////////////////////////////////////////!
     [[deprecated("Use mime(), this function no call effect")]] Request& form(Form&& form) &;
     [[deprecated("Use mime(), this function no call effect")]] Request form(Form&& form) &&;
 

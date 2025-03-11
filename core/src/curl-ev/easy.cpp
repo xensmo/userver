@@ -20,6 +20,7 @@
 #include <curl-ev/error_code.hpp>
 #include <curl-ev/multi.hpp>
 #include <curl-ev/share.hpp>
+#include <curl-ev/string_list.hpp>
 #include <curl-ev/wrappers.hpp>
 
 #include <engine/ev/thread_control.hpp>
@@ -37,12 +38,12 @@ namespace detail {
     using detail_eha = empty_header_action;
     using detail_dha = duplicate_header_action;
 
-    [[nodiscard]] bool is_header_matching_name(std::string_view header, std::string_view name) {
+    bool is_header_matching_name(std::string_view header, std::string_view name) {
         return header.size() > name.size() && utils::StrIcaseEqual()(header.substr(0, name.size()), name) &&
             (header[name.size()] == ':' || header[name.size()] == ';');
     }
 
-    [[nodiscard]] fmt::memory_buffer 
+    fmt::memory_buffer 
     create_header_buffer(std::string_view name, std::string_view value, detail_eha eha) {
         fmt::memory_buffer fmt_mem_buf;
 
@@ -55,7 +56,7 @@ namespace detail {
         return fmt_mem_buf;
     }
 
-    [[nodiscard]] std::optional<std::string_view>
+    std::optional<std::string_view>
     find_header_by_name(const std::shared_ptr<string_list>& headers, std::string_view name) {
         if (!headers)
             return std::nullopt;
@@ -74,15 +75,13 @@ namespace detail {
         return result;
     }
 
-    [[nodiscard]] bool 
-    add_header_do_skip(const std::shared_ptr<string_list>& headers, std::string_view name, detail_dha dha) {
+    bool add_header_do_skip(const std::shared_ptr<string_list>& headers, std::string_view name, detail_dha dha) {
         if (dha == detail_dha::kSkip && headers) 
             find_header_by_name(headers, name);
         return false;
     }
 
-    [[nodiscard]] bool 
-    add_header_do_replace(const std::shared_ptr<string_list>& headers, const fmt::memory_buffer& mem_buf,
+    bool add_header_do_replace(const std::shared_ptr<string_list>& headers, const fmt::memory_buffer& mem_buf,
             std::string_view name, detail_dha dha) {
         if (dha == detail_dha::kReplace && headers) {
             const bool replaced = headers->ReplaceFirstIf([name](std::string_view header) {
@@ -96,7 +95,7 @@ namespace detail {
     }
 
     template <typename _Et, typename = std::enable_if_t<std::is_enum_v<_Et>, _Et>>
-    [[nodiscard]] inline constexpr unsigned long to_integral(_Et val) {
+    inline constexpr unsigned long to_integral(_Et val) {
         return static_cast<std::underlying_type_t<_Et>>(val);
     }
 
@@ -105,7 +104,7 @@ namespace detail {
          std::error_code ec = std::error_code {static_cast<errc::EasyErrorCode>(
             native::curl_easy_setopt(handle, opt, state ? 1L : 0L)
         )};
-        throw(ec, name);
+        throw_error(ec, name);
     }
 
     template <typename _FuncName, typename _Handle, typename _OptType>
@@ -113,12 +112,11 @@ namespace detail {
         std::error_code ec = std::error_code {static_cast<errc::EasyErrorCode>(
             native::curl_easy_setopt(handle, opt, arg)
         )};
-        throw(ec, name);
+        throw_error(ec, name);
     }
 
     template <typename _Handle, typename _OptType>
-    [[nodiscard]] inline std::error_code 
-    set_curl_opt(_Handle handle, native::CURLoption opt, _OptType arg) {
+    inline std::error_code set_curl_opt(_Handle handle, native::CURLoption opt, _OptType arg) {
         std::error_code ec = std::error_code {static_cast<errc::EasyErrorCode>(
             native::curl_easy_setopt(handle, opt, arg)
         )};
@@ -126,21 +124,19 @@ namespace detail {
     }
 
     template <typename _FuncName, typename _Handle>
-    [[noreturn]] inline void 
-    set_curl_opt_blob(_FuncName name, std::string_view sv, unsigned int flags, _Handle handle, native::CURLoption opt) {
+    inline void set_curl_opt_blob(_FuncName name, std::string_view sv, unsigned int flags, _Handle handle, native::CURLoption opt) {
         native::curl_blob blob{};
         blob.data = const_cast<void*>(static_cast<const void*>(sv.data()));
         blob.len = sv.size();
-        blob..flags = flags;
+        blob.flags = flags;
         std::error_code ec = std::error_code {static_cast<errc::EasyErrorCode>(
             native::curl_easy_setopt(handle, opt, &blob)
         )};
-        throw(ec, name);
+        throw_error(ec, name);
     }
 
     template <typename _Handle, typename _Return>
-    [[nodiscard]] inline std::error_code 
-    get_curl_info(_Handle handle, native::CURLINFO info, _Return value) {
+    inline std::error_code get_curl_info(_Handle handle, native::CURLINFO info, _Return value) {
         std::error_code ec = std::error_code{static_cast<errc::EasyErrorCode>(
             native::curl_easy_getinfo(handle, info, value)
         )};
@@ -148,38 +144,34 @@ namespace detail {
     }
 
     template <typename _FuncName, typename _Handle>
-    [[nodiscard]] inline std::string_view 
-    get_curl_info_string_view(_FuncName name, _Handle handle, native::CURLINFO info) {
+    inline std::string_view get_curl_info_string_view(_FuncName name, _Handle handle, native::CURLINFO info) {
         char* result = nullptr;
         std::error_code ec = get_curl_info(handle, info, &result);
-        throw(ec, name);
+        throw_error(ec, name);
         return result ? result : std::string_view{};
     }
 
     template <typename _Handle>
-    [[nodiscard]] inline std::string_view 
-    get_curl_info_string_view(_Handle handle, native::CURLINFO info, std::error_code& ec) {
+    inline std::string_view get_curl_info_string_view(_Handle handle, native::CURLINFO info, std::error_code& ec) {
         char* result = nullptr;
         ec = get_curl_info(handle, info, &result);
         return result ? result : std::string_view{};
     }
 
     template <typename _FuncName, typename _Handle>
-    [[nodiscard]] inline long 
-    get_curl_info_long(_FuncName name, _Handle handle, native::CURLINFO info) {
+    inline long get_curl_info_long(_FuncName name, _Handle handle, native::CURLINFO info) {
         long result;
         std::error_code ec = get_curl_info(handle, info, &result);
-        throw(ec, name);
+        throw_error(ec, name);
         return result;
     }
 
     template <typename _FuncName, typename _Handle>
-    [[nodiscard]] inline std::vector<std::string>
-    get_curl_info_list(_FuncName name, _Handle handle, native::CURLINFO info) {
+    inline std::vector<std::string> get_curl_info_list(_FuncName name, _Handle handle, native::CURLINFO info) {
         std::vector<std::string> results;
         struct native::curl_slist* slist;
         std::error_code ec = get_curl_info(handle, info, &slist);
-        throw(ec , name);
+        throw_error(ec , name);
         struct native::curl_slist* it = slist;
 
         while (it) {
@@ -204,6 +196,8 @@ easy::easy(native::CURL* easy_handle, native::curl_mime* mime_ptr, multi* multi_
 }
 
 easy::~easy() {
+    cancel();
+
     if (easy_handle_) {
         native::curl_easy_cleanup(easy_handle_);
         easy_handle_ = nullptr;
@@ -214,13 +208,13 @@ std::shared_ptr<const easy> easy::create_easy_blocking() {
     impl::CurlGlobal::Init();
     
     // Note: curl_easy_init() is blocking.
-    auto* handle = native::curl_easy_init();
-    if (!handle) { throw std::bad_alloc(); }
+    auto* handle_ptr = native::curl_easy_init();
+    if (!handle_ptr) { throw std::bad_alloc(); }
 
-    auto* mime = native::curl_mime_init(handle);
-    if (!mime) { throw std::bad_alloc(); }
+    auto* mime_ptr = native::curl_mime_init(handle_ptr);
+    if (!mime_ptr) { throw std::bad_alloc(); }
     
-    return std::make_shared<const easy>(handle, mime, nullptr);
+    return std::make_shared<const easy>(handle_ptr, mime_ptr, nullptr);
 }
 
 std::shared_ptr<easy> easy::get_bound_blocking(multi& multi_handle) const {
@@ -233,7 +227,7 @@ std::shared_ptr<easy> easy::get_bound_blocking(multi& multi_handle) const {
     if (!cloned_mime)
         throw std::bad_alloc();
 
-    return std::make_shared<easy>(cloned_easy, cloned_mime, multi_handle);
+    return std::make_shared<easy>(cloned_easy, cloned_mime, &multi_handle);
 }
 
 easy* easy::from_native(native::CURL* native_easy) {
@@ -293,7 +287,7 @@ void easy::reset() {
     if (!ec) {
         set_ssl_ctx_function(nullptr, ec);
     } else if(ec != errc::EasyErrorCode::kNotBuiltIn) {
-        throw(ec, "set_ssl_ctx_data");
+        throw_error(ec, "set_ssl_ctx_data");
     }
 
     UASSERT(!multi_registered_);
@@ -437,7 +431,7 @@ void easy::add_header(const char* header) {
     headers_->add(header);
     std::error_code ec = detail::set_curl_opt(
         easy_handle_, native::CURLOPT_HTTPHEADER, headers_->native_handle());
-    throw(ec, "add_header");
+    throw_error(ec, "add_header");
 }
 
 void easy::add_header(const std::string& header) {
@@ -458,7 +452,7 @@ void easy::add_proxy_header(const char* header) {
     proxy_headers_->add(header);
     std::error_code ec = detail::set_curl_opt(
         easy_handle_, native::CURLOPT_PROXYHEADER, proxy_headers_->native_handle());
-    throw(ec, "add_proxy_header");
+    throw_error(ec, "add_proxy_header");
 }
 
 void easy::add_proxy_header(const std::string& header) {
@@ -490,20 +484,21 @@ void easy::add_resolve(const std::string& host, const std::string& port, const s
     std::error_code ec = detail::set_curl_opt(
         easy_handle_, native::CURLOPT_RESOLVE, resolved_hosts_->native_handle());
 
-    throw(ec, "add_resolve");
+    throw_error(ec, "add_resolve");
 }
 
 void easy::add_http200_alias(const std::string& http200_alias) {
     if (!http200_aliases_)
         http200_aliases_ = std::make_shared<string_list>();
 
+    http200_aliases_->add(http200_alias);    
     std::error_code ec = detail::set_curl_opt(
         easy_handle_, native::CURLOPT_HTTP200ALIASES, http200_aliases_->native_handle());
-    throw(ec, "add_http200_alias");
+    throw_error(ec, "add_http200_alias");
 }
 
-std::optional<std::string_view> easy::find_header_by_name(std::string_view name) {
-    detail::find_header_by_name(headers_, name);
+std::optional<std::string_view> easy::find_header_by_name(std::string_view name) const {
+    return detail::find_header_by_name(headers_, name);
 }
 
 // setters
@@ -514,11 +509,11 @@ void easy::set_share(std::shared_ptr<share> share) {
     if (share) {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_SHARE, share->native_handle());
-        throw(ec, "set_share native_handle failed!");
+        throw_error(ec, "set_share native_handle failed!");
     } else {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_SHARE, nullptr);
-        throw(ec, "set_share nullptr failed!");
+        throw_error(ec, "set_share nullptr failed!");
     }
 }
 
@@ -564,7 +559,7 @@ void easy::set_source(std::shared_ptr<std::istream> source) {
     if (!ec)
         set_seek_data(this, ec);
 
-    throw(ec, "set_source");
+    throw_error(ec, "set_source");
 }
 
 void easy::set_sink(std::string* sink) {
@@ -573,7 +568,7 @@ void easy::set_sink(std::string* sink) {
     set_write_function(&easy::write_function, ec);
     if (!ec)
         set_write_data(this, ec);
-    throw(ec, "set_sink");
+    throw_error(ec, "set_sink");
 }
 
 void easy::set_private(void* ptr) {
@@ -581,9 +576,9 @@ void easy::set_private(void* ptr) {
         "set_private", easy_handle_, native::CURLOPT_PRIVATE, ptr);
 }
 
-void easy::set_custom_request(std::string_view sv) {
+void easy::set_custom_request(const std::string& str) {
     detail::set_curl_opt(
-        "set_custom_request", easy_handle_, native::CURLOPT_CUSTOMREQUEST, sv.data());
+        "set_custom_request", easy_handle_, native::CURLOPT_CUSTOMREQUEST, str.c_str());
 }
 
 void easy::set_new_directory_perms(long perms) {
@@ -601,7 +596,7 @@ void easy::set_url(std::string&& url_str, std::error_code& ec) {
     if (!ec) {
         detail::set_curl_opt(
             "set_url", easy_handle_, native::CURLOPT_URL, url_.native_handle());
-        throw(ec, "set_url native_handle failed!");
+        throw_error(ec, "set_url native_handle failed!");
     }
 
     if (!ec) 
@@ -635,11 +630,11 @@ void easy::set_mimepost(std::unique_ptr<mime> mime_ptr) {
     if (mime_) {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_MIMEPOST, mime_->native_mime());
-        throw(ec, "set_mimepost native_mime failed!");
+        throw_error(ec, "set_mimepost native_mime failed!");
     } else {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_MIMEPOST, nullptr);
-        throw(ec, "set_mimepost nullptr failed!");
+        throw_error(ec, "set_mimepost nullptr failed!");
     }
 }
 
@@ -676,11 +671,6 @@ void easy::set_follow_location(bool state) {
 void easy::set_unrestricted_auth(bool state) {
     detail::set_curl_opt(
         "set_unrestricted_auth", easy_handle_, native::CURLOPT_UNRESTRICTED_AUTH, state);
-}
-
-void easy::set_protocols(long value) {
-    detail::set_curl_opt(
-        "set_protocols", easy_handle_, native::CURLOPT_PROTOCOLS, value);
 }
 
 void easy::set_max_redirs(long value) {
@@ -771,7 +761,7 @@ void easy::set_post_fields(std::string&& post_fields) {
     if (!ec)
         set_post_field_size_large(static_cast<native::curl_off_t>(post_fields_.size()));
 
-    throw(ec, "set_post_fields");
+    throw_error(ec, "set_post_fields");
 }
 
 void easy::set_proxy(std::string_view sv) {
@@ -794,9 +784,9 @@ void easy::set_unix_socket_path(std::string_view sv) {
         "set_unix_socket_path", easy_handle_, native::CURLOPT_UNIX_SOCKET_PATH, sv.data());
 }
 
-void easy::set_accept_encoding(std::string_view sv) {
+void easy::set_accept_encoding(const std::string& str) {
     detail::set_curl_opt(
-        "set_accept_encoding", easy_handle_, native::CURLOPT_ACCEPT_ENCODING, sv.data());
+        "set_accept_encoding", easy_handle_, native::CURLOPT_ACCEPT_ENCODING, str.data());
 }
 
 void easy::set_transfer_encoding(std::string_view sv) {
@@ -806,17 +796,22 @@ void easy::set_transfer_encoding(std::string_view sv) {
 
 void easy::set_referer(std::string_view sv) {
     detail::set_curl_opt(
-        "set_referer", native::CURLOPT_REFERER, sv.data());
+        "set_referer", easy_handle_, native::CURLOPT_REFERER, sv.data());
 }
 
 void easy::set_user_agent(std::string_view sv) {
     detail::set_curl_opt(
-        "set_user_agent", native::CURLOPT_USERAGENT, sv.data());
+        "set_user_agent", easy_handle_, native::CURLOPT_USERAGENT, sv.data());
 }
 
-void easy::set_redir_protocols_str(std::string_view sv) {
+void easy::set_protocols_str(const std::string& str) {
     detail::set_curl_opt(
-        "set_redir_protocols_str", easy_handle_, native::CURLOPT_REDIR_PROTOCOLS_STR, sv.data());
+        "set_protocols", easy_handle_, native::CURLOPT_PROTOCOLS_STR, str.c_str());
+}
+
+void easy::set_redir_protocols_str(const std::string& str) {
+    detail::set_curl_opt(
+        "set_redir_protocols_str", easy_handle_, native::CURLOPT_REDIR_PROTOCOLS_STR, str.c_str());
 }
 
 void easy::set_headers(std::shared_ptr<string_list> headers) {
@@ -825,11 +820,11 @@ void easy::set_headers(std::shared_ptr<string_list> headers) {
     if (headers_) {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_HTTPHEADER, headers_->native_handle());
-        throw(ec, "set_headers native_handle failed!");
+        throw_error(ec, "set_headers native_handle failed!");
     } else {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_HTTPHEADER, nullptr);
-        throw(ec, "set_headers nullptr failed!");
+        throw_error(ec, "set_headers nullptr failed!");
     }
 }
 
@@ -839,11 +834,11 @@ void easy::set_http200_aliases(std::shared_ptr<string_list> http200_aliases) {
     if (http200_aliases_) {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_HTTP200ALIASES, http200_aliases_->native_handle());
-        throw(ec, "set_http200_aliases native_handle failed!");
+        throw_error(ec, "set_http200_aliases native_handle failed!");
     } else {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_HTTP200ALIASES, nullptr);
-        throw(ec, "set_http200_aliases nullptr failed!");
+        throw_error(ec, "set_http200_aliases nullptr failed!");
     }
 }
 
@@ -1108,11 +1103,11 @@ void easy::set_resolves(std::shared_ptr<string_list> resolved_hosts) {
     if (resolved_hosts_) {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_RESOLVE, resolved_hosts_->native_handle());
-        throw(ec, "set_resolves native_handle failed!");
+        throw_error(ec, "set_resolves native_handle failed!");
     } else {
         std::error_code ec = detail::set_curl_opt(
             easy_handle_, native::CURLOPT_RESOLVE, nullptr);
-        throw(ec, "set_resolves nullptr failed!");
+        throw_error(ec, "set_resolves nullptr failed!");
     }
 }
 
@@ -1242,7 +1237,7 @@ void easy::set_ssl_verify_peer(bool state) {
 
 void easy::set_ssl_verify_host(bool state) {
     std::error_code ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_SSL_VERIFYHOST, state ? 2L : 0L);
-    throw(ec, "set_ssl_verify_host");
+    throw_error(ec, "set_ssl_verify_host");
 }
 
 void easy::set_ssl_version(detail::ssl_version_t version) {
@@ -1331,32 +1326,26 @@ void easy::set_interleave_data(void* ptr) {
 
 void easy::set_write_function(write_function_t func, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_WRITEFUNCTION, func);
-    throw(ec, "set_write_function");
 }
 
 void easy::set_write_data(void* ptr, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_WRITEDATA, ptr);
-    throw(ec, "set_write_data");
 }
 
 void easy::set_read_function(read_function_t func, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_READFUNCTION, func);
-    throw(ec, "set_read_function");
 }
 
 void easy::set_read_data(void* ptr, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_READDATA, ptr);
-    throw(ec, "set_read_data");
 }
 
 void easy::set_seek_function(seek_function_t func, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_SEEKFUNCTION, func);
-    throw(ec, "set_seek_function");
 }
 
 void easy::set_seek_data(void* ptr, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_SEEKDATA, ptr);
-    throw(ec, "set_seek_data");
 }
 
 void easy::set_sockopt_function(sockopt_function_t func) {
@@ -1401,19 +1390,17 @@ void easy::set_closesocket_data(void* ptr) {
 
 void easy::set_ssl_ctx_function(ssl_ctx_function_t func, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_SSL_CTX_FUNCTION, func);
-    throw(ec, "set_ssl_ctx_function");
 }
 
 void easy::set_ssl_ctx_data(void* ptr, std::error_code& ec) {
     ec = detail::set_curl_opt(easy_handle_, native::CURLOPT_SSL_CTX_DATA, ptr);
-    throw(ec, "set_ssl_ctx_data");
 }
 
 // public getters
 std::string_view easy::get_effective_url() {
     std::error_code ec;
     std::string_view sv = get_effective_url(ec);
-    throw(ec, "get_effective_url");
+    throw_error(ec, "get_effective_url");
     return sv;
 }
 std::string_view easy::get_effective_url(std::error_code& ec) {

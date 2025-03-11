@@ -21,6 +21,7 @@ void PluginRequest::AddQueryParams(std::string_view params) {
     if (url.find('?') != std::string::npos) {
         std::error_code ec;
         state_.easy().set_url(utils::StrCat(url, "&", params), ec);
+        UASSERT_MSG(!ec, "set_url filed!");
     } else {
         std::error_code ec;
         state_.easy().set_url(utils::StrCat(url, "?", params), ec);

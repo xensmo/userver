@@ -185,7 +185,7 @@ std::string Client::GetProxy() const { return proxy_.ReadCopy(); }
 void Client::SetDnsResolver(clients::dns::Resolver* resolver) { resolver_ = resolver; }
 
 void Client::ReinitEasy() {
-    easy_.Set(utils::CriticalAsync(fs_task_processor_, "http_easy_reinit", &curl::easy::create_easy_blocking()).Get());
+    easy_.Set(utils::CriticalAsync(fs_task_processor_, "http_easy_reinit", &curl::easy::create_easy_blocking).Get());
 }
 
 InstanceStatistics Client::GetMultiStatistics(size_t n) const {
