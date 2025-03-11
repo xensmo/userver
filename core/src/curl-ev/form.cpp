@@ -19,7 +19,7 @@ form::form() { impl::CurlGlobal::Init(); }
 
 form::~form() {
     if (post_) {
-        native::curl_formfree(post_);
+        //native::curl_formfree(post_);
         post_ = nullptr;
     }
 }
@@ -30,7 +30,7 @@ void form::add_content(std::string_view key, std::string_view content) {
     throw_error(ec, "add_content");
 }
 
-void form::add_content(std::string_view key, std::string_view content, std::error_code& ec) {
+void form::add_content([[maybe_unused]] std::string_view key, [[maybe_unused]] std::string_view content, [[maybe_unused]] std::error_code& ec) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
         &last_,
@@ -53,10 +53,10 @@ void form::add_content(std::string_view key, std::string_view content, const std
 }
 
 void form::add_content(
-    std::string_view key,
-    std::string_view content,
-    const std::string& content_type,
-    std::error_code& ec
+    [[maybe_unused]] std::string_view key,
+    [[maybe_unused]] std::string_view content,
+    [[maybe_unused]] const std::string& content_type,
+    [[maybe_unused]] std::error_code& ec
 ) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
@@ -76,11 +76,11 @@ void form::add_content(
 }
 
 void form::add_buffer(
-    const std::string& key,
-    const std::string& file_name,
-    const char* buffer,
-    size_t buffer_len,
-    std::error_code& ec
+    [[maybe_unused]] const std::string& key,
+    [[maybe_unused]] const std::string& file_name,
+    [[maybe_unused]] const char* buffer,
+    [[maybe_unused]] size_t buffer_len,
+    [[maybe_unused]] std::error_code& ec
 ) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
@@ -110,10 +110,10 @@ void form::add_buffer(
 }
 
 void form::add_buffer(
-    const std::string& key,
-    const std::string& file_name,
-    const std::shared_ptr<std::string>& buffer,
-    std::error_code& ec
+    [[maybe_unused]] const std::string& key,
+    [[maybe_unused]] const std::string& file_name,
+    [[maybe_unused]] const std::shared_ptr<std::string>& buffer,
+    [[maybe_unused]] std::error_code& ec
 ) {
     buffers_.push_back(buffer);
     add_buffer(key, file_name, buffers_.back()->c_str(), buffers_.back()->size(), ec);
@@ -131,11 +131,11 @@ void form::add_buffer(
 }
 
 void form::add_buffer(
-    const std::string& key,
-    const std::string& file_name,
-    const std::shared_ptr<std::string>& buffer,
-    const std::string& content_type,
-    std::error_code& ec
+    [[maybe_unused]] const std::string& key,
+    [[maybe_unused]] const std::string& file_name,
+    [[maybe_unused]] const std::shared_ptr<std::string>& buffer,
+    [[maybe_unused]] const std::string& content_type,
+    [[maybe_unused]] std::error_code& ec
 ) {
     buffers_.push_back(buffer);
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
@@ -163,7 +163,7 @@ void form::add_file(const std::string& key, const std::string& file_path) {
     throw_error(ec, "add_file");
 }
 
-void form::add_file(const std::string& key, const std::string& file_path, std::error_code& ec) {
+void form::add_file([[maybe_unused]] const std::string& key, [[maybe_unused]] const std::string& file_path, [[maybe_unused]] std::error_code& ec) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
         &last_,
@@ -184,10 +184,10 @@ void form::add_file(const std::string& key, const std::string& file_path, const 
 }
 
 void form::add_file(
-    const std::string& key,
-    const std::string& file_path,
-    const std::string& content_type,
-    std::error_code& ec
+    [[maybe_unused]] const std::string& key,
+    [[maybe_unused]] const std::string& file_path,
+    [[maybe_unused]] const std::string& content_type,
+    [[maybe_unused]] std::error_code& ec
 ) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
@@ -211,10 +211,10 @@ void form::add_file_using_name(const std::string& key, const std::string& file_p
 }
 
 void form::add_file_using_name(
-    const std::string& key,
-    const std::string& file_path,
-    const std::string& file_name,
-    std::error_code& ec
+    [[maybe_unused]] const std::string& key,
+    [[maybe_unused]] const std::string& file_path,
+    [[maybe_unused]] const std::string& file_name,
+    [[maybe_unused]] std::error_code& ec
 ) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
@@ -243,11 +243,11 @@ void form::add_file_using_name(
 }
 
 void form::add_file_using_name(
-    const std::string& key,
-    const std::string& file_path,
-    const std::string& file_name,
-    const std::string& content_type,
-    std::error_code& ec
+    [[maybe_unused]] const std::string& key,
+    [[maybe_unused]] const std::string& file_path,
+    [[maybe_unused]] const std::string& file_name,
+    [[maybe_unused]] const std::string& content_type,
+    [[maybe_unused]] std::error_code& ec
 ) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
@@ -272,7 +272,7 @@ void form::add_file_content(const std::string& key, const std::string& file_path
     throw_error(ec, "add_file_content");
 }
 
-void form::add_file_content(const std::string& key, const std::string& file_path, std::error_code& ec) {
+void form::add_file_content([[maybe_unused]] const std::string& key, [[maybe_unused]] const std::string& file_path, [[maybe_unused]] std::error_code& ec) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
         &last_,
@@ -293,10 +293,10 @@ void form::add_file_content(const std::string& key, const std::string& file_path
 }
 
 void form::add_file_content(
-    const std::string& key,
-    const std::string& file_path,
-    const std::string& content_type,
-    std::error_code& ec
+    [[maybe_unused]] const std::string& key,
+    [[maybe_unused]] const std::string& file_path,
+    [[maybe_unused]] const std::string& content_type,
+    [[maybe_unused]] std::error_code& ec
 ) {
 /*     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
