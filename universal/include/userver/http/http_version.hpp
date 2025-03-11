@@ -17,6 +17,8 @@ enum class HttpVersion {
     k2,                ///< HTTP/2 with fallback to HTTP/1.1
     k2Tls,             ///< HTTP/2 over TLS only, otherwise (no TLS or h2) HTTP/1.1
     k2PriorKnowledge,  ///< HTTP/2 only (without Upgrade)
+    k30,               ///< HTTP/3
+    k3Only             ///< HTTP/3 only
 };
 
 HttpVersion Parse(const yaml_config::YamlConfig& value, formats::parse::To<HttpVersion>);

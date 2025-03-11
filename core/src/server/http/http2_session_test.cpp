@@ -5,7 +5,6 @@
 
 #include <fmt/format.h>
 #include <nghttp2/nghttp2.h>
-//#include <curl-ev/easy.hpp>
 
 #include <userver/clients/http/client.hpp>
 #include <userver/concurrent/queue.hpp>

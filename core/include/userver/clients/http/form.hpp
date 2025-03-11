@@ -6,8 +6,8 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace curl {
-//class form;
-    class form_mime;
+class form;
+//class form_mime;
 }  // namespace curl
 
 namespace clients::http {
@@ -25,26 +25,19 @@ public:
     void AddContent(std::string_view key, std::string_view content);
     void AddContent(std::string_view key, std::string_view content, const std::string& content_type);
 
-    //void AddBuffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer);
+    void AddBuffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer);
 
-    //void AddBuffer(const std::string& key, const std::string& file_name, 
-    //        const std::shared_ptr<std::string>& buffer, const std::string& content_type);
-
-    void AddBuffer(std::string_view key, std::string_view file_name, 
-            const std::shared_ptr<std::string>& buffer);
-
-    void AddBuffer(std::string_view key, std::string_view file_name, 
-            const std::shared_ptr<std::string>& buffer, std::string_view content_type);
+    void AddBuffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer, const std::string& content_type);
 
     /// @cond
     // Call of this method will invalidate the form
-    //std::unique_ptr<curl::form> GetNative() &&;
-    std::unique_ptr<curl::form_mime> GetNative() &&;
+    std::unique_ptr<curl::form> GetNative() &&;
+    //std::unique_ptr<curl::form_mime> GetNative() &&;
     /// @endcond
 
 private:
-    //std::unique_ptr<curl::form> impl_;
-    std::unique_ptr<curl::form_mime> impl_;
+    std::unique_ptr<curl::form> impl_;
+    //std::unique_ptr<curl::form_mime> impl_;
 };
 
 }  // namespace clients::http

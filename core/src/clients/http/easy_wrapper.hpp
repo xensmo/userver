@@ -2,8 +2,7 @@
 
 #include <memory>
 
-//#include <curl-ev/easy.hpp>
-#include <curl-ev/easy_mime.hpp>
+#include <curl-ev/easy.hpp>
 
 USERVER_NAMESPACE_BEGIN
 

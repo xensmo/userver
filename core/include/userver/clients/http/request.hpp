@@ -149,8 +149,14 @@ public:
     Request& data(std::string data) &;
     Request data(std::string data) &&;
     /// form for POST request
-    Request& form(Form&& form) &;
-    Request form(Form&& form) &&;
+    [[deprecated("Use mime(), this function no call effect")]] Request& form(Form&& form) &;
+    [[deprecated("Use mime(), this function no call effect")]] Request form(Form&& form) &&;
+
+    // mime for POST request
+    //Request& mime(Mime&& mime) &;
+    //Request mime(Mime&& mime) &&;
+
+
     /// Headers for request as map
     Request& headers(const Headers& headers) &;
     Request headers(const Headers& headers) &&;
