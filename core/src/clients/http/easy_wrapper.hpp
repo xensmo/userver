@@ -23,10 +23,11 @@ public:
 
     ~EasyWrapper();
 
-    curl::easy& Easy();
-    const curl::easy& Easy() const;
+    inline curl::easy& Easy() { return *easy_; }
+    inline const curl::easy& Easy() const { return *easy_; };
 
 private:
+    //std::shared_ptr<curl::easy> easy_;
     std::shared_ptr<curl::easy> easy_;
     Client& client_;
 };

@@ -77,7 +77,7 @@ public:
     /// set private key and certificate from memory
     void client_key_cert(crypto::PrivateKey pkey, crypto::Certificate cert);
     /// Set HTTP version
-    void http_version(curl::easy::http_version_t version);
+    void http_version(curl::detail::http_version_t version);
     /// set timeout value
     void set_timeout(long timeout_ms);
     /// set number of retries
@@ -89,9 +89,9 @@ public:
     /// sets proxy to use
     void proxy(const std::string& value);
     /// sets proxy auth type to use
-    void proxy_auth_type(curl::easy::proxyauth_t value);
+    void proxy_auth_type(curl::detail::proxyauth_t value);
     /// sets proxy auth type and credentials to use
-    void http_auth_type(curl::easy::httpauth_t value, bool auth_only, std::string_view user, std::string_view password);
+    void http_auth_type(curl::detail::httpauth_t value, bool auth_only, std::string_view user, std::string_view password);
 
     /// get timeout value in milliseconds
     long timeout() const { return original_timeout_.count(); }

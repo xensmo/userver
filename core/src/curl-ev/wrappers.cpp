@@ -16,6 +16,7 @@ CurlGlobal::CurlGlobal() {
 
 CurlGlobal::~CurlGlobal() { native::curl_global_cleanup(); }
 
+// !HACK
 void CurlGlobal::Init() { [[maybe_unused]] static CurlGlobal global; }
 
 }  // namespace curl::impl

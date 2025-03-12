@@ -18,6 +18,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace curl {
 
+#if LIBCURL_VERSION_NUM <= 0x074700  
 class form {
 public:
     form();
@@ -32,82 +33,36 @@ public:
     void add_content(std::string_view key, std::string_view content);
     void add_content(std::string_view key, std::string_view content, std::error_code& ec);
     void add_content(std::string_view key, std::string_view content, const std::string& content_type);
-    void
-    add_content(std::string_view key, std::string_view content, const std::string& content_type, std::error_code& ec);
+    void add_content(std::string_view key, std::string_view content, const std::string& content_type, std::error_code& ec);
 
     void add_buffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer);
-    void add_buffer(
-        const std::string& key,
-        const std::string& file_name,
-        const std::shared_ptr<std::string>& buffer,
-        std::error_code& ec
-    );
-    void add_buffer(
-        const std::string& key,
-        const std::string& file_name,
-        const std::shared_ptr<std::string>& buffer,
-        const std::string& content_type
-    );
-    void add_buffer(
-        const std::string& key,
-        const std::string& file_name,
-        const std::shared_ptr<std::string>& buffer,
-        const std::string& content_type,
-        std::error_code& ec
-    );
+    void add_buffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer, std::error_code& ec);
+    void add_buffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer, const std::string& content_type);
+    void add_buffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer, const std::string& content_type, std::error_code& ec);
 
 private:
     void add_file(const std::string& key, const std::string& file_path);
     void add_file(const std::string& key, const std::string& file_path, std::error_code& ec);
     void add_file(const std::string& key, const std::string& file_path, const std::string& content_type);
-    void add_file(
-        const std::string& key,
-        const std::string& file_path,
-        const std::string& content_type,
-        std::error_code& ec
-    );
+    void add_file(const std::string& key, const std::string& file_path, const std::string& content_type, std::error_code& ec);
+
     void add_file_using_name(const std::string& key, const std::string& file_path, const std::string& file_name);
-    void add_file_using_name(
-        const std::string& key,
-        const std::string& file_path,
-        const std::string& file_name,
-        std::error_code& ec
-    );
-    void add_file_using_name(
-        const std::string& key,
-        const std::string& file_path,
-        const std::string& file_name,
-        const std::string& content_type
-    );
-    void add_file_using_name(
-        const std::string& key,
-        const std::string& file_path,
-        const std::string& file_name,
-        const std::string& content_type,
-        std::error_code& ec
-    );
+    void add_file_using_name(const std::string& key, const std::string& file_path, const std::string& file_name, std::error_code& ec);
+    void add_file_using_name(const std::string& key, const std::string& file_path, const std::string& file_name, const std::string& content_type);
+    void add_file_using_name(const std::string& key, const std::string& file_path, const std::string& file_name, const std::string& content_type, std::error_code& ec);
+
     void add_file_content(const std::string& key, const std::string& file_path);
     void add_file_content(const std::string& key, const std::string& file_path, std::error_code& ec);
     void add_file_content(const std::string& key, const std::string& file_path, const std::string& content_type);
-    void add_file_content(
-        const std::string& key,
-        const std::string& file_path,
-        const std::string& content_type,
-        std::error_code& ec
-    );
+    void add_file_content(const std::string& key, const std::string& file_path, const std::string& content_type, std::error_code& ec);
 
-    void add_buffer(
-        const std::string& key,
-        const std::string& file_name,
-        const char* buffer,
-        size_t buffer_len,
-        std::error_code& ec
-    );
+    void add_buffer(const std::string& key, const std::string& file_name, const char* buffer, size_t buffer_len, std::error_code& ec);
 
     native::curl_httppost* post_{nullptr};
     native::curl_httppost* last_{nullptr};
     std::vector<std::shared_ptr<std::string>> buffers_;
 };
+#endif // LIBCURL_VERSION_NUM
 
 }  // namespace curl
 

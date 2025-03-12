@@ -29,7 +29,8 @@ class TimerWatcher;
 }  // namespace engine::ev
 
 namespace curl {
-class easy;
+//class easy;
+class easy_mime;
 struct socket_info;
 
 class multi final {

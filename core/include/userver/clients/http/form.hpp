@@ -6,11 +6,13 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace curl {
+#if LIBCURL_VERSION_NUM <= 0x074700
 class form;
+#endif 
 }  // namespace curl
 
 namespace clients::http {
-
+#if LIBCURL_VERSION_NUM <= 0x074700
 class Form final {
 public:
     Form();
@@ -25,12 +27,8 @@ public:
     void AddContent(std::string_view key, std::string_view content, const std::string& content_type);
 
     void AddBuffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer);
-    void AddBuffer(
-        const std::string& key,
-        const std::string& file_name,
-        const std::shared_ptr<std::string>& buffer,
-        const std::string& content_type
-    );
+
+    void AddBuffer(const std::string& key, const std::string& file_name, const std::shared_ptr<std::string>& buffer, const std::string& content_type);
 
     /// @cond
     // Call of this method will invalidate the form
@@ -40,7 +38,7 @@ public:
 private:
     std::unique_ptr<curl::form> impl_;
 };
-
+#endif // LIBCURL_VERSION_NUM
 }  // namespace clients::http
 
 USERVER_NAMESPACE_END
