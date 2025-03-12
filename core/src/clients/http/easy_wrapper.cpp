@@ -20,10 +20,6 @@ EasyWrapper::~EasyWrapper() {
     }
 }
 
-curl::easy& EasyWrapper::Easy() { return *easy_; }
-
-const curl::easy& EasyWrapper::Easy() const { return *easy_; }
-
 }  // namespace clients::http::impl
 
 USERVER_NAMESPACE_END

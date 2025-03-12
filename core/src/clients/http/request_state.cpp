@@ -113,9 +113,9 @@ void SetBaggageHeader(curl::easy& e) {
         LOG_DEBUG() << fmt::format("Send baggage: {}", baggage->ToString());
         e.add_header(
             USERVER_NAMESPACE::http::headers::kXBaggage,
-            baggage->ToString(),
-            curl::easy::EmptyHeaderAction::kDoNotSend,
-            curl::easy::DuplicateHeaderAction::kReplace
+            std::string_view(baggage->ToString()),
+            curl::detail::empty_header_action::kDoNotSend,
+            curl::detail::duplicate_header_action::kReplace
         );
     }
 }
@@ -250,9 +250,7 @@ RequestState::RequestState(
 }
 
 RequestState::~RequestState() {
-    std::error_code ec;
-    easy().set_error_buffer(nullptr, ec);
-    UASSERT(!ec);
+    easy().set_error_buffer(nullptr);
 }
 
 void RequestState::follow_redirects(bool follow) {
@@ -266,7 +264,7 @@ void RequestState::verify(bool verify) {
     easy().set_ssl_verify_peer(verify);
 }
 
-void RequestState::ca_info(const std::string& file_path) { easy().set_ca_info(file_path.c_str()); }
+void RequestState::ca_info(const std::string& file_path) { easy().set_ca_info(std::string_view(file_path)); }
 
 void RequestState::ca(crypto::Certificate cert) {
     UINVARIANT(cert, "No certificate");
@@ -275,12 +273,15 @@ void RequestState::ca(crypto::Certificate cert) {
     } else {
         // Legacy non-portable way, broken since 7.87.0
         ca_ = std::move(cert);
-        easy().set_ssl_ctx_function(&RequestState::on_certificate_request);
-        easy().set_ssl_ctx_data(this);
+        std::error_code ec;
+        easy().set_ssl_ctx_function(&RequestState::on_certificate_request, ec);
+        UASSERT(!ec);
+        easy().set_ssl_ctx_data(this, ec);
+        UASSERT(!ec);
     }
 }
 
-void RequestState::crl_file(const std::string& file_path) { easy().set_crl_file(file_path.c_str()); }
+void RequestState::crl_file(const std::string& file_path) { easy().set_crl_file(std::string_view(file_path)); }
 
 void RequestState::client_key_cert(crypto::PrivateKey pkey, crypto::Certificate cert) {
     UINVARIANT(pkey, "No private key");
@@ -321,14 +322,20 @@ void RequestState::client_key_cert(crypto::PrivateKey pkey, crypto::Certificate 
             cert_id
         );
         cert_id.resize(kCertIdLength, '=');
-        easy().set_egd_socket(cert_id);
 
-        easy().set_ssl_ctx_function(&RequestState::on_certificate_request);
-        easy().set_ssl_ctx_data(this);
+#if LIBCURL_VERSION_NUM <= 0x074700          
+        easy().set_egd_socket(cert_id);
+#endif
+
+        std::error_code ec;
+        easy().set_ssl_ctx_function(&RequestState::on_certificate_request, ec);
+        UASSERT(!ec);
+        easy().set_ssl_ctx_data(this, ec);
+        UASSERT(!ec);
     }
 }
 
-void RequestState::http_version(curl::easy::http_version_t version) { easy().set_http_version(version); }
+void RequestState::http_version(curl::detail::http_version_t version) { easy().set_http_version(version); }
 
 void RequestState::set_timeout(long timeout_ms) {
     original_timeout_ = std::chrono::milliseconds{timeout_ms};
@@ -341,7 +348,7 @@ void RequestState::retry(short retries, bool on_fails) {
     retry_.on_fails = on_fails;
 }
 
-void RequestState::unix_socket_path(const std::string& path) { easy().set_unix_socket_path(path); }
+void RequestState::unix_socket_path(const std::string& path) { easy().set_unix_socket_path(std::string_view(path)); }
 
 void RequestState::connect_to(const ConnectTo& connect_to) {
     curl::native::curl_slist* ptr = connect_to.GetUnderlying();
@@ -352,20 +359,20 @@ void RequestState::connect_to(const ConnectTo& connect_to) {
 
 void RequestState::proxy(const std::string& value) {
     proxy_url_ = value;
-    easy().set_proxy(value);
+    easy().set_proxy(std::string_view(value));
 }
 
-void RequestState::proxy_auth_type(curl::easy::proxyauth_t value) { easy().set_proxy_auth(value); }
+void RequestState::proxy_auth_type(curl::detail::proxyauth_t value) { easy().set_proxy_auth(value); }
 
 void RequestState::http_auth_type(
-    curl::easy::httpauth_t value,
+    curl::detail::httpauth_t value,
     bool auth_only,
     std::string_view user,
     std::string_view password
 ) {
     easy().set_http_auth(value, auth_only);
-    easy().set_user(std::string{user}.c_str());
-    easy().set_password(std::string{password}.c_str());
+    easy().set_user(user);
+    easy().set_password(password);
 }
 
 void RequestState::Cancel() {
@@ -388,7 +395,7 @@ void RequestState::SetTestsuiteConfig(const std::shared_ptr<const TestsuiteConfi
 
 void RequestState::SetAllowedUrlsExtra(const std::vector<std::string>& urls) { allowed_urls_extra_ = urls; }
 
-void RequestState::DisableReplyDecoding() { easy().set_accept_encoding(nullptr); }
+void RequestState::DisableReplyDecoding() { easy().set_accept_encoding(std::string_view{}); }
 
 void RequestState::SetCancellationPolicy(CancellationPolicy cp) { cancellation_policy_ = cp; }
 
@@ -560,7 +567,7 @@ void RequestState::on_retry(std::shared_ptr<RequestState> holder, std::error_cod
         ++holder->retry_.current;
         holder->easy().mark_retry();
 
-        holder->retry_.timer.emplace(holder->easy().GetThreadControl());
+        holder->retry_.timer.emplace(holder->easy().get_thread_control());
 
         // call on_retry_timer on timer
         auto& holder_ref = *holder;
@@ -679,8 +686,12 @@ RequestState::async_perform_stream(const std::shared_ptr<Queue>& queue, utils::i
     auto& span = span_storage_->Get();
     span.AddTag("stream_api", 1);
 
-    easy().set_write_function(&RequestState::StreamWriteFunction);
-    easy().set_write_data(this);
+    std::error_code ec;
+    easy().set_write_function(&RequestState::StreamWriteFunction, ec);
+    UASSERT(!ec);
+    easy().set_write_data(this, ec);
+    UASSERT(!ec);
+    
     // Force no retries
     retry_.retries = 1;
 
@@ -774,7 +785,7 @@ void RequestState::UpdateTimeoutHeader() {
     easy().add_header(
         USERVER_NAMESPACE::http::headers::kXYaTaxiClientTimeoutMs,
         fmt::to_string(remote_timeout_.count()),
-        curl::easy::DuplicateHeaderAction::kReplace
+        curl::detail::duplicate_header_action::kReplace
     );
 }
 

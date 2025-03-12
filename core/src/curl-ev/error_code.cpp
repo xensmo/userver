@@ -7,6 +7,8 @@
    error_code class
 */
 
+// !TODO this header file upgrade in 2025 year                              //
+
 #include <curl-ev/error_code.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -17,6 +19,31 @@ namespace {
 class EasyErrorCategory final : public std::error_category {
 public:
     using std::error_category::error_category;
+
+#if LIBCURL_VERSION_NUM <= 0x074700
+    [[nodiscard]] std::string message(int cond) const override {
+        switch (static_cast<FormErrorCode>(cond)) {
+            case FormErrorCode::kSuccess:
+                return "no error";
+            case FormErrorCode::kMemory:
+                return "memory allocation error";
+            case FormErrorCode::kOptionTwice:
+                return "one option is given twice";
+            case FormErrorCode::kNull:
+                return "a null pointer was given for a char";
+            case FormErrorCode::kUnknownOption:
+                return "an unknown option was used";
+            case FormErrorCode::kIncomplete:
+                return "some FormInfo is not complete (or error)";
+            case FormErrorCode::kIllegalArray:
+                return "an illegal option is used in an array";
+            case FormErrorCode::kDisabled:
+                return "form support was disabled";
+            default:
+                return "unknown CURLFORMcode";
+        }
+    }
+#endif
 
     [[nodiscard]] const char* name() const noexcept override { return "curl-easy"; }
 
@@ -52,29 +79,6 @@ public:
     using std::error_category::error_category;
 
     [[nodiscard]] const char* name() const noexcept override { return "curl-form"; }
-
-    [[nodiscard]] std::string message(int cond) const override {
-        switch (static_cast<FormErrorCode>(cond)) {
-            case FormErrorCode::kSuccess:
-                return "no error";
-            case FormErrorCode::kMemory:
-                return "memory allocation error";
-            case FormErrorCode::kOptionTwice:
-                return "one option is given twice";
-            case FormErrorCode::kNull:
-                return "a null pointer was given for a char";
-            case FormErrorCode::kUnknownOption:
-                return "an unknown option was used";
-            case FormErrorCode::kIncomplete:
-                return "some FormInfo is not complete (or error)";
-            case FormErrorCode::kIllegalArray:
-                return "an illegal option is used in an array";
-            case FormErrorCode::kDisabled:
-                return "form support was disabled";
-            default:
-                return "unknown CURLFORMcode";
-        }
-    }
 };
 
 class UrlErrorCategory final : public std::error_category {
@@ -164,11 +168,6 @@ const std::error_category& GetShareCategory() noexcept {
     return kShareCategory;
 }
 
-const std::error_category& GetFormCategory() noexcept {
-    static const FormErrorCategory kFormCategory;
-    return kFormCategory;
-}
-
 const std::error_category& GetUrlCategory() noexcept {
     static const UrlErrorCategory kUrlCategory;
     return kUrlCategory;
@@ -178,6 +177,13 @@ const std::error_category& GetRateLimitCategory() noexcept {
     static const RateLimitErrorCategory kRateLimitCategory;
     return kRateLimitCategory;
 }
+
+#if LIBCURL_VERSION_NUM <= 0x074700
+const std::error_category& GetFormCategory() noexcept {
+    static const FormErrorCategory kFormCategory;
+    return kFormCategory;
+}
+#endif
 
 }  // namespace curl::errc
 
