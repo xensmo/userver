@@ -5,6 +5,7 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace clients::http {
+#if LIBCURL_VERSION_NUM <= 0x074700
 
 Form::Form() : impl_(std::make_unique<curl::form>()) { }
 Form::~Form() = default;
@@ -27,7 +28,7 @@ void Form::AddBuffer(const std::string& key, const std::string& file_name,
 }
 
 std::unique_ptr<curl::form> Form::GetNative() && { return std::move(impl_); }
-
+#endif // LIBCURL_VERSION_NUM
 }  // namespace clients::http
 
 USERVER_NAMESPACE_END

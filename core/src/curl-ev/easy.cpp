@@ -6,8 +6,7 @@
         C++ wrapper for libcurl's easy interface
 */
 
-// !TODO this @file curl-ev/easy.cpp upgrade in 2025 year                   //
-// !@author <<< xensmo >>> Taras Litvinenko <taraslitvinenko@yandex.kz>     //
+//  !TODO this @file curl-ev/easy.hpp full upgrade in 2025 year  //
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -784,9 +783,9 @@ void easy::set_unix_socket_path(std::string_view sv) {
         "set_unix_socket_path", easy_handle_, native::CURLOPT_UNIX_SOCKET_PATH, sv.data());
 }
 
-void easy::set_accept_encoding(const std::string& str) {
+void easy::set_accept_encoding(std::string_view sv) {
     detail::set_curl_opt(
-        "set_accept_encoding", easy_handle_, native::CURLOPT_ACCEPT_ENCODING, str.data());
+        "set_accept_encoding", easy_handle_, native::CURLOPT_ACCEPT_ENCODING, sv.data());
 }
 
 void easy::set_transfer_encoding(std::string_view sv) {
@@ -804,14 +803,14 @@ void easy::set_user_agent(std::string_view sv) {
         "set_user_agent", easy_handle_, native::CURLOPT_USERAGENT, sv.data());
 }
 
-void easy::set_protocols_str(const std::string& str) {
+void easy::set_protocols_str(std::string_view sv) {
     detail::set_curl_opt(
-        "set_protocols", easy_handle_, native::CURLOPT_PROTOCOLS_STR, str.c_str());
+        "set_protocols", easy_handle_, native::CURLOPT_PROTOCOLS_STR, sv.data());
 }
 
-void easy::set_redir_protocols_str(const std::string& str) {
+void easy::set_redir_protocols_str(std::string_view sv) {
     detail::set_curl_opt(
-        "set_redir_protocols_str", easy_handle_, native::CURLOPT_REDIR_PROTOCOLS_STR, str.c_str());
+        "set_redir_protocols_str", easy_handle_, native::CURLOPT_REDIR_PROTOCOLS_STR, sv.data());
 }
 
 void easy::set_headers(std::shared_ptr<string_list> headers) {
@@ -1771,6 +1770,31 @@ native::curl_socket_t easy::open_tcp_socket(struct native::curl_sockaddr* addres
 
     return fd;
 }
+
+#if LIBCURL_VERSION_NUM <= 0x074700 
+    void easy::set_http_post(std::unique_ptr<form> form_ptr>) {
+        form_ = std::move(form);
+        if (form_) {
+            std::error_code ec = detail::set_curl_opt(
+                easy_handle_, native::CURLOPT_HTTPPOST, form_->native_handle());
+            throw_error(ec, "set_http_post native_handle failed!");
+        } else {
+            std::error_code ec = detail::set_curl_opt(
+                easy_handle_, native::CURLOPT_HTTPPOST, nullptr);
+            throw_error(ec, "set_http_post nullptr failed!");
+        }
+    }
+
+    void easy::set_egd_socket(std::string_view sv) {
+        detail::set_curl_opt("set_egd_socket", easy_handle_, native::CURLOPT_EGDSOCKET, sv.data());
+    }
+
+    long easy::get_protocol() {
+        return detail::get_curl_info_long(
+            "get_protocol", easy_handle_, native::CURLINFO_PROTOCOL);
+    }
+        
+#endif
 
 } // namespace curl
 

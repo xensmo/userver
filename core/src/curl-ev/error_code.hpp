@@ -130,6 +130,19 @@ enum class ShareErrorCode {
     kNotBuiltIn = native::CURLSHE_NOT_BUILT_IN
 };
 
+#if LIBCURL_VERSION_NUM <= 0x074700 
+enum class FormErrorCode {
+    kSuccess = native::CURL_FORMADD_OK,
+    kMemory = native::CURL_FORMADD_MEMORY,
+    kOptionTwice = native::CURL_FORMADD_OPTION_TWICE,
+    kNull = native::CURL_FORMADD_NULL,
+    kUnknownOption = native::CURL_FORMADD_UNKNOWN_OPTION,
+    kIncomplete = native::CURL_FORMADD_INCOMPLETE,
+    kIllegalArray = native::CURL_FORMADD_ILLEGAL_ARRAY,
+    kDisabled = native::CURL_FORMADD_DISABLED
+};
+#endif
+
 enum class UrlErrorCode {
     kSuccess = native::CURLUE_OK,
     kBadHandle = native::CURLUE_BAD_HANDLE,
@@ -160,9 +173,12 @@ enum class RateLimitErrorCode {
 const std::error_category& GetEasyCategory() noexcept;
 const std::error_category& GetMultiCategory() noexcept;
 const std::error_category& GetShareCategory() noexcept;
-//const std::error_category& GetFormCategory() noexcept;
 const std::error_category& GetUrlCategory() noexcept;
 const std::error_category& GetRateLimitCategory() noexcept;
+
+#if LIBCURL_VERSION_NUM <= 0x074700 
+const std::error_category& GetFormCategory() noexcept;
+#endif
 
 }  // namespace curl::errc
 
@@ -185,6 +201,11 @@ struct is_error_code_enum<USERVER_NAMESPACE::curl::errc::UrlErrorCode> : std::tr
 template <>
 struct is_error_code_enum<USERVER_NAMESPACE::curl::errc::RateLimitErrorCode> : std::true_type {};
 
+#if LIBCURL_VERSION_NUM <= 0x074700 
+template <>
+struct is_error_code_enum<USERVER_NAMESPACE::curl::errc::FormErrorCode> : std::true_type {};
+#endif
+
 }  // namespace std
 
 USERVER_NAMESPACE_BEGIN
@@ -200,6 +221,10 @@ inline std::error_code make_error_code(ShareErrorCode e) { return {static_cast<i
 inline std::error_code make_error_code(UrlErrorCode e) { return {static_cast<int>(e), GetUrlCategory()}; }
 
 inline std::error_code make_error_code(RateLimitErrorCode e) { return {static_cast<int>(e), GetRateLimitCategory()}; }
+
+#if LIBCURL_VERSION_NUM <= 0x074700 
+inline std::error_code make_error_code(FormErrorCode e) { return {static_cast<int>(e), GetFormCategory()}; }
+#endif
 
 }  // namespace curl::errc
 

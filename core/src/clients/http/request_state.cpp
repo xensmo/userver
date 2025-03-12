@@ -113,7 +113,7 @@ void SetBaggageHeader(curl::easy& e) {
         LOG_DEBUG() << fmt::format("Send baggage: {}", baggage->ToString());
         e.add_header(
             USERVER_NAMESPACE::http::headers::kXBaggage,
-            baggage->ToString(),
+            std::string_view(baggage->ToString()),
             curl::detail::empty_header_action::kDoNotSend,
             curl::detail::duplicate_header_action::kReplace
         );
@@ -264,7 +264,7 @@ void RequestState::verify(bool verify) {
     easy().set_ssl_verify_peer(verify);
 }
 
-void RequestState::ca_info(const std::string& file_path) { easy().set_ca_info(file_path.c_str()); }
+void RequestState::ca_info(const std::string& file_path) { easy().set_ca_info(std::string_view(file_path)); }
 
 void RequestState::ca(crypto::Certificate cert) {
     UINVARIANT(cert, "No certificate");
@@ -281,7 +281,7 @@ void RequestState::ca(crypto::Certificate cert) {
     }
 }
 
-void RequestState::crl_file(const std::string& file_path) { easy().set_crl_file(file_path.c_str()); }
+void RequestState::crl_file(const std::string& file_path) { easy().set_crl_file(std::string_view(file_path)); }
 
 void RequestState::client_key_cert(crypto::PrivateKey pkey, crypto::Certificate cert) {
     UINVARIANT(pkey, "No private key");
@@ -322,7 +322,10 @@ void RequestState::client_key_cert(crypto::PrivateKey pkey, crypto::Certificate 
             cert_id
         );
         cert_id.resize(kCertIdLength, '=');
+
+#if LIBCURL_VERSION_NUM <= 0x074700          
         easy().set_egd_socket(cert_id);
+#endif
 
         std::error_code ec;
         easy().set_ssl_ctx_function(&RequestState::on_certificate_request, ec);
@@ -345,7 +348,7 @@ void RequestState::retry(short retries, bool on_fails) {
     retry_.on_fails = on_fails;
 }
 
-void RequestState::unix_socket_path(const std::string& path) { easy().set_unix_socket_path(path); }
+void RequestState::unix_socket_path(const std::string& path) { easy().set_unix_socket_path(std::string_view(path)); }
 
 void RequestState::connect_to(const ConnectTo& connect_to) {
     curl::native::curl_slist* ptr = connect_to.GetUnderlying();
@@ -356,7 +359,7 @@ void RequestState::connect_to(const ConnectTo& connect_to) {
 
 void RequestState::proxy(const std::string& value) {
     proxy_url_ = value;
-    easy().set_proxy(value);
+    easy().set_proxy(std::string_view(value));
 }
 
 void RequestState::proxy_auth_type(curl::detail::proxyauth_t value) { easy().set_proxy_auth(value); }
@@ -368,8 +371,8 @@ void RequestState::http_auth_type(
     std::string_view password
 ) {
     easy().set_http_auth(value, auth_only);
-    easy().set_user(std::string{user}.c_str());
-    easy().set_password(std::string{password}.c_str());
+    easy().set_user(user);
+    easy().set_password(password);
 }
 
 void RequestState::Cancel() {
@@ -392,7 +395,7 @@ void RequestState::SetTestsuiteConfig(const std::shared_ptr<const TestsuiteConfi
 
 void RequestState::SetAllowedUrlsExtra(const std::vector<std::string>& urls) { allowed_urls_extra_ = urls; }
 
-void RequestState::DisableReplyDecoding() { easy().set_accept_encoding(nullptr); }
+void RequestState::DisableReplyDecoding() { easy().set_accept_encoding(std::string_view{}); }
 
 void RequestState::SetCancellationPolicy(CancellationPolicy cp) { cancellation_policy_ = cp; }
 

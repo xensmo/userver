@@ -6,12 +6,13 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace curl {
+#if LIBCURL_VERSION_NUM <= 0x074700
 class form;
-//class form_mime;
+#endif 
 }  // namespace curl
 
 namespace clients::http {
-
+#if LIBCURL_VERSION_NUM <= 0x074700
 class Form final {
 public:
     Form();
@@ -32,14 +33,12 @@ public:
     /// @cond
     // Call of this method will invalidate the form
     std::unique_ptr<curl::form> GetNative() &&;
-    //std::unique_ptr<curl::form_mime> GetNative() &&;
     /// @endcond
 
 private:
     std::unique_ptr<curl::form> impl_;
-    //std::unique_ptr<curl::form_mime> impl_;
 };
-
+#endif // LIBCURL_VERSION_NUM
 }  // namespace clients::http
 
 USERVER_NAMESPACE_END

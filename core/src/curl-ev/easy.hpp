@@ -8,8 +8,7 @@
         C++ wrapper for libcurl's easy interface
 */
 
-// !TODO this @file curl-ev/easy.hpp upgrade in 2025 year                   //
-// !@author <<< xensmo >>> Taras Litvinenko <taraslitvinenko@yandex.kz>     //
+//  !TODO this @file curl-ev/easy.hpp full upgrade in 2025 year  //
 
 #include <cstdio>
 #include <functional>
@@ -103,11 +102,11 @@ namespace detail {
     };
 } // namespace detail
 
-/*********************************************************************
+/*************************************************************
  * * cURL easy wrapper class
  * * @class easy 
- *   TODO: @brief curl-ev wrapper shared class for libcurl with libev
- *********************************************************************/ 
+ *   TODO: @brief curl-ev wrapper shared class for libcurl
+ ************************************************************/ 
 class easy final : public std::enable_shared_from_this<easy> {
 public:
     explicit easy(native::CURL* easy_handle, native::curl_mime* mime_ptr, multi* multi_ptr);
@@ -229,12 +228,12 @@ public:
     void set_interface(std::string_view sv);
     void set_unix_socket_path(std::string_view sv);
     void set_no_proxy(std::string_view sv);
-    void set_accept_encoding(const std::string& str);
+    void set_accept_encoding(std::string_view sv);
     void set_transfer_encoding(std::string_view sv);
     void set_referer(std::string_view sv);
     void set_user_agent(std::string_view sv);
-    void set_protocols_str(const std::string& str);
-    void set_redir_protocols_str(const std::string& str);
+    void set_protocols_str(std::string_view sv);
+    void set_redir_protocols_str(std::string_view sv);
     void set_headers(std::shared_ptr<string_list> headers);
     void set_http200_aliases(std::shared_ptr<string_list> http200_aliases);
 
@@ -344,21 +343,6 @@ public:
     
     static constexpr bool is_set_ca_info_blob_available = true;
 #endif
-
-    // this deprecated function use set_mimepost()    
-    [[deprecated("Use set_mimepost())")]] [[noreturn]]
-    void set_http_post(void*);
-    // this deprecated function
-    [[deprecated("Serves no purpose anymore")]] [[noreturn]]
-    void set_random_file(std::string_view); // CURLOPT_RANDOM_FILE
-    // this deprecated function
-    [[deprecated("Serves no purpose anymore")]] [[noreturn]]
-    void set_egd_socket(std::string_view);  // CURLOPT_EGDSOCKET
-    // this deprecated function
-    [[deprecated("Use set_redir_protocols_str()")]] [[noreturn]]
-    void set_redir_protocols(long); // CURLOPT_REDIR_PROTOCOLS
-    [[deprecated("Use set_protocols_str()")]] [[noreturn]]
-    void set_protocols(long); // CURLOPT_PROTOCOLS
 
 // * puplic callback function @fn set_* @return none  
     using progress_function_t = std::function<bool( native::curl_off_t dltotal, native::curl_off_t dlnow,
@@ -472,11 +456,35 @@ public:
     [[nodiscard]] long get_appconnect_time_usec();      // return native::curl_off_t ?
     [[nodiscard]] long get_retry_after_sec();           // return native::curl_off_t ?
 
-// public deprecated getters
-    [[deprecated("Use get_scheme()")]] [[noreturn]]
-    void get_protocol(); // CURLINFO_PROTOCOL
-
     engine::ev::ThreadControl& get_thread_control();
+
+    // this deprecated function use set_mimepost()    
+    [[deprecated("Use set_mimepost())")]] [[noreturn]]
+    void set_http_post(void*);
+    // this deprecated function
+    [[deprecated("Serves no purpose anymore")]] [[noreturn]]
+    void set_random_file(std::string_view); // CURLOPT_RANDOM_FILE
+    // this deprecated function
+    [[deprecated("Serves no purpose anymore")]] [[noreturn]]
+    void set_egd_socket(std::string_view);  // CURLOPT_EGDSOCKET
+    // this deprecated function
+    [[deprecated("Use set_redir_protocols_str()")]] [[noreturn]]
+    void set_redir_protocols(long); // CURLOPT_REDIR_PROTOCOLS
+    [[deprecated("Use set_protocols_str()")]] [[noreturn]]
+    void set_protocols(long); // CURLOPT_PROTOCOLS
+    // this deprecated function
+    [[deprecated("Use get_scheme()")]] [[noreturn]]
+    void get_protocol(); // CURLINFO_PROTOCOL    
+
+#if LIBCURL_VERSION_NUM <= 0x074700 
+    #include <curl-ev/form.hpp>
+    std::shared_ptr<form> form_;
+
+    void set_http_post(std::unique_ptr<form> form_ptr>);
+    void set_egd_socket(std::string_view);
+
+    long get_protocol();
+#endif
     
 private:
 // private static

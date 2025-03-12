@@ -30,11 +30,15 @@ namespace clients::http {
 class RequestState;
 class StreamedResponse;
 class ConnectTo;
-class Form;
+class Mime;
 struct DeadlinePropagationConfig;
 class RequestStats;
 class DestinationStatistics;
 struct TestsuiteConfig;
+
+#if LIBCURL_VERSION_NUM <= 0x074700
+class Form;
+#endif
 
 namespace impl {
 class EasyWrapper;
@@ -111,10 +115,16 @@ public:
     /// POST request with url and data
     Request& post(std::string url, std::string data = {}) &;
     Request post(std::string url, std::string data = {}) &&;
+
     /// POST request with url and multipart/form-data
-    ////////////////////////////////////////////!
-    [[deprecated("Use post_mime(), this function no call effect")]] Request& post(std::string url, Form&& form) &;
-    [[deprecated("Use post_mime(), this function no call effect")]] Request post(std::string url, Form&& form) &&;
+#if LIBCURL_VERSION_NUM <= 0x074700
+    Request& post(std::string url, Form&& form) &;
+    Request post(std::string url, Form&& form) &&;
+#endif
+
+    [[maybe_unused]] Request& post(std::string url, Mime&& mime) &;
+    [[maybe_unused]] Request post(std::string url, Mime&& mime) &&;
+
     /// PUT request
     Request& put() &;
     Request put() &&;
@@ -149,14 +159,16 @@ public:
     /// data for POST request
     Request& data(std::string data) &;
     Request data(std::string data) &&;
-    /// form for POST request
-    //////////////////////////////////////////////////////////////////////////////////////!
-    [[deprecated("Use mime(), this function no call effect")]] Request& form(Form&& form) &;
-    [[deprecated("Use mime(), this function no call effect")]] Request form(Form&& form) &&;
+
+    /// form POST request
+#if LIBCURL_VERSION_NUM <= 0x074700
+    Request& form(Form&& form) &;
+    Request form(Form&& form) &&;
+#endif
 
     // mime for POST request
-    //Request& mime(Mime&& mime) &;
-    //Request mime(Mime&& mime) &&;
+    [[maybe_unused]] Request& mime(Mime&& mime) &;
+    [[maybe_unused]] Request mime(Mime&& mime) &&;
 
 
     /// Headers for request as map

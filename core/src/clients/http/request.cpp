@@ -7,9 +7,13 @@
 #include <string_view>
 #include <system_error>
 
+#if LIBCURL_VERSION_NUM <= 0x074700
+#include <userver/clients/http/form.hpp>
+#endif
+
 #include <userver/clients/http/connect_to.hpp>
 #include <userver/clients/http/error.hpp>
-#include <userver/clients/http/form.hpp>
+#include <userver/clients/http/mime.hpp>
 #include <userver/clients/http/response_future.hpp>
 #include <userver/clients/http/streamed_response.hpp>
 #include <userver/concurrent/queue.hpp>
@@ -54,10 +58,6 @@ curl::detail::http_version_t ToNative(HttpVersion version) {
             return curl::detail::http_version_t::http_version_2tls;
         case HttpVersion::k2PriorKnowledge:
             return curl::detail::http_version_t::http_version_2_prior_knowledge;
-        case HttpVersion::k30:
-            return curl::detail::http_version_t::http_version_3_0;
-        case HttpVersion::k3Only:
-            return curl::detail::http_version_t::http_version_3_0_only;
     }
 
     UINVARIANT(false, "Unexpected HTTP version");
@@ -128,9 +128,9 @@ bool IsUserAgentHeader(std::string_view header_name) {
     return utils::StrIcaseEqual{}(header_name, USERVER_NAMESPACE::http::headers::kUserAgent);
 }
 
-void SetUserAgent(curl::easy& easy, const std::string& value) { easy.set_user_agent(value); }
+void SetUserAgent(curl::easy& easy, const std::string& value) { easy.set_user_agent(std::string_view(value)); }
 
-void SetUserAgent(curl::easy& easy, std::string_view value) { easy.set_user_agent(std::string{value}); }
+void SetUserAgent(curl::easy& easy, std::string_view value) { easy.set_user_agent(value); }
 
 template <class Range>
 void SetHeaders(curl::easy& easy, const Range& headers_range) {
@@ -152,7 +152,7 @@ void SetCookies(curl::easy& easy, const Range& cookies_range) {
         cookie_str += '=';
         cookie_str += value;
     }
-    easy.set_cookie(cookie_str);
+    easy.set_cookie(std::string_view(cookie_str));
 }
 
 template <class Range>
@@ -351,13 +351,24 @@ Request& Request::data(std::string data) & {
 }
 Request Request::data(std::string data) && { return std::move(this->data(std::move(data))); }
 
-//Request& Request::form(Form&& form) & {
-//!    pimpl_->easy().set_http_post(std::move(form).GetNative()); //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////!
-//    pimpl_->easy().add_header(kHeaderExpect, "", curl::detail::empty_header_action::kDoNotSend);
-//   return *this;
-//}
+#if LIBCURL_VERSION_NUM <= 0x074700
+Request& Request::form(Form&& form) & {
+    pimpl_->easy().set_http_post(std::move(form).GetNative());
+    pimpl_->easy().add_header(kHeaderExpect, "", curl::detail::empty_header_action::kDoNotSend);
+   return *this;
+}
 
-//Request Request::form(Form&& form) && { return std::move(this->form(std::move(form))); }
+Request Request::form(Form&& form) && { return std::move(this->form(std::move(form))); }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////!
+/* Request& Request::mime(Mime&& mime) & {
+    pimpl_->easy().set_mimepost(std::move(mime).get_native());
+    pimpl_->easy().add_header(kHeaderExpect, "", curl::detail::empty_header_action::kDoNotSend);
+    return *this;
+}
+
+Request Request::mime(Mime&& mime) && { return std::move(this->mime(std::move(mime))); }; */
 
 Request& Request::headers(const Headers& headers) & {
     SetHeaders(pimpl_->easy(), headers);
@@ -398,7 +409,7 @@ Request Request::proxy_headers(const std::initializer_list<std::pair<std::string
 }
 
 Request& Request::user_agent(const std::string& value) & {
-    pimpl_->easy().set_user_agent(value.c_str());
+    pimpl_->easy().set_user_agent(std::string_view(value));
     return *this;
 }
 Request Request::user_agent(const std::string& value) && { return std::move(this->user_agent(value)); }
@@ -492,10 +503,16 @@ Request Request::get(std::string url) && { return std::move(this->get(std::move(
 Request& Request::head(std::string url) & { return head().url(std::move(url)); }
 Request Request::head(std::string url) && { return std::move(this->head(std::move(url))); }
 
-//Request& Request::post(std::string url, Form&& form) & { return this->url(std::move(url)).form(std::move(form)); }
-//Request Request::post(std::string url, Form&& form) && {
-//    return std::move(this->post(std::move(url), std::move(form)));
-//}
+#if LIBCURL_VERSION_NUM <= 0x074700
+Request& Request::post(std::string url, Form&& form) & { return this->url(std::move(url)).form(std::move(form)); }
+Request Request::post(std::string url, Form&& form) && {
+    return std::move(this->post(std::move(url), std::move(form)));
+}
+#endif 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////!
+//Request& Request::post(std::string url, Mime&& mime) & { return this->url(std::move(url)).mime(std::move(mime)); }
+//Request Request::post(std::string url, Mime&& mime) && { return std::move(this->post(std::move(url), std::move(mime))); }
 
 Request& Request::post(std::string url, std::string data) & {
     return this->url(std::move(url)).data(std::move(data)).post();
