@@ -6,8 +6,6 @@
         C++ wrapper for libcurl's easy interface
 */
 
-//  !TODO this @file curl-ev/easy.hpp full upgrade in 2025 year  //
-
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -34,19 +32,16 @@ USERVER_NAMESPACE_BEGIN
 
 namespace curl {
 namespace detail {
-    using detail_eha = empty_header_action;
-    using detail_dha = duplicate_header_action;
-
     bool is_header_matching_name(std::string_view header, std::string_view name) {
         return header.size() > name.size() && utils::StrIcaseEqual()(header.substr(0, name.size()), name) &&
             (header[name.size()] == ':' || header[name.size()] == ';');
     }
 
     fmt::memory_buffer 
-    create_header_buffer(std::string_view name, std::string_view value, detail_eha eha) {
+    create_header_buffer(std::string_view name, std::string_view value, easy::EmptyHeaderAction eha) {
         fmt::memory_buffer fmt_mem_buf;
 
-        if (eha == detail_eha::kSend && value.empty())
+        if (eha == easy::EmptyHeaderAction::kSend && value.empty())
             fmt::format_to(std::back_inserter(fmt_mem_buf), FMT_COMPILE("{};"), name);
         else
             fmt::format_to(std::back_inserter(fmt_mem_buf), FMT_COMPILE("{}: {}"), name, value);
@@ -74,15 +69,15 @@ namespace detail {
         return result;
     }
 
-    bool add_header_do_skip(const std::shared_ptr<string_list>& headers, std::string_view name, detail_dha dha) {
-        if (dha == detail_dha::kSkip && headers) 
+    bool add_header_do_skip(const std::shared_ptr<string_list>& headers, std::string_view name, easy::DuplicateHeaderAction dha) {
+        if (dha == easy::DuplicateHeaderAction::kSkip && headers) 
             find_header_by_name(headers, name);
         return false;
     }
 
     bool add_header_do_replace(const std::shared_ptr<string_list>& headers, const fmt::memory_buffer& mem_buf,
-            std::string_view name, detail_dha dha) {
-        if (dha == detail_dha::kReplace && headers) {
+            std::string_view name, easy::DuplicateHeaderAction dha) {
+        if (dha == easy::DuplicateHeaderAction::kReplace && headers) {
             const bool replaced = headers->ReplaceFirstIf([name](std::string_view header) {
                 return is_header_matching_name(header, name);
             }, mem_buf.data());
@@ -203,7 +198,7 @@ easy::~easy() {
     }
 }
 
-std::shared_ptr<const easy> easy::create_easy_blocking() {
+std::shared_ptr<const easy> easy::CreateBlocking() {
     impl::CurlGlobal::Init();
     
     // Note: curl_easy_init() is blocking.
@@ -216,7 +211,7 @@ std::shared_ptr<const easy> easy::create_easy_blocking() {
     return std::make_shared<const easy>(handle_ptr, mime_ptr, nullptr);
 }
 
-std::shared_ptr<easy> easy::get_bound_blocking(multi& multi_handle) const {
+std::shared_ptr<easy> easy::GetBoundBlocking(multi& multi_handle) const {
      // Note: curl_easy_init() is blocking.
     auto* cloned_easy = native::curl_easy_duphandle(easy_handle_);
     if (!cloned_easy)
@@ -235,7 +230,7 @@ easy* easy::from_native(native::CURL* native_easy) {
     return easy_handle;
 }
 
-engine::ev::ThreadControl& easy::get_thread_control() {
+engine::ev::ThreadControl& easy::GetThreadControl() {
     return multi_handle_->GetThreadControl();
 }
 
@@ -412,15 +407,15 @@ bool easy::has_post_data() const {
     return !post_fields_.empty() || mime_;
 }
 
-void easy::add_header(std::string_view name, std::string_view value, detail_eha eha, detail_dha dha) {
+void easy::add_header(std::string_view name, std::string_view value, EmptyHeaderAction eha, DuplicateHeaderAction dha) {
     if (detail::add_header_do_skip(headers_, name, dha)) { return; }
     auto buffer = detail::create_header_buffer(name, value, eha);
     if (detail::add_header_do_replace(headers_, buffer, name, dha)) { return; }
     add_header(buffer.data());
 }
 
-void easy::add_header(std::string_view name, std::string_view value, detail_dha dha) {
-    add_header(name, value, detail_eha::kSend, dha);
+void easy::add_header(std::string_view name, std::string_view value, DuplicateHeaderAction dha) {
+    add_header(name, value, EmptyHeaderAction::kSend, dha);
 }
 
 void easy::add_header(const char* header) {
@@ -437,7 +432,7 @@ void easy::add_header(const std::string& header) {
     add_header(header.c_str());
 }
 
-void easy::add_proxy_header(std::string_view name, std::string_view value, detail_eha eha, detail_dha dha) {
+void easy::add_proxy_header(std::string_view name, std::string_view value, EmptyHeaderAction eha, DuplicateHeaderAction dha) {
     if (detail::add_header_do_skip(proxy_headers_, name, dha)) { return; }
     auto buffer = detail::create_header_buffer(name, value, eha);
     if (detail::add_header_do_replace(proxy_headers_, buffer, name, dha)) { return; }
@@ -496,7 +491,7 @@ void easy::add_http200_alias(const std::string& http200_alias) {
     throw_error(ec, "add_http200_alias");
 }
 
-std::optional<std::string_view> easy::find_header_by_name(std::string_view name) const {
+std::optional<std::string_view> easy::FindHeaderByName(std::string_view name) const {
     return detail::find_header_by_name(headers_, name);
 }
 
@@ -881,18 +876,18 @@ void easy::set_proxy_password(std::string_view sv) {
         "set_proxy_password", easy_handle_, native::CURLOPT_PROXYPASSWORD, sv.data());
 }
 
-void easy::set_netrc(detail::netrc_t netrc) {
+void easy::set_netrc(netrc_t netrc) {
     detail::set_curl_opt(
         "set_netrc", easy_handle_, native::CURLOPT_NETRC, detail::to_integral(netrc));
 }
 
-void easy::set_http_auth(detail::httpauth_t httpauth, bool auth_only) {
+void easy::set_http_auth(httpauth_t httpauth, bool auth_only) {
     auto result = detail::to_integral(httpauth) | (auth_only ? CURLAUTH_ONLY : 0UL);
     detail::set_curl_opt(
         "set_http_auth", easy_handle_, native::CURLOPT_HTTPAUTH, result);
 }
 
-void easy::set_proxy_auth(detail::proxyauth_t proxyauth) {
+void easy::set_proxy_auth(proxyauth_t proxyauth) {
     detail::set_curl_opt(
         "set_proxy_auth", easy_handle_, native::CURLOPT_PROXYAUTH, detail::to_integral(proxyauth));
 }
@@ -1012,12 +1007,12 @@ void easy::set_cookie_jar(std::string_view sv) {
         "set_cookie_jar", easy_handle_, native::CURLOPT_COOKIEJAR, sv.data());
 }
 
-void easy::set_http_version(detail::http_version_t version) {
+void easy::set_http_version(http_version_t version) {
     detail::set_curl_opt(
         "set_http_version", easy_handle_, native::CURLOPT_HTTP_VERSION, detail::to_integral(version));
 }
 
-void easy::set_time_condition(detail::time_condition_t condition) {
+void easy::set_time_condition(time_condition_t condition) {
     detail::set_curl_opt(
         "set_time_condition", easy_handle_, native::CURLOPT_TIMECONDITION, detail::to_integral(condition));
 }
@@ -1092,7 +1087,7 @@ void easy::set_dns_servers(std::string_view sv) {
         "set_dns_servers", easy_handle_, native::CURLOPT_DNS_SERVERS, sv.data());
 }
 
-void easy::set_ip_resolve(detail::ip_resolve_t resolve) {
+void easy::set_ip_resolve(ip_resolve_t resolve) {
     detail::set_curl_opt(
         "set_ip_resolve", easy_handle_, native::CURLOPT_IPRESOLVE, detail::to_integral(resolve));
 }
@@ -1239,12 +1234,12 @@ void easy::set_ssl_verify_host(bool state) {
     throw_error(ec, "set_ssl_verify_host");
 }
 
-void easy::set_ssl_version(detail::ssl_version_t version) {
+void easy::set_ssl_version(ssl_version_t version) {
     detail::set_curl_opt(
         "set_ssl_version", easy_handle_, native::CURLOPT_SSLVERSION, detail::to_integral(version));
 }
 
-void easy::set_use_ssl(detail::use_ssl_t ssl) {
+void easy::set_use_ssl(use_ssl_t ssl) {
     detail::set_curl_opt(
         "set_use_ssl", easy_handle_, native::CURLOPT_USE_SSL, detail::to_integral(ssl));
 }
@@ -1771,30 +1766,27 @@ native::curl_socket_t easy::open_tcp_socket(struct native::curl_sockaddr* addres
     return fd;
 }
 
-#if LIBCURL_VERSION_NUM <= 0x074700 
-    void easy::set_http_post(std::unique_ptr<form> form_ptr>) {
-        form_ = std::move(form);
-        if (form_) {
-            std::error_code ec = detail::set_curl_opt(
-                easy_handle_, native::CURLOPT_HTTPPOST, form_->native_handle());
-            throw_error(ec, "set_http_post native_handle failed!");
-        } else {
-            std::error_code ec = detail::set_curl_opt(
-                easy_handle_, native::CURLOPT_HTTPPOST, nullptr);
-            throw_error(ec, "set_http_post nullptr failed!");
-        }
+void easy::set_http_post(std::unique_ptr<form> form_ptr) {
+    form_ = std::move(form_ptr);
+    if (form_) {
+        std::error_code ec = detail::set_curl_opt(
+            easy_handle_, native::CURLOPT_HTTPPOST, form_->native_handle());
+        throw_error(ec, "set_http_post native_handle failed!");
+    } else {
+        std::error_code ec = detail::set_curl_opt(
+            easy_handle_, native::CURLOPT_HTTPPOST, nullptr);
+        throw_error(ec, "set_http_post nullptr failed!");
     }
+}
 
-    void easy::set_egd_socket(std::string_view sv) {
-        detail::set_curl_opt("set_egd_socket", easy_handle_, native::CURLOPT_EGDSOCKET, sv.data());
-    }
+void easy::set_egd_socket(std::string_view sv) {
+    detail::set_curl_opt("set_egd_socket", easy_handle_, native::CURLOPT_EGDSOCKET, sv.data());
+}
 
-    long easy::get_protocol() {
-        return detail::get_curl_info_long(
-            "get_protocol", easy_handle_, native::CURLINFO_PROTOCOL);
-    }
-        
-#endif
+long easy::get_protocol() {
+    return detail::get_curl_info_long(
+        "get_protocol", easy_handle_, native::CURLINFO_PROTOCOL);
+}
 
 } // namespace curl
 

@@ -12,7 +12,7 @@ PluginRequest::PluginRequest(RequestState& state) : state_(state) {}
 
 void PluginRequest::SetHeader(std::string_view name, std::string_view value) {
     state_.easy().add_header(
-        name, value, curl::detail::empty_header_action::kDoNotSend, curl::detail::duplicate_header_action::kReplace
+        name, value, curl::easy::EmptyHeaderAction::kDoNotSend, curl::easy::DuplicateHeaderAction::kReplace
     );
 }
 

@@ -114,8 +114,8 @@ void SetBaggageHeader(curl::easy& e) {
         e.add_header(
             USERVER_NAMESPACE::http::headers::kXBaggage,
             std::string_view(baggage->ToString()),
-            curl::detail::empty_header_action::kDoNotSend,
-            curl::detail::duplicate_header_action::kReplace
+            curl::easy::EmptyHeaderAction::kDoNotSend,
+            curl::easy::DuplicateHeaderAction::kReplace
         );
     }
 }
@@ -335,7 +335,7 @@ void RequestState::client_key_cert(crypto::PrivateKey pkey, crypto::Certificate 
     }
 }
 
-void RequestState::http_version(curl::detail::http_version_t version) { easy().set_http_version(version); }
+void RequestState::http_version(curl::easy::http_version_t version) { easy().set_http_version(version); }
 
 void RequestState::set_timeout(long timeout_ms) {
     original_timeout_ = std::chrono::milliseconds{timeout_ms};
@@ -362,10 +362,10 @@ void RequestState::proxy(const std::string& value) {
     easy().set_proxy(std::string_view(value));
 }
 
-void RequestState::proxy_auth_type(curl::detail::proxyauth_t value) { easy().set_proxy_auth(value); }
+void RequestState::proxy_auth_type(curl::easy::proxyauth_t value) { easy().set_proxy_auth(value); }
 
 void RequestState::http_auth_type(
-    curl::detail::httpauth_t value,
+    curl::easy::httpauth_t value,
     bool auth_only,
     std::string_view user,
     std::string_view password
@@ -567,7 +567,7 @@ void RequestState::on_retry(std::shared_ptr<RequestState> holder, std::error_cod
         ++holder->retry_.current;
         holder->easy().mark_retry();
 
-        holder->retry_.timer.emplace(holder->easy().get_thread_control());
+        holder->retry_.timer.emplace(holder->easy().GetThreadControl());
 
         // call on_retry_timer on timer
         auto& holder_ref = *holder;
@@ -785,7 +785,7 @@ void RequestState::UpdateTimeoutHeader() {
     easy().add_header(
         USERVER_NAMESPACE::http::headers::kXYaTaxiClientTimeoutMs,
         fmt::to_string(remote_timeout_.count()),
-        curl::detail::duplicate_header_action::kReplace
+        curl::easy::DuplicateHeaderAction::kReplace
     );
 }
 

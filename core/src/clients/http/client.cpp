@@ -114,7 +114,7 @@ Request Client::CreateRequest() {
     auto request = [this] {
         auto easy = TryDequeueIdle();
         if (easy) {
-            auto idx = FindMultiIndex(easy->get_multi());
+            auto idx = FindMultiIndex(easy->GetMulti());
             auto wrapper = impl::EasyWrapper{std::move(easy), *this};
             return Request{
                 std::move(wrapper),
@@ -129,7 +129,7 @@ Request Client::CreateRequest() {
 
             try {
                 auto wrapper = engine::AsyncNoSpan(fs_task_processor_, [this, &multi] {
-                                   return impl::EasyWrapper { easy_.Get()->get_bound_blocking(*multi), *this };
+                                   return impl::EasyWrapper { easy_.Get()->GetBoundBlocking(*multi), *this };
                                }).Get();
                 return Request{
                     std::move(wrapper),
@@ -185,7 +185,7 @@ std::string Client::GetProxy() const { return proxy_.ReadCopy(); }
 void Client::SetDnsResolver(clients::dns::Resolver* resolver) { resolver_ = resolver; }
 
 void Client::ReinitEasy() {
-    easy_.Set(utils::CriticalAsync(fs_task_processor_, "http_easy_reinit", &curl::easy::create_easy_blocking).Get());
+    easy_.Set(utils::CriticalAsync(fs_task_processor_, "http_easy_reinit", &curl::easy::CreateBlocking).Get());
 }
 
 InstanceStatistics Client::GetMultiStatistics(size_t n) const {

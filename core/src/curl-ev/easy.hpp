@@ -8,8 +8,6 @@
         C++ wrapper for libcurl's easy interface
 */
 
-//  !TODO this @file curl-ev/easy.hpp full upgrade in 2025 year  //
-
 #include <cstdio>
 #include <functional>
 #include <memory>
@@ -20,6 +18,8 @@
 #include <vector>
 #include <utility>
 
+#include <curl-ev/error_code.hpp>
+#include <curl-ev/form.hpp>
 #include <curl-ev/mime.hpp>
 #include <curl-ev/ratelimit.hpp>
 #include <curl-ev/url.hpp>
@@ -35,23 +35,43 @@ namespace engine::ev {
     class ThreadControl;
 }  // namespace engine::ev
 
+#ifdef CURL_SSLVERSION_DEFAULT
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define CURL_SSLVERSION_NAMESPACE
+#else
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define CURL_SSLVERSION_NAMESPACE native::
+#endif
+
 namespace curl {
 class multi;
 class share;
 class string_list;
 
-namespace detail {
-    enum class empty_header_action      { kSend, kDoNotSend };
-    enum class duplicate_header_action  { kAdd, kSkip, kReplace };
+class easy final : public std::enable_shared_from_this<easy> {
+public:
+    explicit easy(native::CURL* easy_handle, native::curl_mime* mime_ptr, multi* multi_ptr);
+
+    easy(const easy& rhs) = delete;
+    easy(easy&& rhs) = delete;
+
+    easy& operator= (const easy& rhs) = delete;
+    easy& operator= (easy&& rhs) = delete;
+
+    ~easy();
+
+public: 
+    enum class EmptyHeaderAction      { kSend, kDoNotSend };
+    enum class DuplicateHeaderAction  { kAdd, kSkip, kReplace };
     enum class http_version_t : unsigned long {
         http_version_none               = native::CURL_HTTP_VERSION_NONE,
         http_version_1_0                = native::CURL_HTTP_VERSION_1_0,
         http_version_1_1                = native::CURL_HTTP_VERSION_1_1,
         http_version_2_0                = native::CURL_HTTP_VERSION_2_0,
         http_version_2tls               = native::CURL_HTTP_VERSION_2TLS,
-        http_version_2_prior_knowledge  = native::CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE,
-        http_version_3_0                = native::CURL_HTTP_VERSION_3,
-        http_version_3_0_only           = native::CURL_HTTP_VERSION_3ONLY
+        http_version_2_prior_knowledge  = native::CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE
+        // !http_version_3_0                = native::CURL_HTTP_VERSION_3,      // important, uncomments next feature
+        // !http_version_3_0_only           = native::CURL_HTTP_VERSION_3ONLY   // version userver supports HTTP/3
     };
     enum class ssl_version_t : unsigned long {
         ssl_version_default     = native::CURL_SSLVERSION_DEFAULT,
@@ -100,26 +120,7 @@ namespace detail {
         proxy_auth_any          = CURLAUTH_ANY,
         proxy_auth_anysafe      = CURLAUTH_ANYSAFE
     };
-} // namespace detail
 
-/*************************************************************
- * * cURL easy wrapper class
- * * @class easy 
- *   TODO: @brief curl-ev wrapper shared class for libcurl
- ************************************************************/ 
-class easy final : public std::enable_shared_from_this<easy> {
-public:
-    explicit easy(native::CURL* easy_handle, native::curl_mime* mime_ptr, multi* multi_ptr);
-
-    easy(const easy& rhs) = delete;
-    easy(easy&& rhs) noexcept = default;
-
-    easy& operator= (const easy& rhs) noexcept = default;
-    easy& operator= (easy&& rhs) noexcept = default;
-
-    ~easy();
-
-public: 
     using time_point = std::chrono::steady_clock::time_point;
     using handler_type = std::function<void(std::error_code err)>;
     
@@ -131,16 +132,16 @@ public:
     void reset();
     void mark_retry();
 
-// public sys
     void handle_completion(const std::error_code& ec);
 
     void set_share(std::shared_ptr<share> share);
 
-// public static     
     static easy* from_native(native::CURL* native_easy);
-    static std::shared_ptr<const easy> create_easy_blocking();
+    [[nodiscard]] static std::shared_ptr<const easy> CreateBlocking();
 
-// public
+    [[nodiscard]] std::shared_ptr<easy> GetBoundBlocking(multi& multi_handle) const;
+    engine::ev::ThreadControl& GetThreadControl();
+
     std::error_code rate_limit_error() const;
     time_point::duration time_to_start() const;
     clients::http::LocalStats get_local_stats();
@@ -150,29 +151,25 @@ public:
 
     bool has_post_data() const;
 
-// public inline     
     inline native::CURL* native_handle() { return easy_handle_; }
-    inline const multi* get_multi() const { return multi_handle_; }
+    inline const multi* GetMulti() const { return multi_handle_; }
 
     inline bool operator<(const easy& other) const { return (this < &other); }
 
 public:
-    using detail_eha = detail::empty_header_action;
-    using detail_dha = detail::duplicate_header_action;
-    
     void add_header(std::string_view name, std::string_view value, 
-            detail_eha eha = detail_eha::kSend, detail_dha dha = detail_dha::kAdd);
-    void add_header(std::string_view name, std::string_view value, detail_dha dha);
+        EmptyHeaderAction eha = EmptyHeaderAction::kSend, DuplicateHeaderAction dha = DuplicateHeaderAction::kAdd);
+    void add_header(std::string_view name, std::string_view value, DuplicateHeaderAction dha);
     void add_header(const char* header);
     void add_header(const std::string& header);
     void add_proxy_header(std::string_view name, std::string_view value, 
-        detail_eha = detail_eha::kSend, detail_dha = detail_dha::kAdd);
+        EmptyHeaderAction = EmptyHeaderAction::kSend, DuplicateHeaderAction = DuplicateHeaderAction::kAdd);
     void add_proxy_header(const char* header);
     void add_proxy_header(const std::string& header);
     void add_resolve(const std::string& host, const std::string& port, const std::string& addr);
     void add_http200_alias(const std::string& http200_alias);
 
-    std::optional<std::string_view> find_header_by_name(std::string_view name) const;
+    std::optional<std::string_view> FindHeaderByName(std::string_view name) const;
 
 public:
 /// cURL Opt setters
@@ -180,18 +177,18 @@ public:
     void set_header(bool state);
     void set_no_progress(bool state);
     void set_no_signal(bool state);
-    void set_wildcard_match(bool state);
+    [[maybe_unused]] void set_wildcard_match(bool state);
     void set_post(bool state);
 
-    void set_source(std::shared_ptr<std::istream> source);
+    [[maybe_unused]] void set_source(std::shared_ptr<std::istream> source);
     void set_sink(std::string* sink);
     void set_private(void* ptr);
     void set_custom_request(const std::string& str);
-    void set_new_directory_perms(long perms);
-    void set_new_file_perms(long perms);
+    [[maybe_unused]] void set_new_directory_perms(long perms);
+    [[maybe_unused]] void set_new_file_perms(long perms);
 
     void set_url(std::string&& url_str, std::error_code& ec);
-    void set_progress_data(void* ptr);
+    [[maybe_unused]] void set_progress_data(void* ptr);
 
     void set_error_buffer(char* buffer);
     void set_stderr(FILE* file);
@@ -200,109 +197,109 @@ public:
     void set_mimepost(std::unique_ptr<mime> mime_ptr);
     
 // * puplic http setters @fn set_* @return none
-    void set_http_proxy_tunnel(bool state);
-    void set_socks5_gsapi_nec(bool state);
-    void set_tcp_no_delay(bool state);
-    void set_tcp_keep_alive(bool state);
-    void set_auto_referrer(bool state);
+    [[maybe_unused]] void set_http_proxy_tunnel(bool state);
+    [[maybe_unused]] void set_socks5_gsapi_nec(bool state);
+    [[maybe_unused]] void set_tcp_no_delay(bool state);
+    [[maybe_unused]] void set_tcp_keep_alive(bool state);
+    [[maybe_unused]] void set_auto_referrer(bool state);
     void set_follow_location(bool state);
-    void set_unrestricted_auth(bool state);
+    [[maybe_unused]] void set_unrestricted_auth(bool state);
     void set_max_redirs(long value);
     void set_post_redir(long value);
-    void set_post_field_size(long value);
-    void set_proxy_port(long value);
-    void set_proxy_type(long value);
-    void set_local_port(long value);
-    void set_local_port_range(long value);
-    void set_dns_cache_timeout(long value);
-    void set_buffer_size(long value);
-    void set_port(long value);
-    void set_address_scope(long value);
-    void set_tcp_keep_idle(long value);
-    void set_tcp_keep_intvl(long value);
+    [[maybe_unused]] void set_post_field_size(long value);
+    [[maybe_unused]] void set_proxy_port(long value);
+    [[maybe_unused]] void set_proxy_type(long value);
+    [[maybe_unused]] void set_local_port(long value);
+    [[maybe_unused]] void set_local_port_range(long value);
+    [[maybe_unused]] void set_dns_cache_timeout(long value);
+    [[maybe_unused]] void set_buffer_size(long value);
+    [[maybe_unused]] void set_port(long value);
+    [[maybe_unused]] void set_address_scope(long value);
+    [[maybe_unused]] void set_tcp_keep_idle(long value);
+    [[maybe_unused]] void set_tcp_keep_intvl(long value);
     void set_connect_to(native::curl_slist* slist);
     void set_post_field_size_large(native::curl_off_t value);
     void set_post_fields(void* ptr);
     void set_post_fields(std::string&& post_fields);
     void set_proxy(std::string_view sv);
-    void set_interface(std::string_view sv);
+    [[maybe_unused]] void set_interface(std::string_view sv);
     void set_unix_socket_path(std::string_view sv);
-    void set_no_proxy(std::string_view sv);
+    [[maybe_unused]] void set_no_proxy(std::string_view sv);
     void set_accept_encoding(std::string_view sv);
-    void set_transfer_encoding(std::string_view sv);
-    void set_referer(std::string_view sv);
+    [[maybe_unused]] void set_transfer_encoding(std::string_view sv);
+    [[maybe_unused]] void set_referer(std::string_view sv);
     void set_user_agent(std::string_view sv);
-    void set_protocols_str(std::string_view sv);
-    void set_redir_protocols_str(std::string_view sv);
-    void set_headers(std::shared_ptr<string_list> headers);
-    void set_http200_aliases(std::shared_ptr<string_list> http200_aliases);
+    [[maybe_unused]] void set_protocols_str(std::string_view sv);
+    [[maybe_unused]] void set_redir_protocols_str(std::string_view sv);
+    [[maybe_unused]] void set_headers(std::shared_ptr<string_list> headers);
+    [[maybe_unused]] void set_http200_aliases(std::shared_ptr<string_list> http200_aliases);
 
 // * puplic auth setters @fn set_* @return none
-    void set_tls_auth_type(long value);
-    void set_tls_auth_user(std::string_view sv);
-    void set_tls_auth_password(std::string_view sv);
-    void set_netrc_file(std::string_view sv);
+    [[maybe_unused]] void set_tls_auth_type(long value);
+    [[maybe_unused]] void set_tls_auth_user(std::string_view sv);
+    [[maybe_unused]] void set_tls_auth_password(std::string_view sv);
+    [[maybe_unused]] void set_netrc_file(std::string_view sv);
     void set_user(std::string_view sv);
     void set_password(std::string_view sv);
-    void set_proxy_user(std::string_view sv);
-    void set_proxy_password(std::string_view sv);
-    void set_netrc(detail::netrc_t netrc);
-    void set_http_auth(detail::httpauth_t httpauth, bool auth_only);
-    void set_proxy_auth(detail::proxyauth_t proxyauth);
+    [[maybe_unused]] void set_proxy_user(std::string_view sv);
+    [[maybe_unused]] void set_proxy_password(std::string_view sv);
+    [[maybe_unused]] void set_netrc(netrc_t netrc);
+    void set_http_auth(httpauth_t httpauth, bool auth_only);
+    void set_proxy_auth(proxyauth_t proxyauth);
 
 // * puplic protocol setters @fn set_* @return none
-    void set_transfer_text(bool state);
-    void set_transfer_mode(bool state);
-    void set_crlf(bool state);
-    void set_file_time(bool state);
-    void set_upload(bool state);
+    [[maybe_unused]] void set_transfer_text(bool state);
+    [[maybe_unused]] void set_transfer_mode(bool state);
+    [[maybe_unused]] void set_crlf(bool state);
+    [[maybe_unused]] void set_file_time(bool state);
+    [[maybe_unused]] void set_upload(bool state);
     void set_no_body(bool state);
-    void set_ignore_content_length(bool state);
-    void set_http_content_decoding(bool state);
-    void set_http_transfer_decoding(bool state);
+    [[maybe_unused]] void set_ignore_content_length(bool state);
+    [[maybe_unused]] void set_http_content_decoding(bool state);
+    [[maybe_unused]] void set_http_transfer_decoding(bool state);
     void set_http_get(bool state);
-    void set_cookie_session(bool state);
-    void set_resume_from(long value);
-    void set_in_file_size(long value);
-    void set_max_file_size(long value);
-    void set_time_value(long value);
-    void set_resume_from_large(native::curl_off_t value);
-    void set_in_file_size_large(native::curl_off_t value);
-    void set_max_file_size_large(native::curl_off_t value);
-    void set_range(std::string_view sv);
-    void set_cookie_list(std::string_view sv);
+    [[maybe_unused]] void set_cookie_session(bool state);
+    [[maybe_unused]] void set_resume_from(long value);
+    [[maybe_unused]] void set_in_file_size(long value);
+    [[maybe_unused]] void set_max_file_size(long value);
+    [[maybe_unused]] void set_time_value(long value);
+    [[maybe_unused]] void set_resume_from_large(native::curl_off_t value);
+    [[maybe_unused]] void set_in_file_size_large(native::curl_off_t value);
+    [[maybe_unused]] void set_max_file_size_large(native::curl_off_t value);
+    [[maybe_unused]] void set_range(std::string_view sv);
+    [[maybe_unused]] void set_cookie_list(std::string_view sv);
     void set_cookie(std::string_view sv);
-    void set_cookie_file(std::string_view sv);
-    void set_cookie_jar(std::string_view sv);
-    void set_http_version(detail::http_version_t version);
-    void set_time_condition(detail::time_condition_t condition);
+    [[maybe_unused]] void set_cookie_file(std::string_view sv);
+    [[maybe_unused]] void set_cookie_jar(std::string_view sv);
+    void set_http_version(http_version_t version);
+    [[maybe_unused]] void set_time_condition(time_condition_t condition);
 
 // * puplic connection setters @fn set_* @return none
-    void set_fresh_connect(bool state);
-    void set_forbit_reuse(bool state);
-    void set_connect_only(bool state);
-    void set_timeout(long timeout);
+    [[maybe_unused]] void set_fresh_connect(bool state);
+    [[maybe_unused]] void set_forbit_reuse(bool state);
+    [[maybe_unused]] void set_connect_only(bool state);
+    [[maybe_unused]] void set_timeout(long timeout);
     void set_timeout_ms(long timeout);
-    void set_low_speed_limit(long limit);
-    void set_low_speed_time(long time);
-    void set_max_connects(long connects);
-    void set_connect_timeout(long timeout);
+    [[maybe_unused]] void set_low_speed_limit(long limit);
+    [[maybe_unused]] void set_low_speed_time(long time);
+    [[maybe_unused]] void set_max_connects(long connects);
+    [[maybe_unused]] void set_connect_timeout(long timeout);
     void set_connect_timeout_ms(long timeout);
-    void set_accept_timeout_ms(long timeout);
-    void set_max_send_speed_large(native::curl_off_t large);
-    void set_max_recv_speed_large(native::curl_off_t large);
-    void set_dns_servers(std::string_view sv);
-    void set_ip_resolve(detail::ip_resolve_t resolve);
+    [[maybe_unused]] void set_accept_timeout_ms(long timeout);
+    [[maybe_unused]] void set_max_send_speed_large(native::curl_off_t large);
+    [[maybe_unused]] void set_max_recv_speed_large(native::curl_off_t large);
+    [[maybe_unused]] void set_dns_servers(std::string_view sv);
+    void set_ip_resolve(ip_resolve_t resolve);
     void set_resolves(std::shared_ptr<string_list> resolved_hosts);
 
 // * puplic ssh setters @fn set_* @return none
-    void set_ssh_auth_types(long types);
-    void set_ssh_host_public_key_md5(std::string_view sv);
-    void set_ssh_public_key_file(std::string_view sv);
-    void set_ssh_private_key_file(std::string_view sv);
-    void set_ssh_known_hosts(std::string_view sv);
-    void set_ssh_key_function(void* ptr); // !TODO ssh key callback ?
-    void set_ssh_key_data(void* ptr);
+    [[maybe_unused]] void set_ssh_auth_types(long types);
+    [[maybe_unused]] void set_ssh_host_public_key_md5(std::string_view sv);
+    [[maybe_unused]] void set_ssh_public_key_file(std::string_view sv);
+    [[maybe_unused]] void set_ssh_private_key_file(std::string_view sv);
+    [[maybe_unused]] void set_ssh_known_hosts(std::string_view sv);
+    [[maybe_unused]] void set_ssh_key_function(void* ptr); // !TODO ssh key callback ?
+    [[maybe_unused]] void set_ssh_key_data(void* ptr);
 
 // * ssl and security setters @fn set_* @return none
     void set_ssl_cert(std::string_view sv);
@@ -324,8 +321,8 @@ public:
     void set_ssl_session_id_cache(bool state);
     void set_ssl_verify_peer(bool state);
     void set_ssl_verify_host(bool state);
-    void set_ssl_version(detail::ssl_version_t version);
-    void set_use_ssl(detail::use_ssl_t ssl);
+    void set_ssl_version(ssl_version_t version);
+    void set_use_ssl(use_ssl_t ssl);
     
 #if LIBCURL_VERSION_NUM >= 0x074700    
     void set_ssl_cert_blob_copy(std::string_view sv);
@@ -359,8 +356,8 @@ public:
     void set_debug_data(void* ptr);
 
     using interleave_function_t = size_t (*)(void* ptr, size_t size, size_t nmemb, void* userdata);
-    void set_interleave_function(interleave_function_t func);
-    void set_interleave_data(void* ptr);
+    [[maybe_unused]] void set_interleave_function(interleave_function_t func);
+    [[maybe_unused]] void set_interleave_data(void* ptr);
       
     using write_function_t = size_t (*)(char* ptr, size_t size, size_t nmemb, void* userdata);
     void set_write_function(write_function_t func, std::error_code& ec);
@@ -397,7 +394,6 @@ public:
     void set_ssl_ctx_data(void* ptr, std::error_code& ec);
 
 // * getters @fn get_* @return std::shared_ptr<easy>
-    [[nodiscard]] std::shared_ptr<easy> get_bound_blocking(multi& multi_handle) const;
     [[nodiscard]] inline const std::string& get_original_url() const { return orig_url_str_; }
     [[nodiscard]] inline const url& get_easy_url() const { return url_; }
 
@@ -456,35 +452,23 @@ public:
     [[nodiscard]] long get_appconnect_time_usec();      // return native::curl_off_t ?
     [[nodiscard]] long get_retry_after_sec();           // return native::curl_off_t ?
 
-    engine::ev::ThreadControl& get_thread_control();
-
     // this deprecated function use set_mimepost()    
-    [[deprecated("Use set_mimepost())")]] [[noreturn]]
-    void set_http_post(void*);
+    [[deprecated("Use set_mimepost())")]]
+    void set_http_post(std::unique_ptr<form> form_ptr);
     // this deprecated function
     [[deprecated("Serves no purpose anymore")]] [[noreturn]]
     void set_random_file(std::string_view); // CURLOPT_RANDOM_FILE
     // this deprecated function
-    [[deprecated("Serves no purpose anymore")]] [[noreturn]]
-    void set_egd_socket(std::string_view);  // CURLOPT_EGDSOCKET
+    [[deprecated("Serves no purpose anymore")]]
+    void set_egd_socket(std::string_view sv);  // CURLOPT_EGDSOCKET
     // this deprecated function
     [[deprecated("Use set_redir_protocols_str()")]] [[noreturn]]
     void set_redir_protocols(long); // CURLOPT_REDIR_PROTOCOLS
     [[deprecated("Use set_protocols_str()")]] [[noreturn]]
     void set_protocols(long); // CURLOPT_PROTOCOLS
     // this deprecated function
-    [[deprecated("Use get_scheme()")]] [[noreturn]]
-    void get_protocol(); // CURLINFO_PROTOCOL    
-
-#if LIBCURL_VERSION_NUM <= 0x074700 
-    #include <curl-ev/form.hpp>
-    std::shared_ptr<form> form_;
-
-    void set_http_post(std::unique_ptr<form> form_ptr>);
-    void set_egd_socket(std::string_view);
-
-    long get_protocol();
-#endif
+    [[deprecated("Use get_scheme()")]] 
+    long get_protocol(); // CURLINFO_PROTOCOL
     
 private:
 // private static
@@ -506,13 +490,13 @@ private:
     void mark_start_performing();
     void mark_open_socket();
 
-    void cancel(size_t request_num);    
+    void cancel(size_t request_num);
 
 protected:
     native::CURL*                   easy_handle_;
     std::shared_ptr<mime>           mime_;
     multi*                          multi_handle_;
-    url                             url_;                            
+    url                             url_;
     
     size_t                          request_counter_        { 0 };
     size_t                          retries_counter_        { 0 };
@@ -523,8 +507,9 @@ protected:
 
     std::string*                    sink_                   { nullptr };
     std::string                     orig_url_str_           {};
-    std::string                     post_fields_            {};                    
+    std::string                     post_fields_            {};
 
+    std::shared_ptr<form>           form_                   { nullptr };
     std::shared_ptr<share>          share_                  { nullptr };
     std::shared_ptr<std::istream>   source_                 { nullptr };
     std::shared_ptr<string_list>    headers_                { nullptr };

@@ -14,7 +14,6 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace curl {
-#if LIBCURL_VERSION_NUM <= 0x074700
 
 form::form() { impl::CurlGlobal::Init(); }
 
@@ -221,7 +220,7 @@ void form::add_file_content(const std::string& key, const std::string& file_path
     throw_error(ec, "add_file_content");
 }
 
-void form::add_file_content([[maybe_unused]] const std::string& key, [[maybe_unused]] const std::string& file_path, [[maybe_unused]] std::error_code& ec) {
+void form::add_file_content(const std::string& key, const std::string& file_path, std::error_code& ec) {
     ec = std::error_code{static_cast<errc::FormErrorCode>(native::curl_formadd(
         &post_,
         &last_,
@@ -257,7 +256,6 @@ void form::add_file_content(const std::string& key, const std::string& file_path
     ))};
 }
 
-#endif // LIBCURL_VERSION_NUM
 }  // namespace curl
 
 USERVER_NAMESPACE_END

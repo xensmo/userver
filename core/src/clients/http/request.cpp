@@ -7,12 +7,9 @@
 #include <string_view>
 #include <system_error>
 
-#if LIBCURL_VERSION_NUM <= 0x074700
-#include <userver/clients/http/form.hpp>
-#endif
-
 #include <userver/clients/http/connect_to.hpp>
 #include <userver/clients/http/error.hpp>
+#include <userver/clients/http/form.hpp>
 #include <userver/clients/http/mime.hpp>
 #include <userver/clients/http/response_future.hpp>
 #include <userver/clients/http/streamed_response.hpp>
@@ -44,20 +41,20 @@ constexpr std::string_view kHeaderExpect = "Expect";
 
 std::string ToString(HttpMethod method) { return std::string{ToStringView(method)}; }
 
-curl::detail::http_version_t ToNative(HttpVersion version) {
+curl::easy::http_version_t ToNative(HttpVersion version) {
     switch (version) {
         case HttpVersion::kDefault:
-            return curl::detail::http_version_t::http_version_none;
+            return curl::easy::http_version_t::http_version_none;
         case HttpVersion::k10:
-            return curl::detail::http_version_t::http_version_1_0;
+            return curl::easy::http_version_t::http_version_1_0;
         case HttpVersion::k11:
-            return curl::detail::http_version_t::http_version_1_1;
+            return curl::easy::http_version_t::http_version_1_1;
         case HttpVersion::k2:
-            return curl::detail::http_version_t::http_version_2_0;
+            return curl::easy::http_version_t::http_version_2_0;
         case HttpVersion::k2Tls:
-            return curl::detail::http_version_t::http_version_2tls;
+            return curl::easy::http_version_t::http_version_2tls;
         case HttpVersion::k2PriorKnowledge:
-            return curl::detail::http_version_t::http_version_2_prior_knowledge;
+            return curl::easy::http_version_t::http_version_2_prior_knowledge;
     }
 
     UINVARIANT(false, "Unexpected HTTP version");
@@ -76,49 +73,49 @@ constexpr utils::TrivialBiMap kAuthTypeMap = [](auto selector) {
         .Case("any_safe", ProxyAuthType::kAnySafe);
 };
 
-curl::detail::httpauth_t HttpAuthTypeToNative(HttpAuthType value) {
+curl::easy::httpauth_t HttpAuthTypeToNative(HttpAuthType value) {
     switch (value) {
         case HttpAuthType::kBasic:
-            return curl::detail::httpauth_t::auth_basic;
+            return curl::easy::httpauth_t::auth_basic;
         case HttpAuthType::kDigest:
-            return curl::detail::httpauth_t::auth_digest;
+            return curl::easy::httpauth_t::auth_digest;
         case HttpAuthType::kDigestIE:
-            return curl::detail::httpauth_t::auth_digest_ie;
+            return curl::easy::httpauth_t::auth_digest_ie;
         case HttpAuthType::kNegotiate:
-            return curl::detail::httpauth_t::auth_negotiate;
+            return curl::easy::httpauth_t::auth_negotiate;
         case HttpAuthType::kNtlm:
-            return curl::detail::httpauth_t::auth_ntlm;
+            return curl::easy::httpauth_t::auth_ntlm;
         case HttpAuthType::kNtlmWb:
-            return curl::detail::httpauth_t::auth_ntlm_wb;
+            return curl::easy::httpauth_t::auth_ntlm_wb;
         case HttpAuthType::kAny:
-            return curl::detail::httpauth_t::auth_any;
+            return curl::easy::httpauth_t::auth_any;
         case HttpAuthType::kAnySafe:
-            return curl::detail::httpauth_t::auth_any_safe;
+            return curl::easy::httpauth_t::auth_any_safe;
     }
 
     UINVARIANT(false, "Unexpected http auth type");
 }
 
-curl::detail::proxyauth_t ProxyAuthTypeToNative(ProxyAuthType value) {
+curl::easy::proxyauth_t ProxyAuthTypeToNative(ProxyAuthType value) {
     switch (value) {
         case ProxyAuthType::kBasic:
-            return curl::detail::proxyauth_t::proxy_auth_basic;
+            return curl::easy::proxyauth_t::proxy_auth_basic;
         case ProxyAuthType::kDigest:
-            return curl::detail::proxyauth_t::proxy_auth_digest;
+            return curl::easy::proxyauth_t::proxy_auth_digest;
         case ProxyAuthType::kDigestIE:
-            return curl::detail::proxyauth_t::proxy_auth_digest_ie;
+            return curl::easy::proxyauth_t::proxy_auth_digest_ie;
         case ProxyAuthType::kBearer:
-            return curl::detail::proxyauth_t::proxy_auth_bearer;
+            return curl::easy::proxyauth_t::proxy_auth_bearer;
         case ProxyAuthType::kNegotiate:
-            return curl::detail::proxyauth_t::proxy_auth_negotiate;
+            return curl::easy::proxyauth_t::proxy_auth_negotiate;
         case ProxyAuthType::kNtlm:
-            return curl::detail::proxyauth_t::proxy_auth_ntlm;
+            return curl::easy::proxyauth_t::proxy_auth_ntlm;
         case ProxyAuthType::kNtlmWb:
-            return curl::detail::proxyauth_t::proxy_auth_ntlm_wb;
+            return curl::easy::proxyauth_t::proxy_auth_ntlm_wb;
         case ProxyAuthType::kAny:
-            return curl::detail::proxyauth_t::proxy_auth_any;
+            return curl::easy::proxyauth_t::proxy_auth_any;
         case ProxyAuthType::kAnySafe:
-            return curl::detail::proxyauth_t::proxy_auth_anysafe;
+            return curl::easy::proxyauth_t::proxy_auth_anysafe;
     }
 
     UINVARIANT(false, "Unexpected proxy auth type");
@@ -327,13 +324,13 @@ Request& Request::unix_socket_path(const std::string& path) & {
 Request Request::unix_socket_path(const std::string& path) && { return std::move(this->unix_socket_path(path)); }
 
 Request& Request::use_ipv4() & {
-    pimpl_->easy().set_ip_resolve(curl::detail::ip_resolve_t::ip_resolve_v4);
+    pimpl_->easy().set_ip_resolve(curl::easy::ip_resolve_t::ip_resolve_v4);
     return *this;
 }
 Request Request::use_ipv4() && { return std::move(this->use_ipv4()); }
 
 Request& Request::use_ipv6() & {
-    pimpl_->easy().set_ip_resolve(curl::detail::ip_resolve_t::ip_resolve_v6);
+    pimpl_->easy().set_ip_resolve(curl::easy::ip_resolve_t::ip_resolve_v6);
     return *this;
 }
 Request Request::use_ipv6() && { return std::move(this->use_ipv6()); }
@@ -345,30 +342,27 @@ Request& Request::connect_to(const ConnectTo& connect_to) & {
 Request Request::connect_to(const ConnectTo& connect_to) && { return std::move(this->connect_to(connect_to)); }
 
 Request& Request::data(std::string data) & {
-    if (!data.empty()) pimpl_->easy().add_header(kHeaderExpect, "", curl::detail::empty_header_action::kDoNotSend);
+    if (!data.empty()) pimpl_->easy().add_header(kHeaderExpect, "", curl::easy::EmptyHeaderAction::kDoNotSend);
     pimpl_->easy().set_post_fields(std::move(data));
     return *this;
 }
 Request Request::data(std::string data) && { return std::move(this->data(std::move(data))); }
 
-#if LIBCURL_VERSION_NUM <= 0x074700
 Request& Request::form(Form&& form) & {
     pimpl_->easy().set_http_post(std::move(form).GetNative());
-    pimpl_->easy().add_header(kHeaderExpect, "", curl::detail::empty_header_action::kDoNotSend);
+    pimpl_->easy().add_header(kHeaderExpect, "", curl::easy::EmptyHeaderAction::kDoNotSend);
    return *this;
 }
 
 Request Request::form(Form&& form) && { return std::move(this->form(std::move(form))); }
-#endif
 
-////////////////////////////////////////////////////////////////////////////////////////////////!
-/* Request& Request::mime(Mime&& mime) & {
-    pimpl_->easy().set_mimepost(std::move(mime).get_native());
-    pimpl_->easy().add_header(kHeaderExpect, "", curl::detail::empty_header_action::kDoNotSend);
+Request& Request::mime(Mime&& mime) & {
+    pimpl_->easy().set_mimepost(std::move(mime).GetNative());
+    pimpl_->easy().add_header(kHeaderExpect, "", curl::easy::EmptyHeaderAction::kDoNotSend);
     return *this;
 }
 
-Request Request::mime(Mime&& mime) && { return std::move(this->mime(std::move(mime))); }; */
+Request Request::mime(Mime&& mime) && { return std::move(this->mime(std::move(mime))); };
 
 Request& Request::headers(const Headers& headers) & {
     SetHeaders(pimpl_->easy(), headers);
@@ -503,16 +497,13 @@ Request Request::get(std::string url) && { return std::move(this->get(std::move(
 Request& Request::head(std::string url) & { return head().url(std::move(url)); }
 Request Request::head(std::string url) && { return std::move(this->head(std::move(url))); }
 
-#if LIBCURL_VERSION_NUM <= 0x074700
 Request& Request::post(std::string url, Form&& form) & { return this->url(std::move(url)).form(std::move(form)); }
 Request Request::post(std::string url, Form&& form) && {
     return std::move(this->post(std::move(url), std::move(form)));
 }
-#endif 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////!
-//Request& Request::post(std::string url, Mime&& mime) & { return this->url(std::move(url)).mime(std::move(mime)); }
-//Request Request::post(std::string url, Mime&& mime) && { return std::move(this->post(std::move(url), std::move(mime))); }
+Request& Request::post(std::string url, Mime&& mime) & { return this->url(std::move(url)).mime(std::move(mime)); }
+Request Request::post(std::string url, Mime&& mime) && { return std::move(this->post(std::move(url), std::move(mime))); }
 
 Request& Request::post(std::string url, std::string data) & {
     return this->url(std::move(url)).data(std::move(data)).post();

@@ -18,7 +18,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace curl {
 
-#if LIBCURL_VERSION_NUM <= 0x074700  
 class form {
 public:
     form();
@@ -62,7 +61,6 @@ private:
     native::curl_httppost* last_{nullptr};
     std::vector<std::shared_ptr<std::string>> buffers_;
 };
-#endif // LIBCURL_VERSION_NUM
 
 }  // namespace curl
 
