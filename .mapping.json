@@ -1572,6 +1572,7 @@
   "core/src/fs/read.cpp":"taxi/uservices/userver/core/src/fs/read.cpp",
   "core/src/fs/read_test.cpp":"taxi/uservices/userver/core/src/fs/read_test.cpp",
   "core/src/fs/temp_file.cpp":"taxi/uservices/userver/core/src/fs/temp_file.cpp",
+  "core/src/fs/temp_file_test.cpp":"taxi/uservices/userver/core/src/fs/temp_file_test.cpp",
   "core/src/fs/write.cpp":"taxi/uservices/userver/core/src/fs/write.cpp",
   "core/src/fs/write_test.cpp":"taxi/uservices/userver/core/src/fs/write_test.cpp",
   "core/src/logging/component.cpp":"taxi/uservices/userver/core/src/logging/component.cpp",
