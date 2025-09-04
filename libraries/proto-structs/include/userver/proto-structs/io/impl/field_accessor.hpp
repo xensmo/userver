@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -13,7 +14,7 @@ class Message;
 
 USERVER_NAMESPACE_BEGIN
 
-namespace proto_structs::impl {
+namespace proto_structs::io::impl {
 
 class FieldAccessor {
 public:
@@ -23,11 +24,12 @@ public:
     const ::google::protobuf::Message& GetMessage() const noexcept { return message_; }
     int GetFieldNumber() const noexcept { return field_number_; }
 
-    const ::google::protobuf::FieldDescriptor* GetFieldDescriptor() const noexcept;
+    const ::google::protobuf::FieldDescriptor& GetFieldDescriptor() const noexcept;
 
 private:
     const ::google::protobuf::Message& message_;
     int field_number_;
+    mutable const ::google::protobuf::FieldDescriptor* field_desc_ = nullptr;
 };
 
 template <proto_structs::traits::ProtoMessage TMessage, typename TReturn>
@@ -100,6 +102,31 @@ private:
     SetFunc set_func_;
 };
 
+template <proto_structs::traits::ProtoMessage TMessage>
+class FieldSetterString : public FieldSetterWithArg<TMessage, const std::string&> {
+public:
+    using Base = FieldSetterWithArg<TMessage, const std::string&>;
+    using typename Base::ClearFunc;
+    using typename Base::Message;
+    using typename Base::SetFunc;
+    using ArgType = std::string&&;
+    using SetFuncForRvalue = void (Message::*)(std::string&&);
+
+    FieldSetterString(
+        Message& message,
+        int field_number,
+        SetFunc set_func,
+        SetFuncForRvalue set_func_for_rvalue,
+        ClearFunc clear_func
+    )
+        : Base(message, field_number, set_func, clear_func), set_func_for_rvalue_(set_func_for_rvalue) {}
+
+    void SetValue(std::string&& value) const { (Base::GetMessage().*set_func_for_rvalue_)(std::move(value)); }
+
+private:
+    SetFuncForRvalue set_func_for_rvalue_;
+};
+
 template <proto_structs::traits::ProtoMessage TMessage, typename TReturn>
 class FieldSetterWithMutable : public FieldSetter<TMessage> {
 public:
@@ -112,7 +139,7 @@ public:
     FieldSetterWithMutable(Message& message, int field_number, GetMutableFunc get_mutable_func, ClearFunc clear_func)
         : Base(message, field_number, clear_func), get_mutable_func_(get_mutable_func) {}
 
-    ReturnType GetMutableValue() const { (Base::GetMessage().*get_mutable_func_)(); }
+    ReturnType GetMutableValue() const { return (Base::GetMessage().*get_mutable_func_)(); }
 
 private:
     GetMutableFunc get_mutable_func_;
@@ -128,7 +155,7 @@ auto CreateFieldGetter(
     const TMessage& message,
     int field_number,
     TReturn (TMessage::*get_func)() const,
-    bool (TMessage::*has_func)() const noexcept
+    bool (TMessage::*has_func)() const
 ) {
     return FieldGetterWithPresence<TMessage, TReturn>(message, field_number, get_func, has_func);
 }
@@ -141,6 +168,17 @@ auto CreateFieldSetter(
     void (TMessage::*clear_func)()
 ) noexcept {
     return FieldSetterWithArg<TMessage, TArg>(message, field_number, set_func, clear_func);
+}
+
+template <proto_structs::traits::ProtoMessage TMessage>
+auto CreateFieldSetter(
+    TMessage& message,
+    int field_number,
+    void (TMessage::*set_func)(const std::string&),
+    void (TMessage::*set_func_for_rvalue)(std::string&&),
+    void (TMessage::*clear_func)()
+) noexcept {
+    return FieldSetterString<TMessage>(message, field_number, set_func, set_func_for_rvalue, clear_func);
 }
 
 template <proto_structs::traits::ProtoMessage TMessage, typename TReturn>
@@ -156,16 +194,16 @@ auto CreateFieldSetter(
 namespace traits {
 
 template <typename T>
-concept FieldGetter = InheritsFromInstantiation<proto_structs::impl::FieldGetter, T>;
+concept FieldGetter = proto_structs::impl::traits::InheritsFromInstantiation<FieldGetter, T>;
 
 template <typename T>
-concept FieldGetterWithPresence = InheritsFromInstantiation<proto_structs::impl::FieldGetterWithPresence, T>;
+concept FieldGetterWithPresence = proto_structs::impl::traits::InheritsFromInstantiation<FieldGetterWithPresence, T>;
 
 template <typename T>
-concept FieldSetter = InheritsFromInstantiation<proto_structs::impl::FieldSetter, T>;
+concept FieldSetter = proto_structs::impl::traits::InheritsFromInstantiation<FieldSetter, T>;
 
 }  // namespace traits
 
-}  // namespace proto_structs::impl
+}  // namespace proto_structs::io::impl
 
 USERVER_NAMESPACE_END
