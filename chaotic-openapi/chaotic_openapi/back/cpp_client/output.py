@@ -207,6 +207,8 @@ def external_libraries(schemas_dir: str) -> External:
             if 'x-usrv-cpp-type' in data:
                 types.add(data['x-usrv-cpp-type'])
 
+            if data.get('x-taxi-middlewares', {}).get('api-4.0') is True:
+                libraries.append('passenger-authorizer-backend')
             if data.get('x-taxi-middlewares', {}).get('eats') == 'v1':
                 libraries.append('eats-authproxy-backend')
             if data.get('x-taxi-middlewares', {}).get('bank-authproxy') is True:
