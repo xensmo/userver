@@ -1,16 +1,12 @@
-#include <ugrpc/impl/protobuf_utils.hpp>
-
-#include <exception>
-#include <memory>
-#include <unordered_set>
+#include <userver/ugrpc/protobuf_logging.hpp>
 
 #include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <google/protobuf/text_format.h>
-#include <grpcpp/support/config.h>
 #include <boost/container/small_vector.hpp>
 
 #include <userver/compiler/thread_local.hpp>
+#include <userver/ugrpc/status_codes.hpp>
+#include <userver/ugrpc/status_utils.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/numeric_cast.hpp>
 
@@ -189,31 +185,89 @@ compiler::ThreadLocal kDebugStringPrinter = [] { return DebugStringPrinter{}; };
 
 }  // namespace
 
+void Print(const google::protobuf::Message& message, google::protobuf::io::ZeroCopyOutputStream& output_stream) {
+    auto printer = kDebugStringPrinter.Use();
+    printer->RegisterDebugRedactPrinters(*message.GetDescriptor());
+    printer->Print(message, output_stream);
+}
+
+}  // namespace ugrpc::impl
+
+namespace ugrpc {
+
 std::string ToLimitedDebugString(const google::protobuf::Message& message, std::size_t limit) {
     boost::container::small_vector<char, 1024> output_buffer{limit, boost::container::default_init};
     google::protobuf::io::ArrayOutputStream output_stream{output_buffer.data(), utils::numeric_cast<int>(limit)};
 
-    auto printer = kDebugStringPrinter.Use();
+    auto printer = impl::kDebugStringPrinter.Use();
     printer->RegisterDebugRedactPrinters(*message.GetDescriptor());
 
 #if defined(ARCADIA_ROOT) || GOOGLE_PROTOBUF_VERSION >= 6031002
     // Throw `LimitReachedException` on limit reached to stop printing immediately, otherwise TextFormat will continue
     // to walk the whole message and apply noop printing.
-    LimitingOutputStream limiting_output_stream{output_stream};
+    impl::LimitingOutputStream limiting_output_stream{output_stream};
     try {
-        printer->Print(message, limiting_output_stream);
-    } catch (const LimitingOutputStream::LimitReachedException& /*ex*/) {
+        impl::Print(message, limiting_output_stream);
+    } catch (const impl::LimitingOutputStream::LimitReachedException& /*ex*/) {
         // Buffer limit has been reached.
     }
 #else
     // For old protobuf, we cannot apply hard limits when printing messages, because its TextFormat is not
     // exception-safe. https://github.com/protocolbuffers/protobuf/commit/be875d0aaf37dbe6948717ea621278e75e89c9c7
-    printer->Print(message, output_stream);
+    impl::Print(message, output_stream);
 #endif
-
-    return std::string{output_buffer.data(), static_cast<std::size_t>(output_stream.ByteCount())};
+    std::string returned_str = std::string{output_buffer.data(), static_cast<std::size_t>(output_stream.ByteCount())};
+    if (returned_str.empty() && limit >= 7) return "<EMPTY>";
+    return returned_str;
 }
 
-}  // namespace ugrpc::impl
+std::string ToUnlimitedDebugString(const google::protobuf::Message& message) {
+    grpc::string result;
+    google::protobuf::io::StringOutputStream output_stream(&result);
+    impl::Print(message, output_stream);
+    std::string returned_str = std::string(result);
+    if (returned_str.empty()) return "<EMPTY>";
+    return returned_str;
+}
+
+std::string ToLimitedDebugString(const grpc::Status& status, std::size_t max_size) {
+    if (status.ok()) {
+        return "OK";
+    }
+
+    const auto gstatus = ugrpc::ToGoogleRpcStatus(status);
+    if (gstatus.has_value()) {
+        const std::string details_string = ugrpc::ToLimitedDebugString(*gstatus, max_size);
+        return fmt::format(
+            "code: {}, error message: {}\nerror details:\n{}",
+            ugrpc::ToString(status.error_code()),
+            status.error_message(),
+            details_string
+        );
+    } else {
+        return fmt::format("code: {}, error message: {}", ugrpc::ToString(status.error_code()), status.error_message());
+    }
+}
+
+std::string ToUnlimitedDebugString(const grpc::Status& status) {
+    if (status.ok()) {
+        return "OK";
+    }
+
+    const auto gstatus = ugrpc::ToGoogleRpcStatus(status);
+    if (gstatus.has_value()) {
+        const std::string details_string = ugrpc::ToUnlimitedDebugString(*gstatus);
+        return fmt::format(
+            "code: {}, error message: {}\nerror details:\n{}",
+            ugrpc::ToString(status.error_code()),
+            status.error_message(),
+            details_string
+        );
+    } else {
+        return fmt::format("code: {}, error message: {}", ugrpc::ToString(status.error_code()), status.error_message());
+    }
+}
+
+}  // namespace ugrpc
 
 USERVER_NAMESPACE_END
