@@ -11,10 +11,10 @@ That's why there are userver distro package maintainers! That's the community ro
 userver buildable and working in a specific environment.
 
 A maintainer should (where possible):
-* keep build dependencies list in @ref scripts/docs/en/deps/ for the distro up-to-date
-* watch for new distro version releases and create new dependency files in @ref scripts/docs/en/deps soon after release
+* keep build dependencies list in `scripts/docs/en/deps/` for the distro up-to-date
+* watch for new distro version releases and create new dependency files in `scripts/docs/en/deps` soon after release
 * cleanup EOL (end of life) distro versions dependency files
-* maintain CI setup in @ref .github/workflows in "green" state
+* maintain CI setup in `.github/workflows` in "green" state
 
 The maintainer is a community role which is not paid, but is a honorable one. You will get a "distro maintainer" label
 in official userver telegram channels.
