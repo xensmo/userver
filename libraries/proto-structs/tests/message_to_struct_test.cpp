@@ -496,6 +496,9 @@ TEST(MessageToStruct, Indirect) {
         (*msg.mutable_f4())[1].set_f1(5);
         (*msg.mutable_f4())[2].set_f1(6);
         msg.mutable_f5()->set_f1(7);
+        msg.set_f7(1001);
+        msg.add_f8(messages::TEST_ENUM_UNSPECIFIED);
+        (*msg.mutable_f9())["3"].set_f1(8);
 
         auto obj = MessageToStruct<structs::Indirect>(msg);
 
@@ -510,13 +513,17 @@ TEST(MessageToStruct, Indirect) {
 
         msg.mutable_f1()->set_f1(10);
         msg.mutable_f3()->Add()->set_f1(11);
+        msg.set_f6("hello");
         obj.f1 = {.f1 = 1001};
         obj.f4 = {{10, structs::Simple{.f1 = 1002}}};
+        obj.test_oneof.Set<0>(structs::Simple{.f1 = 30});
 
         ASSERT_NO_THROW(MessageToStruct(msg, obj));
         CheckIndirectEqual(obj, msg);
 
         msg.mutable_f5()->set_f1(12);
+        msg.add_f8(messages::TEST_ENUM_VALUE2);
+        msg.add_f8(messages::TEST_ENUM_VALUE1);
         obj.test_oneof.Set<0>(structs::Simple{.f1 = 1003});
 
         ASSERT_NO_THROW(MessageToStruct(msg, obj));

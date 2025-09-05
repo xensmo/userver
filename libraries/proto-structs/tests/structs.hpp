@@ -1,10 +1,12 @@
 #pragma once
 
+#include <cstdint>
 #include <userver/proto-structs/io/fwd.hpp>
 #include <userver/proto-structs/io/supported_types.hpp>
 #include <userver/proto-structs/type_mapping.hpp>
 
 #include "struct_simple.hpp"
+#include "userver/utils/box.hpp"
 
 namespace messages {
 class ConversionFailure;
@@ -106,13 +108,20 @@ struct Oneof {
 
 struct Indirect {
     using ProtobufMessage = messages::Indirect;
-    using OneofType = ups::Oneof<USERVER_NAMESPACE::utils::Box<Simple>>;
 
-    USERVER_NAMESPACE::utils::Box<Simple> f1 = {};
-    std::optional<USERVER_NAMESPACE::utils::Box<std::chrono::nanoseconds>> f2 = {};
-    std::vector<USERVER_NAMESPACE::utils::Box<Simple>> f3 = {};
-    std::map<int32_t, USERVER_NAMESPACE::utils::Box<Simple>> f4 = {};
+    template <typename T>
+    using Box = USERVER_NAMESPACE::utils::Box<T>;
+
+    using OneofType = ups::Oneof<Box<Simple>, Box<std::string>>;
+
+    Box<Simple> f1 = {};
+    std::optional<Box<std::chrono::nanoseconds>> f2 = {};
+    std::vector<Box<Simple>> f3 = {};
+    std::map<int32_t, Box<Simple>> f4 = {};
     OneofType test_oneof = {};
+    Box<int32_t> f7 = {};
+    Box<std::vector<Box<TestEnum>>> f8 = {};
+    Box<std::map<std::string, Box<Simple>>> f9 = {};
 };
 
 struct Strong {

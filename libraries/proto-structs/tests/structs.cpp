@@ -4,6 +4,7 @@
 
 #include <google/protobuf/util/time_util.h>
 
+#include <cstdint>
 #include <userver/proto-structs/io/impl/read.hpp>
 #include <userver/proto-structs/io/impl/write.hpp>
 #include <userver/proto-structs/io/supported_types_conv.hpp>
@@ -489,26 +490,38 @@ void WriteProtoStruct(ups::io::WriteContext& ctx, Oneof&& obj, messages::Oneof& 
 
 Indirect ReadProtoStruct(ups::io::ReadContext& ctx, ups::io::To<Indirect>, const messages::Indirect& msg) {
     return {
-        .f1 = ups::io::impl::ReadField<USERVER_NAMESPACE::utils::Box<Simple>>(
+        .f1 = ups::io::impl::ReadField<Indirect::Box<Simple>>(
             ctx, ups::io::impl::CreateFieldGetter(msg, messages::Indirect::kF1FieldNumber, &messages::Indirect::f1)
         ),
-        .f2 = ups::io::impl::ReadField<std::optional<USERVER_NAMESPACE::utils::Box<std::chrono::nanoseconds>>>(
+        .f2 = ups::io::impl::ReadField<std::optional<Indirect::Box<std::chrono::nanoseconds>>>(
             ctx,
             ups::io::impl::CreateFieldGetter(
                 msg, messages::Indirect::kF2FieldNumber, &messages::Indirect::f2, &messages::Indirect::has_f2
             )
         ),
-        .f3 = ups::io::impl::ReadField<std::vector<USERVER_NAMESPACE::utils::Box<Simple>>>(
+        .f3 = ups::io::impl::ReadField<std::vector<Indirect::Box<Simple>>>(
             ctx, ups::io::impl::CreateFieldGetter(msg, messages::Indirect::kF3FieldNumber, &messages::Indirect::f3)
         ),
-        .f4 = ups::io::impl::ReadField<std::map<int32_t, USERVER_NAMESPACE::utils::Box<Simple>>>(
+        .f4 = ups::io::impl::ReadField<std::map<int32_t, Indirect::Box<Simple>>>(
             ctx, ups::io::impl::CreateFieldGetter(msg, messages::Indirect::kF4FieldNumber, &messages::Indirect::f4)
         ),
         .test_oneof = ups::io::impl::ReadField<Indirect::OneofType>(
             ctx,
             ups::io::impl::CreateFieldGetter(
                 msg, messages::Indirect::kF5FieldNumber, &messages::Indirect::f5, &messages::Indirect::has_f5
+            ),
+            ups::io::impl::CreateFieldGetter(
+                msg, messages::Indirect::kF6FieldNumber, &messages::Indirect::f6, &messages::Indirect::has_f6
             )
+        ),
+        .f7 = ups::io::impl::ReadField<Indirect::Box<int32_t>>(
+            ctx, ups::io::impl::CreateFieldGetter(msg, messages::Indirect::kF7FieldNumber, &messages::Indirect::f7)
+        ),
+        .f8 = ups::io::impl::ReadField<Indirect::Box<std::vector<Indirect::Box<TestEnum>>>>(
+            ctx, ups::io::impl::CreateFieldGetter(msg, messages::Indirect::kF8FieldNumber, &messages::Indirect::f8)
+        ),
+        .f9 = ups::io::impl::ReadField<Indirect::Box<std::map<std::string, Indirect::Box<Simple>>>>(
+            ctx, ups::io::impl::CreateFieldGetter(msg, messages::Indirect::kF9FieldNumber, &messages::Indirect::f9)
         )};
 }
 
@@ -547,6 +560,34 @@ void WriteIndirectStruct(ups::io::WriteContext& ctx, T&& obj, messages::Indirect
         std::forward<T>(obj).test_oneof,
         ups::io::impl::CreateFieldSetter(
             msg, messages::Indirect::kF5FieldNumber, &messages::Indirect::mutable_f5, &messages::Indirect::clear_f5
+        ),
+        ups::io::impl::CreateFieldSetter(
+            msg,
+            messages::Indirect::kF6FieldNumber,
+            &messages::Indirect::set_f6<const std::string&>,
+            &messages::Indirect::set_f6<std::string>,
+            &messages::Indirect::clear_f6
+        )
+    );
+    ups::io::impl::WriteField(
+        ctx,
+        std::forward<T>(obj).f7,
+        ups::io::impl::CreateFieldSetter(
+            msg, messages::Indirect::kF7FieldNumber, &messages::Indirect::set_f7, &messages::Indirect::clear_f7
+        )
+    );
+    ups::io::impl::WriteField(
+        ctx,
+        std::forward<T>(obj).f8,
+        ups::io::impl::CreateFieldSetter(
+            msg, messages::Indirect::kF8FieldNumber, &messages::Indirect::mutable_f8, &messages::Indirect::clear_f8
+        )
+    );
+    ups::io::impl::WriteField(
+        ctx,
+        std::forward<T>(obj).f9,
+        ups::io::impl::CreateFieldSetter(
+            msg, messages::Indirect::kF9FieldNumber, &messages::Indirect::mutable_f9, &messages::Indirect::clear_f9
         )
     );
 }
@@ -898,6 +939,27 @@ void CheckIndirectEqual(const Indirect& obj, const messages::Indirect& msg) {
         CheckSimpleEqual(*obj.test_oneof.Get<0>(), msg.f5());
     } else {
         EXPECT_FALSE(msg.has_f5());
+    }
+
+    if (obj.test_oneof.Contains(1)) {
+        EXPECT_TRUE(msg.has_f6());
+        EXPECT_EQ(*obj.test_oneof.Get<1>(), msg.f6());
+    } else {
+        EXPECT_FALSE(msg.has_f6());
+    }
+
+    EXPECT_EQ(*obj.f7, msg.f7());
+    ASSERT_EQ((*obj.f8).size(), static_cast<std::size_t>(msg.f8().size()));
+
+    for (int i = 0; i < msg.f8().size(); ++i) {
+        EXPECT_EQ(*((*obj.f8)[i]), static_cast<TestEnum>(msg.f8()[i]));
+    }
+
+    ASSERT_EQ((*obj.f9).size(), static_cast<std::size_t>(msg.f9().size()));
+
+    for (const auto& [key, value] : msg.f9()) {
+        ASSERT_EQ((*obj.f9).count(key), std::size_t{1});
+        CheckSimpleEqual(*((*obj.f9).at(key)), value);
     }
 }
 

@@ -10,6 +10,7 @@
 
 #include "messages.pb.h"
 #include "structs.hpp"
+#include "taxi/uservices/userver/libraries/proto-structs/tests/struct_simple.hpp"
 
 USERVER_NAMESPACE_BEGIN
 
@@ -384,6 +385,9 @@ TEST(StructToMessage, Indirect) {
         obj.f3 = {structs::Simple{.f1 = 3}, structs::Simple{.f1 = 4}};
         obj.f4 = {{1, structs::Simple{.f1 = 5}}, {2, structs::Simple{.f1 = 6}}};
         obj.test_oneof.Set<0>(structs::Simple{.f1 = 7});
+        obj.f7 = 8;
+        obj.f8 = {structs::TestEnum::kValue1, structs::TestEnum::kValue2};
+        obj.f9 = {{"hello", structs::Simple{.f1 = 9}}, {"", structs::Simple{.f1 = 10}}};
 
         auto msg = StructToMessage(obj);
         CheckIndirectEqual(obj, msg);
@@ -398,13 +402,16 @@ TEST(StructToMessage, Indirect) {
 
         obj.f1 = {.f1 = 1};
         obj.f4 = {{1, structs::Simple{.f1 = 10}}};
+        obj.test_oneof.Set<1>("test");
         msg.mutable_f1()->set_f1(1001);
         msg.mutable_f3()->Add()->set_f1(1002);
+        msg.mutable_f5()->set_f1(1003);
 
         ASSERT_NO_THROW(StructToMessage(obj, msg));
         CheckIndirectEqual(obj, msg);
 
         obj.test_oneof.Set<0>(structs::Simple{.f1 = 11});
+        msg.add_f8(messages::TEST_ENUM_VALUE1);
 
         ASSERT_NO_THROW(StructToMessage(obj, msg));
         CheckIndirectEqual(obj, msg);

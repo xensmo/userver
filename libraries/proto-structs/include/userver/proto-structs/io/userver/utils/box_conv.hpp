@@ -26,6 +26,32 @@ void WriteProtoStruct(WriteContext& ctx, utils::Box<T>&& obj, TMessage& msg) {
     WriteProtoStruct(ctx, std::move(*obj), msg);
 }
 
+template <typename TStructField, typename TMessageField>
+utils::Box<TStructField>
+ReadProtoField(ReadContext& ctx, To<utils::Box<TStructField>>, int field_number, const TMessageField& message_field) {
+    return {ctx.ReadField<TStructField>(field_number, message_field)};
+}
+
+template <typename TStructField, typename TMessageField>
+void WriteProtoField(
+    WriteContext& ctx,
+    const utils::Box<TStructField>& struct_field,
+    int field_number,
+    TMessageField& message_field
+) {
+    ctx.WriteField(*struct_field, field_number, message_field);
+}
+
+template <typename TStructField, typename TMessageField>
+void WriteProtoField(
+    WriteContext& ctx,
+    utils::Box<TStructField>&& struct_field,
+    int field_number,
+    TMessageField& message_field
+) {
+    ctx.WriteField(std::move(*struct_field), field_number, message_field);
+}
+
 }  // namespace proto_structs::io
 
 USERVER_NAMESPACE_END

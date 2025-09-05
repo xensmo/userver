@@ -96,7 +96,12 @@ message Indirect {
 
   oneof test_oneof {
     Simple f5 = 5;
+    string f6 = 6;
   }
+
+  int32 f7 = 7;
+  repeated TestEnum f8 = 8;
+  map<string, Simple> f9 = 9;
 }
 
 message Strong {
