@@ -368,6 +368,10 @@ endif()
 _userver_add_target_gen_dynamic_configs_docs()
 
 _userver_print_features_list()
+if(CPM_PACKAGES)
+    include(DownloadUsingCPM)
+    _userver_print_cpm_packages()
+endif()
 
 if(USERVER_INSTALL)
     include(cmake/UserverPack.cmake)
