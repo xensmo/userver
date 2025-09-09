@@ -151,6 +151,16 @@ class Translator:
                 ),
             )
 
+        match = re.fullmatch('/components/responses/([-a-zA-Z_0-9]*)/headers/([^/]*)/schema', name)
+        if match:
+            return '{}::Response{}Header{}'.format(
+                self._spec.cpp_namespace,
+                match.group(1),
+                cpp_names.camel_case(
+                    cpp_names.cpp_identifier(match.group(2)),
+                ),
+            )
+
         match = re.fullmatch('/paths/\\[([^\\]]*)\\]/([a-zA-Z]*)/parameters/([0-9]*)(/schema)?', name)
         if match:
             return '{}::{}::{}::Parameter{}'.format(
