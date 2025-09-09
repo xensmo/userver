@@ -225,6 +225,10 @@ def external_libraries(schemas_dir: str) -> External:
                 types.add(data['x-taxi-cpp-type'])
             if 'x-usrv-cpp-type' in data:
                 types.add(data['x-usrv-cpp-type'])
+            if 'x-taxi-cpp-typedef-tag' in data:
+                types.add(data['x-taxi-cpp-typedef-tag'])
+            if 'x-usrv-cpp-typedef-tag' in data:
+                types.add(data['x-usrv-cpp-typedef-tag'])
 
             if data.get('x-taxi-middlewares', {}).get('api-4.0') is True:
                 libraries.append('passenger-authorizer-backend')
@@ -243,6 +247,8 @@ def external_libraries(schemas_dir: str) -> External:
             visit(content)
 
     for type_ in types:
+        if type_.startswith('::'):
+            type_ = type_[2:]
         library = type_.split('::')[0].replace('_', '-')
         # special namespaces (and unsigned) which are defined in userver/, not in libraries/
         if library not in {'std', 'storages', 'decimal64', 'unsigned'}:
