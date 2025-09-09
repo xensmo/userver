@@ -7,6 +7,7 @@ from typing import Optional
 
 import yaml
 
+from chaotic.back.cpp import types as cpp_types
 from chaotic.front import parser as chaotic_parser
 from chaotic.front import ref
 from . import renderer
@@ -124,10 +125,13 @@ def extract_includes(name: str, path: pathlib.Path, schemas_dir: pathlib.Path) -
                     stem = os.path.join(relpath, filepath_with_stem(filename))
                     stem = chaotic_parser.SchemaParser._normalize_ref(stem)
                     includes.append(f'clients/{name}/{stem}.hpp')
-            if 'x-taxi-cpp-type' in data:
-                pass
-            if 'x-usrv-cpp-type' in data:
-                pass
+
+            for field in ('x-taxi-cpp-type', 'x-usrv-cpp-type'):
+                if field not in data:
+                    continue
+                header = extract_cpp_type_header(data[field])
+                if header:
+                    includes.append(header)
 
             if is_file_produced_feature(data):
                 is_file_produced = True
@@ -154,6 +158,15 @@ def is_file_produced_feature(data: dict[str, Any]) -> bool:
     if data.get('allOf'):
         return True
     return False
+
+
+def extract_cpp_type_header(cpp_type: str) -> Optional[str]:
+    parts = cpp_type.split('::')
+    library = parts[0].replace('_', '-')
+    if library == 'std':
+        return None
+    filename = cpp_types.camel_to_snake_case(parts[1])
+    return '{}/{}.hpp'.format(library, filename)
 
 
 def include_graph(name: str, schemas_dir: pathlib.Path) -> dict[str, list[str]]:
