@@ -62,6 +62,11 @@ class MediaType(base_model.BaseModel):
     examples: dict[str, Any] = pydantic.Field(default_factory=dict)
     # encoding: dict[str, Encoding] = {}
 
+    _model_userver_tags: list[str] = [
+        'x-taxi-non-std-type-reason',
+        'x-usrv-non-std-type-reason',
+    ]
+
 
 # https://spec.openapis.org/oas/v3.0.0.html#reference-object
 class Ref(base_model.BaseModel):
