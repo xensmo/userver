@@ -16,4 +16,12 @@ paths:
                                 type: object
                                 properties: {}
                                 additionalProperties: false
+    /test2:
+        get:
+            operationId: MyTest2
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json: {}
 components: {}

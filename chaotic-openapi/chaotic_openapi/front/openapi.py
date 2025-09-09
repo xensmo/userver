@@ -80,6 +80,11 @@ class Response(base_model.BaseModel):
     content: dict[str, MediaType] = pydantic.Field(default_factory=dict)
     # TODO: links
 
+    def model_post_init(self, context: Any, /) -> None:
+        if 'application/json' in self.content and not self.content['application/json'].schema_:
+            # empty application/json means the same "no body"
+            del self.content['application/json']
+
 
 class In(str, enum.Enum):
     path = 'path'

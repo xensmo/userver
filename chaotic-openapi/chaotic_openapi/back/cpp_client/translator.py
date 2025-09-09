@@ -1,4 +1,6 @@
 import re
+import sys
+import traceback
 import typing
 from typing import Union
 
@@ -40,6 +42,7 @@ class Translator:
         except chaotic_error.BaseError:
             raise
         except BaseException as exc:
+            print(traceback.format_exc(), file=sys.stderr)
             raise chaotic_error.BaseError(
                 full_filepath=f'<{service.name}>',
                 infile_path='',
@@ -272,13 +275,14 @@ class Translator:
         for name, header in response.headers.items():
             headers.append(self._translate_parameter(header))
 
+        body = {}
+        for content_type, schema in response.content.items():
+            assert isinstance(schema.schema, chaotic_types.Schema)
+            body[content_type] = self._translate_single_schema(schema.schema)
         return types.Response(
             status=status,
             headers=headers,
-            body={
-                content_type: self._translate_single_schema(schema.schema)
-                for content_type, schema in response.content.items()
-            },
+            body=body,
         )
 
     def _translate_request_body(self, request_body: model.RequestBody) -> types.Body:
