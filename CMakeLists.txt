@@ -204,6 +204,7 @@ set(USERVER_THIRD_PARTY_DIRS
 
 init_debian_depends()
 
+include(SetupBoost)
 include(SetupGTest)
 
 if(USERVER_FEATURE_GRPC)
