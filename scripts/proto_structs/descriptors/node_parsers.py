@@ -16,25 +16,25 @@ from typing import Union
 
 import google.protobuf.descriptor as descriptor
 
+from proto_structs.descriptors import option_parsers
 from proto_structs.descriptors import type_mapping
 from proto_structs.models import gen_node
 from proto_structs.models import names
 from proto_structs.models import options
 from proto_structs.models import sort_dependencies
 from proto_structs.models import type_ref
+from proto_structs.models import type_ref_consts
 from proto_structs.models import vanilla
 
 TypeDescriptor = Union[descriptor.Descriptor, descriptor.EnumDescriptor]
 
 
-def parse_file(file: descriptor.FileDescriptor) -> gen_node.File:
-    fields_options: options.PluginOptions = options.load_fields_options()
-
+def parse_file(file: descriptor.FileDescriptor, *, plugin_options: options.PluginOptions) -> gen_node.File:
     types: List[gen_node.TypeNode] = []
     for enum in typing.cast(Dict[str, descriptor.EnumDescriptor], file.enum_types_by_name).values():
         types.append(parse_enum(enum))
     for message in typing.cast(Dict[str, descriptor.Descriptor], file.message_types_by_name).values():
-        if message_type := parse_message(message, fields_options):
+        if message_type := parse_message(message, plugin_options=plugin_options):
             types.append(message_type)
 
     types = sort_dependencies.sort_types(types)
@@ -85,7 +85,9 @@ def _cut_enum_value_name(value_name: str, *, enum_name: str) -> str:
     return value_name
 
 
-def parse_message(message: descriptor.Descriptor, plugin_options: options.PluginOptions) -> Optional[gen_node.TypeNode]:
+def parse_message(
+    message: descriptor.Descriptor, *, plugin_options: options.PluginOptions
+) -> Optional[gen_node.TypeNode]:
     if _is_map_entry(message):
         return None
 
@@ -99,7 +101,7 @@ def parse_message(message: descriptor.Descriptor, plugin_options: options.Plugin
     for nested_enum in typing.cast(List[descriptor.EnumDescriptor], message.enum_types):
         nested_types.append(parse_enum(nested_enum))
     for nested_message in typing.cast(List[descriptor.Descriptor], message.nested_types):
-        if message_type := parse_message(nested_message, plugin_options):
+        if message_type := parse_message(nested_message, plugin_options=plugin_options):
             nested_types.append(message_type)
 
     nested_types = sort_dependencies.sort_types(nested_types)
@@ -141,21 +143,31 @@ _SYNTHETIC_ONEOF_NAME_REGEX = re.compile(r'X*_\w*')
 
 
 def _apply_options_to_field(
-    field: descriptor.FieldDescriptor, plugin_options: options.PluginOptions, struct_field: gen_node.StructField
+    field: descriptor.FieldDescriptor, struct_field: gen_node.StructField, *, plugin_options: options.PluginOptions
 ) -> gen_node.StructField:
-    full_name: Any = field.full_name
-    if options := plugin_options.field_options.get(str(full_name)):
-        if options.should_box:
-            template_args = (struct_field.field_type,)
-            if isinstance(struct_field.field_type, type_ref.TemplateType):
-                if struct_field.field_type.template.full_cpp_name() == 'std::optional':
-                    template_args = struct_field.field_type.template_args
-            struct_field.field_type = type_ref.TemplateType(
-                template=type_ref.BOX_TEMPLATE,
-                template_args=template_args,
-                works_with_forward_references=True,
-            )
+    message_type = _get_optional_message_type(field)
+    if message_type:
+        message_options = option_parsers.parse_message(message_type, plugin_options)
+    else:
+        message_options = None
+
+    field_options = option_parsers.parse_field(field, plugin_options)
+
+    should_box = field_options.indirect or (message_options and message_options.indirect)
+    if should_box:
+        _wrap_field_in_box(struct_field)
+
     return struct_field
+
+
+def _wrap_field_in_box(field: gen_node.StructField) -> None:
+    if isinstance(field.field_type, type_ref.TemplateType):
+        if field.field_type.template.full_cpp_name() == type_ref_consts.OPTIONAL_TEMPLATE.full_cpp_name():
+            # Wrap the type inside the optional in `utils::Box`, not the optional itself.
+            value_type = field.field_type.template_args[0]
+            field.field_type = type_ref_consts.make_optional(type_ref_consts.make_box(value_type))
+            return
+    field.field_type = type_ref_consts.make_box(field.field_type)
 
 
 def _is_synthetic_oneof(oneof: descriptor.OneofDescriptor) -> bool:
@@ -212,12 +224,7 @@ def parse_field(
         number=typing.cast(int, field.number),
         oneof_fields=None,
     )
-    return _apply_options_to_field(field, plugin_options, result_field)
-
-
-_HASH_MAP_TEMPLATE = type_ref.UserverLibraryType(
-    full_cpp_name_wo_userver='proto_structs::HashMap', include='userver/proto-structs/hash_map.hpp'
-)
+    return _apply_options_to_field(field, result_field, plugin_options=plugin_options)
 
 
 def _try_parse_map_field_type(field: descriptor.FieldDescriptor) -> Optional[type_ref.TypeReference]:
@@ -232,7 +239,7 @@ def _try_parse_map_field_type(field: descriptor.FieldDescriptor) -> Optional[typ
     key_type = _parse_type_reference(fields_by_name['key'])
     value_type = _parse_type_reference(fields_by_name['value'])
 
-    return type_ref.TemplateType(template=_HASH_MAP_TEMPLATE, template_args=[key_type, value_type])
+    return type_ref_consts.make_hash_map(key_type, value_type)
 
 
 def parse_oneof(
@@ -312,3 +319,13 @@ def _parse_type_reference(field_type: descriptor.FieldDescriptor) -> type_ref.Ty
         return type_mapping.parse_struct_reference(message_type)
 
     raise RuntimeError(f'Invalid field type kind: {type_kind}')
+
+
+def _get_optional_message_type(field: descriptor.FieldDescriptor) -> Optional[descriptor.Descriptor]:
+    type_kind: int = field.type
+    if type_kind == descriptor.FieldDescriptor.TYPE_MESSAGE or type_kind == descriptor.FieldDescriptor.TYPE_GROUP:
+        # Details on groups:
+        # https://protobuf.com/docs/descriptors#groups
+        message_type: descriptor.Descriptor = field.message_type
+        return message_type
+    return None

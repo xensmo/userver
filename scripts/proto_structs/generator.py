@@ -3,6 +3,7 @@
 
 """The core of the proto structs generation."""
 
+import json
 import pathlib
 import sys
 import typing
@@ -15,14 +16,27 @@ from google.protobuf import descriptor
 from google.protobuf import descriptor_pool
 from google.protobuf.compiler import plugin_pb2  # pyright: ignore
 import jinja2
+import pydantic
 
 from proto_structs.descriptors import node_parsers
 from proto_structs.models import gen_node
 from proto_structs.models import includes
+from proto_structs.models import options
+from proto_structs.models import type_ref_consts
 
 
 def _strip_ext(path: str) -> str:
     return path.removesuffix('.proto')
+
+
+class Params(pydantic.BaseModel, extra='forbid'):
+    """
+    protoc allows to pass a single string option to a plugin (`--uproto-structs_opt`).
+    The option must contain JSON described by this model.
+    """
+
+    #: Absolute path to the file with the JSON containing detailed options, see `models/options.py`.
+    opts_file: Optional[pydantic.FilePath] = None
 
 
 class _CodeGenerator:
@@ -30,15 +44,17 @@ class _CodeGenerator:
         self,
         file_descriptor: descriptor.FileDescriptor,
         jinja_env: jinja2.Environment,
+        plugin_options: options.PluginOptions,
         response: plugin_pb2.CodeGeneratorResponse,  # pyright: ignore
     ) -> None:
         self.file_descriptor = file_descriptor
         self.jinja_env = jinja_env
+        self.plugin_options = plugin_options
         self.response = response  # pyright: ignore
 
     def run(self) -> None:
         try:
-            file_node = node_parsers.parse_file(self.file_descriptor)
+            file_node = node_parsers.parse_file(self.file_descriptor, plugin_options=self.plugin_options)
             data = self._make_jinja_data(file_node)
 
             for file_ext in ['cpp', 'hpp']:
@@ -69,6 +85,7 @@ class _CodeGenerator:
             'gen_nodes': file_node.children,
             'includes_hpp': includes_hpp_list,
             'includes_cpp': includes_cpp_list,
+            'type_ref_consts': type_ref_consts,
         }
 
 
@@ -77,6 +94,9 @@ def generate(loader: jinja2.BaseLoader) -> None:
 
     request = plugin_pb2.CodeGeneratorRequest()  # pyright: ignore
     request.ParseFromString(data)  # pyright: ignore
+
+    params = Params(**json.loads(request.parameter)) if request.parameter else Params()  # pyright: ignore
+    plugin_options = options.load_plugin_options(params.opts_file)
 
     response = plugin_pb2.CodeGeneratorResponse()  # pyright: ignore
     if hasattr(response, 'FEATURE_PROTO3_OPTIONAL'):  # pyright: ignore
@@ -108,6 +128,7 @@ def generate(loader: jinja2.BaseLoader) -> None:
         _CodeGenerator(
             file_descriptor=pool.FindFileByName(file_to_generate),  # pyright: ignore
             jinja_env=jinja_env,
+            plugin_options=plugin_options,
             response=response,  # pyright: ignore
         ).run()
 

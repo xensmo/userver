@@ -19,6 +19,7 @@ from proto_structs.models import io
 from proto_structs.models import names
 from proto_structs.models import reserved_identifiers
 from proto_structs.models import type_ref
+from proto_structs.models import type_ref_consts
 
 
 class CodegenNode(names.HasCppNameImpl, includes.HasCppIncludes, type_ref.HasTypeDependencies, abc.ABC):
@@ -338,11 +339,6 @@ class EnumValue:
     number: int
 
 
-_ONEOF_BASE_CLASS = type_ref.UserverLibraryType(
-    full_cpp_name_wo_userver='proto_structs::Oneof', include='userver/proto-structs/impl/oneof_codegen.hpp'
-)
-
-
 class OneofNode(TypeNode):
     """A C++ oneof class definition scheduled for generation."""
 
@@ -355,8 +351,6 @@ class OneofNode(TypeNode):
         super().__init__(name=name)
         #: Struct fields included in the oneof.
         self.fields: Final[Sequence[StructField]] = fields
-        #: Reference to Oneof base class template.
-        self.base_class_template: Final[type_ref.TypeReference] = _ONEOF_BASE_CLASS
 
     @property
     @override
@@ -365,7 +359,7 @@ class OneofNode(TypeNode):
 
     @override
     def own_includes(self) -> Iterable[includes.Include]:
-        yield from self.base_class_template.collect_includes()
+        yield from type_ref_consts.ONEOF_BASE_CLASS.collect_includes()
         for field in self.fields:
             yield from field.field_type.collect_includes()
 

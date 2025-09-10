@@ -13,6 +13,7 @@ import google.protobuf.descriptor as descriptor
 from proto_structs.models import includes
 from proto_structs.models import names
 from proto_structs.models import type_ref
+from proto_structs.models import type_ref_consts
 
 TypeDescriptor = Union[descriptor.Descriptor, descriptor.EnumDescriptor]
 
@@ -36,9 +37,6 @@ BUILTIN_TYPES: Mapping[int, type_ref.TypeReference] = {
     descriptor.FieldDescriptor.TYPE_SFIXED64: type_ref.BuiltinType(full_cpp_name='std::int64_t', include=_BUNDLE_HPP),
 }
 
-_OPTIONAL_TEMPLATE = type_ref.BuiltinType(full_cpp_name='std::optional', include=_BUNDLE_HPP)
-_VECTOR_TEMPLATE = type_ref.BuiltinType(full_cpp_name='std::vector', include=_BUNDLE_HPP)
-
 
 def parse_enum_reference(field_type: descriptor.EnumDescriptor) -> type_ref.TypeReference:
     return type_ref.UseerverCodegenEnumType(
@@ -61,15 +59,13 @@ def handle_type_label(
     label = typing.cast(int, field.label)
     if label == descriptor.FieldDescriptor.LABEL_OPTIONAL:
         if typing.cast(bool, field.has_presence):
-            return type_ref.TemplateType(template=_OPTIONAL_TEMPLATE, template_args=(parsed_type,))
+            return type_ref_consts.make_optional(parsed_type)
         else:
             return parsed_type
     if label == descriptor.FieldDescriptor.LABEL_REQUIRED:
         return parsed_type
     if label == descriptor.FieldDescriptor.LABEL_REPEATED:
-        return type_ref.TemplateType(
-            template=_VECTOR_TEMPLATE, template_args=(parsed_type,), works_with_forward_references=True
-        )
+        return type_ref_consts.make_vector(parsed_type)
     raise RuntimeError(f'Unknown type label {label}')
 
 

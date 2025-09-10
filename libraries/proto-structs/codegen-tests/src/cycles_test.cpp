@@ -24,16 +24,14 @@ constexpr void AssertFieldCount() {
 
 TEST(Cycles, Self) {
     namespace ss = simple::structs;
-    AssertFieldType<decltype(ss::Self::self), USERVER_NAMESPACE::utils::Box<ss::Self>>();
+    AssertFieldType<decltype(ss::Self::self), std::optional<utils::Box<ss::Self>>>();
     AssertFieldCount<ss::CycleEnd, 1>();
 }
 
 TEST(Cycles, MyMap) {
     namespace ss = simple::structs;
 
-    AssertFieldType<
-        decltype(ss::MyMap::self),
-        USERVER_NAMESPACE::utils::Box<::proto_structs::HashMap<std::string, std::string>>>();
+    AssertFieldType<decltype(ss::MyMap::self), utils::Box<::proto_structs::HashMap<std::string, std::string>>>();
 
     AssertFieldCount<ss::MyMap, 1>();
 }
@@ -42,7 +40,7 @@ TEST(Cycles, CycleLenIsThree) {
     namespace ss = simple::structs;
     AssertFieldType<decltype(ss::First::c), std::optional<ss::Second>>();
     AssertFieldType<decltype(ss::Second::c), std::optional<ss::Third>>();
-    AssertFieldType<decltype(ss::Third::c), USERVER_NAMESPACE::utils::Box<ss::First>>();
+    AssertFieldType<decltype(ss::Third::c), std::optional<utils::Box<ss::First>>>();
 
     AssertFieldCount<ss::First, 1>();
     AssertFieldCount<ss::Second, 1>();
@@ -51,7 +49,7 @@ TEST(Cycles, CycleLenIsThree) {
 
 TEST(Cycles, Simple) {
     namespace ss = simple::structs;
-    AssertFieldType<decltype(ss::CycleStart::cycle), USERVER_NAMESPACE::utils::Box<ss::CycleEnd>>();
+    AssertFieldType<decltype(ss::CycleStart::cycle), std::optional<utils::Box<ss::CycleEnd>>>();
     AssertFieldType<decltype(ss::CycleStart::not_boxed), std::vector<ss::CycleEnd>>();
     AssertFieldType<decltype(ss::CycleEnd::cycle), std::optional<ss::CycleStart>>();
 
@@ -62,10 +60,10 @@ TEST(Cycles, Simple) {
 TEST(Cycles, Main) {
     namespace ss = simple::structs;
     AssertFieldType<decltype(ss::Main1::inner), std::optional<ss::Main1::Inner>>();
-    AssertFieldType<decltype(ss::Main1::Inner::cycle), USERVER_NAMESPACE::utils::Box<ss::ImBelowMain1>>();
+    AssertFieldType<decltype(ss::Main1::Inner::cycle), std::optional<utils::Box<ss::ImBelowMain1>>>();
     AssertFieldType<decltype(ss::IamAboveMain2::cycle), std::optional<ss::Main2>>();
     AssertFieldType<decltype(ss::Main2::inner), std::optional<ss::Main2::Inner>>();
-    AssertFieldType<decltype(ss::Main2::Inner::cycle), USERVER_NAMESPACE::utils::Box<ss::IamAboveMain2>>();
+    AssertFieldType<decltype(ss::Main2::Inner::cycle), std::optional<utils::Box<ss::IamAboveMain2>>>();
     AssertFieldType<decltype(ss::ImBelowMain1::cycle), std::optional<ss::Main1>>();
 
     AssertFieldCount<ss::Main1, 1>();
@@ -85,7 +83,7 @@ TEST(Cycles, NewCycle) {
     AssertFieldType<decltype(ss::NewCycle::Inner2Below::i), std::optional<ss::NewCycle::Inner2Below::InnerInner>>();
     AssertFieldType<
         decltype(ss::NewCycle::Inner2Below::InnerInner::inner),
-        USERVER_NAMESPACE::utils::Box<ss::NewCycle::Inner1>>();
+        std::optional<utils::Box<ss::NewCycle::Inner1>>>();
 
     AssertFieldCount<ss::NewCycle::Inner1, 1>();
     AssertFieldCount<ss::NewCycle::Inner1::InnerInner, 1>();
@@ -102,7 +100,7 @@ TEST(Cycles, NewCycle2) {
     AssertFieldType<decltype(ss::NewCycle2::Inner2Above::i), std::optional<ss::NewCycle2::Inner2Above::InnerInner>>();
     AssertFieldType<
         decltype(ss::NewCycle2::Inner2Above::InnerInner::inner),
-        USERVER_NAMESPACE::utils::Box<ss::NewCycle2::Inner1>>();
+        std::optional<utils::Box<ss::NewCycle2::Inner1>>>();
 
     AssertFieldCount<ss::NewCycle2::Inner1, 1>();
     AssertFieldCount<ss::NewCycle2::Inner1::InnerInner, 1>();
