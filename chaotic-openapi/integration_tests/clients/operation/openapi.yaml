@@ -16,9 +16,8 @@ paths:
                                 type: object
                                 properties: {}
                                 additionalProperties: false
-    /test2:
+    /test3:
         get:
-            operationId: MyTest2
             responses:
                 '200':
                     description: OK

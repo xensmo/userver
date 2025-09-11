@@ -162,6 +162,8 @@ def is_file_produced_feature(data: dict[str, Any]) -> bool:
 
 def extract_cpp_type_header(cpp_type: str) -> Optional[str]:
     parts = cpp_type.split('::')
+    if len(parts) < 2:
+        return None
     library = parts[0].replace('_', '-')
     if library == 'std':
         return None
