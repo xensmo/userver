@@ -221,7 +221,7 @@ UTEST_F(RedisClientTransactionTest, Expire) {
     auto& client = GetTransactionClient();
     Get(client->Set("mykey", "Hello"));
     EXPECT_EQ(Get(client->Expire("mykey", std::chrono::seconds(10))), storages::redis::ExpireReply::kTimeoutWasSet);
-    EXPECT_EQ(Get(client->Ttl("mykey")).GetExpireSeconds(), 10);
+    EXPECT_EQ(Get(client->Ttl("mykey")).GetExpire().count(), 10);
     Get(client->Set("mykey", "Hello World"));
     EXPECT_FALSE(Get(client->Ttl("mykey")).KeyHasExpiration());
 }
@@ -507,7 +507,7 @@ UTEST_F(RedisClientTransactionTest, Pexpire) {
     EXPECT_EQ(
         Get(client->Pexpire("key", std::chrono::milliseconds{1999})), storages::redis::ExpireReply::kTimeoutWasSet
     );
-    EXPECT_EQ(Get(client->Ttl("key")).GetExpireSeconds(), 2);
+    EXPECT_EQ(Get(client->Ttl("key")).GetExpire().count(), 2);
 }
 
 UTEST_F(RedisClientTransactionTest, Ping) {
@@ -593,7 +593,7 @@ UTEST_F(RedisClientTransactionTest, Setex) {
     auto& client = GetTransactionClient();
 
     EXPECT_NO_THROW(Get(client->Setex("key", std::chrono::seconds{10}, "value")));
-    EXPECT_EQ(Get(client->Ttl("key")).GetExpireSeconds(), 10);
+    EXPECT_EQ(Get(client->Ttl("key")).GetExpire().count(), 10);
 }
 
 UTEST_F(RedisClientTransactionTest, Sismember) {

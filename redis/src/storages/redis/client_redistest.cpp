@@ -270,7 +270,7 @@ UTEST_F(RedisClientTest, Expire) {
     EXPECT_EQ(
         client->Expire("mykey", std::chrono::seconds(10), {}).Get(), storages::redis::ExpireReply::kTimeoutWasSet
     );
-    EXPECT_EQ(client->Ttl("mykey", {}).Get().GetExpireSeconds(), 10);
+    EXPECT_EQ(client->Ttl("mykey", {}).Get().GetExpire().count(), 10);
     client->Set("mykey", "Hello World", {}).Get();
     EXPECT_FALSE(client->Ttl("mykey", {}).Get().KeyHasExpiration());
 }
@@ -557,7 +557,7 @@ UTEST_F(RedisClientTest, Pexpire) {
     EXPECT_EQ(
         client->Pexpire("key", std::chrono::milliseconds{1999}, {}).Get(), storages::redis::ExpireReply::kTimeoutWasSet
     );
-    EXPECT_EQ(client->Ttl("key", {}).Get().GetExpireSeconds(), 2);
+    EXPECT_EQ(client->Ttl("key", {}).Get().GetExpire().count(), 2);
 }
 
 UTEST_F(RedisClientTest, Ping) {
@@ -643,7 +643,7 @@ UTEST_F(RedisClientTest, Setex) {
     auto client = GetClient();
 
     EXPECT_NO_THROW(client->Setex("key", std::chrono::seconds{10}, "value", {}).Get());
-    EXPECT_EQ(client->Ttl("key", {}).Get().GetExpireSeconds(), 10);
+    EXPECT_EQ(client->Ttl("key", {}).Get().GetExpire().count(), 10);
 }
 
 UTEST_F(RedisClientTest, Sismember) {
