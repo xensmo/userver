@@ -78,6 +78,7 @@ dist-clean:
 	rm -rf build_*/
 	rm -rf debian/
 	rm -rf .ruff_cache/
+	rm -rf _CPack_Packages/
 	find -name .mypy_cache | xargs rm -rf
 	find -name __pycache__ | xargs rm -rf
 
