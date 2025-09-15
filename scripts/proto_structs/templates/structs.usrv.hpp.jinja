@@ -1,4 +1,4 @@
-{% import "forward_declarations.inc.jinja" as forward_declarations %}
+{% import "types_forward_declarations.inc.jinja" as types_forward_declarations %}
 {% import "types.inc.jinja" as types with context %}
 {% import "utils.inc.jinja" as utils %}
 {{ utils.do_not_edit(file_name_wo_ext) }}
@@ -12,7 +12,7 @@
 {% endfor %}
 
 {% for node in gen_nodes %}
-{{ forward_declarations.render_gen_node(node) }}
+{{ types_forward_declarations.render_gen_node(node) }}
 {%- endfor %}
 
 {% for node in gen_nodes %}

@@ -123,10 +123,7 @@ class KeywordType(TypeReference, names.HasCppName):
 
     @override
     def collect_includes(self) -> Iterable[includes.Include]:
-        # For IO.
-        yield includes.Include(
-            path='userver/proto-structs/impl/bundles/structs_cpp.hpp', kind=includes.IncludeKind.FOR_CPP
-        )
+        yield includes.Include(path='userver/proto-structs/io/std/scalar_conv.hpp', kind=includes.IncludeKind.FOR_CPP)
 
 
 class BuiltinType(TypeReference, names.HasCppNameImpl):
@@ -194,7 +191,7 @@ class UserverCodegenType(TypeReference, names.HasCppNameImpl):
     def collect_includes(self) -> Iterable[includes.Include]:
         yield includes.Include(path=self._include, kind=includes.IncludeKind.FOR_HPP)
         yield includes.Include(
-            path=self._include.removesuffix('.structs.usrv.pb.hpp') + '.pb.h', kind=includes.IncludeKind.FOR_CPP
+            path=includes.structs_path_to_vanilla_pb_h(self._include), kind=includes.IncludeKind.FOR_CPP
         )
 
 

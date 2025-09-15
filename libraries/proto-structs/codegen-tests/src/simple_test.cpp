@@ -4,8 +4,8 @@
 
 #include <userver/proto-structs/convert.hpp>
 
-#include <simple/file1.pb.h>
-#include <simple/file1.structs.usrv.pb.hpp>
+#include <simple/base.pb.h>
+#include <simple/base.structs.usrv.pb.hpp>
 
 namespace ss = simple::structs;
 

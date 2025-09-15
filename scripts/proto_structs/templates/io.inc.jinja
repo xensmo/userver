@@ -35,40 +35,41 @@ namespace {{ namespace.short_name }} {
 {% endmacro -%}
 
 {%- macro do_render_vanilla(struct) %}
-::{{ struct.vanilla_full_name }}
-{% endmacro -%}
+::{{ struct.vanilla_full_name -}}
+{%- endmacro -%}
 
 {%- macro do_render_field_number(struct, field) %}
-{{ do_render_vanilla(struct) | trim }}::{{ field.field_number_name }}
-{% endmacro -%}
+{{ do_render_vanilla(struct) -}}::{{ field.field_number_name }}
+{%- endmacro -%}
 
 {%- macro do_render_field_set(struct, field) %}
-&{{ do_render_vanilla(struct) | trim }}::set_{{ field.short_vanilla_name }}
-{% endmacro -%}
+&{{ do_render_vanilla(struct) -}}::set_{{ field.short_vanilla_name }}
+{%- endmacro -%}
 
 {%- macro do_render_field_clear(struct, field) %}
-&{{ do_render_vanilla(struct) | trim }}::clear_{{ field.short_vanilla_name }}
-{% endmacro -%}
+&{{ do_render_vanilla(struct)  -}}::clear_{{ field.short_vanilla_name }}
+{%- endmacro -%}
 
 {%- macro do_render_field_mutable(struct, field) %}
-&{{ do_render_vanilla(struct) | trim }}::mutable_{{ field.short_vanilla_name }}
-{% endmacro -%}
+&{{ do_render_vanilla(struct) -}}::mutable_{{ field.short_vanilla_name }}
+{%- endmacro -%}
 
 {%- macro do_render_ptr_getter(struct, field) %}
-&{{ do_render_vanilla(struct) | trim }}::{{ field.short_vanilla_name }}
-{% endmacro -%}
+&{{ do_render_vanilla(struct) -}}::{{ field.short_vanilla_name }}
+{%- endmacro -%}
 
 {%- macro do_render_ptr_has(struct, field) %}
-&{{ do_render_vanilla(struct) | trim }}::has_{{ field.short_vanilla_name }}
-{% endmacro -%}
+&{{ do_render_vanilla(struct) -}}::has_{{ field.short_vanilla_name }}
+{%- endmacro -%}
 
 {%- macro do_render_field_getter(struct, field, pass_has) %}
 USERVER_NAMESPACE::proto_structs::io::impl::CreateFieldGetter(msg, ::{{ struct.vanilla_full_name }}::{{ field.field_number_name }},
 {% filter indent(width=4, first=True) %}
-{{ do_render_ptr_getter(struct, field) }} 
-{%- if pass_has %},{{ do_render_ptr_has(struct, field) | trim }}{% endif %})
+{{ do_render_ptr_getter(struct, field) -}} 
+{%- if pass_has -%},{{ do_render_ptr_has(struct, field) -}}{% endif %}
+)
 {% endfilter %}
-{% endmacro -%}
+{%- endmacro -%}
 
 {%- macro do_render_read_field(struct, context, field) %}
 .{{ field.short_name }} = USERVER_NAMESPACE::proto_structs::io::impl::ReadField<decltype({{ struct.contextual_cpp_name(context=context) }}::{{ field.short_name }})>(ctx, 
@@ -80,7 +81,7 @@ USERVER_NAMESPACE::proto_structs::io::impl::CreateFieldGetter(msg, ::{{ struct.v
 {%- elif field.read_kind == "oneof" %}
 {%- for oneof_field in field.oneof_fields %} 
 {{ do_render_field_getter(struct, oneof_field, True) }}
-{%- if not loop.last %},{% endif %}
+{%- if not loop.last -%},{%- endif %}
 {% endfor %}
 {% endif %}
 ),
@@ -109,9 +110,9 @@ return {
 USERVER_NAMESPACE::proto_structs::io::impl::CreateFieldSetter(
 {% filter indent(width=4, first=True) %}
 msg,
-{{ do_render_field_number(struct, field) | trim }},
-{{ do_render_field_set(struct, field) | trim }}<const std::string&>,
-{{ do_render_field_clear(struct, field) | trim }}
+{{ do_render_field_number(struct, field) }},
+{{ do_render_field_set(struct, field) }}<const std::string&>,
+{{ do_render_field_clear(struct, field) }}
 {% endfilter %}
 )
 {% endmacro -%}
@@ -120,9 +121,9 @@ msg,
 USERVER_NAMESPACE::proto_structs::io::impl::CreateFieldSetter(
 {% filter indent(width=4, first=True) %}
 msg, 
-{{ do_render_field_number(struct, field) | trim }},
-{{ do_render_field_set(struct, field) | trim }},
-{{ do_render_field_clear(struct, field) | trim}}
+{{ do_render_field_number(struct, field) }},
+{{ do_render_field_set(struct, field) }},
+{{ do_render_field_clear(struct, field)}}
 {% endfilter %}
 )
 {% endmacro -%}
@@ -131,9 +132,9 @@ msg,
 USERVER_NAMESPACE::proto_structs::io::impl::CreateFieldSetter(
 {% filter indent(width=4, first=True) %}
 msg, 
-{{ do_render_field_number(struct, field) | trim }},
-{{ do_render_field_mutable(struct, field) | trim }},
-{{ do_render_field_clear(struct, field) | trim }}
+{{ do_render_field_number(struct, field) }},
+{{ do_render_field_mutable(struct, field) }},
+{{ do_render_field_clear(struct, field) }}
 {% endfilter %}
 )
 {% endmacro -%}

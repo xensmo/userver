@@ -80,6 +80,8 @@ class File(includes.HasCppIncludes):
     def collect_includes(self) -> Iterable[includes.Include]:
         for child in self.children:
             yield from child.collect_includes()
+        yield includes.Include(path='cstddef', kind=includes.IncludeKind.FOR_HPP)
+        yield includes.Include(path='utility', kind=includes.IncludeKind.FOR_HPP)
 
     def gen_path(self, *, ext: str) -> pathlib.Path:
         """Path to the generated userver proto structs file."""
@@ -191,6 +193,18 @@ class StructNode(TypeNode, names.HasVanillaName):
         )
         for field in self.fields:
             yield from field.field_type.collect_includes()
+        yield includes.Include(path='userver/proto-structs/io/fwd.hpp', kind=includes.IncludeKind.FOR_HPP)
+
+        # For IO.
+        yield from [
+            includes.Include(path=path, kind=includes.IncludeKind.FOR_CPP)
+            for path in [
+                'userver/proto-structs/io/impl/field_accessor.hpp',
+                'userver/proto-structs/io/impl/read.hpp',
+                'userver/proto-structs/io/impl/write.hpp',
+                'userver/proto-structs/type_mapping.hpp',
+            ]
+        ]
 
     @override
     def type_dependencies(self) -> Iterable[type_ref.TypeDependency]:
@@ -315,6 +329,7 @@ class OneofNode(TypeNode):
     def own_includes(self) -> Iterable[includes.Include]:
         for field in self.fields:
             yield from field.field_type.collect_includes()
+        yield includes.Include(path='userver/proto-structs/impl/oneof_codegen.hpp', kind=includes.IncludeKind.FOR_HPP)
 
     @override
     def type_dependencies(self) -> Iterable[type_ref.TypeDependency]:
@@ -323,7 +338,7 @@ class OneofNode(TypeNode):
             yield from field.field_type.type_dependencies()
 
 
-class VanillaType(TypeNode):
+class VanillaTypeDeclaration(TypeNode):
     """A C++ vanilla type."""
 
     def __init__(
@@ -336,7 +351,7 @@ class VanillaType(TypeNode):
         self.vanilla_name: Final[names.TypeName] = vanilla_name
 
 
-class VanillaClass(VanillaType):
+class VanillaClassDeclaration(VanillaTypeDeclaration):
     """A C++ vanilla class."""
 
     @property

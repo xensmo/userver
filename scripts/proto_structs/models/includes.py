@@ -9,6 +9,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
+from proto_structs.models import includes_bundles
 from proto_structs.models import names
 
 
@@ -21,7 +22,7 @@ class IncludeKind(enum.Enum):
     FOR_CPP = enum.auto()
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(order=True, frozen=True)
 class Include:
     """A C++ include"""
 
@@ -29,12 +30,6 @@ class Include:
     path: str
     #: Include type.
     kind: IncludeKind
-
-    def __hash__(self):
-        return hash(self.path)
-
-    def __lt__(self, other: 'Include') -> bool:
-        return self.path < other.path
 
 
 class HasCppIncludes(abc.ABC):
@@ -53,8 +48,16 @@ def sorted_includes(entity: HasCppIncludes, *, current_hpp: Optional[str] = None
         includes_set.discard(Include(path=current_hpp, kind=IncludeKind.FOR_HPP))
     sorted_includes = sorted(includes_set)
     return {
-        IncludeKind.FOR_HPP: [include.path for include in sorted_includes if include.kind == IncludeKind.FOR_HPP],
-        IncludeKind.FOR_CPP: [include.path for include in sorted_includes if include.kind == IncludeKind.FOR_CPP],
+        IncludeKind.FOR_HPP: [
+            include.path
+            for include in sorted_includes
+            if include.kind == IncludeKind.FOR_HPP and include.path not in includes_bundles.BUNDLE_HPP
+        ],
+        IncludeKind.FOR_CPP: [
+            include.path
+            for include in sorted_includes
+            if include.kind == IncludeKind.FOR_CPP and include.path not in includes_bundles.BUNDLE_CPP
+        ],
     }
 
 
@@ -66,6 +69,11 @@ def proto_path_to_structs_path(proto_relative_path: pathlib.Path, *, ext: str) -
 def proto_path_to_vanilla_pb_h(path: pathlib.Path) -> str:
     """Returns the path of vanilla C++ `.pb.h` file (relative to source dir)."""
     return str(path.with_suffix('.pb.h'))
+
+
+def structs_path_to_vanilla_pb_h(path: str) -> str:
+    """Returns the path of vanilla C++ `.pb.h` file (relative to source dir)."""
+    return path.removesuffix('.structs.usrv.pb.hpp') + '.pb.h'
 
 
 def io_includes_by_full_name(name: str, *, prefix: str) -> List[Include]:

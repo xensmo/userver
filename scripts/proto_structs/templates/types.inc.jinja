@@ -1,4 +1,4 @@
-{% import "forward_declarations.inc.jinja" as forward_declarations %}
+{% import "types_forward_declarations.inc.jinja" as types_forward_declarations %}
 {% import "io_forward_declarations.inc.jinja" as io_forward_declarations %}
 
 {%- macro render_gen_node(node) %}
@@ -34,7 +34,7 @@ struct {{ struct.name.short_name }} final {
 using ProtobufMessage = ::{{ struct.vanilla_full_name_fwd }};
 
 {%- for child in struct.children %}
-{{ forward_declarations.render_gen_node(child) }}
+{{ types_forward_declarations.render_gen_node(child) }}
 {%- endfor %}
 {% if struct.children | length > 0 %}
 
