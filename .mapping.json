@@ -191,6 +191,7 @@
   "chaotic/chaotic/cpp_names.py":"taxi/uservices/userver/chaotic/chaotic/cpp_names.py",
   "chaotic/chaotic/error.py":"taxi/uservices/userver/chaotic/chaotic/error.py",
   "chaotic/chaotic/front/__init__.py":"taxi/uservices/userver/chaotic/chaotic/front/__init__.py",
+  "chaotic/chaotic/front/base_model.py":"taxi/uservices/userver/chaotic/chaotic/front/base_model.py",
   "chaotic/chaotic/front/parser.py":"taxi/uservices/userver/chaotic/chaotic/front/parser.py",
   "chaotic/chaotic/front/ref.py":"taxi/uservices/userver/chaotic/chaotic/front/ref.py",
   "chaotic/chaotic/front/ref_resolver.py":"taxi/uservices/userver/chaotic/chaotic/front/ref_resolver.py",

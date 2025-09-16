@@ -177,7 +177,7 @@ class OneToOneFileRenderer:
 
             filepath = self.filepath_wo_ext(
                 self._vfilepath_to_relfilepath(
-                    schema.schema.source_location().filepath,
+                    schema.schema_.source_location().filepath,
                 ),
             )
             if filepath != ignore_filepath_wo_ext:
