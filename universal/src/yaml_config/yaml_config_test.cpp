@@ -6,8 +6,10 @@
 #include <gtest/gtest.h>
 
 #include <formats/common/value_test.hpp>
+#include <userver/formats/common/utils.hpp>
 #include <userver/formats/json/serialize.hpp>
 #include <userver/formats/json/value.hpp>
+#include <userver/formats/json/value_builder.hpp>
 #include <userver/formats/yaml/serialize.hpp>
 #include <userver/formats/yaml/value.hpp>
 #include <userver/formats/yaml/value_builder.hpp>
@@ -867,6 +869,42 @@ array:
     ::unsetenv("SOME_ENV_VARIABLE");
     // NOLINTNEXTLINE(concurrency-mt-unsafe)
     ::unsetenv("ANOTHER_ENV_VARIABLE");
+}
+
+template <typename Value>
+std::size_t CountDepth(const Value& value) {
+    std::size_t depth = 0;
+    auto value_ref = value;
+    while (value_ref.IsObject()) {
+        value_ref = value_ref["obj"];
+        ++depth;
+    }
+    return depth;
+}
+
+TEST(YamlConfig, DeepYamlToJson) {
+    constexpr std::size_t kDepth = 30;
+    std::vector<std::string> path(kDepth, "obj");
+    path.push_back("key");
+
+    formats::yaml::ValueBuilder yaml_builder;
+    formats::common::SetAtPath(yaml_builder, std::vector(path), formats::yaml::ValueBuilder("value").ExtractValue());
+    const auto node = yaml_builder.ExtractValue();
+
+    formats::json::ValueBuilder expected_json_builder;
+    formats::common::SetAtPath(
+        expected_json_builder, std::vector(path), formats::json::ValueBuilder("value").ExtractValue()
+    );
+    const auto expected_json = expected_json_builder.ExtractValue();
+
+    const yaml_config::YamlConfig yaml{node, {}};
+    const auto json = yaml.As<formats::json::Value>();
+
+    EXPECT_EQ(json, expected_json) << "Actual json value:\n"
+                                   << ToString(json) << "\n  actual json depth: " << CountDepth(json)
+                                   << "\n  expected json value:\n"
+                                   << ToString(expected_json)
+                                   << "\n  expected json depth: " << CountDepth(expected_json);
 }
 
 USERVER_NAMESPACE_END
