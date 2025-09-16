@@ -27,44 +27,16 @@ class CppType:
         return id(self)
 
     def is_isomorphic(self, other: 'CppType') -> bool:
-        if self == other:
-            return True
-
         assert self.json_schema is not None
-        assert other.json_schema is not None
-        left = self.json_schema.model_dump()
-        right = other.json_schema.model_dump()
-        return self._is_isomorphic_dicts(left, right)
-
-    @staticmethod
-    def _is_isomorphic_dicts(left: dict, right: dict) -> bool:
-        left.pop('source_location_', None)
-        right.pop('source_location_', None)
+        left = dataclasses.asdict(self.json_schema)
         left.pop('description', None)
+        left['x_properties'].pop('description', None)
+        assert other.json_schema is not None
+        right = dataclasses.asdict(other.json_schema)
         right.pop('description', None)
-        if 'x_properties' in left:
-            left['x_properties'].pop('description', None)
-        if 'x_properties' in right:
-            right['x_properties'].pop('description', None)
+        right['x_properties'].pop('description', None)
 
-        if left.keys() != right.keys():
-            return False
-
-        for prop in left:
-            p1 = left[prop]
-            p2 = right[prop]
-
-            if isinstance(p1, CppType) and isinstance(p2, CppType):
-                if not p1.is_isomorphic(p2):
-                    return False
-            elif isinstance(p1, dict) and isinstance(p2, dict):
-                if not CppType._is_isomorphic_dicts(p1, p2):
-                    return False
-            else:
-                if p1 != p2:
-                    return False
-
-        return True
+        return left == right
 
     def without_json_schema(self) -> 'CppType':
         return dataclasses.replace(self, json_schema=None)
@@ -148,8 +120,8 @@ class CppType:
     def cpp_comment(self) -> str:
         assert self.json_schema
 
-        schema = self.json_schema
-        description = ((schema.title or '') + '\n' + (schema.description or '')).strip()
+        kwargs = self.json_schema.x_properties
+        description = (kwargs.get('title', '') + '\n' + kwargs.get('description', '')).strip()
         if description:
             return '// ' + description.replace('\n', '\n//')
         else:

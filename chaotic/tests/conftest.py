@@ -21,16 +21,8 @@ def schema_parser():
 
 
 @pytest.fixture
-def clear_source_location():
-    def func(child: Schema, _) -> None:
-        child.source_location_ = None
-
-    return func
-
-
-@pytest.fixture
-def simple_parse(clear_source_location):
-    def func(input_: dict, clear=True):
+def simple_parse():
+    def func(input_: dict):
         config = parser.ParserConfig(erase_prefix='')
         schema_parser = parser.SchemaParser(
             config=config,
@@ -38,12 +30,7 @@ def simple_parse(clear_source_location):
             full_vfilepath='vfull',
         )
         schema_parser.parse_schema('/definitions/type', input_)
-        parsed = schema_parser.parsed_schemas()
-        if clear:
-            for schema in parsed.schemas.values():
-                schema.visit_children(clear_source_location)
-                clear_source_location(schema, None)
-        return parsed
+        return schema_parser.parsed_schemas()
 
     return func
 

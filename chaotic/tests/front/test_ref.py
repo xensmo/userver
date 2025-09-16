@@ -12,17 +12,13 @@ from chaotic.front.types import Integer
 from chaotic.front.types import Ref
 
 
-def test_ref_ok(schema_parser, clear_source_location):
+def test_ref_ok(schema_parser):
     parser = schema_parser
 
     parser.parse_schema('/definitions/type1', {'type': 'integer'})
     parser.parse_schema('/definitions/type2', {'$ref': '#/definitions/type1'})
 
     parsed = parser.parsed_schemas().schemas
-    for schema in parsed.values():
-        schema.visit_children(clear_source_location)
-        clear_source_location(schema, None)
-
     assert parsed == {
         'vfull#/definitions/type1': Integer(),
         'vfull#/definitions/type2': Ref(
@@ -33,7 +29,7 @@ def test_ref_ok(schema_parser, clear_source_location):
     }
 
 
-def test_ref_from_items_ok(schema_parser, clear_source_location):
+def test_ref_from_items_ok(schema_parser):
     parser = schema_parser
 
     parser.parse_schema('/definitions/type1', {'type': 'integer'})
@@ -43,9 +39,6 @@ def test_ref_from_items_ok(schema_parser, clear_source_location):
     )
 
     parsed = parser.parsed_schemas().schemas
-    for schema in parsed.values():
-        schema.visit_children(clear_source_location)
-        clear_source_location(schema, None)
     assert parsed == {
         'vfull#/definitions/type1': Integer(),
         'vfull#/definitions/type2': Array(
@@ -85,7 +78,7 @@ def test_extra_fields(simple_parse):
     assert exc.value.msg == "Unknown field(s) ['field']"
 
 
-def test_sibling_file(schema_parser, clear_source_location):
+def test_sibling_file(schema_parser):
     config = ParserConfig(erase_prefix='')
     schemas = []
     parser = schema_parser
@@ -104,9 +97,6 @@ def test_sibling_file(schema_parser, clear_source_location):
     schemas.append(parser.parsed_schemas())
     rr = ref_resolver.RefResolver()
     parsed_schemas = rr.sort_schemas(types.ParsedSchemas.merge(schemas))
-    for schema in parsed_schemas.schemas.values():
-        schema.visit_children(clear_source_location)
-        clear_source_location(schema, None)
 
     var = Integer(
         type='integer',
@@ -121,14 +111,14 @@ def test_sibling_file(schema_parser, clear_source_location):
         'vfull#/definitions/type1': var,
         'vfull2#/definitions/type2': Ref(
             ref='vfull#/definitions/type1',
-            schema_=var,
+            schema=var,
             indirect=False,
             self_ref=False,
         ),
     }
 
 
-def test_forward_reference(schema_parser, clear_source_location):
+def test_forward_reference(schema_parser):
     parser = schema_parser
     parser.parse_schema('/definitions/type1', {'$ref': '#/definitions/type2'})
     parser.parse_schema('/definitions/type2', {'type': 'integer'})
@@ -137,9 +127,6 @@ def test_forward_reference(schema_parser, clear_source_location):
 
     rr = ref_resolver.RefResolver()
     parsed_schemas = rr.sort_schemas(parser.parsed_schemas())
-    for schema in parsed_schemas.schemas.values():
-        schema.visit_children(clear_source_location)
-        clear_source_location(schema, None)
 
     var = Integer(
         type='integer',
@@ -154,19 +141,19 @@ def test_forward_reference(schema_parser, clear_source_location):
         'vfull#/definitions/type2': var,
         'vfull#/definitions/type1': Ref(
             ref='vfull#/definitions/type2',
-            schema_=var,
+            schema=var,
             indirect=False,
             self_ref=False,
         ),
         'vfull#/definitions/type4': Ref(
             ref='vfull#/definitions/type2',
-            schema_=var,
+            schema=var,
             indirect=False,
             self_ref=False,
         ),
         'vfull#/definitions/type3': Ref(
             ref='vfull#/definitions/type4',
-            schema_=var,
+            schema=var,
             indirect=False,
             self_ref=False,
         ),

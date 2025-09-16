@@ -47,7 +47,7 @@ class Header(base_model.BaseModel):
     deprecated: bool = False
     allowEmptyValue: bool = False
 
-    style: Optional[Style] = pydantic.Field(default=None, strict=False)
+    style: Optional[Style] = None
     explode: Optional[bool] = None
     allowReserved: bool = False
     schema_: Schema = pydantic.Field(alias='schema')
@@ -62,10 +62,10 @@ class MediaType(base_model.BaseModel):
     examples: dict[str, Any] = pydantic.Field(default_factory=dict)
     # encoding: dict[str, Encoding] = {}
 
-    x_non_std_type_reason: Optional[str] = pydantic.Field(
-        default=None,
-        validation_alias=pydantic.AliasChoices('x-taxi-non-std-type-reason', 'x-usrv-non-std-type-reason'),
-    )
+    _model_userver_tags: list[str] = [
+        'x-taxi-non-std-type-reason',
+        'x-usrv-non-std-type-reason',
+    ]
 
 
 # https://spec.openapis.org/oas/v3.0.0.html#reference-object
@@ -101,13 +101,13 @@ class QueryLogMode(str, enum.Enum):
 # https://spec.openapis.org/oas/v3.0.0.html#parameter-object
 class Parameter(base_model.BaseModel):
     name: str
-    in_: In = pydantic.Field(alias='in', strict=False)
+    in_: In = pydantic.Field(alias='in')
     description: Optional[str] = None
     required: bool = False
     deprecated: bool = False
     allowEmptyValue: bool = False
 
-    style: Optional[Style] = pydantic.Field(default=None, strict=False)
+    style: Optional[Style] = None
     explode: Optional[bool] = None
     allowReserved: bool = False
     schema_: Schema = pydantic.Field(alias='schema')
@@ -127,7 +127,6 @@ class Parameter(base_model.BaseModel):
     x_query_log_mode: QueryLogMode = pydantic.Field(
         default=QueryLogMode.show,
         validation_alias=pydantic.AliasChoices('x-taxi-query-log-mode', 'x-usrv-query-log-mode'),
-        strict=False,
     )
     x_explode_true_reason: str = pydantic.Field(
         default='',
@@ -202,10 +201,10 @@ class OAuthFlows(base_model.BaseModel):
 
 # https://spec.openapis.org/oas/v3.0.0.html#security-scheme-object
 class SecurityScheme(base_model.BaseModel):
-    type: SecurityType = pydantic.Field(strict=False)
+    type: SecurityType
     description: Optional[str] = None
     name: Optional[str] = None
-    in_: Optional[SecurityIn] = pydantic.Field(alias='in', default=None, strict=False)
+    in_: Optional[SecurityIn] = pydantic.Field(alias='in', default=None)
     scheme_: Optional[str] = pydantic.Field(alias='scheme', default=None)
     bearerFormat: Optional[str] = None
     flows: Optional[OAuthFlows] = None
@@ -274,7 +273,6 @@ class Operation(base_model.BaseModel):
     x_query_log_mode: QueryLogMode = pydantic.Field(
         default=QueryLogMode.show,
         validation_alias=pydantic.AliasChoices('x-taxi-query-log-mode', 'x-usrv-query-log-mode'),
-        strict=False,
     )
     x_client_codegen: bool = pydantic.Field(
         default=True,

@@ -31,7 +31,7 @@ class In(str, enum.Enum):
 # https://spec.openapis.org/oas/v2.0.html#parameter-object
 class Parameter(base_model.BaseModel):
     name: str
-    in_: In = pydantic.Field(alias='in', strict=False)
+    in_: In = pydantic.Field(alias='in')
     description: str = ''
     required: bool = False
 
@@ -118,11 +118,11 @@ class OAuthFlow(str, enum.Enum):
 
 # https://spec.openapis.org/oas/v2.0.html#security-definitions-object
 class SecurityDef(base_model.BaseModel):
-    type: SecurityType = pydantic.Field(strict=False)
+    type: SecurityType
     description: Optional[str] = None
     name: Optional[str] = None
-    in_: Optional[SecurityIn] = pydantic.Field(alias='in', default=None, strict=False)
-    flow: Optional[OAuthFlow] = pydantic.Field(default=None, strict=False)
+    in_: Optional[SecurityIn] = pydantic.Field(alias='in', default=None)
+    flow: Optional[OAuthFlow] = None
     authorizationUrl: Optional[str] = None
     tokenUrl: Optional[str] = None
     scopes: dict[str, str] = pydantic.Field(default_factory=dict)
