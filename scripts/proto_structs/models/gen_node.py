@@ -80,8 +80,6 @@ class File(includes.HasCppIncludes):
     def collect_includes(self) -> Iterable[includes.Include]:
         for child in self.children:
             yield from child.collect_includes()
-        yield includes.Include(path='cstddef', kind=includes.IncludeKind.FOR_HPP)
-        yield includes.Include(path='utility', kind=includes.IncludeKind.FOR_HPP)
 
     def gen_path(self, *, ext: str) -> pathlib.Path:
         """Path to the generated userver proto structs file."""
@@ -199,6 +197,7 @@ class StructNode(TypeNode, names.HasVanillaName):
         yield from [
             includes.Include(path=path, kind=includes.IncludeKind.FOR_CPP)
             for path in [
+                'utility',
                 'userver/proto-structs/io/impl/field_accessor.hpp',
                 'userver/proto-structs/io/impl/read.hpp',
                 'userver/proto-structs/io/impl/write.hpp',
@@ -239,6 +238,7 @@ class StructField:
         """
         Converts a `snake_case` or `camelCase` identifier to `PascalCase`.
         Example: some_bytes_my_word -> kSomeBytesMyWordFieldNumber
+        Example: IYandexUid -> kIYandexUidFieldNumber
         """
         return f'k{names.to_pascal_case(self.short_name)}FieldNumber'
 

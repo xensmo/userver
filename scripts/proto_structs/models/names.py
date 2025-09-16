@@ -225,14 +225,25 @@ def make_nested_type_name(containing_type_name: TypeName, short_name: str) -> Ty
     )
 
 
-def to_pascal_case(name: str) -> str:
+_SPLIT_PASCAL_PATTERN = re.compile(r'_|(?<=[a-z])(?=[A-Z])')
+
+
+def to_pascal_case(name: str, to_lower: bool = False) -> str:
     """
-    Converts a `snake_case` or `camelCase` identifier to `PascalCase`.
+    Converts a `snake_case` or `UPPER_CASE` or `camelCase` identifier to `PascalCase`.
     Examples:
-    some_bytes_my_word -> kSomeBytesMyWordFieldNumber
-    by2tes_m1y -> kBy2TesM1YFieldNumber
-    IYandexUid -> kIYandexUidFieldNumber
+    some_bytes_my_word -> SomeBytesMyWord
+    by2tes_m1y -> By2TesM1Y
+    IYandexUid -> IYandexUid (if to_lower=False)
+    FOO_BAR_BazQux -> FooBarBazQux
     """
+    # We should split name by '_' and uppers letters. 'FOO_BAR_BazQux' -> ["FOO", "BAR", "Baz", "Qux"]
+    words = _SPLIT_PASCAL_PATTERN.split(name)
+    name = '_'.join(words)
+
+    if to_lower:
+        name = name.lower()
+
     words = ''.join(word[0].upper() + word[1:] for word in name.split('_') if len(word) > 0)
 
     result = ''

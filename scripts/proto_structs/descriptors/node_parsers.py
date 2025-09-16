@@ -72,9 +72,14 @@ def parse_enum_value(value: descriptor.EnumValueDescriptor) -> gen_node.EnumValu
     enum_name = typing.cast(str, enum_descriptor.name)
 
     return gen_node.EnumValue(
-        short_name=names.escape_id(_cut_enum_value_name(enum_value_name, enum_name=enum_name)),
+        short_name=names.escape_id(_format_enum_value_name(enum_value_name, enum_name=enum_name)),
         number=typing.cast(int, value.number),
     )
+
+
+def _format_enum_value_name(value_name: str, *, enum_name: str) -> str:
+    name = _cut_enum_value_name(value_name, enum_name=enum_name)
+    return f'k{names.to_pascal_case(name, to_lower=True)}'
 
 
 def _cut_enum_value_name(value_name: str, *, enum_name: str) -> str:

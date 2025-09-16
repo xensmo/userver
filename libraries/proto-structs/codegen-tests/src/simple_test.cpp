@@ -19,7 +19,7 @@ TEST(SingleFile, SimpleStruct) {
     message.is_condition = true;
     message.some_bytes = {"foo", "bar"};
     message.something.set_bar("bar_val");
-    message.inner_enum = ss::SimpleStruct::InnerEnum2::FOO_VAL;
+    message.inner_enum = ss::SimpleStruct::InnerEnum2::kFooVal;
 
     ss::SimpleStruct::ProtobufMessage vanilla;
 
@@ -57,12 +57,12 @@ TEST(SingleFile, NestedStruct) {
 
 TEST(SingleFile, InnerEnum1) {
     static_assert(std::is_enum_v<ss::SimpleStruct::NestedStruct::NestedStruct2::InnerEnum1>);
-    [[maybe_unused]] const auto inner_enum1 = ss::SimpleStruct::NestedStruct::NestedStruct2::InnerEnum1::BAR_VAL;
+    [[maybe_unused]] const auto inner_enum1 = ss::SimpleStruct::NestedStruct::NestedStruct2::InnerEnum1::kBarVal;
 }
 
 TEST(SingleFile, InnerEnum2) {
     static_assert(std::is_enum_v<ss::SimpleStruct::InnerEnum2>);
-    [[maybe_unused]] const auto inner_enum2 = ss::SimpleStruct::InnerEnum2::FOO_VAL;
+    [[maybe_unused]] const auto inner_enum2 = ss::SimpleStruct::InnerEnum2::kFooVal;
 }
 
 TEST(SingleFile, SecondStruct) {

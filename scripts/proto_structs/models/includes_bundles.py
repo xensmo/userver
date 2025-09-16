@@ -3,7 +3,6 @@
 from typing import Set
 
 BUNDLE_HPP: Set[str] = {
-    'cstddef',
     'cstdint',
     'limits',
     'optional',
