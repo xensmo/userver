@@ -1,9 +1,10 @@
 #pragma once
 
-#include <userver/storages/secdist/secdist.hpp>
+#include <grpcpp/security/credentials.h>
+#include <grpcpp/support/channel_arguments.h>
+
 #include <userver/yaml_config/yaml_config.hpp>
 
-#include <userver/ugrpc/client/client_factory_settings.hpp>
 #include <userver/ugrpc/client/retry_config.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -38,9 +39,6 @@ struct ClientFactoryConfig final {
 };
 
 ClientFactoryConfig Parse(const yaml_config::YamlConfig& value, formats::parse::To<ClientFactoryConfig>);
-
-ClientFactorySettings
-MakeFactorySettings(impl::ClientFactoryConfig&& config, const storages::secdist::SecdistConfig* secdist);
 
 }  // namespace ugrpc::client::impl
 

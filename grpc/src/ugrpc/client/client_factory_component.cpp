@@ -3,13 +3,17 @@
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/dynamic_config/storage/component.hpp>
+#include <userver/logging/log.hpp>
 #include <userver/storages/secdist/component.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
-#include <ugrpc/client/impl/client_factory_config.hpp>
 #include <userver/ugrpc/client/common_component.hpp>
 #include <userver/ugrpc/client/middlewares/pipeline.hpp>
+#include <userver/ugrpc/impl/to_string.hpp>
+
+#include <ugrpc/client/impl/client_factory_config.hpp>
+#include <ugrpc/client/secdist.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -22,6 +26,43 @@ const storages::secdist::SecdistConfig* GetSecdist(const components::ComponentCo
         return &component->Get();
     }
     return nullptr;
+}
+
+std::shared_ptr<grpc::ChannelCredentials>
+MakeCredentials(impl::AuthType auth_type, const grpc::SslCredentialsOptions& ssl_credentials_options) {
+    if (auth_type == impl::AuthType::kSsl) {
+        LOG_INFO() << "GRPC client (SSL) initialized...";
+        return grpc::SslCredentials(ssl_credentials_options);
+    } else {
+        LOG_INFO() << "GRPC client (non SSL) initialized...";
+        return grpc::InsecureChannelCredentials();
+    }
+}
+
+ClientFactorySettings
+MakeClientFactorySettings(impl::ClientFactoryConfig&& config, const storages::secdist::SecdistConfig* secdist) {
+    std::shared_ptr<grpc::ChannelCredentials> credentials =
+        MakeCredentials(config.auth_type, config.ssl_credentials_options);
+    std::unordered_map<std::string, std::shared_ptr<grpc::ChannelCredentials>> client_credentials;
+
+    if (secdist) {
+        const auto& tokens = secdist->Get<Secdist>();
+
+        for (const auto& [client_name, token] : tokens.tokens) {
+            client_credentials[client_name] = grpc::CompositeChannelCredentials(
+                credentials, grpc::AccessTokenCredentials(ugrpc::impl::ToGrpcString(token))
+            );
+        }
+    }
+
+    return ClientFactorySettings{
+        std::move(credentials),
+        std::move(client_credentials),
+        std::move(config.retry_config),
+        std::move(config.channel_args),
+        std::move(config.default_service_config),
+        config.channel_count,
+    };
 }
 
 }  // namespace
@@ -44,7 +85,7 @@ ClientFactoryComponent::ClientFactoryComponent(
     const auto* secdist = GetSecdist(context);
 
     factory_.emplace(
-        MakeFactorySettings(std::move(factory_config), secdist),
+        MakeClientFactorySettings(std::move(factory_config), secdist),
         client_common_component.blocking_task_processor_,
         *this,  // impl::PipelineCreatorInterface&
         client_common_component.completion_queues_,

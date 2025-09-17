@@ -24,7 +24,7 @@ struct ClientFactorySettings final {
 
     /// gRPC channel credentials by client_name. If not set, default `credentials`
     /// is used instead.
-    std::unordered_map<std::string, std::shared_ptr<grpc::ChannelCredentials>> client_credentials{};
+    std::unordered_map<std::string, std::shared_ptr<grpc::ChannelCredentials>> client_credentials;
 
     /// Retry configuration for outgoing RPCs
     RetryConfig retry_config;
