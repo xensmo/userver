@@ -11,6 +11,7 @@
   ".github/docker-compose.yml":"taxi/uservices/userver/.github/docker-compose.yml",
   ".github/pull_request_template.md":"taxi/uservices/userver/.github/pull_request_template.md",
   ".github/workflows/alpine.yml":"taxi/uservices/userver/.github/workflows/alpine.yml",
+  ".github/workflows/archlinux.yml":"taxi/uservices/userver/.github/workflows/archlinux.yml",
   ".github/workflows/ci-conan.yml":"taxi/uservices/userver/.github/workflows/ci-conan.yml",
   ".github/workflows/ci.yml":"taxi/uservices/userver/.github/workflows/ci.yml",
   ".github/workflows/codeql-analysis.yml":"taxi/uservices/userver/.github/workflows/codeql-analysis.yml",
