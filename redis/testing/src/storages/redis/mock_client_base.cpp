@@ -118,6 +118,15 @@ MockClientBase::Expire(std::string /*key*/, std::chrono::seconds /*ttl*/, const 
     AbortWithStacktrace(kNotMocked);
 }
 
+RequestExpire MockClientBase::Expire(
+    std::string /*key*/,
+    std::chrono::seconds /*ttl*/,
+    ExpireOptions /*option*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
 RequestGeoadd
 MockClientBase::Geoadd(std::string /*key*/, GeoaddArg /*point_member*/, const CommandControl& /*command_control*/) {
     AbortWithStacktrace(kNotMocked);

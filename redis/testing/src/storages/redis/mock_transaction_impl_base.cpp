@@ -45,6 +45,11 @@ RequestExpire MockTransactionImplBase::Expire(std::string /*key*/, std::chrono::
     AbortWithStacktrace("Redis method not mocked");
 }
 
+RequestExpire
+MockTransactionImplBase::Expire(std::string /*key*/, std::chrono::seconds /*ttl*/, ExpireOptions /*option*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
 RequestGeoadd MockTransactionImplBase::Geoadd(std::string /*key*/, GeoaddArg /*point_member*/) {
     AbortWithStacktrace("Redis method not mocked");
 }

@@ -148,6 +148,9 @@ public:
 
     virtual RequestExpire Expire(std::string key, std::chrono::seconds ttl, const CommandControl& command_control) = 0;
 
+    virtual RequestExpire
+    Expire(std::string key, std::chrono::seconds ttl, ExpireOptions options, const CommandControl& command_control) = 0;
+
     virtual RequestGeoadd Geoadd(std::string key, GeoaddArg point_member, const CommandControl& command_control) = 0;
 
     virtual RequestGeoadd

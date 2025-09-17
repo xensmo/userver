@@ -7,6 +7,9 @@ USERVER_NAMESPACE_BEGIN
 
 namespace {
 
+using storages::redis::ExpireOptions;
+using storages::redis::ExpireReply;
+
 /// [Sample Redis Client usage]
 void RedisClientSampleUsage(storages::redis::Client& client) {
     client.Rpush("sample_list", "a", {}).Get();
@@ -274,6 +277,119 @@ UTEST_F(RedisClientTest, Expire) {
     client->Set("mykey", "Hello World", {}).Get();
     EXPECT_FALSE(client->Ttl("mykey", {}).Get().KeyHasExpiration());
 }
+
+struct RedisExpireOptionsTestCase {
+    std::optional<int> initial_expire;
+    int new_expire;
+    ExpireOptions options;
+    storages::redis::ExpireReply expected_reply;
+};
+
+class RedisExpireOptionsTest : public RedisClientTest,
+                               public ::testing::WithParamInterface<RedisExpireOptionsTestCase> {};
+
+UTEST_P(RedisExpireOptionsTest, ExpireOptionsTest) {
+    const Version since{7, 0, 0};
+    if (!CheckVersion(since)) GTEST_SKIP() << SkipMsgByVersion("Expire options", since);
+
+    auto client = GetClient();
+    auto [initial_expire, new_expire, options, expected_reply] = GetParam();
+
+    client->Set("mykey", "Hello", {}).Get();
+    if (initial_expire.has_value()) {
+        client->Expire("mykey", std::chrono::seconds(initial_expire.value()), {}).Get();
+    }
+    EXPECT_EQ(client->Expire("mykey", std::chrono::seconds(new_expire), options, {}).Get(), expected_reply);
+
+    switch (expected_reply) {
+        case ExpireReply::kKeyDoesNotExist:
+            if (initial_expire.has_value()) {
+                EXPECT_EQ(client->Ttl("mykey", {}).Get().GetExpire().count(), initial_expire.value());
+            } else {
+                EXPECT_FALSE(client->Ttl("mykey", {}).Get().KeyHasExpiration());
+            }
+            break;
+        case ExpireReply::kTimeoutWasSet:
+            EXPECT_EQ(client->Ttl("mykey", {}).Get().GetExpire().count(), new_expire);
+            break;
+    }
+}
+
+INSTANTIATE_UTEST_SUITE_P(
+    RedisClientTest,
+    RedisExpireOptionsTest,
+    testing::Values(
+        // initial_expire, new_expire, options, expected_reply
+        RedisExpireOptionsTestCase{
+            std::nullopt,
+            10,
+            ExpireOptions(ExpireOptions::Compare::kGreaterThan),
+            ExpireReply::kKeyDoesNotExist},
+        RedisExpireOptionsTestCase{
+            9,
+            10,
+            ExpireOptions(ExpireOptions::Compare::kGreaterThan),
+            ExpireReply::kTimeoutWasSet},
+        RedisExpireOptionsTestCase{
+            11,
+            10,
+            ExpireOptions(ExpireOptions::Compare::kGreaterThan),
+            ExpireReply::kKeyDoesNotExist},
+
+        RedisExpireOptionsTestCase{
+            std::nullopt,
+            20,
+            ExpireOptions(ExpireOptions::Compare::kLessThan),
+            ExpireReply::kTimeoutWasSet},
+        RedisExpireOptionsTestCase{
+            std::nullopt,
+            20,
+            ExpireOptions(ExpireOptions::Compare::kLessThan, ExpireOptions::Exist::kSetIfExist),
+            ExpireReply::kKeyDoesNotExist},
+        RedisExpireOptionsTestCase{
+            19,
+            20,
+            ExpireOptions(ExpireOptions::Compare::kLessThan),
+            ExpireReply::kKeyDoesNotExist},
+        RedisExpireOptionsTestCase{
+            21,
+            20,
+            ExpireOptions(ExpireOptions::Compare::kLessThan),
+            ExpireReply::kTimeoutWasSet},
+
+        RedisExpireOptionsTestCase{
+            std::nullopt,
+            30,
+            ExpireOptions(ExpireOptions::Exist::kSetIfExist),
+            ExpireReply::kKeyDoesNotExist},
+        RedisExpireOptionsTestCase{
+            29,
+            30,
+            ExpireOptions(ExpireOptions::Exist::kSetIfExist),
+            ExpireReply::kTimeoutWasSet},
+        RedisExpireOptionsTestCase{
+            31,
+            30,
+            ExpireOptions(ExpireOptions::Exist::kSetIfExist),
+            ExpireReply::kTimeoutWasSet},
+
+        RedisExpireOptionsTestCase{
+            std::nullopt,
+            40,
+            ExpireOptions(ExpireOptions::Exist::kSetIfNotExist),
+            ExpireReply::kTimeoutWasSet},
+        RedisExpireOptionsTestCase{
+            39,
+            40,
+            ExpireOptions(ExpireOptions::Exist::kSetIfNotExist),
+            ExpireReply::kKeyDoesNotExist},
+        RedisExpireOptionsTestCase{
+            41,
+            40,
+            ExpireOptions(ExpireOptions::Exist::kSetIfNotExist),
+            ExpireReply::kKeyDoesNotExist}
+    )
+);
 
 UTEST_F(RedisClientTest, Georadius) {
     auto client = GetClient();

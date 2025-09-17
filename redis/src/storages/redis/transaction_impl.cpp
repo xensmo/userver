@@ -100,6 +100,11 @@ RequestExpire TransactionImpl::Expire(std::string key, std::chrono::seconds ttl)
     return AddCmd<RequestExpire>("expire", true, std::move(key), ttl.count());
 }
 
+RequestExpire TransactionImpl::Expire(std::string key, std::chrono::seconds ttl, ExpireOptions options) {
+    UpdateShard(key);
+    return AddCmd<RequestExpire>("expire", true, std::move(key), ttl.count(), options);
+}
+
 RequestGeoadd TransactionImpl::Geoadd(std::string key, GeoaddArg point_member) {
     UpdateShard(key);
     return AddCmd<RequestGeoadd>("geoadd", true, std::move(key), std::move(point_member));

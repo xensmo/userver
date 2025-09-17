@@ -221,6 +221,18 @@ RequestExpire ClientImpl::Expire(std::string key, std::chrono::seconds ttl, cons
     );
 }
 
+RequestExpire ClientImpl::Expire(
+    std::string key,
+    std::chrono::seconds ttl,
+    ExpireOptions options,
+    const CommandControl& command_control
+) {
+    const auto shard = ShardByKey(key, command_control);
+    return CreateRequest<RequestExpire>(MakeRequest(
+        CmdArgs{"expire", std::move(key), ttl.count(), options}, shard, true, GetCommandControl(command_control)
+    ));
+}
+
 RequestGeoadd ClientImpl::Geoadd(std::string key, GeoaddArg point_member, const CommandControl& command_control) {
     auto shard = ShardByKey(key, command_control);
     return CreateRequest<RequestGeoadd>(MakeRequest(

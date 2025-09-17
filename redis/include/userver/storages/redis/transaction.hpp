@@ -65,6 +65,8 @@ public:
 
     virtual RequestExpire Expire(std::string key, std::chrono::seconds ttl) = 0;
 
+    virtual RequestExpire Expire(std::string key, std::chrono::seconds ttl, ExpireOptions options) = 0;
+
     virtual RequestGeoadd Geoadd(std::string key, GeoaddArg point_member) = 0;
 
     virtual RequestGeoadd Geoadd(std::string key, std::vector<GeoaddArg> point_members) = 0;
