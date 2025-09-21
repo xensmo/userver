@@ -1,55 +1,60 @@
 {% import "types_forward_declarations.inc.jinja" as types_forward_declarations %}
-{% import "io_forward_declarations.inc.jinja" as io_forward_declarations %}
+{% import "utils.inc.jinja" as utils %}
 
 {%- macro render_gen_node(node) %}
-{%- if node.kind == "namespace" %}
-{{ do_render_namespace(node) }}
-{%- elif node.kind == "struct" %}
-{{ do_render_struct(node) }}
-{%- elif node.kind == "enum" %}
-{{ do_render_enum(node) }}
-{%- elif node.kind == "oneof" %}
-{{ do_render_oneof(node) }}
-{%- elif node.kind == "vanilla_class" %}
-{%- else %}
+{% if node.kind == "namespace" %}
+{{ do_render_namespace(node) -}}
+{% elif node.kind == "struct" %}
+{{ do_render_struct(node) -}}
+{% elif node.kind == "enum" %}
+{{ do_render_enum(node) -}}
+{% elif node.kind == "oneof" %}
+{{ do_render_oneof(node) -}}
+{% elif node.kind == "vanilla_class" %}
+{% else %}
 NOT_IMPLEMENTED_ERROR()
-{%- endif %}
+{% endif %}
 {% endmacro -%}
 
 {%- macro do_render_namespace(namespace) %}
-namespace {{ namespace.short_name }} {
 
+{% call utils.optional_namespace(namespace.short_name) %}
+{% call utils.prepend_empty_line_if_not_empty() %}
 {% for child in namespace.children %}
-{{ render_gen_node(child) }}
+{{ types_forward_declarations.render_gen_node(child) -}}
 {% endfor %}
-{%- for child in namespace.iter_all_children() %}
-{{ io_forward_declarations.do_render_io_functions(child, namespace) }}
+{% endcall %}
+{% for child in namespace.children %}
+{{ render_gen_node(child) -}}
 {% endfor %}
-}  // namespace {{ namespace.short_name }}
+
+{% endcall %}  {#- optional namespace -#}
 {% endmacro -%}
 
 {%- macro do_render_struct(struct) %}
+
 struct {{ struct.name.short_name }} final {
 {% filter indent(width=4, first=True) %}
 using ProtobufMessage = ::{{ struct.vanilla_full_name_fwd }};
-
-{%- for child in struct.children %}
-{{ types_forward_declarations.render_gen_node(child) }}
-{%- endfor %}
-{% if struct.children | length > 0 %}
-
-{% endif %}
+{% call utils.prepend_empty_line_if_not_empty() %}
 {% for nested in struct.nested_types %}
-{{ render_gen_node(nested) }}
+{{ types_forward_declarations.render_gen_node(nested) -}}
 {% endfor %}
+{% endcall %}  {#- prepend empty line -#}
+{% for nested in struct.nested_types %}
+{{ render_gen_node(nested) -}}
+{% endfor %}
+{% call utils.prepend_empty_line_if_not_empty() %}
 {% for field in struct.fields %}
-{{ do_render_field(struct, field) }}
+{{ do_render_field(struct, field) -}}
 {% endfor %}
-{% endfilter %}
+{% endcall %}  {#- prepend empty line -#}
+{% endfilter %}  {#- indent #}
 };
 {% endmacro -%}
 
 {%- macro do_render_enum(enum) %}
+
 enum class {{ enum.name.short_name }} : std::int32_t {
 {% filter indent(width=4, first=True) %}
 {% for value in enum.values %}
@@ -61,6 +66,7 @@ INTERNAL_DO_NOT_USE_ = std::numeric_limits<std::int32_t>::max(),  // Write defau
 {% endmacro -%}
 
 {%- macro do_render_oneof(oneof) %}
+
 struct {{ oneof.name.short_name }} final : {{ type_ref_consts.ONEOF_BASE_CLASS.contextual_cpp_name(context=oneof) }}<
 {% filter indent(width=4, first=True) %}
 {% for field in oneof.fields %}
@@ -85,4 +91,4 @@ UPROTO_ONEOF_FIELD({{ oneof.name.short_name }}, {{ field.field_type.contextual_c
 
 {%- macro do_render_field(struct, field) %}
 {{ field.field_type.contextual_cpp_name(context=struct) }} {{ field.short_name }}{};
-{%- endmacro -%}
+{% endmacro -%}

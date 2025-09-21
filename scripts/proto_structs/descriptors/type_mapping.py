@@ -10,7 +10,6 @@ from typing import Union
 
 import google.protobuf.descriptor as descriptor
 
-from proto_structs.models import includes
 from proto_structs.models import names
 from proto_structs.models import type_ref
 from proto_structs.models import type_ref_consts
@@ -38,16 +37,16 @@ BUILTIN_TYPES: Mapping[int, type_ref.TypeReference] = {
 
 
 def parse_enum_reference(field_type: descriptor.EnumDescriptor) -> type_ref.TypeReference:
-    return type_ref.UseerverCodegenEnumType(
+    return type_ref.UserverCodegenType(
         name=names.make_structs_type_name(vanilla_type_name=parse_type_name(field_type)),
-        include=parse_include(field_type),
+        proto_file=parse_file_path(field_type),
     )
 
 
 def parse_struct_reference(field_type: descriptor.Descriptor) -> type_ref.TypeReference:
-    return type_ref.UseerverCodegenStructType(
+    return type_ref.UserverCodegenType(
         name=names.make_structs_type_name(vanilla_type_name=parse_type_name(field_type)),
-        include=parse_include(field_type),
+        proto_file=parse_file_path(field_type),
     )
 
 
@@ -84,7 +83,7 @@ def _get_outer_structs_names(proto_type: TypeDescriptor) -> Sequence[str]:
     return list(reversed(names_list))
 
 
-def parse_include(proto_type: TypeDescriptor) -> str:
+def parse_file_path(proto_type: TypeDescriptor) -> pathlib.Path:
     file = typing.cast(descriptor.FileDescriptor, proto_type.file)
     file_name = typing.cast(str, file.name)
-    return str(includes.proto_path_to_structs_path(pathlib.Path(file_name), ext='hpp'))
+    return pathlib.Path(file_name)

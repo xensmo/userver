@@ -49,6 +49,9 @@ class HasCppNameImpl(HasCppName, abc.ABC):
     def contextual_cpp_name(self, *, context: HasCppName) -> str:
         return _get_contextual_cpp_name(self, context=context)
 
+    def __repr__(self) -> str:
+        return f'{self.__class__.__qualname__}(name={self.full_cpp_name()})'
+
 
 class HasVanillaName(abc.ABC):
     """A C++ entity with a vanilla proto name."""
@@ -65,7 +68,7 @@ class HasVanillaName(abc.ABC):
         Vanilla name when the definition is available.
         Example: 'path::to::MyType::Nested::Inner'.
         """
-        return self.name_impl(name=self.vanilla_name)
+        return self._name_impl(name=self.vanilla_name)
 
     @property
     def vanilla_full_name_fwd(self) -> str:
@@ -73,15 +76,17 @@ class HasVanillaName(abc.ABC):
         Vanilla name when the definition isn't available. For fwd.
         Example: 'path::to:MyType_Nested_Inner'.
         """
-        return self.name_impl(name=get_vanilla_type_name(name=self.vanilla_name))
+        return self._name_impl(name=get_vanilla_fwd_type_name(name=self.vanilla_name))
 
-    def name_impl(self, name: TypeName) -> str:
+    def _name_impl(self, name: TypeName) -> str:
+        # TODO this is a copy-paste from full_cpp_name().
+        # TODO HasVanillaName should require proto_file property and should rely on VanillaCodegenType.
         segments = name.name_segments()
         assert all(segments), f'Empty name segments are not allowed for {self}'
         return '::'.join(segments)
 
 
-def get_vanilla_type_name(*, name: TypeName) -> TypeName:
+def get_vanilla_fwd_type_name(*, name: TypeName) -> TypeName:
     """
     Converts a proto package to a vanilla protobuf name.
     Example: 'path::to::MyType::Nested::Inner' -> 'path::to:MyType_Nested_Inner'.

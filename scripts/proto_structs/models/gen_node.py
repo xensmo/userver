@@ -18,6 +18,7 @@ from proto_structs.models import io
 from proto_structs.models import names
 from proto_structs.models import reserved_identifiers
 from proto_structs.models import type_ref
+from proto_structs.models import type_ref_consts
 
 
 class CodegenNode(names.HasCppNameImpl, includes.HasCppIncludes, type_ref.HasTypeDependencies, abc.ABC):
@@ -65,7 +66,7 @@ class CodegenNode(names.HasCppNameImpl, includes.HasCppIncludes, type_ref.HasTyp
             yield from child.type_dependencies()
 
 
-class File(includes.HasCppIncludes):
+class File(names.HasCppName, includes.HasCppIncludes):
     """A C++ proto structs file scheduled for generation."""
 
     def __init__(self, *, proto_relative_path: pathlib.Path, children: Sequence[CodegenNode]) -> None:
@@ -75,6 +76,18 @@ class File(includes.HasCppIncludes):
         self.proto_relative_path: Final[pathlib.Path] = proto_relative_path
         #: The top-level C++ entities to define in the file.
         self.children = children
+
+    @override
+    def full_cpp_name(self) -> str:
+        return f'<file {self.proto_relative_path}>'
+
+    @override
+    def contextual_cpp_name(self, *, context: names.HasCppName) -> str:
+        return self.full_cpp_name()
+
+    @override
+    def full_cpp_name_segments(self) -> Sequence[str]:
+        return ()
 
     @override
     def collect_includes(self) -> Iterable[includes.Include]:
@@ -145,10 +158,19 @@ class TypeNode(CodegenNode, abc.ABC):
         super().__init__()
         #: Detailed type name.
         self.name: Final[names.TypeName] = name
+        #: Whether a forward declaration should be generated for the type at the top of the containing scope.
+        self.should_forward_declare: bool = False
 
     @override
     def full_cpp_name_segments(self) -> Sequence[str]:
         return self.name.name_segments()
+
+
+def iter_type_nodes(node: CodegenNode) -> Iterable[TypeNode]:
+    """Iterate through all types defined inside, recursively."""
+    for child in node.iter_all_children():
+        if isinstance(child, TypeNode):
+            yield child
 
 
 class StructNode(TypeNode, names.HasVanillaName):
@@ -207,10 +229,16 @@ class StructNode(TypeNode, names.HasVanillaName):
 
     @override
     def type_dependencies(self) -> Iterable[type_ref.TypeDependency]:
+        yield type_ref.TypeDependency(type_reference=self._vanilla_type_ref(), kind=type_ref.TypeDependencyKind.WEAK)
         for field in self.fields:
             yield from field.field_type.type_dependencies()
         for nested in self.nested_types:
             yield from nested.type_dependencies()
+
+    def _vanilla_type_ref(self) -> type_ref.TypeReference:
+        # TODO should move this method to HasVanillaName.
+        # TODO should implement methods of HasVanillaName using TypeReference.full_cpp_name.
+        return type_ref.VanillaCodegenType(name=self._vanilla_name, proto_file=self.proto_file)
 
     @property
     @override
@@ -258,6 +286,25 @@ class StructField:
             if self.short_name[:-1].lower() in reserved_identifiers.CPP_KEYWORDS or self.short_name.endswith('__'):
                 return self.short_name.lower()
         return self.short_name.removesuffix('_').lower()
+
+
+def wrap_field_in_box(field: StructField) -> None:
+    """
+    Wrap type of the field in `utils::Box`.
+    Policy:
+     * Message types `T` are replaced with `utils::Box<T>`.
+     * For optionals `std::optional<T>`, the inside is wrapped: `std::optional<utils::Box<T>>`.
+       This prevents an unnecessary allocation for empty fields.
+     * For repeated and map containers that require type definition, the whole container is wrapped, not each element.
+     * For custom / unknown types, `T` is replaced with `utils::Box<T>`.
+    """
+    if isinstance(field.field_type, type_ref.TemplateType):
+        if field.field_type.template.full_cpp_name() == type_ref_consts.OPTIONAL_TEMPLATE.full_cpp_name():
+            # Wrap the type inside the optional in `utils::Box`, not the optional itself.
+            value_type = field.field_type.template_args[0]
+            field.field_type = type_ref_consts.make_optional(type_ref_consts.make_box(value_type))
+            return
+    field.field_type = type_ref_consts.make_box(field.field_type)
 
 
 class EnumNode(TypeNode, names.HasVanillaName):
@@ -338,7 +385,7 @@ class OneofNode(TypeNode):
             yield from field.field_type.type_dependencies()
 
 
-class VanillaTypeDeclaration(TypeNode):
+class VanillaTypeDeclaration(TypeNode, abc.ABC):
     """A C++ vanilla type."""
 
     def __init__(
@@ -349,6 +396,8 @@ class VanillaTypeDeclaration(TypeNode):
         super().__init__(name=names.make_structs_type_name(vanilla_name))
         #: Vanilla type name.
         self.vanilla_name: Final[names.TypeName] = vanilla_name
+        # `forward_decls.py` does not work across files, so just require the forward declaration here.
+        self.should_forward_declare = True
 
 
 class VanillaClassDeclaration(VanillaTypeDeclaration):

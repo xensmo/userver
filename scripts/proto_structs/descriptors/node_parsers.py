@@ -18,6 +18,7 @@ import google.protobuf.descriptor as descriptor
 
 from proto_structs.descriptors import option_parsers
 from proto_structs.descriptors import type_mapping
+from proto_structs.models import forward_decls
 from proto_structs.models import gen_node
 from proto_structs.models import io
 from proto_structs.models import names
@@ -38,20 +39,22 @@ def parse_file(file: descriptor.FileDescriptor, *, plugin_options: options.Plugi
         if message_type := parse_message(message, plugin_options=plugin_options):
             types.append(message_type)
 
-    types = sort_dependencies.sort_types(types)
+    types = sort_dependencies.sort_nodes_topologically(types)
 
-    structs_namespace = gen_node.NamespaceNode.make_for_structs(
-        typing.cast(str, file.package),
-        children=types,
-    )
     vanilla_namespace = gen_node.NamespaceNode.make_for_vanilla(
         typing.cast(str, file.package),
         children=vanilla.collect_vanilla_types(types=types),
     )
+    structs_namespace = gen_node.NamespaceNode.make_for_structs(
+        typing.cast(str, file.package),
+        children=types,
+    )
+
+    forward_decls.add_forward_declarations((structs_namespace,))
 
     return gen_node.File(
         proto_relative_path=pathlib.Path(typing.cast(str, file.name)),
-        children=[structs_namespace, vanilla_namespace],
+        children=[vanilla_namespace, structs_namespace],
     )
 
 
@@ -110,7 +113,7 @@ def parse_message(
         if message_type := parse_message(nested_message, plugin_options=plugin_options):
             nested_types.append(message_type)
 
-    nested_types = sort_dependencies.sort_types(nested_types)
+    nested_types = sort_dependencies.sort_nodes_topologically(nested_types)
 
     fields: List[gen_node.StructField] = []
 
@@ -131,7 +134,7 @@ def parse_message(
                 continue
         fields.append(parse_field(field, plugin_options=plugin_options))
 
-    nested_types = sort_dependencies.sort_types(nested_types)
+    nested_types = sort_dependencies.sort_nodes_topologically(nested_types)
 
     result = gen_node.StructNode(
         vanilla_name=vanilla_type_name,
@@ -197,19 +200,9 @@ def _apply_options_to_field(
 
     should_box = field_options.indirect or (message_options and message_options.indirect)
     if should_box:
-        _wrap_field_in_box(struct_field)
+        gen_node.wrap_field_in_box(struct_field)
 
     return struct_field
-
-
-def _wrap_field_in_box(field: gen_node.StructField) -> None:
-    if isinstance(field.field_type, type_ref.TemplateType):
-        if field.field_type.template.full_cpp_name() == type_ref_consts.OPTIONAL_TEMPLATE.full_cpp_name():
-            # Wrap the type inside the optional in `utils::Box`, not the optional itself.
-            value_type = field.field_type.template_args[0]
-            field.field_type = type_ref_consts.make_optional(type_ref_consts.make_box(value_type))
-            return
-    field.field_type = type_ref_consts.make_box(field.field_type)
 
 
 def _is_synthetic_oneof(oneof: descriptor.OneofDescriptor) -> bool:
@@ -314,7 +307,7 @@ def parse_oneof(
 
     type_reference = type_ref.UserverCodegenType(
         name=oneof_type_name,
-        include=type_mapping.parse_include(containing_type_descriptor),
+        proto_file=type_mapping.parse_file_path(containing_type_descriptor),
     )
 
     return gen_node.StructField(

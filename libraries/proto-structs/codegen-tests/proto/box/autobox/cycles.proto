@@ -1,17 +1,11 @@
 syntax = "proto3";
 
-package simple;
+package box.autobox;
 
-option go_package = "a.yandex-team.ru/taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/simple;simple";
-
-import "userver/structs/annotations.proto";
-
-message MyMap {
-    map<string, string> self = 1 [(userver.structs.field).indirect = true];
-}
+option go_package = "a.yandex-team.ru/taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/box/autobox;boxautobox";
 
 message Self {
-    Self self = 1 [(userver.structs.field).indirect = true];
+    Self self = 1;
 }
 
 message First {
@@ -23,7 +17,7 @@ message Second {
 }
 
 message Third {
-    First c = 1 [(userver.structs.field).indirect = true];
+    First c = 1;
 }
 
 message CycleEnd {
@@ -31,13 +25,13 @@ message CycleEnd {
 }
 
 message CycleStart {
-    CycleEnd cycle = 1 [(userver.structs.field).indirect = true];
+    CycleEnd cycle = 1;
     repeated CycleEnd not_boxed = 2;
 }
 
 message Main1 {
     message Inner {
-        ImBelowMain1 cycle = 1 [(userver.structs.field).indirect = true];
+        ImBelowMain1 cycle = 1;
     }
     Main1.Inner inner = 1;
 }
@@ -55,7 +49,7 @@ message Main2 {
         Main2.Inner inner = 1;
     }
     message Inner {
-        IamAboveMain2 cycle = 1 [(userver.structs.field).indirect = true];
+        IamAboveMain2 cycle = 1;
     }
     Inner inner = 1;
 }
@@ -69,7 +63,7 @@ message NewCycle {
     }
     message Inner2Below {
         message InnerInner {
-            NewCycle.Inner1 inner = 1 [(userver.structs.field).indirect = true];
+            NewCycle.Inner1 inner = 1;
         }
         InnerInner i = 1;
     }
@@ -79,7 +73,7 @@ message NewCycle {
 message NewCycle2 {
     message Inner2Above {
         message InnerInner {
-            NewCycle2.Inner1 inner = 1 [(userver.structs.field).indirect = true];
+            NewCycle2.Inner1 inner = 1;
         }
         NewCycle2.Inner2Above.InnerInner i = 1;
     }

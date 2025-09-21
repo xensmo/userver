@@ -67,16 +67,19 @@ class _CodeGenerator:
                 file = self.response.file.add()  # pyright: ignore
                 file.name = file_name  # pyright: ignore
                 file.content = file_content  # pyright: ignore
-        except Exception as exc:
-            raise Exception(f'File: {self.file_descriptor.name}.\n{exc}')
+        except Exception:
+            raise Exception(
+                f'userver proto structs codegen failed for file: {self.file_descriptor.name} '
+                '(see details in the exception above)'
+            )
 
-    def _make_jinja_data(self, file_node: gen_node.File) -> Dict[str, Any]:
+    @staticmethod
+    def _make_jinja_data(file_node: gen_node.File) -> Dict[str, Any]:
         includes_dict = includes.sorted_includes(file_node, current_hpp=str(file_node.gen_path(ext='hpp')))
-        proto_file_name = typing.cast(str, self.file_descriptor.name)
 
         return {
-            'file_name_wo_ext': _strip_ext(proto_file_name),
-            'gen_nodes': file_node.children,
+            'file_name_wo_ext': _strip_ext(str(file_node.proto_relative_path)),
+            'file': file_node,
             'includes_hpp': includes_dict[includes.IncludeKind.FOR_HPP],
             'includes_cpp': includes_dict[includes.IncludeKind.FOR_CPP],
             'type_ref_consts': type_ref_consts,

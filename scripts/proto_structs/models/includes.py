@@ -71,11 +71,6 @@ def proto_path_to_vanilla_pb_h(path: pathlib.Path) -> str:
     return str(path.with_suffix('.pb.h'))
 
 
-def structs_path_to_vanilla_pb_h(path: str) -> str:
-    """Returns the path of vanilla C++ `.pb.h` file (relative to source dir)."""
-    return path.removesuffix('.structs.usrv.pb.hpp') + '.pb.h'
-
-
 def io_includes_by_full_name(name: str, *, prefix: str) -> List[Include]:
     """Returns includes for IO."""
 

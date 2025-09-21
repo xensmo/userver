@@ -1,36 +1,33 @@
-{%- macro render_gen_node(node) %}
-{%- if node.kind == "namespace" %}
-{{ do_render_namespace(node) }}
-{%- endif %}
+{% import "utils.inc.jinja" as utils %}
+
+{%- macro render_gen_node(node, context) %}
+{% if node.kind == "namespace" %}
+{{ do_render_namespace(node) -}}
+{% elif node.kind == "struct" %}
+{{ do_render_struct(node, context) -}}
+{% endif %}
 {% endmacro -%}
 
 {%- macro do_render_namespace(namespace) %}
-namespace {{ namespace.short_name }} {
 
-
-{%- for child in namespace.children %}
-
-{%- if child.kind == "struct" %}
-{{ do_render_io(child, namespace) }}
-{%- else %}
-{{ render_gen_node(child) }}
-{%- endif %}
+{% call utils.optional_namespace(namespace.short_name) %}
+{% for child in namespace.children %}
+{{ render_gen_node(child, namespace) -}}
 {% endfor %}
 
-}  // namespace {{ namespace.short_name }}
+{% endcall %}  {#- optional namespace -#}
 {% endmacro -%}
 
 
-{%- macro do_render_io(node, context) %}
-{%- for child in node.iter_all_children() %}
-{%- if child.kind == "struct" %}
-{%- if child.fields | length > 0 %}
-{{ do_render_read(child, context) }}
-{{ do_render_write_impl(child) }}
-{{ do_render_write_const_ref(child, context) }}
-{{ do_render_write_rvalue(child, context) }}
-{% endif %}
-{% endif %}
+{%- macro do_render_struct(node, context) %}
+
+// ---------- IO for {{ node.full_cpp_name() }} ----------
+{{ do_render_read(node, context) -}}
+{{ do_render_write_impl(node) -}}
+{{ do_render_write_const_ref(node, context) -}}
+{{ do_render_write_rvalue(node, context) -}}
+{% for child in node.nested_types %}
+{{ render_gen_node(child, context) -}}
 {% endfor %}
 {% endmacro -%}
 
@@ -89,11 +86,12 @@ USERVER_NAMESPACE::proto_structs::io::impl::CreateFieldGetter(msg, ::{{ struct.v
 {% endmacro -%}
 
 {%- macro do_render_read(struct, context) %}
+
 {{ struct.contextual_cpp_name(context=context) }} ReadProtoStruct(
 {% filter indent(width=4, first=True) %}
-USERVER_NAMESPACE::proto_structs::io::ReadContext& ctx,
+[[maybe_unused]] USERVER_NAMESPACE::proto_structs::io::ReadContext& ctx,
 USERVER_NAMESPACE::proto_structs::io::To<{{ struct.contextual_cpp_name(context=context) }}>,
-const ::{{ struct.vanilla_full_name }}& msg) {
+[[maybe_unused]] const ::{{ struct.vanilla_full_name }}& msg) {
 return {
 {% filter indent(width=4, first=True) %}
 {%- for field in struct.fields %} 
@@ -163,6 +161,7 @@ USERVER_NAMESPACE::proto_structs::io::impl::WriteField(ctx, std::forward<T>(obj)
 {% endmacro -%}
 
 {%- macro do_render_write_impl(struct) %}
+
 template<typename T>
 void WriteProtoStructImpl(
 {% filter indent(width=4, first=True) %}
@@ -180,6 +179,7 @@ void WriteProtoStructImpl(
 {% endmacro -%}
 
 {%- macro do_render_write_const_ref(struct, context) %}
+
 void WriteProtoStruct(
 {% filter indent(width=4, first=True) %}
 USERVER_NAMESPACE::proto_structs::io::WriteContext& ctx,
@@ -191,6 +191,7 @@ WriteProtoStructImpl(ctx, obj, msg);
 {% endmacro -%}
 
 {%- macro do_render_write_rvalue(struct, context) %}
+
 void WriteProtoStruct(
 {% filter indent(width=4, first=True) %}
 USERVER_NAMESPACE::proto_structs::io::WriteContext& ctx,
