@@ -248,14 +248,18 @@ def parse_field(
 ) -> gen_node.StructField:
     if map_field_type := _try_parse_map_field_type(field):
         parsed_type = map_field_type
+        initializer = ''
     else:
-        parsed_type = _parse_type_reference(field)
+        parsed_type = type_mapping.parse_type_reference(field)
+        parsed_type = type_mapping.replace_well_known_types(parsed_type)
+        initializer = '' if isinstance(parsed_type, type_ref.UserverCodegenType) else '{}'
         if not ignore_label:
             parsed_type = type_mapping.handle_type_label(field, parsed_type)
 
     result_field = gen_node.StructField(
         short_name=names.escape_id(typing.cast(str, field.name)),
         field_type=parsed_type,
+        initializer=initializer,
         number=typing.cast(int, field.number),
         oneof_fields=None,
         io_kinds=_io_kind_by_field(field),
@@ -272,8 +276,8 @@ def _try_parse_map_field_type(field: descriptor.FieldDescriptor) -> Optional[typ
         return None
 
     fields_by_name = typing.cast(Mapping[str, descriptor.FieldDescriptor], message_type.fields_by_name)
-    key_type = _parse_type_reference(fields_by_name['key'])
-    value_type = _parse_type_reference(fields_by_name['value'])
+    key_type = type_mapping.parse_type_reference(fields_by_name['key'])
+    value_type = type_mapping.parse_type_reference(fields_by_name['value'])
 
     return type_ref_consts.make_hash_map(key_type, value_type)
 
@@ -313,6 +317,7 @@ def parse_oneof(
     return gen_node.StructField(
         short_name=oneof_field_short_name,
         field_type=type_reference,
+        initializer='',
         number=None,
         oneof_fields=fields,
         io_kinds=_io_kind_oneof(),
@@ -338,24 +343,6 @@ def _make_unique_member_name(base_name: str, taken_member_names: MutableSet[str]
         base_name = f'X{base_name}'
     taken_member_names.add(base_name)
     return base_name
-
-
-def _parse_type_reference(field_type: descriptor.FieldDescriptor) -> type_ref.TypeReference:
-    type_kind = typing.cast(int, field_type.type)
-    if builtin_type := type_mapping.BUILTIN_TYPES.get(type_kind):
-        return builtin_type
-
-    if type_kind == descriptor.FieldDescriptor.TYPE_ENUM:
-        enum_type = typing.cast(descriptor.EnumDescriptor, field_type.enum_type)
-        return type_mapping.parse_enum_reference(enum_type)
-
-    if type_kind == descriptor.FieldDescriptor.TYPE_MESSAGE or type_kind == descriptor.FieldDescriptor.TYPE_GROUP:
-        # Details on groups:
-        # https://protobuf.com/docs/descriptors#groups
-        message_type = typing.cast(descriptor.Descriptor, field_type.message_type)
-        return type_mapping.parse_struct_reference(message_type)
-
-    raise RuntimeError(f'Invalid field type kind: {type_kind}')
 
 
 def _get_optional_message_type(field: descriptor.FieldDescriptor) -> Optional[descriptor.Descriptor]:

@@ -90,5 +90,5 @@ UPROTO_ONEOF_FIELD({{ oneof.name.short_name }}, {{ field.field_type.contextual_c
 {% endmacro -%} {#- do_render_oneof -#}
 
 {%- macro do_render_field(struct, field) %}
-{{ field.field_type.contextual_cpp_name(context=struct) }} {{ field.short_name }}{};
+{{ field.field_type.contextual_cpp_name(context=struct) }} {{ field.short_name }}{{ field.initializer }};
 {% endmacro -%}

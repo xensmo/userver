@@ -41,6 +41,8 @@ message SimpleStruct {
 
     InnerEnum2 inner_enum = 7;
     string digit1u = 8;
+    NestedStruct nested = 9;
+    optional NestedStruct optional_nested = 10;
 }
 
 message SecondStruct {

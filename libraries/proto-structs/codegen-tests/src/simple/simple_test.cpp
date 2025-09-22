@@ -20,6 +20,8 @@ TEST(SingleFile, SimpleStruct) {
     message.some_bytes = {"foo", "bar"};
     message.something.set_bar("bar_val");
     message.inner_enum = ss::SimpleStruct::InnerEnum2::kFooVal;
+    message.nested.swag = "foo";
+    message.optional_nested = std::optional<ss::SimpleStruct::NestedStruct>{{.swag = "foo"}};
 
     ss::SimpleStruct::ProtobufMessage vanilla;
 
@@ -32,6 +34,8 @@ TEST(SingleFile, SimpleStruct) {
     EXPECT_EQ(vanilla.some_bytes().Get(1), "bar");
     EXPECT_EQ(vanilla.bar(), "bar_val");
     EXPECT_EQ(vanilla.inner_enum(), ss::SimpleStruct::ProtobufMessage::FOO_VAL);
+    EXPECT_EQ(vanilla.nested().swag(), "foo");
+    EXPECT_EQ(vanilla.optional_nested().swag(), "foo");
 
     ss::SimpleStruct to;
     ::proto_structs::MessageToStruct(vanilla, to);

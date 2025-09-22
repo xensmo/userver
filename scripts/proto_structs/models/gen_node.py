@@ -254,7 +254,9 @@ class StructField:
     short_name: Final[str]
     #: Type of the field.
     field_type: type_ref.TypeReference
-    #: Low-level numeric ID of the field for serialization. Absent for oneof fields.
+    #: C++ code for the field initializer, e.g. '', '{}' or '{5}'.
+    initializer: Final[str]
+    #: Low-level numeric ID of the field for serialization. Absent for fields of type "oneof".
     number: Final[Optional[int]]
     #: If this struct field maps to oneof, lists the fields of the oneof type.
     oneof_fields: Final[Optional[Sequence[StructField]]]

@@ -91,3 +91,31 @@ message NewCycle2 {
     }
     NewCycle2.Inner1 inner = 1;
 }
+
+message OptionalSelf {
+    optional OptionalSelf self = 1 [(userver.structs.field).indirect = true];
+}
+
+message OptionalDouble {
+    message First {
+        optional Second c = 1 [(userver.structs.field).indirect = true];
+    }
+
+    message Second {
+        optional First c = 1;
+    }
+}
+
+message OptionalTriple {
+    message First {
+        optional Second c = 1;
+    }
+
+    message Second {
+        optional Third c = 1;
+    }
+
+    message Third {
+        optional First c = 1 [(userver.structs.field).indirect = true];
+    }
+}
