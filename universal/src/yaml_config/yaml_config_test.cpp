@@ -68,14 +68,28 @@ TEST(YamlConfig, SampleEnv) {
     /// [sample env]
     auto node = formats::yaml::FromString(R"(
     some_element:
-        some#env: ENV_VARIABLE_NAME
+        int#env: INT_VARIABLE_NAME
+        valid_yaml#env: VALID_YAML_VARIABLE_NAME
+        invalid_yaml#env: INVALID_YAML_VARIABLE_NAME
+        empty#env: EMPTY_VARIABLE_NAME
+        missing#env: MISSING_VARIABLE_NAME
   )");
 
     // NOLINTNEXTLINE(concurrency-mt-unsafe)
-    ::setenv("ENV_VARIABLE_NAME", "100", 1);
+    ::setenv("INT_VARIABLE_NAME", "100", 1);
+    // NOLINTNEXTLINE(concurrency-mt-unsafe)
+    ::setenv("VALID_YAML_VARIABLE_NAME", "x: [5]", 1);
+    // NOLINTNEXTLINE(concurrency-mt-unsafe)
+    ::setenv("INVALID_YAML_VARIABLE_NAME", "[::]:1234", 1);
+    // NOLINTNEXTLINE(concurrency-mt-unsafe)
+    ::setenv("EMPTY_VARIABLE_NAME", "", 1);
 
     const yaml_config::YamlConfig yaml(std::move(node), {}, yaml_config::YamlConfig::Mode::kEnvAllowed);
-    EXPECT_EQ(yaml["some_element"]["some"].As<int>(), 100);
+    EXPECT_EQ(yaml["some_element"]["int"].As<std::string>(), "100");
+    EXPECT_EQ(yaml["some_element"]["valid_yaml"].As<std::string>(), "x: [5]");
+    EXPECT_EQ(yaml["some_element"]["invalid_yaml"].As<std::string>(), "[::]:1234");
+    EXPECT_EQ(yaml["some_element"]["empty"].As<std::string>(), "");
+    EXPECT_TRUE(yaml["some_element"]["missing"].IsMissing());
     /// [sample env]
 }
 
