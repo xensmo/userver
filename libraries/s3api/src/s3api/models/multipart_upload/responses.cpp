@@ -75,11 +75,11 @@ constexpr auto ExtractChildValueAsULong = ExtractChildValueAsIntegral<unsigned l
 
 }  // namespace
 
-InitiateMultipartUploadResult InitiateMultipartUploadResult::Parse(std::string_view http_s3_respose_body) {
+InitiateMultipartUploadResult InitiateMultipartUploadResult::Parse(utils::zstring_view http_s3_respose_body) {
     InitiateMultipartUploadResult result;
     pugi::xml_document xml;
     const pugi::xml_parse_result parse_result =
-        xml.load_string(http_s3_respose_body.data(), pugi::parse_default | pugi::parse_escapes);
+        xml.load_string(http_s3_respose_body.c_str(), pugi::parse_default | pugi::parse_escapes);
     if (parse_result.status != pugi::status_ok) {
         throw ResponseParsingError(parse_result.description());
     }
@@ -90,11 +90,11 @@ InitiateMultipartUploadResult InitiateMultipartUploadResult::Parse(std::string_v
     return result;
 }
 
-CompleteMultipartUploadResult CompleteMultipartUploadResult::Parse(std::string_view http_s3_respose_body) {
+CompleteMultipartUploadResult CompleteMultipartUploadResult::Parse(utils::zstring_view http_s3_respose_body) {
     CompleteMultipartUploadResult result;
     pugi::xml_document xml;
     const pugi::xml_parse_result parse_result =
-        xml.load_string(http_s3_respose_body.data(), pugi::parse_default | pugi::parse_escapes);
+        xml.load_string(http_s3_respose_body.c_str(), pugi::parse_default | pugi::parse_escapes);
     if (parse_result.status != pugi::status_ok) {
         throw ResponseParsingError(parse_result.description());
     }
@@ -105,11 +105,11 @@ CompleteMultipartUploadResult CompleteMultipartUploadResult::Parse(std::string_v
     return result;
 }
 
-ListMultipartUploadsResult ListMultipartUploadsResult::Parse(std::string_view http_s3_respose_body) {
+ListMultipartUploadsResult ListMultipartUploadsResult::Parse(utils::zstring_view http_s3_respose_body) {
     ListMultipartUploadsResult result;
     pugi::xml_document xml;
     const pugi::xml_parse_result parse_result =
-        xml.load_string(http_s3_respose_body.data(), pugi::parse_default | pugi::parse_escapes);
+        xml.load_string(http_s3_respose_body.c_str(), pugi::parse_default | pugi::parse_escapes);
     if (parse_result.status != pugi::status_ok) {
         throw ResponseParsingError(parse_result.description());
     }
@@ -144,11 +144,11 @@ ListMultipartUploadsResult ListMultipartUploadsResult::Parse(std::string_view ht
     return result;
 }
 
-ListPartsResult ListPartsResult::Parse(std::string_view http_s3_respose_body) {
+ListPartsResult ListPartsResult::Parse(utils::zstring_view http_s3_respose_body) {
     ListPartsResult result;
     pugi::xml_document xml;
     const pugi::xml_parse_result parse_result =
-        xml.load_string(http_s3_respose_body.data(), pugi::parse_default | pugi::parse_escapes);
+        xml.load_string(http_s3_respose_body.c_str(), pugi::parse_default | pugi::parse_escapes);
     if (parse_result.status != pugi::status_ok) {
         throw ResponseParsingError(parse_result.description());
     }
