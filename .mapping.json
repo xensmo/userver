@@ -2562,6 +2562,7 @@
   "libraries/easy/src/easy.cpp":"taxi/uservices/userver/libraries/easy/src/easy.cpp",
   "libraries/grpc-proto-structs/include/userver/grpc-proto-structs/client/impl/codegen_declarations.hpp":"taxi/uservices/userver/libraries/grpc-proto-structs/include/userver/grpc-proto-structs/client/impl/codegen_declarations.hpp",
   "libraries/grpc-proto-structs/include/userver/grpc-proto-structs/server/impl/codegen_declarations.hpp":"taxi/uservices/userver/libraries/grpc-proto-structs/include/userver/grpc-proto-structs/server/impl/codegen_declarations.hpp",
+  "libraries/grpc-proto-structs/include/userver/grpc-proto-structs/server/stream.hpp":"taxi/uservices/userver/libraries/grpc-proto-structs/include/userver/grpc-proto-structs/server/stream.hpp",
   "libraries/grpc-proto-structs/src/grpc-proto-structs.cpp":"taxi/uservices/userver/libraries/grpc-proto-structs/src/grpc-proto-structs.cpp",
   "libraries/grpc-protovalidate/CMakeLists.txt":"taxi/uservices/userver/libraries/grpc-protovalidate/CMakeLists.txt",
   "libraries/grpc-protovalidate/include/userver/grpc-protovalidate/buf_validate.hpp":"taxi/uservices/userver/libraries/grpc-protovalidate/include/userver/grpc-protovalidate/buf_validate.hpp",

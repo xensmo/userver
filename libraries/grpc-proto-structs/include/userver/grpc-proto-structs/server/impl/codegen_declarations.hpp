@@ -4,3 +4,5 @@
 // *_service.structs.usrv.pb.hpp files.
 //
 // Do not include this header in your code, use non-impl includes instead!
+
+#include <userver/grpc-proto-structs/server/stream.hpp>
