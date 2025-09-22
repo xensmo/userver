@@ -19,12 +19,12 @@ namespace grpc_proto_structs::server {
 /// If any method throws, further methods must not be called on the same stream.
 /// @see @ref ugrpc::server::Reader.
 template <typename Request>
-class ProtoStructReader {
+class Reader {
 public:
     using RequestMessage = proto_structs::traits::CompatibleMessageType<Request>;
     using ProtobufMessageReader = ugrpc::server::Reader<RequestMessage>;
 
-    explicit ProtoStructReader(ProtobufMessageReader& reader) : reader_{reader} {}
+    explicit Reader(ProtobufMessageReader& reader) : reader_{reader} {}
 
     /// @brief Await and read the next incoming message.
     ///
@@ -52,12 +52,12 @@ private:
 /// If any method throws, further methods must not be called on the same stream.
 /// @see @ref ugrpc::server::Writer.
 template <typename Response>
-class ProtoStructWriter {
+class Writer {
 public:
     using ResponseMessage = proto_structs::traits::CompatibleMessageType<Response>;
     using ProtobufMessageWriter = ugrpc::server::Writer<ResponseMessage>;
 
-    explicit ProtoStructWriter(ProtobufMessageWriter& writer) : writer_{writer} {}
+    explicit Writer(ProtobufMessageWriter& writer) : writer_{writer} {}
 
     /// @{
     /// @brief Write the next outgoing message.
@@ -96,14 +96,13 @@ private:
 /// If any method throws, further methods must not be called on the same stream.
 /// @see @ref ugrpc::server::ReaderWriter.
 template <typename Request, typename Response>
-class ProtoStructReaderWriter : public ProtoStructReader<Request>, public ProtoStructWriter<Response> {
+class ReaderWriter : public Reader<Request>, public Writer<Response> {
 public:
-    using ProtobufMessageReaderWriter = ugrpc::server::ReaderWriter<
-        typename ProtoStructReader<Request>::RequestMessage,
-        typename ProtoStructWriter<Response>::ResponseMessage>;
+    using ProtobufMessageReaderWriter = ugrpc::server::
+        ReaderWriter<typename Reader<Request>::RequestMessage, typename Writer<Response>::ResponseMessage>;
 
-    explicit ProtoStructReaderWriter(ProtobufMessageReaderWriter& reader_writer)
-        : ProtoStructReader<Request>{reader_writer}, ProtoStructWriter<Response>{reader_writer} {}
+    explicit ReaderWriter(ProtobufMessageReaderWriter& reader_writer)
+        : Reader<Request>{reader_writer}, Writer<Response>{reader_writer} {}
 };
 
 }  // namespace grpc_proto_structs::server
