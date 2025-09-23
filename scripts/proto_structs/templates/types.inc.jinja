@@ -1,7 +1,7 @@
 {% import "types_forward_declarations.inc.jinja" as types_forward_declarations %}
 {% import "utils.inc.jinja" as utils %}
 
-{%- macro render_gen_node(node) %}
+{% macro render_gen_node(node) %}
 {% if node.kind == "namespace" %}
 {{ do_render_namespace(node) -}}
 {% elif node.kind == "struct" %}
@@ -14,9 +14,9 @@
 {% else %}
 NOT_IMPLEMENTED_ERROR()
 {% endif %}
-{% endmacro -%}
+{% endmacro %}
 
-{%- macro do_render_namespace(namespace) %}
+{% macro do_render_namespace(namespace) %}
 
 {% call utils.optional_namespace(namespace.short_name) %}
 {% call utils.prepend_empty_line_if_not_empty() %}
@@ -29,9 +29,9 @@ NOT_IMPLEMENTED_ERROR()
 {% endfor %}
 
 {% endcall %}  {#- optional namespace -#}
-{% endmacro -%}
+{% endmacro %}
 
-{%- macro do_render_struct(struct) %}
+{% macro do_render_struct(struct) %}
 
 struct {{ struct.name.short_name }} final {
 {% filter indent(width=4, first=True) %}
@@ -51,9 +51,9 @@ using ProtobufMessage = ::{{ struct.vanilla_full_name_fwd }};
 {% endcall %}  {#- prepend empty line -#}
 {% endfilter %}  {#- indent #}
 };
-{% endmacro -%}
+{% endmacro %}
 
-{%- macro do_render_enum(enum) %}
+{% macro do_render_enum(enum) %}
 
 enum class {{ enum.name.short_name }} : std::int32_t {
 {% filter indent(width=4, first=True) %}
@@ -63,9 +63,9 @@ enum class {{ enum.name.short_name }} : std::int32_t {
 INTERNAL_DO_NOT_USE_ = std::numeric_limits<std::int32_t>::max(),  // Write default: instead.
 {% endfilter %}
 };
-{% endmacro -%}
+{% endmacro %}
 
-{%- macro do_render_oneof(oneof) %}
+{% macro do_render_oneof(oneof) %}
 
 struct {{ oneof.name.short_name }} final : {{ type_ref_consts.ONEOF_BASE_CLASS.contextual_cpp_name(context=oneof) }}<
 {% filter indent(width=4, first=True) %}
@@ -87,8 +87,8 @@ UPROTO_ONEOF_FIELD({{ oneof.name.short_name }}, {{ field.field_type.contextual_c
 {% endfor %} {#- for field #}
 {% endfilter %} {#- filter indent (struct contents) #}
 };
-{% endmacro -%} {#- do_render_oneof -#}
+{% endmacro %} {#- do_render_oneof -#}
 
-{%- macro do_render_field(struct, field) %}
+{% macro do_render_field(struct, field) %}
 {{ field.field_type.contextual_cpp_name(context=struct) }} {{ field.short_name }}{{ field.initializer }};
-{% endmacro -%}
+{% endmacro %}
