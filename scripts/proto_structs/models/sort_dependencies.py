@@ -6,12 +6,10 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import dataclasses
 import graphlib
-import typing
 from typing import Dict
 from typing import List
 from typing import MutableSet
 from typing import Tuple
-from typing import TypeVar
 
 from proto_structs.models import gen_node
 from proto_structs.models import toposort
@@ -23,9 +21,9 @@ from proto_structs.models import type_ref_consts
 #: "Node A depends on node B" means: a type defined in A (possibly A itself) refers to
 #: a type defined in B (possibly B itself).
 #:
-#: Guideline: write the type of some `CodegenNode` as `_GraphNode` if and only if it is directly a graph node
+#: Guideline: write the type of some `TypeNode` as `_GraphNode` if and only if it is directly a graph node
 #: (not a nested type, not an unrelated type).
-_GraphNode = gen_node.CodegenNode
+_GraphNode = gen_node.TypeNode
 
 _MAX_CYCLE_BREAK_ATTEMPTS = 1000
 
@@ -76,39 +74,54 @@ class _Graph:
             self._graph.setdefault(node, set())
 
         for node in self._nodes:
-            for dep in self.iter_referenced_type_nodes(node, ignore_types_strictly_inside=node):
+            for dep in self.iter_referenced_type_nodes(entity=node, entity_graph_node=node):
                 self._graph[node].add(self._types_to_containing_graph_nodes[dep])
 
     def iter_referenced_type_nodes(
         self,
-        entity: type_ref.HasTypeDependencies,
         *,
-        ignore_types_strictly_inside: _GraphNode,
+        entity: type_ref.HasTypeDependencies,
+        entity_graph_node: _GraphNode,
     ) -> Iterable[gen_node.TypeNode]:
-        return (
-            dep_node
-            for dep in entity.type_dependencies()
-            if dep.kind == type_ref.TypeDependencyKind.STRONG
+        for dep in entity.type_dependencies():
             # Select `TypeReference`s to types defined among `self._nodes`, get the corresponding `TypeNode`s.
-            if (dep_node := self._types_by_names.get(dep.type_reference.full_cpp_name()))
-            # Dependency within a graph node will be resolved while sorting the node itself.
-            # However, cyclic dependency on the graph node itself needs to be accounted for.
-            if self._types_to_containing_graph_nodes[dep_node] is not ignore_types_strictly_inside
-            or dep_node is ignore_types_strictly_inside
-        )
+            if dep_node := self._types_by_names.get(dep.type_reference.full_cpp_name()):
+                dep_node_parent = self._types_to_containing_graph_nodes[dep_node]
+
+                # Dependency within a graph node will be resolved while sorting the node itself; skip it for now.
+                # However, cyclic dependency on the graph node itself needs to be accounted for.
+                #
+                # See examples in: libraries/proto-structs/codegen-tests/proto/box/autobox/dependency_on_nested.proto
+                if dep_node_parent is entity_graph_node:
+                    if dep_node is entity_graph_node and dep.kind == type_ref.TypeDependencyKind.STRONG:
+                        yield dep_node
+                    continue
+
+                # Dependency on a nested type holds even when WEAK.
+                # This is because the outer type needs to be defined to mention its nested type.
+                #
+                # See examples in: libraries/proto-structs/codegen-tests/proto/box/autobox/dependency_on_self.proto
+                if dep_node != dep_node_parent:
+                    yield dep_node
+                    continue
+
+                if dep.kind == type_ref.TypeDependencyKind.STRONG:
+                    yield dep_node
 
     def can_break_dependency(self, node: _GraphNode, *, dependency: _GraphNode) -> bool:
         # Can break dependency if node only depends on the type itself, not on its nested types.
-        # This is because nested types cannot be forward declared.
+        # This is because nested types cannot be forward declared, e.g. mentioning Foo::Bar requires definition of Foo.
+        #
+        # See examples in: libraries/proto-structs/codegen-tests/proto/box/autobox/dependency_on_nested.proto
         return all(
             dep_node is dependency
-            for dep_node in self.iter_referenced_type_nodes(node, ignore_types_strictly_inside=node)
+            for dep_node in self.iter_referenced_type_nodes(entity=node, entity_graph_node=node)
             if self._types_to_containing_graph_nodes[dep_node] is dependency
         )
 
     def break_dependency(self, node: _GraphNode, *, dependency: _GraphNode) -> None:
         for field in _iter_struct_fields(node):
-            for dep_node in self.iter_referenced_type_nodes(field.field_type, ignore_types_strictly_inside=node):
+            for dep_node in self.iter_referenced_type_nodes(entity=field.field_type, entity_graph_node=node):
                 if self._types_to_containing_graph_nodes[dep_node] is dependency:
                     if dep_node is dependency:
                         gen_node.wrap_field_in_box(field)
@@ -140,10 +153,7 @@ class _Graph:
                     self._graph[node].discard(dependency)
 
 
-Node = TypeVar('Node', bound=gen_node.CodegenNode)
-
-
-def sort_nodes_topologically(nodes: Sequence[Node]) -> List[Node]:
+def sort_types_topologically(nodes: Sequence[gen_node.TypeNode]) -> List[gen_node.TypeNode]:
     """
     Topologically sort `nodes`.
     Wrap fields in `utils::Box` (as in `gen_node.wrap_field_in_box`) when necessary.
@@ -151,6 +161,4 @@ def sort_nodes_topologically(nodes: Sequence[Node]) -> List[Node]:
     """
     graph = _Graph(nodes)
     graph.prepare()
-    sorted_nodes = graph.sort_nodes()
-    # The result is a permutation of `nodes`, so the item type remains the same.
-    return typing.cast(List[Node], sorted_nodes)
+    return graph.sort_nodes()

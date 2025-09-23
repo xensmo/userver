@@ -14,6 +14,9 @@ from typing import TypeVar
 
 import pydantic
 
+ShortName = Annotated[str, pydantic.StringConstraints(pattern=r'^[a-zA-Z_]\w*$')]
+FullName = Annotated[str, pydantic.StringConstraints(pattern=r'^[a-zA-Z_]\w*(\.[a-zA-Z_]\w*)*$')]
+
 
 class FileOptions(pydantic.BaseModel, extra='forbid'):
     """Options that apply to all definitions or types in a file."""
@@ -29,15 +32,15 @@ class MessageOptions(pydantic.BaseModel, extra='forbid'):
 class OneofOptions(pydantic.BaseModel, extra='forbid'):
     """Options that apply to oneof definition."""
 
+    #: Overrides the generated name of the C++ class to represent oneof.
+    generated_type_name: Optional[ShortName] = None
+
 
 class FieldOptions(pydantic.BaseModel, extra='forbid'):
     """Options that apply to message fields."""
 
     #: True, if the field's type should be wrapped in `utils::Box`.
     indirect: bool = False
-
-
-FullName = Annotated[str, pydantic.StringConstraints(pattern=r'^\w+(\.\w+)*$')]
 
 
 class PluginOptions(pydantic.BaseModel, extra='forbid'):

@@ -83,10 +83,11 @@ TEST(AutoboxCycles, NewCycle2) {
 
 TEST(AutoboxCycles, OptionalSelf) {
     namespace ss = box::autobox::structs;
-    // Boost.Pfr actually refuses to process a struct, in which first field is constructible from the same struct.
-#if 0
-        AssertFieldCount<ss::OptionalSelf, 1>();
-#endif
+    {
+        // Boost.Pfr refuses to process a struct in which first field is constructible from the same struct.
+        // So we can't use Boost.Pfr to check that `OptionalSelf` has exactly 1 field.
+        const auto [_] = ss::OptionalSelf{};
+    }
     AssertFieldType<decltype(ss::OptionalSelf::self), std::optional<utils::Box<ss::OptionalSelf>>>();
 }
 

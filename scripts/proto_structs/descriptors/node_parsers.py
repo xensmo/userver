@@ -39,7 +39,7 @@ def parse_file(file: descriptor.FileDescriptor, *, plugin_options: options.Plugi
         if message_type := parse_message(message, plugin_options=plugin_options):
             types.append(message_type)
 
-    types = sort_dependencies.sort_nodes_topologically(types)
+    types = sort_dependencies.sort_types_topologically(types)
 
     vanilla_namespace = gen_node.NamespaceNode.make_for_vanilla(
         typing.cast(str, file.package),
@@ -113,7 +113,7 @@ def parse_message(
         if message_type := parse_message(nested_message, plugin_options=plugin_options):
             nested_types.append(message_type)
 
-    nested_types = sort_dependencies.sort_nodes_topologically(nested_types)
+    nested_types = sort_dependencies.sort_types_topologically(nested_types)
 
     fields: List[gen_node.StructField] = []
 
@@ -134,7 +134,7 @@ def parse_message(
                 continue
         fields.append(parse_field(field, plugin_options=plugin_options))
 
-    nested_types = sort_dependencies.sort_nodes_topologically(nested_types)
+    nested_types = sort_dependencies.sort_types_topologically(nested_types)
 
     result = gen_node.StructNode(
         vanilla_name=vanilla_type_name,
@@ -288,6 +288,8 @@ def parse_oneof(
     nested_types_to_generate: List[gen_node.TypeNode],
     plugin_options: options.PluginOptions,
 ) -> gen_node.StructField:
+    oneof_options = option_parsers.parse_oneof(oneof, plugin_options)
+
     fields: List[gen_node.StructField] = []
 
     for field in typing.cast(List[descriptor.FieldDescriptor], oneof.fields):
@@ -298,11 +300,9 @@ def parse_oneof(
     containing_type_name = names.make_structs_type_name(type_mapping.parse_type_name(containing_type_descriptor))
 
     oneof_field_short_name = names.escape_id(typing.cast(str, oneof.name))
-    if oneof_field_short_name[0].isupper():
-        oneof_type_short_name = f'T{names.to_pascal_case(oneof_field_short_name)}'
-    else:
-        oneof_type_short_name = names.to_pascal_case(oneof_field_short_name)
-    oneof_type_short_name = _make_unique_member_name(oneof_type_short_name, taken_member_names)
+    oneof_type_short_name = oneof_options.generated_type_name or _synthesize_oneof_type_name(
+        oneof_field_short_name, taken_member_names
+    )
 
     oneof_type_name = names.make_nested_type_name(containing_type_name, oneof_type_short_name)
 
@@ -322,6 +322,14 @@ def parse_oneof(
         oneof_fields=fields,
         io_kinds=_io_kind_oneof(),
     )
+
+
+def _synthesize_oneof_type_name(oneof_field_short_name: str, taken_member_names: MutableSet[str]) -> str:
+    if oneof_field_short_name[0].isupper():
+        oneof_type_short_name = f'T{names.to_pascal_case(oneof_field_short_name)}'
+    else:
+        oneof_type_short_name = names.to_pascal_case(oneof_field_short_name)
+    return _make_unique_member_name(oneof_type_short_name, taken_member_names)
 
 
 def _collect_taken_member_names(message: descriptor.Descriptor) -> MutableSet[str]:

@@ -39,9 +39,20 @@ def parse_message(message: descriptor_module.Descriptor, /, defaults: options.Pl
     )
 
 
-def parse_oneof(oneof: descriptor_module.OneofDescriptor, /, defaults: options.OneofOptions) -> options.OneofOptions:
+def parse_oneof(oneof: descriptor_module.OneofDescriptor, /, defaults: options.PluginOptions) -> options.OneofOptions:
     """Parses oneof options from descriptor, merging with options manually passed to this protoc plugin."""
-    return options.OneofOptions()
+    options_raw = _get_option(oneof, annotations_pb2.oneof, annotations_pb2.OneofAnnotations)  # pyright: ignore
+
+    generated_type_name_raw = typing.cast(str, options_raw.generated_type_name)
+    # Add new options here.
+
+    oneof_full_name: str = oneof.full_name
+    oneof_defaults = defaults.oneof_options.get(oneof_full_name, options.OneofOptions())
+
+    return options.OneofOptions(
+        generated_type_name=generated_type_name_raw or oneof_defaults.generated_type_name,
+        # Add new options here.
+    )
 
 
 def parse_field(field: descriptor_module.FieldDescriptor, /, defaults: options.PluginOptions) -> options.FieldOptions:
