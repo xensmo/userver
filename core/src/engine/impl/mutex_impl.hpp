@@ -37,8 +37,6 @@ public:
 private:
     class MutexWaitStrategy;
 
-    bool TryLockWithTaskContext(TaskContext& current);
-
     bool LockFastPath(TaskContext&) noexcept;
     bool LockSlowPath(TaskContext&, Deadline);
 
@@ -54,7 +52,7 @@ public:
 
     EarlyWakeup SetupWakeups() override {
         WaitList::Lock lock(mutex_.lock_waiters_);
-        if (mutex_.TryLockWithTaskContext(current_)) {
+        if (mutex_.LockFastPath(current_)) {
             return EarlyWakeup{true};
         }
         // A race is not possible here, because check + Append is performed under
@@ -175,17 +173,11 @@ void MutexImpl<Waiters>::unlock() {
 template <class Waiters>
 bool MutexImpl<Waiters>::try_lock() {
     auto& current = current_task::GetCurrentTaskContext();
-    return TryLockWithTaskContext(current);
-}
 
-template <class Waiters>
-bool MutexImpl<Waiters>::TryLockWithTaskContext(TaskContext& current) {
 #if USERVER_IMPL_HAS_TSAN
     __tsan_mutex_pre_lock(this, __tsan_mutex_try_lock);
 #endif
-
     const auto result = LockFastPath(current);
-
 #if USERVER_IMPL_HAS_TSAN
     __tsan_mutex_post_lock(this, __tsan_mutex_try_lock | (result ? 0 : __tsan_mutex_try_lock_failed), 0);
 #endif
