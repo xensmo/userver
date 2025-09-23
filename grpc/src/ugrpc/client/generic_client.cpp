@@ -5,6 +5,7 @@
 #include <grpcpp/generic/generic_stub.h>
 
 #include <userver/ugrpc/client/impl/call_params.hpp>
+#include <userver/ugrpc/client/impl/client_data.hpp>
 #include <userver/ugrpc/client/impl/perform_unary_call.hpp>
 #include <userver/utils/algo.hpp>
 
@@ -26,6 +27,10 @@ GenericClient::GenericClient(impl::ClientInternals&& internals)
     // However, it would be difficult to detect non-existent RPC names in QOS.
     UINVARIANT(!client_data_->GetClientQos(), "Client QOS configs are unsupported for generic services");
 }
+
+GenericClient::GenericClient(GenericClient&&) noexcept = default;
+
+GenericClient& GenericClient::operator=(GenericClient&&) noexcept = default;
 
 GenericClient::~GenericClient() = default;
 

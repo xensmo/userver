@@ -176,11 +176,6 @@ private:
     concurrent::AsyncEventSubscriberScope config_subscription_;
 };
 
-template <typename Client>
-ClientData& GetClientData(Client& client) {
-    return *client.client_data_;
-}
-
 }  // namespace ugrpc::client::impl
 
 USERVER_NAMESPACE_END

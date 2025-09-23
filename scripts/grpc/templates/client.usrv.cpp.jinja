@@ -45,6 +45,10 @@ inline const bool k{{service.name}}TypesRegistration =
             std::in_place_type<{{utils.namespace_with_colons(proto.namespace)}}::{{service.name}}>) {
     }
 
+{{service.name}}Client::{{service.name}}Client({{service.name}}Client&&) noexcept = default;
+
+{{service.name}}Client& {{service.name}}Client::operator=({{service.name}}Client&&) noexcept = default;
+
 {{service.name}}Client::~{{service.name}}Client() = default;
 
 {% for method in service.method %}
