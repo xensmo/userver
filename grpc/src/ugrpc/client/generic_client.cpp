@@ -27,6 +27,8 @@ GenericClient::GenericClient(impl::ClientInternals&& internals)
     UINVARIANT(!client_data_->GetClientQos(), "Client QOS configs are unsupported for generic services");
 }
 
+GenericClient::~GenericClient() = default;
+
 ResponseFuture<grpc::ByteBuffer> GenericClient::AsyncUnaryCall(
     std::string_view call_name,
     const grpc::ByteBuffer& request,

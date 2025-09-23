@@ -40,11 +40,13 @@ inline const bool k{{service.name}}TypesRegistration =
     }),
     false);
 
-{{service.name}}Client::{{service.name}}Client(
-    USERVER_NAMESPACE::ugrpc::client::impl::ClientInternals&& internals)
+{{service.name}}Client::{{service.name}}Client(USERVER_NAMESPACE::ugrpc::client::impl::ClientInternals&& internals)
     : client_data_(std::move(internals), GetMetadata(),
             std::in_place_type<{{utils.namespace_with_colons(proto.namespace)}}::{{service.name}}>) {
     }
+
+{{service.name}}Client::~{{service.name}}Client() = default;
+
 {% for method in service.method %}
 {% set method_id = loop.index0 %}
 

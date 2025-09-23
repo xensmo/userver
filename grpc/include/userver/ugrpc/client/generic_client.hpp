@@ -50,7 +50,9 @@ namespace ugrpc::client {
 class GenericClient final {
 public:
     GenericClient(GenericClient&&) noexcept = default;
-    GenericClient& operator=(GenericClient&&) noexcept = delete;
+    GenericClient& operator=(GenericClient&&) noexcept = default;
+
+    ~GenericClient();
 
     /// Initiate a `single request -> single response` RPC with the given name.
     ResponseFuture<grpc::ByteBuffer> AsyncUnaryCall(

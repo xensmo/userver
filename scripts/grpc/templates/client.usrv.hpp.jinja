@@ -17,9 +17,11 @@
 // Client for {{service.name}}
 class {{service.name}}Client final {
 public:
-    // For internal use only
-    {{service.name}}Client(
-        USERVER_NAMESPACE::ugrpc::client::impl::ClientInternals&& internals);
+    {{service.name}}Client({{service.name}}Client&&) noexcept = default;
+    {{service.name}}Client& operator=({{service.name}}Client&&) noexcept = default;
+
+    ~{{service.name}}Client();
+
 {% for method in service.method %}
 
 {% if method.client_streaming and method.server_streaming %}
@@ -65,8 +67,12 @@ public:
 {% endif %}
 {% endfor %}
 
+    /// @cond
     // For internal use only
+    {{service.name}}Client(USERVER_NAMESPACE::ugrpc::client::impl::ClientInternals&& internals);
+
     static USERVER_NAMESPACE::ugrpc::impl::StaticServiceMetadata GetMetadata();
+    /// @endcond
 
 private:
     template <typename Client>
