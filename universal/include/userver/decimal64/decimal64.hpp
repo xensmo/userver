@@ -781,7 +781,7 @@ private:
     friend class Decimal;
 
     template <typename T, int OldPrec, typename OldRound>
-    friend constexpr T decimal_cast(Decimal<OldPrec, OldRound> arg);
+    friend constexpr T decimal_cast(Decimal<OldPrec, OldRound> arg);  // NOLINT(readability-identifier-naming)
 
     int64_t value_{0};
 };
@@ -814,7 +814,7 @@ inline constexpr bool kIsDecimal = impl::IsDecimal<T>::value;
 /// auto discount = decimal64::decimal_cast<Discount>(cost) * Discount{"0.05"};
 /// @endcode
 template <typename T, int OldPrec, typename OldRound>
-constexpr T decimal_cast(Decimal<OldPrec, OldRound> arg) {
+constexpr T decimal_cast(Decimal<OldPrec, OldRound> arg) {  // NOLINT(readability-identifier-naming)
     static_assert(kIsDecimal<T>);
     return T::FromDecimal(arg);
 }

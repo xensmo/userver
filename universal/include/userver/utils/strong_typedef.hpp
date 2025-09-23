@@ -320,7 +320,7 @@ constexpr T UnderlyingValue(StrongTypedef<Tag, T, Ops>&& v) noexcept {
     return std::move(v).GetUnderlying();
 }
 
-constexpr bool IsStrongTypedefLoggable(StrongTypedefOps Ops) { return !(Ops & StrongTypedefOps::kNonLoggable); }
+constexpr bool IsStrongTypedefLoggable(StrongTypedefOps ops) { return !(ops & StrongTypedefOps::kNonLoggable); }
 
 // Serialization
 
@@ -388,7 +388,7 @@ constexpr Target StrongCast(StrongTypedef<Tag, T, Ops, Enable>&& src) {
 }
 
 template <class Tag, class T, StrongTypedefOps Ops>
-std::size_t hash_value(const StrongTypedef<Tag, T, Ops>& v) {
+std::size_t hash_value(const StrongTypedef<Tag, T, Ops>& v) {  // NOLINT(readability-identifier-naming)
     return boost::hash<T>{}(v.GetUnderlying());
 }
 

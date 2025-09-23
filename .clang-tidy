@@ -134,12 +134,12 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.PublicMethodIgnoredRegexp
     value: "(begin|end|empty|size|ysize|front|back|parse|format)"
-  # - key: readability-identifier-naming.FunctionCase
-  #   value: CamelCase
-  # - key: readability-identifier-naming.ParameterCase
-  #   value: lower_case
-  # - key: readability-identifier-naming.ParameterPackCase
-  #   value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterPackCase
+    value: lower_case
   # - key: readability-identifier-naming.VariableCase
   #   value: lower_case
   # - key: readability-identifier-naming.ConstexprVariableCase

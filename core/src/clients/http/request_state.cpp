@@ -100,7 +100,7 @@ bool IsSetCookie(std::string_view key) {
 // Not a strict check, but OK for non-header line check
 bool IsHttpStatusLineStart(const char* ptr, size_t size) { return (size > 5 && memcmp(ptr, "HTTP/", 5) == 0); }
 
-char* rfind_not_space(char* ptr, size_t size) {
+char* RfindNotSpace(char* ptr, size_t size) {
     for (char* p = ptr + size - 1; p >= ptr; --p) {
         const char c = *p;
         if (c == '\n' || c == '\r' || c == ' ' || c == '\t') continue;
@@ -602,7 +602,7 @@ void RequestState::ParseHeader(char* ptr, size_t size) try {
     /* It is a fast path in curl's thread (io thread).  Creation of tmp
      * std::string, boost::trim_right_if(), etc. is too expensive. */
 
-    auto* end = rfind_not_space(ptr, size);
+    auto* end = RfindNotSpace(ptr, size);
     if (ptr == end) {
         const auto status_code = static_cast<Status>(easy().get_response_code());
         response()->SetStatusCode(status_code);

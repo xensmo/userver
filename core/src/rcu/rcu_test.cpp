@@ -217,7 +217,7 @@ UTEST(Rcu, ReadablePtrMoveAssign) {
 
 UTEST(Rcu, NoCopy) {
     struct X {
-        X(int x_, bool y_) : x(x_), y(y_) {}
+        X(int x, bool y) : x(x), y(y) {}
 
         X(X&&) = default;
         X(const X&) = delete;

@@ -245,8 +245,8 @@ private:
 
     // refcounter for resources and memory deallocation
     std::atomic<std::size_t> intrusive_refcount_{1};
-    friend void intrusive_ptr_add_ref(TaskContext* p) noexcept;
-    friend void intrusive_ptr_release(TaskContext* p) noexcept;
+    friend void intrusive_ptr_add_ref(TaskContext* p) noexcept;  // NOLINT(readability-identifier-naming)
+    friend void intrusive_ptr_release(TaskContext* p) noexcept;  // NOLINT(readability-identifier-naming)
 
 public:
     using WaitListHook = typename boost::intrusive::make_list_member_hook<
@@ -256,8 +256,8 @@ public:
     WaitListHook wait_list_hook;
 };
 
-void intrusive_ptr_add_ref(TaskContext* p) noexcept;
-void intrusive_ptr_release(TaskContext* p) noexcept;
+void intrusive_ptr_add_ref(TaskContext* p) noexcept;  // NOLINT(readability-identifier-naming)
+void intrusive_ptr_release(TaskContext* p) noexcept;  // NOLINT(readability-identifier-naming)
 
 bool HasWaitSucceeded(TaskContext::WakeupSource) noexcept;
 

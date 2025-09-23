@@ -85,7 +85,7 @@ constexpr auto kDeadlineMaxTime = std::chrono::seconds{60};
 
 }  // namespace
 
-[[maybe_unused]] void tls_write_all_buffered(benchmark::State& state) {
+[[maybe_unused]] void TlsWriteAllBuffered(benchmark::State& state) {
     engine::RunStandalone(2, [&]() {
         const auto deadline = Deadline::FromDuration(kDeadlineMaxTime);
 
@@ -126,9 +126,9 @@ constexpr auto kDeadlineMaxTime = std::chrono::seconds{60};
     });
 }
 
-BENCHMARK(tls_write_all_buffered)->RangeMultiplier(2)->Range(1 << 6, 1 << 12)->Unit(benchmark::kNanosecond);
+BENCHMARK(TlsWriteAllBuffered)->RangeMultiplier(2)->Range(1 << 6, 1 << 12)->Unit(benchmark::kNanosecond);
 
-[[maybe_unused]] void tls_write_all_default(benchmark::State& state) {
+[[maybe_unused]] void TlsWriteAllDefault(benchmark::State& state) {
     engine::RunStandalone(2, [&]() {
         const auto deadline = Deadline::FromDuration(kDeadlineMaxTime);
 
@@ -171,6 +171,6 @@ BENCHMARK(tls_write_all_buffered)->RangeMultiplier(2)->Range(1 << 6, 1 << 12)->U
     });
 }
 
-BENCHMARK(tls_write_all_default)->RangeMultiplier(2)->Range(1 << 6, 1 << 12)->Unit(benchmark::kNanosecond);
+BENCHMARK(TlsWriteAllDefault)->RangeMultiplier(2)->Range(1 << 6, 1 << 12)->Unit(benchmark::kNanosecond);
 
 USERVER_NAMESPACE_END

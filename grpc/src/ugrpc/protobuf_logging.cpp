@@ -93,11 +93,11 @@ public:
         const google::protobuf::Message& /*message*/,
         int /*fieldIndex*/,
         int /*fieldCount*/,
-        bool singleLineMode,
+        bool single_line_mode,
         BaseTextGenerator* generator
     ) const override {
         PrintRedacted(generator);
-        if (singleLineMode) {
+        if (single_line_mode) {
             generator->PrintLiteral(" ");
         } else {
             generator->PrintLiteral("\n");

@@ -402,7 +402,7 @@ template <typename Accessor>
 class YamlConfigAccessor : public ::testing::Test {};
 
 struct SquareBracketAccessor {
-    explicit SquareBracketAccessor(const yaml_config::YamlConfig& value_) : value(value_) {}
+    explicit SquareBracketAccessor(const yaml_config::YamlConfig& value) : value(value) {}
 
     template <typename X>
     auto Access(X&& arg) const {
@@ -416,7 +416,7 @@ struct SquareBracketAccessor {
 };
 
 struct IteratorAccessor {
-    explicit IteratorAccessor(const yaml_config::YamlConfig& value_) : value(value_) {}
+    explicit IteratorAccessor(const yaml_config::YamlConfig& value) : value(value) {}
 
     auto Access(size_t index) const {
         auto it = value.begin();
