@@ -8,6 +8,8 @@
 
 #include <grpcpp/support/byte_buffer.h>
 
+#include <userver/utils/box.hpp>
+
 #include <userver/ugrpc/client/call_options.hpp>
 #include <userver/ugrpc/client/generic_options.hpp>
 #include <userver/ugrpc/client/impl/client_data.hpp>
@@ -77,7 +79,7 @@ private:
     template <typename Client>
     friend impl::ClientData& impl::GetClientData(Client& client);
 
-    impl::ClientData impl_;
+    utils::Box<impl::ClientData> client_data_;
 };
 
 }  // namespace ugrpc::client

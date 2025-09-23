@@ -55,8 +55,7 @@ public:
               internals_.default_service_config,
               internals_.retry_config,
               metadata
-          ),
-          stub_state_(std::make_unique<rcu::Variable<StubState>>()) {
+          ) {
         if (internals_.qos) {
             SubscribeOnConfigUpdate<Service>(*internals_.qos);
         } else {
@@ -66,20 +65,19 @@ public:
 
     template <typename Service>
     ClientData(ClientInternals&& internals, GenericClientTag, std::in_place_type_t<Service>)
-        : internals_(std::move(internals)), stub_state_(std::make_unique<rcu::Variable<StubState>>()) {
+        : internals_(std::move(internals)) {
         ConstructStubState<Service>();
     }
 
     ~ClientData();
 
-    ClientData(ClientData&&) noexcept = default;
-    ClientData& operator=(ClientData&&) = delete;
-
+    ClientData(ClientData&&) noexcept = delete;
     ClientData(const ClientData&) = delete;
+    ClientData& operator=(ClientData&&) = delete;
     ClientData& operator=(const ClientData&) = delete;
 
     StubHandle NextStubFromMethodId(std::size_t method_id) const {
-        auto stub_state = stub_state_->Read();
+        auto stub_state = stub_state_.Read();
         auto& dedicated_stubs = stub_state->dedicated_stubs[method_id];
         auto& stubs = dedicated_stubs.Size() ? dedicated_stubs : stub_state->stubs;
         auto& stub = stubs.NextStub();
@@ -87,7 +85,7 @@ public:
     }
 
     StubHandle NextStub() const {
-        auto stub_state = stub_state_->Read();
+        auto stub_state = stub_state_.Read();
         auto& stub = stub_state->stubs.NextStub();
         return StubHandle{std::move(stub_state), stub};
     }
@@ -112,7 +110,7 @@ public:
 
     const RetryConfig& GetRetryConfig() const { return internals_.retry_config; }
 
-    rcu::ReadablePtr<StubState> GetStubState() const { return stub_state_->Read(); }
+    rcu::ReadablePtr<StubState> GetStubState() const { return stub_state_.Read(); }
 
 private:
     template <typename Stub>
@@ -163,7 +161,7 @@ private:
                   )
                 : utils::FixedArray<StubPool>{};
 
-        stub_state_->Assign({client_qos, std::move(stubs), std::move(dedicated_stubs)});
+        stub_state_.Assign({client_qos, std::move(stubs), std::move(dedicated_stubs)});
     }
 
     ClientInternals internals_;
@@ -172,7 +170,7 @@ private:
 
     std::optional<compat::ChannelArgumentsBuilder> channel_arguments_builder_;
 
-    std::unique_ptr<rcu::Variable<StubState>> stub_state_;
+    rcu::Variable<StubState> stub_state_;
 
     // These fields must be the last ones
     concurrent::AsyncEventSubscriberScope config_subscription_;
@@ -180,7 +178,7 @@ private:
 
 template <typename Client>
 ClientData& GetClientData(Client& client) {
-    return client.impl_;
+    return *client.client_data_;
 }
 
 }  // namespace ugrpc::client::impl

@@ -74,7 +74,7 @@ private:
     USERVER_NAMESPACE::ugrpc::client::impl::GetClientData(Client& client);
 
     {# All non-template related client data should be placed in ClientData #}
-    USERVER_NAMESPACE::ugrpc::client::impl::ClientData impl_;
+    USERVER_NAMESPACE::utils::Box<USERVER_NAMESPACE::ugrpc::client::impl::ClientData> client_data_;
 };
 {% endfor %}
 {% endcall %} {# utils.optional_namespace #}

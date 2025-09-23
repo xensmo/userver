@@ -42,7 +42,7 @@ inline const bool k{{service.name}}TypesRegistration =
 
 {{service.name}}Client::{{service.name}}Client(
     USERVER_NAMESPACE::ugrpc::client::impl::ClientInternals&& internals)
-    : impl_(std::move(internals), GetMetadata(),
+    : client_data_(std::move(internals), GetMetadata(),
             std::in_place_type<{{utils.namespace_with_colons(proto.namespace)}}::{{service.name}}>) {
     }
 {% for method in service.method %}
@@ -54,7 +54,7 @@ inline const bool k{{service.name}}TypesRegistration =
 ) const {
     return {
         USERVER_NAMESPACE::ugrpc::client::impl::CreateCallParams(
-            impl_, {{method_id}}, std::move(call_options)
+            *client_data_, {{method_id}}, std::move(call_options)
         ),
         &{{service.name}}::Stub::PrepareAsync{{method.name}},
     };
@@ -65,7 +65,7 @@ inline const bool k{{service.name}}TypesRegistration =
 ) const {
     return {
         USERVER_NAMESPACE::ugrpc::client::impl::CreateCallParams(
-            impl_, {{method_id}}, std::move(call_options)
+            *client_data_, {{method_id}}, std::move(call_options)
         ),
         &{{service.name}}::Stub::PrepareAsync{{method.name}},
     };
@@ -77,7 +77,7 @@ inline const bool k{{service.name}}TypesRegistration =
 ) const {
     return {
         USERVER_NAMESPACE::ugrpc::client::impl::CreateCallParams(
-            impl_, {{method_id}}, std::move(call_options)
+            *client_data_, {{method_id}}, std::move(call_options)
         ),
         &{{service.name}}::Stub::PrepareAsync{{method.name}},
         request,
@@ -90,7 +90,7 @@ inline const bool k{{service.name}}TypesRegistration =
 ) const {
     return USERVER_NAMESPACE::ugrpc::client::impl::PerformUnaryCall(
         USERVER_NAMESPACE::ugrpc::client::impl::CreateCallParams(
-            impl_, {{method_id}}, std::move(call_options)
+            *client_data_, {{method_id}}, std::move(call_options)
         ),
         USERVER_NAMESPACE::ugrpc::client::impl::PrepareUnaryCallProxy(
             &{{service.name}}::Stub::PrepareAsync{{method.name}}
@@ -105,7 +105,7 @@ inline const bool k{{service.name}}TypesRegistration =
 ) const {
     return {
         USERVER_NAMESPACE::ugrpc::client::impl::CreateCallParams(
-            impl_, {{method_id}}, std::move(call_options)
+            *client_data_, {{method_id}}, std::move(call_options)
         ),
         USERVER_NAMESPACE::ugrpc::client::impl::PrepareUnaryCallProxy(
             &{{service.name}}::Stub::PrepareAsync{{method.name}}
