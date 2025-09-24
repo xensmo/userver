@@ -134,6 +134,16 @@ public:
     void SetBackground(bool);
     bool IsBackground() const noexcept { return is_background_; };
 
+    static constexpr std::size_t kUnsetThreadIndex = static_cast<std::size_t>(-1);
+
+    void SetThreadPinning(std::size_t thread_index) noexcept {
+        UASSERT(thread_index_ == kUnsetThreadIndex);
+        UASSERT(thread_index != kUnsetThreadIndex);
+        thread_index_ = thread_index;
+    }
+
+    std::size_t GetThreadPinning() const noexcept { return thread_index_; }
+
     // causes this to yield and wait for wakeup
     // must only be called from this context
     // "spurious wakeups" may be caused by wakeup queueing
@@ -247,6 +257,9 @@ private:
     std::atomic<std::size_t> intrusive_refcount_{1};
     friend void intrusive_ptr_add_ref(TaskContext* p) noexcept;  // NOLINT(readability-identifier-naming)
     friend void intrusive_ptr_release(TaskContext* p) noexcept;  // NOLINT(readability-identifier-naming)
+
+    // for thread pinning task processors
+    std::size_t thread_index_{kUnsetThreadIndex};
 
 public:
     using WaitListHook = typename boost::intrusive::make_list_member_hook<
