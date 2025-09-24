@@ -5194,6 +5194,7 @@
   "universal/src/formats/yaml/value_location_test.cpp":"taxi/uservices/userver/universal/src/formats/yaml/value_location_test.cpp",
   "universal/src/formats/yaml/value_test.cpp":"taxi/uservices/userver/universal/src/formats/yaml/value_test.cpp",
   "universal/src/fs/blocking/c_file.cpp":"taxi/uservices/userver/universal/src/fs/blocking/c_file.cpp",
+  "universal/src/fs/blocking/c_file_benchmark.cpp":"taxi/uservices/userver/universal/src/fs/blocking/c_file_benchmark.cpp",
   "universal/src/fs/blocking/c_file_test.cpp":"taxi/uservices/userver/universal/src/fs/blocking/c_file_test.cpp",
   "universal/src/fs/blocking/file_descriptor.cpp":"taxi/uservices/userver/universal/src/fs/blocking/file_descriptor.cpp",
   "universal/src/fs/blocking/file_descriptor_test.cpp":"taxi/uservices/userver/universal/src/fs/blocking/file_descriptor_test.cpp",
