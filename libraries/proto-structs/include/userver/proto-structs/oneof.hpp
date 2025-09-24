@@ -121,6 +121,9 @@ public:
     /// @brief Returns `true` if oneof contains some field
     constexpr explicit operator bool() const noexcept { return ContainsAny(); }
 
+    /// @brief Comparison to another oneof of the same type
+    bool operator==(const Oneof& other) const = default;
+
 private:
     std::optional<std::variant<TFields...>> storage_;
 };
