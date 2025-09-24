@@ -62,7 +62,12 @@ def sorted_includes(entity: HasCppIncludes, *, current_hpp: Optional[str] = None
 
 
 def proto_path_to_structs_path(proto_relative_path: pathlib.Path, *, ext: str) -> pathlib.Path:
-    """Returns the path of structs hpp or cpp based on the path of original proto file (relative to source dir)."""
+    """
+    Returns the path of structs hpp or cpp based on the path of original proto file (relative to source dir).
+    Example: 'simple/subdirectory/subdirectory.proto' -> 'simple/subdirectory/subdirectory.structs.usrv.pb.{ext}'
+    """
+    assert proto_relative_path.suffix == '.proto'
+
     return proto_relative_path.with_suffix(f'.structs.usrv.pb.{ext}')
 
 

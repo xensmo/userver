@@ -17,6 +17,7 @@ from typing import Union
 import google.protobuf.descriptor as descriptor
 
 from proto_structs.descriptors import option_parsers
+from proto_structs.descriptors import services
 from proto_structs.descriptors import type_mapping
 from proto_structs.models import forward_decls
 from proto_structs.models import gen_node
@@ -55,6 +56,7 @@ def parse_file(file: descriptor.FileDescriptor, *, plugin_options: options.Plugi
     return gen_node.File(
         proto_relative_path=pathlib.Path(typing.cast(str, file.name)),
         children=[vanilla_namespace, structs_namespace],
+        services_type_dependencies=list(services.collect_rpc_input_output_types(file)),
     )
 
 

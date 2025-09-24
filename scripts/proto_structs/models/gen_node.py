@@ -69,13 +69,20 @@ class CodegenNode(names.HasCppNameImpl, includes.HasCppIncludes, type_ref.HasTyp
 class File(names.HasCppName, includes.HasCppIncludes):
     """A C++ proto structs file scheduled for generation."""
 
-    def __init__(self, *, proto_relative_path: pathlib.Path, children: Sequence[CodegenNode]) -> None:
+    def __init__(
+        self,
+        *,
+        proto_relative_path: pathlib.Path,
+        children: Sequence[CodegenNode],
+        services_type_dependencies: Iterable[type_ref.TypeReference],
+    ) -> None:
         super().__init__()
         assert not proto_relative_path.is_absolute()
         #: Path to the original proto file relative to its base source directory.
         self.proto_relative_path: Final[pathlib.Path] = proto_relative_path
         #: The top-level C++ entities to define in the file.
         self.children = children
+        self._services_type_dependencies = services_type_dependencies
 
     @override
     def full_cpp_name(self) -> str:
@@ -91,6 +98,8 @@ class File(names.HasCppName, includes.HasCppIncludes):
 
     @override
     def collect_includes(self) -> Iterable[includes.Include]:
+        for dependency in self._services_type_dependencies:
+            yield from dependency.collect_includes()
         for child in self.children:
             yield from child.collect_includes()
 
