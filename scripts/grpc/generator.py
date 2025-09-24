@@ -74,6 +74,11 @@ def _grpc_to_cpp_name(in_str: str) -> str:
     return in_str.replace('.', '::')
 
 
+def _grpc_to_structs_name(in_str: str) -> str:
+    cpp_name = _grpc_to_cpp_name(in_str)
+    return '::structs::'.join(cpp_name.rsplit('::', 1))
+
+
 def _to_package_prefix(package: str):
     return f'{package}.' if package else ''
 
@@ -179,6 +184,7 @@ def generate(
         autoescape=True,
     )
     jinja_env.filters['grpc_to_cpp_name'] = _grpc_to_cpp_name  # type: ignore
+    jinja_env.filters['grpc_to_structs_name'] = _grpc_to_structs_name  # type: ignore
 
     # pylint: disable=no-member
     for proto_file in request.proto_file:
