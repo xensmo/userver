@@ -75,8 +75,10 @@ def _grpc_to_cpp_name(in_str: str) -> str:
 
 
 def _grpc_to_structs_name(in_str: str) -> str:
-    cpp_name = _grpc_to_cpp_name(in_str)
-    return '::structs::'.join(cpp_name.rsplit('::', 1))
+    namespace_segments = in_str.split('.')
+    # insert 'structs' before class name.
+    namespace_segments.insert(-1, 'structs')
+    return '::'.join(namespace_segments)
 
 
 def _to_package_prefix(package: str):
