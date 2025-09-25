@@ -12,9 +12,9 @@
 
 namespace samples {
 
-const USERVER_NAMESPACE::dynamic_config::Key<ugrpc::client::ClientQos> kGreeterClientQos{
+const dynamic_config::Key<ugrpc::client::ClientQos> kGreeterClientQos{
     "GREETER_CLIENT_QOS",
-    USERVER_NAMESPACE::dynamic_config::DefaultAsJsonString{R"({
+    dynamic_config::DefaultAsJsonString{R"({
       "methods": {
         "__default__": {
           "timeout-ms": 10000

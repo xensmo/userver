@@ -11,8 +11,6 @@
 #include <grpcpp/security/credentials.h>
 #include <grpcpp/support/channel_arguments.h>
 
-#include <userver/ugrpc/client/auth_type.hpp>
-#include <userver/ugrpc/client/proxy_settings.hpp>
 #include <userver/ugrpc/client/retry_config.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -21,8 +19,6 @@ namespace ugrpc::client {
 
 /// Settings relating to the ClientFactory
 struct ClientFactorySettings final {
-    AuthType auth_type{AuthType::kInsecure};
-
     /// gRPC channel credentials, none by default
     std::shared_ptr<grpc::ChannelCredentials> credentials{grpc::InsecureChannelCredentials()};
 
@@ -44,9 +40,6 @@ struct ClientFactorySettings final {
     /// Number of underlying channels that will be created for every client
     /// in this factory.
     std::size_t channel_count{1};
-
-    /// gRPC channel proxy settings, no proxy by default
-    ProxySettings proxy_settings;
 };
 
 std::shared_ptr<grpc::ChannelCredentials>
