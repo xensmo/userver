@@ -172,8 +172,8 @@ class UserverLibraryType(TypeReference, names.HasCppNameImpl):
 
     @override
     def collect_includes(self) -> Iterable[includes.Include]:
-        prefix: str = 'userver/proto-structs/io/userver'
-        yield from includes.io_includes_by_full_name(self.full_cpp_name(), prefix=prefix)
+        prefix: str = 'userver/proto-structs/io/userver/'
+        yield from includes.io_includes_by_full_name(self._full_cpp_name_wo_userver, prefix=prefix)
 
 
 class UserverCodegenType(TypeReference, names.HasCppNameImpl):

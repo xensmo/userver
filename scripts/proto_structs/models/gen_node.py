@@ -215,6 +215,7 @@ class StructNode(TypeNode, names.HasVanillaName):
 
     @override
     def own_includes(self) -> Iterable[includes.Include]:
+        yield from COMMON_STRUCT_INCLUDES
         # Need for IO.
         yield includes.Include(
             path=includes.proto_path_to_vanilla_pb_h(path=self.proto_file),
@@ -222,19 +223,6 @@ class StructNode(TypeNode, names.HasVanillaName):
         )
         for field in self.fields:
             yield from field.field_type.collect_includes()
-        yield includes.Include(path='userver/proto-structs/io/fwd.hpp', kind=includes.IncludeKind.FOR_HPP)
-
-        # For IO.
-        yield from [
-            includes.Include(path=path, kind=includes.IncludeKind.FOR_CPP)
-            for path in [
-                'utility',
-                'userver/proto-structs/io/impl/field_accessor.hpp',
-                'userver/proto-structs/io/impl/read.hpp',
-                'userver/proto-structs/io/impl/write.hpp',
-                'userver/proto-structs/type_mapping.hpp',
-            ]
-        ]
 
     @override
     def type_dependencies(self) -> Iterable[type_ref.TypeDependency]:
@@ -253,6 +241,16 @@ class StructNode(TypeNode, names.HasVanillaName):
     @override
     def vanilla_name(self) -> names.TypeName:
         return self._vanilla_name
+
+
+COMMON_STRUCT_INCLUDES: Sequence[includes.Include] = [
+    includes.Include(path='userver/proto-structs/io/fwd.hpp', kind=includes.IncludeKind.FOR_HPP),
+    includes.Include(path='utility', kind=includes.IncludeKind.FOR_CPP),
+    includes.Include(path='userver/proto-structs/io/impl/field_accessor.hpp', kind=includes.IncludeKind.FOR_CPP),
+    includes.Include(path='userver/proto-structs/io/impl/read.hpp', kind=includes.IncludeKind.FOR_CPP),
+    includes.Include(path='userver/proto-structs/io/impl/write.hpp', kind=includes.IncludeKind.FOR_CPP),
+    includes.Include(path='userver/proto-structs/type_mapping.hpp', kind=includes.IncludeKind.FOR_CPP),
+]
 
 
 @dataclasses.dataclass
@@ -385,15 +383,20 @@ class OneofNode(TypeNode):
 
     @override
     def own_includes(self) -> Iterable[includes.Include]:
+        yield from COMMON_ONEOF_INCLUDES
         for field in self.fields:
             yield from field.field_type.collect_includes()
-        yield includes.Include(path='userver/proto-structs/impl/oneof_codegen.hpp', kind=includes.IncludeKind.FOR_HPP)
 
     @override
     def type_dependencies(self) -> Iterable[type_ref.TypeDependency]:
         yield from super().type_dependencies()
         for field in self.fields:
             yield from field.field_type.type_dependencies()
+
+
+COMMON_ONEOF_INCLUDES: Sequence[includes.Include] = [
+    includes.Include(path='userver/proto-structs/impl/oneof_codegen.hpp', kind=includes.IncludeKind.FOR_HPP)
+]
 
 
 class VanillaTypeDeclaration(TypeNode, abc.ABC):

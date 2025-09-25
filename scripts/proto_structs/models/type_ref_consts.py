@@ -1,5 +1,7 @@
 """`TypeReference` constants for common built-in C++ types."""
 
+from typing import Mapping
+
 from proto_structs.models import type_ref
 
 #: `std::optional`
@@ -18,6 +20,25 @@ UNBREAKABLE_DEPENDENCY_CYCLE = type_ref.UserverLibraryType(
 
 #: `USERVER_NAMESPACE::proto_structs::Oneof`
 ONEOF_BASE_CLASS = type_ref.UserverLibraryType(full_cpp_name_wo_userver='proto_structs::Oneof')
+
+#: All Protobuf primitive types, mapped from their Protobuf names to C++ types.
+PRIMITIVE_TYPES: Mapping[str, type_ref.TypeReference] = {
+    'bool': type_ref.KeywordType(full_cpp_name='bool'),
+    'float': type_ref.KeywordType(full_cpp_name='float'),
+    'double': type_ref.KeywordType(full_cpp_name='double'),
+    'string': type_ref.BuiltinType(full_cpp_name='std::string'),
+    'bytes': type_ref.BuiltinType(full_cpp_name='std::string'),
+    'int32': type_ref.BuiltinType(full_cpp_name='std::int32_t'),
+    'int64': type_ref.BuiltinType(full_cpp_name='std::int64_t'),
+    'uint32': type_ref.BuiltinType(full_cpp_name='std::uint32_t'),
+    'uint64': type_ref.BuiltinType(full_cpp_name='std::uint64_t'),
+    'sint32': type_ref.BuiltinType(full_cpp_name='std::int32_t'),
+    'sint64': type_ref.BuiltinType(full_cpp_name='std::int64_t'),
+    'fixed32': type_ref.BuiltinType(full_cpp_name='std::uint32_t'),
+    'fixed64': type_ref.BuiltinType(full_cpp_name='std::uint64_t'),
+    'sfixed32': type_ref.BuiltinType(full_cpp_name='std::int32_t'),
+    'sfixed64': type_ref.BuiltinType(full_cpp_name='std::int64_t'),
+}
 
 
 def make_optional(value: type_ref.TypeReference) -> type_ref.TypeReference:

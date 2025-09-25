@@ -15,28 +15,30 @@ import google.protobuf.descriptor as descriptor
 
 from proto_structs.descriptors import descriptor_proto
 from proto_structs.models import names
+from proto_structs.models import options
+from proto_structs.models import type_overrides
 from proto_structs.models import type_ref
 from proto_structs.models import type_ref_consts
 
 TypeDescriptor = Union[descriptor.Descriptor, descriptor.EnumDescriptor]
 
 
-BUILTIN_TYPES: Mapping[int, type_ref.TypeReference] = {
-    descriptor.FieldDescriptor.TYPE_BOOL: type_ref.KeywordType(full_cpp_name='bool'),
-    descriptor.FieldDescriptor.TYPE_FLOAT: type_ref.KeywordType(full_cpp_name='float'),
-    descriptor.FieldDescriptor.TYPE_DOUBLE: type_ref.KeywordType(full_cpp_name='double'),
-    descriptor.FieldDescriptor.TYPE_STRING: type_ref.BuiltinType(full_cpp_name='std::string'),
-    descriptor.FieldDescriptor.TYPE_BYTES: type_ref.BuiltinType(full_cpp_name='std::string'),
-    descriptor.FieldDescriptor.TYPE_INT32: type_ref.BuiltinType(full_cpp_name='std::int32_t'),
-    descriptor.FieldDescriptor.TYPE_INT64: type_ref.BuiltinType(full_cpp_name='std::int64_t'),
-    descriptor.FieldDescriptor.TYPE_UINT32: type_ref.BuiltinType(full_cpp_name='std::uint32_t'),
-    descriptor.FieldDescriptor.TYPE_UINT64: type_ref.BuiltinType(full_cpp_name='std::uint64_t'),
-    descriptor.FieldDescriptor.TYPE_SINT32: type_ref.BuiltinType(full_cpp_name='std::int32_t'),
-    descriptor.FieldDescriptor.TYPE_SINT64: type_ref.BuiltinType(full_cpp_name='std::int64_t'),
-    descriptor.FieldDescriptor.TYPE_FIXED32: type_ref.BuiltinType(full_cpp_name='std::uint32_t'),
-    descriptor.FieldDescriptor.TYPE_FIXED64: type_ref.BuiltinType(full_cpp_name='std::uint64_t'),
-    descriptor.FieldDescriptor.TYPE_SFIXED32: type_ref.BuiltinType(full_cpp_name='std::int32_t'),
-    descriptor.FieldDescriptor.TYPE_SFIXED64: type_ref.BuiltinType(full_cpp_name='std::int64_t'),
+PRIMITIVE_TYPES_TO_PROTOBUF_NAME: Mapping[int, str] = {
+    descriptor.FieldDescriptor.TYPE_BOOL: 'bool',
+    descriptor.FieldDescriptor.TYPE_FLOAT: 'float',
+    descriptor.FieldDescriptor.TYPE_DOUBLE: 'double',
+    descriptor.FieldDescriptor.TYPE_STRING: 'string',
+    descriptor.FieldDescriptor.TYPE_BYTES: 'bytes',
+    descriptor.FieldDescriptor.TYPE_INT32: 'int32',
+    descriptor.FieldDescriptor.TYPE_INT64: 'int64',
+    descriptor.FieldDescriptor.TYPE_UINT32: 'uint32',
+    descriptor.FieldDescriptor.TYPE_UINT64: 'uint64',
+    descriptor.FieldDescriptor.TYPE_SINT32: 'sint32',
+    descriptor.FieldDescriptor.TYPE_SINT64: 'sint64',
+    descriptor.FieldDescriptor.TYPE_FIXED32: 'fixed32',
+    descriptor.FieldDescriptor.TYPE_FIXED64: 'fixed64',
+    descriptor.FieldDescriptor.TYPE_SFIXED32: 'sfixed32',
+    descriptor.FieldDescriptor.TYPE_SFIXED64: 'sfixed64',
 }
 
 
@@ -54,23 +56,33 @@ def parse_struct_reference(field_type: descriptor.Descriptor) -> type_ref.TypeRe
     )
 
 
-def parse_type_reference(field: descriptor.FieldDescriptor) -> type_ref.TypeReference:
+def parse_type_reference(
+    field: descriptor.FieldDescriptor, *, plugin_options: options.PluginOptions
+) -> type_ref.TypeReference:
     """Parses `field` type, not applying any wrappings or replacements yet."""
     type_kind = typing.cast(int, field.type)
-    if builtin_type := BUILTIN_TYPES.get(type_kind):
-        return builtin_type
+    if builtin_type_name := PRIMITIVE_TYPES_TO_PROTOBUF_NAME.get(type_kind):
+        return type_ref_consts.PRIMITIVE_TYPES[builtin_type_name]
 
     if type_kind == descriptor.FieldDescriptor.TYPE_ENUM:
         enum_type = typing.cast(descriptor.EnumDescriptor, field.enum_type)
-        return parse_enum_reference(enum_type)
+        return _apply_type_overrides(parse_enum_reference(enum_type), enum_type, plugin_options)
 
     if type_kind == descriptor.FieldDescriptor.TYPE_MESSAGE or type_kind == descriptor.FieldDescriptor.TYPE_GROUP:
         # Details on groups:
         # https://protobuf.com/docs/descriptors#groups
         message_type = typing.cast(descriptor.Descriptor, field.message_type)
-        return parse_struct_reference(message_type)
+        return _apply_type_overrides(parse_struct_reference(message_type), message_type, plugin_options)
 
     raise RuntimeError(f'Invalid field type kind: {type_kind}')
+
+
+def _apply_type_overrides(
+    parsed_type: type_ref.TypeReference, proto_type: TypeDescriptor, plugin_options: options.PluginOptions
+) -> type_ref.TypeReference:
+    full_type_name: str = proto_type.full_name
+    type_override = type_overrides.get_type_override(proto_type_name=full_type_name, plugin_options=plugin_options)
+    return type_override or parsed_type
 
 
 def handle_type_label(
@@ -114,12 +126,6 @@ def _should_wrap_in_optional(field: descriptor.FieldDescriptor) -> bool:
         # If `true`, then the field distinguishes unpopulated and default values.
         has_presence = typing.cast(bool, field.has_presence)
         return has_presence
-
-
-def replace_well_known_types(parsed_type: type_ref.TypeReference) -> type_ref.TypeReference:
-    """Replaces `parsed_type` according to options and built-in notions of well-known types."""
-    # TODO(TAXICOMMON-10999): support well-known types
-    return parsed_type
 
 
 def parse_type_name(proto_type: TypeDescriptor) -> names.TypeName:

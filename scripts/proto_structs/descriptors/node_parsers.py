@@ -12,7 +12,6 @@ from typing import List
 from typing import Mapping
 from typing import MutableSet
 from typing import Optional
-from typing import Union
 
 import google.protobuf.descriptor as descriptor
 
@@ -28,8 +27,6 @@ from proto_structs.models import sort_dependencies
 from proto_structs.models import type_ref
 from proto_structs.models import type_ref_consts
 from proto_structs.models import vanilla
-
-TypeDescriptor = Union[descriptor.Descriptor, descriptor.EnumDescriptor]
 
 
 def parse_file(file: descriptor.FileDescriptor, *, plugin_options: options.PluginOptions) -> gen_node.File:
@@ -172,7 +169,7 @@ def _io_kind_write(field: descriptor.FieldDescriptor) -> io.WriteVanillaFieldKin
     if type_kind == descriptor.FieldDescriptor.TYPE_STRING or type_kind == descriptor.FieldDescriptor.TYPE_BYTES:
         return io.WriteVanillaFieldKind.STRING
 
-    if type_mapping.BUILTIN_TYPES.get(type_kind) is not None or type_kind == descriptor.FieldDescriptor.TYPE_ENUM:
+    if type_kind in type_mapping.PRIMITIVE_TYPES_TO_PROTOBUF_NAME or type_kind == descriptor.FieldDescriptor.TYPE_ENUM:
         return io.WriteVanillaFieldKind.OTHER
 
     if type_kind == descriptor.FieldDescriptor.TYPE_MESSAGE or type_kind == descriptor.FieldDescriptor.TYPE_GROUP:
@@ -248,12 +245,11 @@ def parse_field(
     plugin_options: options.PluginOptions,
     ignore_label: bool = False,
 ) -> gen_node.StructField:
-    if map_field_type := _try_parse_map_field_type(field):
+    if map_field_type := _try_parse_map_field_type(field, plugin_options=plugin_options):
         parsed_type = map_field_type
         initializer = ''
     else:
-        parsed_type = type_mapping.parse_type_reference(field)
-        parsed_type = type_mapping.replace_well_known_types(parsed_type)
+        parsed_type = type_mapping.parse_type_reference(field, plugin_options=plugin_options)
         initializer = '' if isinstance(parsed_type, type_ref.UserverCodegenType) else '{}'
         if not ignore_label:
             parsed_type = type_mapping.handle_type_label(field, parsed_type)
@@ -269,7 +265,10 @@ def parse_field(
     return _apply_options_to_field(field, result_field, plugin_options=plugin_options)
 
 
-def _try_parse_map_field_type(field: descriptor.FieldDescriptor) -> Optional[type_ref.TypeReference]:
+def _try_parse_map_field_type(
+    field: descriptor.FieldDescriptor,
+    plugin_options: options.PluginOptions,
+) -> Optional[type_ref.TypeReference]:
     # https://protobuf.com/docs/descriptors#map-fields
     if typing.cast(int, field.type) != descriptor.FieldDescriptor.TYPE_MESSAGE:
         return None
@@ -278,8 +277,8 @@ def _try_parse_map_field_type(field: descriptor.FieldDescriptor) -> Optional[typ
         return None
 
     fields_by_name = typing.cast(Mapping[str, descriptor.FieldDescriptor], message_type.fields_by_name)
-    key_type = type_mapping.parse_type_reference(fields_by_name['key'])
-    value_type = type_mapping.parse_type_reference(fields_by_name['value'])
+    key_type = type_mapping.parse_type_reference(fields_by_name['key'], plugin_options=plugin_options)
+    value_type = type_mapping.parse_type_reference(fields_by_name['value'], plugin_options=plugin_options)
 
     return type_ref_consts.make_hash_map(key_type, value_type)
 

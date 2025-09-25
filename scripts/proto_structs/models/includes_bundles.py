@@ -11,6 +11,15 @@ BUNDLE_HPP: Set[str] = {
     'vector',
     'userver/proto-structs/impl/oneof_codegen.hpp',
     'userver/proto-structs/io/fwd.hpp',
+    'userver/proto-structs/io/std/optional.hpp',
+    'userver/proto-structs/io/std/string.hpp',
+    'userver/proto-structs/io/std/vector.hpp',
+    'userver/proto-structs/io/std/int32_t.hpp',
+    'userver/proto-structs/io/std/int64_t.hpp',
+    'userver/proto-structs/io/std/size_t.hpp',
+    'userver/proto-structs/io/std/uint32_t.hpp',
+    'userver/proto-structs/io/std/uint64_t.hpp',
+    'userver/proto-structs/io/std/scalar_conv.hpp',
 }
 
 BUNDLE_CPP: Set[str] = {
