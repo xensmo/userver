@@ -3,7 +3,7 @@
 
 """The core of the proto structs generation."""
 
-import json
+import dataclasses
 import pathlib
 import sys
 import typing
@@ -16,7 +16,6 @@ from google.protobuf import descriptor
 from google.protobuf import descriptor_pool
 from google.protobuf.compiler import plugin_pb2  # pyright: ignore
 import jinja2
-import pydantic
 
 from proto_structs.descriptors import node_parsers
 from proto_structs.models import gen_node
@@ -29,14 +28,15 @@ def _strip_ext(path: str) -> str:
     return path.removesuffix('.proto')
 
 
-class Params(pydantic.BaseModel, extra='forbid'):
+@dataclasses.dataclass(frozen=True)
+class Params(options.ModelBase):
     """
     protoc allows to pass a single string option to a plugin (`--uproto-structs_opt`).
     The option must contain JSON described by this model.
     """
 
     #: Absolute path to the file with the JSON containing detailed options, see `models/options.py`.
-    opts_file: Optional[pydantic.FilePath] = None
+    opts_file: Optional[pathlib.Path] = None
 
 
 class _CodeGenerator:
@@ -92,8 +92,7 @@ def generate(loader: jinja2.BaseLoader) -> None:
     request = plugin_pb2.CodeGeneratorRequest()  # pyright: ignore
     request.ParseFromString(data)  # pyright: ignore
 
-    params = Params(**json.loads(request.parameter)) if request.parameter else Params()  # pyright: ignore
-    plugin_options = options.load_plugin_options(params.opts_file)
+    params = Params.from_json(request.parameter or '{}')  # pyright: ignore
 
     response = plugin_pb2.CodeGeneratorResponse()  # pyright: ignore
     if hasattr(response, 'FEATURE_PROTO3_OPTIONAL'):  # pyright: ignore
@@ -119,6 +118,14 @@ def generate(loader: jinja2.BaseLoader) -> None:
         pool.Add(proto_file)  # pyright: ignore
         name: str = typing.cast(str, proto_file.name)
         files.append(name)
+
+    try:
+        plugin_options = options.load_plugin_options(params.opts_file)
+    except Exception:
+        raise Exception(
+            f'userver proto structs codegen failed to parse options for files: {", ".join(files)} '
+            '(see details in the exception above)'
+        )
 
     # pylint: disable=no-member
     for file_to_generate in request.file_to_generate:  # pyright: ignore
