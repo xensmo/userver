@@ -36,14 +36,20 @@ void FromJsonStringImpl(
     google::protobuf::Message& output,
     const google::protobuf::util::JsonParseOptions& options
 ) {
-#if GOOGLE_PROTOBUF_VERSION >= 4022000
+#if defined(ARCADIA_ROOT)
+    // JSON utils use y_absl::string_view.
+    const auto status = google::protobuf::util::JsonStringToMessage(
+        y_absl::string_view(json_string.data(), json_string.size()), &output, options
+    );
+#elif GOOGLE_PROTOBUF_VERSION >= 4022000
     // JSON utils use absl::string_view.
-    const auto status =
-        google::protobuf::util::JsonStringToMessage({json_string.data(), json_string.size()}, &output, options);
+    const auto status = google::protobuf::util::JsonStringToMessage(
+        absl::string_view(json_string.data(), json_string.size()), &output, options
+    );
 #else
     // JSON utils use StringPiece.
     const auto status = google::protobuf::util::JsonStringToMessage(
-        {json_string.data(), static_cast<std::ptrdiff_t>(json_string.size())}, &output, options
+        google::protobuf::StringPiece(json_string.data(), json_string.size()), &output, options
     );
 #endif
 
