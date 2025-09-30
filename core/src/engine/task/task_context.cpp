@@ -119,8 +119,6 @@ TaskContext::TaskContext(
     UASSERT(payload_);
     LOG_TRACE() << "task with task_id=" << ReadableTaskId(current_task::GetCurrentTaskContextUnchecked())
                 << " created task with task_id=" << ReadableTaskId(this) << logging::LogExtra::Stacktrace();
-
-    TsanReleaseBarrier();
 }
 
 TaskContext::~TaskContext() noexcept {
@@ -218,12 +216,10 @@ void TaskContext::DoStep() {
         try {
             SetState(Task::State::kRunning);
             auto& coro_ref = *coro_;
-            TsanAcquireBarrier();
             coro_ref(this);
         } catch (...) {
             uncaught = std::current_exception();
         }
-        TsanReleaseBarrier();
     }
 
     if (uncaught) std::rethrow_exception(uncaught);
@@ -328,9 +324,7 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
     ProfilerStopExecution();
 
     auto& task_pipe_ref = *task_pipe_;
-    TsanAcquireBarrier();
     [[maybe_unused]] TaskContext* context = task_pipe_ref().get();
-    TsanReleaseBarrier();
 
     ProfilerStartExecution();
     TraceStateTransition(Task::State::kRunning);
@@ -497,7 +491,6 @@ private:
 void TaskContext::CoroFunc(TaskPipe& task_pipe) {
     for (TaskContext* context : task_pipe) {
         UASSERT(context);
-        context->TsanReleaseBarrier();
         context->task_pipe_ = &task_pipe;
 
         {
@@ -535,7 +528,6 @@ void TaskContext::CoroFunc(TaskPipe& task_pipe) {
         }
 
         context->task_pipe_ = nullptr;
-        context->TsanAcquireBarrier();
     }
 }
 
@@ -713,20 +705,6 @@ bool HasWaitSucceeded(TaskContext::WakeupSource wakeup_source) noexcept {
 
     // Assume that bugs with an unexpected WakeupSource don't reach production.
     return false;
-}
-
-void TaskContext::TsanAcquireBarrier() noexcept {
-#if USERVER_IMPL_HAS_TSAN
-    __tsan_acquire(this);
-    __tsan_acquire(&coro_);
-#endif
-}
-
-void TaskContext::TsanReleaseBarrier() noexcept {
-#if USERVER_IMPL_HAS_TSAN
-    __tsan_release(&coro_);
-    __tsan_release(this);
-#endif
 }
 
 }  // namespace impl
