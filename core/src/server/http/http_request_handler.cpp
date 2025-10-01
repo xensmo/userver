@@ -30,8 +30,7 @@ HttpRequestHandler::HttpRequestHandler(
     bool is_monitor,
     std::string server_name
 )
-    : add_handler_disabled_(false),
-      is_monitor_(is_monitor),
+    : is_monitor_(is_monitor),
       server_name_(std::move(server_name)),
       rate_limit_(utils::TokenBucket::MakeUnbounded()),
       metrics_(component_context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()),
@@ -164,29 +163,21 @@ engine::TaskWithResult<void> HttpRequestHandler::StartRequestTask(std::shared_pt
     }
 }  // namespace http
 
-void HttpRequestHandler::DisableAddHandler() {
-    const auto was_enabled = !add_handler_disabled_.exchange(true);
-    UASSERT(was_enabled);
-}
+void HttpRequestHandler::DisableAddHandler() { handler_info_index_.SetRegistrationFinished(); }
 
 void HttpRequestHandler::AddHandler(const handlers::HttpHandlerBase& handler, engine::TaskProcessor& task_processor) {
-    UASSERT_MSG(!add_handler_disabled_, "handler adding disabled");
     if (is_monitor_ != handler.IsMonitor()) {
         throw std::runtime_error(
             std::string("adding ") + (handler.IsMonitor() ? "" : "non-") + "monitor handler to " +
             (is_monitor_ ? "" : "non-") + "monitor HttpRequestHandler"
         );
     }
-    const std::lock_guard<engine::Mutex> lock(handler_infos_mutex_);
     handler_info_index_.AddHandler(handler, task_processor);
 }
 
-bool HttpRequestHandler::IsAddHandlerDisabled() const noexcept { return add_handler_disabled_.load(); }
+bool HttpRequestHandler::IsAddHandlerDisabled() const noexcept { return handler_info_index_.IsRegistrationFinished(); }
 
-const HandlerInfoIndex& HttpRequestHandler::GetHandlerInfoIndex() const {
-    UASSERT_MSG(add_handler_disabled_, "handler adding must be disabled before GetHandlerInfoIndex() call");
-    return handler_info_index_;
-}
+const HandlerInfoIndex& HttpRequestHandler::GetHandlerInfoIndex() const { return handler_info_index_; }
 
 void HttpRequestHandler::SetNewRequestHook(NewRequestHook hook) { new_request_hook_ = std::move(hook); }
 

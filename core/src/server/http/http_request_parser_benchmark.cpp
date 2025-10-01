@@ -2,6 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include <userver/engine/run_standalone.hpp>
 #include <userver/http/http_version.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -44,70 +45,80 @@ inline server::http::HttpRequestParser CreateBenchmarkParser(server::http::HttpR
 }  // namespace
 
 void HttpRequestParserParseBenchmarkSmall(benchmark::State& state) {
-    auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
+    engine::RunStandalone([&] {
+        auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
 
-    for ([[maybe_unused]] auto _ : state) {
-        parser.Parse(kHttpRequestDataSmall);
-    }
+        for ([[maybe_unused]] auto _ : state) {
+            parser.Parse(kHttpRequestDataSmall);
+        }
+    });
 }
 
 void HttpRequestParserParseBenchmarkMiddle(benchmark::State& state) {
-    auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
+    engine::RunStandalone([&] {
+        auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
 
-    for ([[maybe_unused]] auto _ : state) {
-        parser.Parse(kHttpRequestDataMiddle);
-    }
+        for ([[maybe_unused]] auto _ : state) {
+            parser.Parse(kHttpRequestDataMiddle);
+        }
+    });
 }
 
 void HttpRequestParserParseBenchmarkLargeUrl(benchmark::State& state) {
-    auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
+    engine::RunStandalone([&] {
+        auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
 
-    std::string large_url;
-    for (size_t i = 0; i < kEntryCount; ++i) {
-        large_url += "/foo";
-    }
-    const std::string http_request_data = fmt::format("GET {} HTTP/1.1\r\n\r\n", large_url);
+        std::string large_url;
+        for (size_t i = 0; i < kEntryCount; ++i) {
+            large_url += "/foo";
+        }
+        const std::string http_request_data = fmt::format("GET {} HTTP/1.1\r\n\r\n", large_url);
 
-    for ([[maybe_unused]] auto _ : state) {
-        parser.Parse(http_request_data);
-    }
+        for ([[maybe_unused]] auto _ : state) {
+            parser.Parse(http_request_data);
+        }
+    });
 }
 
 void HttpRequestParserParseBenchmarkLargeBody(benchmark::State& state) {
-    auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
+    engine::RunStandalone([&] {
+        auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
 
-    std::string large_body;
-    for (size_t i = 0; i < kEntryCount; ++i) {
-        large_body += "body";
-    }
-    const std::string http_request_data = fmt::format(
-        "POST / HTTP/1.1\r\n"
-        "Content-Length: {}\r\n\r\n{}",
-        large_body.size(),
-        large_body
-    );
+        std::string large_body;
+        for (size_t i = 0; i < kEntryCount; ++i) {
+            large_body += "body";
+        }
+        const std::string http_request_data = fmt::format(
+            "POST / HTTP/1.1\r\n"
+            "Content-Length: {}\r\n\r\n{}",
+            large_body.size(),
+            large_body
+        );
 
-    for ([[maybe_unused]] auto _ : state) {
-        parser.Parse(http_request_data);
-    }
+        for ([[maybe_unused]] auto _ : state) {
+            parser.Parse(http_request_data);
+        }
+    });
 }
 
 void HttpRequestParserParseBenchmarkManyHeaders(benchmark::State& state) {
-    auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
+    engine::RunStandalone([&] {
+        auto parser = CreateBenchmarkParser([](std::shared_ptr<server::http::HttpRequest>&&) {});
 
-    std::string headers;
-    for (size_t i = 0; i < kEntryCount; ++i) {
-        headers += fmt::format("header{}: value\r\n", i);
-    }
-    const std::string http_request_data = fmt::format(
-        "POST / HTTP/1.1\r\n"
-        "{}\r\n\r\n",
-        headers
-    );
+        std::string headers;
+        for (size_t i = 0; i < kEntryCount; ++i) {
+            headers += fmt::format("header{}: value\r\n", i);
+        }
+        const std::string http_request_data = fmt::format(
+            "POST / HTTP/1.1\r\n"
+            "{}\r\n\r\n",
+            headers
+        );
 
-    for ([[maybe_unused]] auto _ : state) {
-        parser.Parse(http_request_data);
-    }
+        for ([[maybe_unused]] auto _ : state) {
+            parser.Parse(http_request_data);
+        }
+    });
 }
 
 BENCHMARK(HttpRequestParserParseBenchmarkSmall);

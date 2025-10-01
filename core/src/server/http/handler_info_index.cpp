@@ -23,6 +23,10 @@ class HandlerInfoIndex::HandlerInfoIndexImpl final {
 public:
     void AddHandler(const handlers::HttpHandlerBase& handler, engine::TaskProcessor& task_processor);
 
+    void SetRegistrationFinished();
+
+    bool IsRegistrationFinished() const;
+
     const HandlerList& GetHandlers() const;
 
     MatchRequestResult MatchRequest(HttpMethod method, const std::string& path) const;
@@ -47,7 +51,18 @@ void HandlerInfoIndex::HandlerInfoIndexImpl::AddHandler(
     } else {
         wildcard_path_index_.AddHandler(handler, task_processor);
     }
-    handler_list_.emplace_back(&handler);
+
+    auto handler_list = handler_list_.Lock();
+    handler_list->emplace_back(&handler);
+}
+
+void HandlerInfoIndex::HandlerInfoIndexImpl::SetRegistrationFinished() {
+    fixed_path_index_.SetRegistrationFinished();
+    wildcard_path_index_.SetRegistrationFinished();
+}
+
+bool HandlerInfoIndex::HandlerInfoIndexImpl::IsRegistrationFinished() const {
+    return fixed_path_index_.IsRegistrationFinished() && wildcard_path_index_.IsRegistrationFinished();
 }
 
 const HandlerInfoIndex::HandlerList& HandlerInfoIndex::HandlerInfoIndexImpl::GetHandlers() const {
@@ -73,7 +88,9 @@ void HandlerInfoIndex::HandlerInfoIndexImpl::SetFallbackHandler(
     if (fallback_handlers_[index])
         throw std::runtime_error(fmt::format("fallback {} handler already registered", ToString(fallback)));
     fallback_handlers_[index].emplace(task_processor, handler);
-    handler_list_.emplace_back(&handler);
+
+    auto handler_list = handler_list_.Lock();
+    handler_list->emplace_back(&handler);
 }
 
 const HandlerInfo* HandlerInfoIndex::HandlerInfoIndexImpl::GetFallbackHandler(handlers::FallbackHandler fallback
@@ -95,6 +112,10 @@ void HandlerInfoIndex::AddHandler(const handlers::HttpHandlerBase& handler, engi
         handler.GetConfig().path
     );
 }
+
+void HandlerInfoIndex::SetRegistrationFinished() { impl_->SetRegistrationFinished(); }
+
+bool HandlerInfoIndex::IsRegistrationFinished() const { return impl_->IsRegistrationFinished(); }
 
 const HandlerInfoIndex::HandlerList& HandlerInfoIndex::GetHandlers() const { return impl_->GetHandlers(); }
 
