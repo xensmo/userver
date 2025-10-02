@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-#include <userver/concurrent/variable.hpp>
 #include <userver/engine/task/task_processor_fwd.hpp>
 #include <userver/server/handlers/fallback_handlers.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
@@ -43,11 +42,7 @@ public:
 
     void AddHandler(const handlers::HttpHandlerBase& handler, engine::TaskProcessor& task_processor);
 
-    void SetRegistrationFinished();
-
-    bool IsRegistrationFinished() const;
-
-    using HandlerList = concurrent::Variable<std::vector<utils::NotNull<const handlers::HttpHandlerBase*>>>;
+    using HandlerList = std::vector<utils::NotNull<const handlers::HttpHandlerBase*>>;
     const HandlerList& GetHandlers() const;
 
     const HandlerInfo* GetFallbackHandler(handlers::FallbackHandler) const;

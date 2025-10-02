@@ -29,18 +29,12 @@ void FixedPathIndex::AddHandler(
     const handlers::HttpHandlerBase& handler,
     engine::TaskProcessor& task_processor
 ) {
-    auto handler_method_index_map = handler_method_index_map_.UniqueLock();
-    (*handler_method_index_map)[std::move(path)].AddHandler(handler, task_processor, {});
+    handler_method_index_map_[std::move(path)].AddHandler(handler, task_processor, {});
 }
 
-void FixedPathIndex::SetRegistrationFinished() { handler_method_index_map_.DisableWrites(); }
-
-bool FixedPathIndex::IsRegistrationFinished() const { return handler_method_index_map_.AreWritesDisabled(); }
-
 bool FixedPathIndex::MatchRequest(HttpMethod method, const std::string& path, MatchRequestResult& match_result) const {
-    auto handler_method_index_map = handler_method_index_map_.SharedLock();
-    auto it = handler_method_index_map->find(path);
-    if (it == handler_method_index_map->end()) return false;
+    auto it = handler_method_index_map_.find(path);
+    if (it == handler_method_index_map_.end()) return false;
 
     const auto* handler_info_data = it->second.GetHandlerInfoData(method);
     if (!handler_info_data) {

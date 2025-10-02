@@ -7,7 +7,6 @@
 
 #include <userver/engine/task/task_processor_fwd.hpp>
 
-#include <concurrent/fast_variable.hpp>
 #include <server/http/handler_info_index.hpp>
 #include <server/http/handler_method_index.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
@@ -30,10 +29,6 @@ public:
     };
 
     void AddHandler(const handlers::HttpHandlerBase& handler, engine::TaskProcessor& task_processor);
-
-    void SetRegistrationFinished();
-
-    bool IsRegistrationFinished() const;
 
     bool MatchRequest(HttpMethod method, const std::string& path, MatchRequestResult& match_result) const;
 
@@ -67,7 +62,7 @@ private:
         std::unordered_set<std::string>& wildcard_names
     );
 
-    concurrent::FastVariable<Node> root_;
+    Node root_;
 };
 
 }  // namespace server::http::impl

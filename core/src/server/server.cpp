@@ -75,6 +75,7 @@ void PortInfo::Init(
 
 void PortInfo::Start() {
     UASSERT(request_handler);
+    request_handler->DisableAddHandler();
     for (auto& listener : listeners) {
         listener.Start();
     }
@@ -168,12 +169,6 @@ ServerImpl::ServerImpl(
         monitor_port_info_.Init(config_, *config_.monitor_listener, component_context, true);
     }
 
-    if (monitor_port_info_.request_handler) {
-        monitor_port_info_.Start();
-    } else {
-        LOG_WARNING() << "No 'listener-monitor' in 'server' component";
-    }
-
     middlewares_ = component_context.FindComponent<middlewares::PipelineBuilder>(config_.middleware_pipeline_builder)
                        .BuildPipeline(middlewares::DefaultPipeline());
 
@@ -190,12 +185,16 @@ void ServerImpl::StartPortInfos() {
         requests_view_.StartBackgroundWorker();
         auto hook = [queue](std::shared_ptr<http::HttpRequest> request) mutable { queue->enqueue(std::move(request)); };
         main_port_info_.request_handler->SetNewRequestHook(hook);
+        if (monitor_port_info_.request_handler) {
+            monitor_port_info_.request_handler->SetNewRequestHook(hook);
+        }
     }
 
     main_port_info_.Start();
-    main_port_info_.request_handler->DisableAddHandler();
     if (monitor_port_info_.request_handler) {
-        monitor_port_info_.request_handler->DisableAddHandler();
+        monitor_port_info_.Start();
+    } else {
+        LOG_WARNING() << "No 'listener-monitor' in 'server' component";
     }
 }
 
@@ -294,9 +293,9 @@ void ServerImpl::WriteTotalHandlerStatistics(utils::statistics::Writer& writer) 
         }
 
         UASSERT(main_port_info_.request_handler);
-        const auto& handlers = main_port_info_.request_handler->GetHandlerInfoIndex().GetHandlers().Lock();
+        const auto& handlers = main_port_info_.request_handler->GetHandlerInfoIndex().GetHandlers();
 
-        for (const auto handler_ptr : *handlers) {
+        for (const auto handler_ptr : handlers) {
             for (const auto method : handler_ptr->GetAllowedMethods()) {
                 total.Add(handlers::HttpHandlerStatisticsSnapshot{
                     handler_ptr->GetHandlerStatistics().GetByMethod(method)});

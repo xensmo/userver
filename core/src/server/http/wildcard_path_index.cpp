@@ -102,14 +102,9 @@ void WildcardPathIndex::AddHandler(const handlers::HttpHandlerBase& handler, eng
     }
 }
 
-void WildcardPathIndex::SetRegistrationFinished() { root_.DisableWrites(); }
-
-bool WildcardPathIndex::IsRegistrationFinished() const { return root_.AreWritesDisabled(); }
-
 bool WildcardPathIndex::MatchRequest(HttpMethod method, const std::string& path, MatchRequestResult& match_result)
     const {
-    auto root = root_.SharedLock();
-    return MatchRequest(*root, method, SplitBySlash(path), path.size(), match_result);
+    return MatchRequest(root_, method, SplitBySlash(path), path.size(), match_result);
 }
 
 void WildcardPathIndex::AddHandler(
@@ -142,8 +137,7 @@ void WildcardPathIndex::AddPath(
     std::vector<PathItem> wildcards
 ) {
     const size_t length = fixed_path.size() + wildcards.size();
-    auto root = root_.UniqueLock();
-    Node* cur = &*root;
+    Node* cur = &root_;
     for (auto& path_item : std::move(fixed_path)) {
         cur = &cur->next[path_item.index][std::move(path_item.name)];
     }
