@@ -420,7 +420,15 @@ void TaskContext::Wakeup(WakeupSource source, SleepState::Epoch epoch) {
 
         auto new_sleep_state = prev_sleep_state;
         new_sleep_state.flags |= static_cast<SleepFlags>(source);
-        if (sleep_state_.CompareExchangeWeak<std::memory_order_relaxed, std::memory_order_relaxed>(
+
+        // 1) thread1: calls context.GetQueueWaitTimepoint()
+        // 2) thread1: starts waiting for some task in thread2
+        // 3) thread2: wakes up the thread1-coroutine via TaskContext::Wakeup
+        // 4) thread2: TaskContext::Wakeup in Schedule() calls context.SetQueueWaitTimepoint()
+        //
+        // Without std::memory_order_seq_cst in this function TSAN reports a data race at step 4) on
+        // a ServerMinimalComponentList.Basic test. Run the test under TSAN multiple times if planning to change.
+        if (sleep_state_.CompareExchangeWeak<std::memory_order_seq_cst, std::memory_order_relaxed>(
                 prev_sleep_state, new_sleep_state
             )) {
             break;
@@ -439,10 +447,9 @@ void TaskContext::Wakeup(WakeupSource source, NoEpoch) {
 
     if (IsFinished()) return;
 
-    // Set flag regardless of kSleeping - missing kSleeping usually means one of
-    // the following: 1) the task is somewhere between Sleep() and setting
-    // kSleeping in DoStep(). 2) the task is already awaken, but DisableWakeups()
-    // is not yet finished (and not all timers/watchers are stopped).
+    // Set flag regardless of kSleeping - missing kSleeping usually means one of the following:
+    // * the task is somewhere between Sleep() and setting kSleeping in DoStep().
+    // * the task is already awaken, but DisableWakeups() is not yet finished (and not all timers/watchers are stopped).
     const auto prev_sleep_state = sleep_state_.FetchOrFlags<std::memory_order_seq_cst>(static_cast<SleepFlags>(source));
     if (ShouldSchedule(prev_sleep_state.flags, source)) {
         Schedule();
