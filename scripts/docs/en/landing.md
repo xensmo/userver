@@ -171,7 +171,9 @@ int main(int argc, char* argv[]) {
           <span class="logo logo_matchmaker" title="Matchmaker"></span>
           <span class="logo logo_yago" title="Yandex Go"></span>
           <span class="logo logo_slugkit" title="SlugKit"></span>
-          2GIS, T-Bank and others...
+        </div>
+        <div class="companies__logos mt">
+          <p style="text-align: center;" class="paragraph">2GIS, T-Bank and others...</p>
         </div>
       </section>
       <section class="section feedback">
