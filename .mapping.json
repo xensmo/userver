@@ -1,4 +1,5 @@
 {
+  "":"taxi/uservices/userver",
   ".":"taxi/uservices/userver",
   ".clang-format":"taxi/uservices/userver/.clang-format",
   ".clang-tidy":"taxi/uservices/userver/.clang-tidy",
