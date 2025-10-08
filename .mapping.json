@@ -5267,6 +5267,7 @@
   "universal/src/http/header_map_test.cpp":"taxi/uservices/userver/universal/src/http/header_map_test.cpp",
   "universal/src/http/http_version.cpp":"taxi/uservices/userver/universal/src/http/http_version.cpp",
   "universal/src/http/parser/http_request_parse_args.cpp":"taxi/uservices/userver/universal/src/http/parser/http_request_parse_args.cpp",
+  "universal/src/http/parser/http_request_parse_args_test.cpp":"taxi/uservices/userver/universal/src/http/parser/http_request_parse_args_test.cpp",
   "universal/src/http/status_code.cpp":"taxi/uservices/userver/universal/src/http/status_code.cpp",
   "universal/src/http/url.cpp":"taxi/uservices/userver/universal/src/http/url.cpp",
   "universal/src/http/url_benchmark.cpp":"taxi/uservices/userver/universal/src/http/url_benchmark.cpp",
