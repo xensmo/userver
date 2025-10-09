@@ -160,7 +160,7 @@ CheckOptions:
     value: lower_case
   # Allow NCamelCase for NMonitoring.
   - key: readability-identifier-naming.NamespaceIgnoredRegexp
-    value: ^N([A-Z][a-z]+)+$
+    value: ^(N([A-Z][a-z]+)+|Headers)$
   # Allow kCamelCase.
   - key: readability-identifier-naming.ValueTemplateParameterIgnoredRegexp
     value: ^k([A-Z][a-z]+)+$
