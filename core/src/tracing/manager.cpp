@@ -87,7 +87,7 @@ bool OpenTelemetryTryFillSpanBuilderFromRequest(
         return false;
     }
 
-    auto extraction_result = tracing::opentelemetry::ExtractTraceParentData(traceparent);
+    auto extraction_result = tracing::opentelemetry::ExtractTraceParentDataView(traceparent);
     if (!extraction_result.has_value()) {
         LOG_LIMITED_WARNING() << fmt::format(
             "Invalid traceparent header format ({}). Skipping Opentelemetry "
@@ -102,13 +102,13 @@ bool OpenTelemetryTryFillSpanBuilderFromRequest(
     span_builder.SetTraceId(std::move(data.trace_id));
     span_builder.SetParentSpanId(std::move(data.span_id));
     if (data.trace_flags.empty()) {
-        data.trace_flags = std::string{kDefaultOtelTraceFlags};
+        data.trace_flags = kDefaultOtelTraceFlags;
     }
 
     const auto& tracestate = request.GetHeader(opentelemetry::kTraceState);
     kOTelTracingHeadersInheritedData.Set({
         tracestate,
-        std::move(data.trace_flags),
+        std::string(data.trace_flags),
     });
     return true;
 }

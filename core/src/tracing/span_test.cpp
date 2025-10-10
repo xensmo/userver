@@ -920,7 +920,7 @@ UTEST_F(Span, IsCompatibleWithOpentelemetry) {
         tracing::opentelemetry::BuildTraceParentHeader(span.GetTraceId(), span.GetSpanId(), kFlags);
     ASSERT_TRUE(otel_header.has_value()) << otel_header.error();
 
-    const auto otel_data = tracing::opentelemetry::ExtractTraceParentData(otel_header.value());
+    const auto otel_data = tracing::opentelemetry::ExtractTraceParentDataView(otel_header.value());
     ASSERT_TRUE(otel_data.has_value()) << otel_data.error();
 
     EXPECT_EQ(otel_data.value().trace_id, span.GetTraceId());

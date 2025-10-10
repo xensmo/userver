@@ -57,11 +57,10 @@ void SetupSpan(
     auto span_name = utils::StrCat("grpc/", call_name);
     const auto& client_metadata = context.client_metadata();
 
-    const auto* const trace_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaTraceId);
-    const auto* const parent_span_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaSpanId);
     const auto* const traceparent = utils::FindOrNullptr(client_metadata, ugrpc::impl::kTraceParent);
     if (traceparent) {
-        auto extraction_result = tracing::opentelemetry::ExtractTraceParentData(ugrpc::impl::ToString(*traceparent));
+        auto extraction_result =
+            tracing::opentelemetry::ExtractTraceParentDataView(ugrpc::impl::ToStringView(*traceparent));
         if (!extraction_result.has_value()) {
             LOG_LIMITED_WARNING() << fmt::format(
                 "Invalid traceparent header format ({}). Skipping Opentelemetry "
@@ -75,11 +74,12 @@ void SetupSpan(
                 std::move(span_name), data.trace_id, data.span_id, utils::impl::SourceLocation::Current()
             );
         }
-    } else if (trace_id) {
+    } else if (const auto* const trace_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaTraceId)) {
+        const auto* const parent_span_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaSpanId);
         span_holder.emplace(
             std::move(span_name),
-            ugrpc::impl::ToString(*trace_id),
-            parent_span_id ? ugrpc::impl::ToString(*parent_span_id) : std::string{},
+            ugrpc::impl::ToStringView(*trace_id),
+            parent_span_id ? ugrpc::impl::ToStringView(*parent_span_id) : std::string_view{},
             utils::impl::SourceLocation::Current()
         );
     } else {
@@ -127,7 +127,7 @@ void ReportRpcInterruptedError(CallState& state) noexcept {
 grpc::Status
 ReportCustomError(const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex, CallState& state) noexcept {
     try {
-        grpc::Status status{CustomStatusToGrpc(ex.GetCode()), ugrpc::impl::ToGrpcString(ex.GetExternalErrorBody())};
+        grpc::Status status{CustomStatusToGrpc(ex.GetCode()), ex.GetExternalErrorBody()};
 
         const auto log_level = AdjustLogLevelForCancellations(
             IsServerError(status.error_code()) ? logging::Level::kError : logging::Level::kWarning

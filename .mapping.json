@@ -5303,6 +5303,7 @@
   "universal/src/logging/timestamp.cpp":"taxi/uservices/userver/universal/src/logging/timestamp.cpp",
   "universal/src/logging/timestamp.hpp":"taxi/uservices/userver/universal/src/logging/timestamp.hpp",
   "universal/src/tracing/opentelemetry.cpp":"taxi/uservices/userver/universal/src/tracing/opentelemetry.cpp",
+  "universal/src/tracing/opentelemetry_benchmark.cpp":"taxi/uservices/userver/universal/src/tracing/opentelemetry_benchmark.cpp",
   "universal/src/tracing/opentelemetry_test.cpp":"taxi/uservices/userver/universal/src/tracing/opentelemetry_test.cpp",
   "universal/src/utils/algo_test.cpp":"taxi/uservices/userver/universal/src/utils/algo_test.cpp",
   "universal/src/utils/any_movable.cpp":"taxi/uservices/userver/universal/src/utils/any_movable.cpp",
