@@ -96,7 +96,7 @@ HttpClient::HttpClient(const ComponentConfig& component_config, const ComponentC
     http_client_.SetConfig(bootstrap_config);
 
     auto& config_component = context.FindComponent<components::DynamicConfig>();
-    subscriber_scope_ = components::DynamicConfig::NoblockSubscriber{config_component}.GetEventSource().AddListener(
+    subscriber_scope_ = components::DynamicConfig::NoblockSubscriber{config_component}.GetDiffSource().AddListener(
         this, kName, &HttpClient::OnConfigUpdate
     );
 
@@ -126,7 +126,19 @@ HttpClient::~HttpClient() {
 
 clients::http::Client& HttpClient::GetHttpClient() { return http_client_; }
 
-void HttpClient::OnConfigUpdate(const dynamic_config::Snapshot& config) {
+void HttpClient::OnConfigUpdate(const dynamic_config::Diff& diff) {
+    const auto& config = diff.current;
+    const auto& prev_config_opt = diff.previous;
+    if (prev_config_opt) {
+        const auto& prev_config = *prev_config_opt;
+        if (config[::dynamic_config::HTTP_CLIENT_CONNECTION_POOL_SIZE] ==
+                prev_config[::dynamic_config::HTTP_CLIENT_CONNECTION_POOL_SIZE] &&
+            config[::dynamic_config::USERVER_HTTP_PROXY] == prev_config[::dynamic_config::USERVER_HTTP_PROXY] &&
+            config[::dynamic_config::HTTP_CLIENT_CONNECT_THROTTLE] ==
+                prev_config[::dynamic_config::HTTP_CLIENT_CONNECT_THROTTLE]) {
+            return;
+        }
+    }
     http_client_.SetConfig(clients::http::impl::Config{
         config[::dynamic_config::HTTP_CLIENT_CONNECTION_POOL_SIZE],
         config[::dynamic_config::USERVER_HTTP_PROXY],

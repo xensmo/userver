@@ -26,6 +26,8 @@ public:
 
     SnapshotChannel& GetChannel();
 
+    DiffChannel& GetDiffChannel();
+
     concurrent::AsyncEventSubscriberScope
     DoUpdateAndListen(concurrent::FunctionId id, std::string_view name, SnapshotChannel::Function&& func);
 

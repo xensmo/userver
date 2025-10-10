@@ -358,6 +358,8 @@ void RequestState::proxy(utils::zstring_view value) {
     easy().set_proxy(value);
 }
 
+bool RequestState::IsProxySet() const { return proxy_url_.has_value(); }
+
 void RequestState::proxy_auth_type(curl::easy::proxyauth_t value) { easy().set_proxy_auth(value); }
 
 void RequestState::http_auth_type(
@@ -1024,7 +1026,10 @@ void RequestState::WithRequestStats(const Func& func) {
 void RequestState::ResolveTargetAddress(clients::dns::Resolver& resolver) {
     const auto deadline = engine::Deadline::FromDuration(remote_timeout_);
 
-    const MaybeOwnedUrl target{proxy_url_, easy()};
+    const static std::string kEmptyString;
+    const std::string& proxy_url = proxy_url_ ? *proxy_url_ : kEmptyString;
+    const MaybeOwnedUrl target{proxy_url, easy()};
+
     const std::string hostname = target.Get().GetHostPtr().get();
 
     // CURLOPT_RESOLV hostnames cannot contain colons (as IPv6 addresses do), skip

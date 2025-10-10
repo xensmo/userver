@@ -50,6 +50,8 @@ void StorageData::Update(SnapshotData config, AfterAssignHook after_assign_hook)
 
 StorageData::SnapshotChannel& StorageData::GetChannel() { return snapshot_channel_; }
 
+StorageData::DiffChannel& StorageData::GetDiffChannel() { return diff_channel_; }
+
 concurrent::AsyncEventSubscriberScope
 StorageData::DoUpdateAndListen(concurrent::FunctionId id, std::string_view name, SnapshotChannel::Function&& func) {
     auto updater = [&, func_copy = func] { func_copy(GetSnapshot()); };

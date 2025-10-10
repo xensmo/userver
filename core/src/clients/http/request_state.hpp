@@ -140,6 +140,8 @@ public:
 
     void SetTracingManager(const tracing::TracingManagerBase&);
 
+    bool IsProxySet() const;
+
     PluginRequest GetEditableRequestInstance();
 
 private:
@@ -237,7 +239,7 @@ private:
     std::array<char, CURL_ERROR_SIZE> errorbuffer_{};
 
     clients::dns::Resolver* resolver_{nullptr};
-    std::string proxy_url_;
+    std::optional<std::string> proxy_url_;
     impl::PluginPipeline plugin_pipeline_;
 
     struct StreamData {
