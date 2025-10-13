@@ -59,9 +59,9 @@ public:
 
     const impl::TaskCounter& GetTaskCounter() const { return task_counter_; }
 
-    std::size_t GetTaskQueueSize() const;
+    std::size_t GetTaskQueueSize() const noexcept;
 
-    std::size_t GetWorkerCount() const { return workers_.size(); }
+    std::size_t GetWorkerCount() const noexcept { return workers_.size(); }
 
     void SetSettings(const TaskProcessorSettings& settings, const TaskProcessorProfilerSettings& profiler_settings);
 

@@ -208,7 +208,7 @@ ev::ThreadPool& TaskProcessor::EventThreadPool() { return pools_->EventThreadPoo
 
 impl::CountedCoroutinePtr TaskProcessor::GetCoroutine() { return {pools_->GetCoroPool().GetCoroutine(), *this}; }
 
-std::size_t TaskProcessor::GetTaskQueueSize() const {
+std::size_t TaskProcessor::GetTaskQueueSize() const noexcept {
     return std::visit([](auto&& arg) { return arg.GetSizeApproximate(); }, task_queue_);
 }
 
@@ -315,7 +315,9 @@ TaskProcessor& TaskProcessor::GetBlockingTaskProcessor() {
 
 void TaskProcessor::SetBlockingTaskProcessor(TaskProcessor& task_processor) { fs_task_processor_ = &task_processor; }
 
-size_t GetQueueSize(const TaskProcessor& task_processor) { return task_processor.GetTaskQueueSize(); }
+std::size_t GetQueueSize(const TaskProcessor& task_processor) noexcept { return task_processor.GetTaskQueueSize(); }
+
+std::size_t GetWorkerCount(const TaskProcessor& task_processor) noexcept { return task_processor.GetWorkerCount(); }
 
 void RegisterThreadStartedHook(std::function<void()> func) {
     utils::impl::AssertStaticRegistrationAllowed("Calling engine::RegisterThreadStartedHook()");
