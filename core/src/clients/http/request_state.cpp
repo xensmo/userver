@@ -19,6 +19,7 @@
 #include <userver/clients/http/connect_to.hpp>
 #include <userver/http/url.hpp>
 #include <userver/server/request/task_inherited_data.hpp>
+#include <userver/utils/algo.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/encoding/hex.hpp>
@@ -52,8 +53,6 @@ constexpr Status kLeastBadHttpCodeForEB{500};
 constexpr Status kLeastHttpCodeForDeadlineExpired{400};
 
 constexpr Status kFakeHttpErrorCode{599};
-
-const std::string kTracingClientName = "external/";
 
 constexpr utils::TrivialBiMap kTestsuiteActions = [](auto selector) {
     return selector()
@@ -99,6 +98,8 @@ bool IsSetCookie(std::string_view key) {
 
 // Not a strict check, but OK for non-header line check
 bool IsHttpStatusLineStart(const char* ptr, size_t size) { return (size > 5 && memcmp(ptr, "HTTP/", 5) == 0); }
+
+std::string ToString(HttpMethod method) { return std::string{ToStringView(method)}; }
 
 char* RfindNotSpace(char* ptr, size_t size) {
     for (char* p = ptr + size - 1; p >= ptr; --p) {
@@ -484,7 +485,7 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
 
         span.AddTag(tracing::kErrorFlag, true);
         span.AddTag(tracing::kErrorMessage, err.message());
-        span.AddTag(tracing::kHttpStatusCode, kFakeHttpErrorCode);
+        span.AddTag(tracing::kHttpResponseStatusCode, kFakeHttpErrorCode);
 
         if (holder->errorbuffer_.front()) {
             LOG_DEBUG() << "cURL error details: " << holder->errorbuffer_.data();
@@ -506,7 +507,7 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
             }};
         std::visit(visitor, holder->data_);
     } else {
-        span.AddTag(tracing::kHttpStatusCode, status_code);
+        span.AddTag(tracing::kHttpResponseStatusCode, status_code);
         holder->response()->SetStatusCode(status_code);
         holder->response()->SetStats(easy.get_local_stats());
 
@@ -651,6 +652,39 @@ void RequestState::SetPluginsList(const std::vector<utils::NotNull<Plugin*>>& pl
 }
 
 void RequestState::SetLoggedUrl(std::string url) { log_url_ = std::move(url); }
+
+void RequestState::SetUrlTemplate(std::string url_template) { url_template_ = std::move(url_template); }
+
+void RequestState::SetMethod(HttpMethod method) {
+    switch (method) {
+        case HttpMethod::kDelete:
+        case HttpMethod::kOptions:
+            easy().set_custom_request(ToString(method));
+            break;
+        case HttpMethod::kGet:
+            easy().set_http_get(true);
+            easy().set_custom_request(nullptr);
+            break;
+        case HttpMethod::kHead:
+            easy().set_no_body(true);
+            easy().set_custom_request(nullptr);
+            break;
+        // NOTE: set_post makes libcURL to read from stdin if no data is set
+        case HttpMethod::kPost:
+        case HttpMethod::kPut:
+        case HttpMethod::kPatch:
+            easy().set_custom_request(ToString(method));
+            // ensure a body as we should send Content-Length for this method
+            if (!easy().has_post_data()) data({});
+            break;
+    };
+    method_ = method;
+}
+
+void RequestState::data(std::string data) {
+    if (!data.empty()) easy().add_header(kHeaderExpect, "", curl::easy::EmptyHeaderAction::kDoNotSend);
+    easy().set_post_fields(std::move(data));
+}
 
 const std::string& RequestState::GetLoggedOriginalUrl() const noexcept {
     // We may want to use original_url if effective_url is not available yet.
@@ -992,16 +1026,30 @@ void RequestState::ApplyTestsuiteConfig() {
 void RequestState::StartNewSpan(utils::impl::SourceLocation location) {
     UINVARIANT(!span_storage_, "Attempt to reuse request while the previous one has not finished");
 
-    span_storage_.emplace(
-        kTracingClientName + std::string{USERVER_NAMESPACE::http::ExtractHostname(easy().get_original_url())}, location
-    );
+    std::string span_name;
+    if (url_template_.has_value()) {
+        span_name = utils::StrCat(ToStringView(method_), " ", url_template_.value());
+    } else {
+        span_name = utils::StrCat(
+            ToStringView(method_), " ", USERVER_NAMESPACE::http::ExtractHostname(easy().get_original_url())
+        );
+    }
+    span_storage_.emplace(std::move(span_name), location);
+
     auto& span = span_storage_->Get();
 
     auto request_editable_instance = GetEditableRequestInstance();
 
     tracing_manager_->FillRequestWithTracingContext(span, request_editable_instance);
     plugin_pipeline_.HookCreateSpan(*this, span);
-    span.AddTag(tracing::kHttpUrl, GetLoggedOriginalUrl());
+    span.AddTag(tracing::kUrlFull, GetLoggedOriginalUrl());
+    span.AddTag(
+        tracing::kServerAddress, std::string{USERVER_NAMESPACE::http::ExtractHostname(easy().get_original_url())}
+    );
+    span.AddTag(tracing::kHttpRequestMethod, std::string{ToStringView(method_)});
+    if (url_template_.has_value()) {
+        span.AddTag(tracing::kHttpUrlTemplate, url_template_.value());
+    }
     span.AddTag(tracing::kMaxAttempts, retry_.retries);
 
     // Span is local to a Request, it is not related to current coroutine

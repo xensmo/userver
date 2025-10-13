@@ -1,5 +1,7 @@
 #include <userver/tracing/manager.hpp>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 #include <userver/engine/task/inherited_variable.hpp>
 #include <userver/http/common_headers.hpp>
 #include <userver/server/http/http_request.hpp>
@@ -214,7 +216,6 @@ bool TryFillSpanBuilderFromRequest(Format format, const server::http::HttpReques
         case Format::kB3Alternative:
             return B3TryFillSpanBuilderFromRequest(request, span_builder);
     }
-
     UINVARIANT(false, "Unexpected format of tracing headers");
 }
 
@@ -266,16 +267,14 @@ bool GenericTracingManager::TryFillSpanBuilderFromRequest(
     const server::http::HttpRequest& request,
     SpanBuilder& span_builder
 ) const {
-    for (auto format : kAllFormatsOrdered) {
-        if (!(in_request_response_ & format)) {
-            continue;
-        }
+    bool success = false;
 
-        if (tracing::TryFillSpanBuilderFromRequest(format, request, span_builder)) {
-            return true;
+    for (const auto& format : boost::adaptors::reverse(kAllFormatsOrdered)) {
+        if (in_request_response_ & format) {
+            success |= tracing::TryFillSpanBuilderFromRequest(format, request, span_builder);
         }
     }
-    return false;
+    return success;
 }
 
 void GenericTracingManager::FillRequestWithTracingContext(

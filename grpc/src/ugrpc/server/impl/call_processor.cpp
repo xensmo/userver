@@ -28,7 +28,7 @@ void ReportFinishSuccess(const grpc::Status& status, CallState& state) noexcept 
         state.statistics_scope.OnExplicitFinish(status_code);
 
         auto& span = state.GetSpan();
-        span.AddNonInheritableTag("grpc_code", ugrpc::ToString(status_code));
+        span.AddNonInheritableTag(tracing::kGrpcCode, ugrpc::ToString(status_code));
         if (!status.ok()) {
             span.AddNonInheritableTag(tracing::kErrorFlag, true);
             span.AddNonInheritableTag(tracing::kErrorMessage, status.error_message());
@@ -52,9 +52,11 @@ logging::Level AdjustLogLevelForCancellations(logging::Level level) {
 void SetupSpan(
     std::optional<tracing::InPlaceSpan>& span_holder,
     grpc::ServerContext& context,
-    std::string_view call_name
+    std::string_view call_name,
+    std::string_view service_name,
+    std::string_view method_name
 ) {
-    auto span_name = utils::StrCat("grpc/", call_name);
+    auto span_name = call_name;
     const auto& client_metadata = context.client_metadata();
 
     const auto* const traceparent = utils::FindOrNullptr(client_metadata, ugrpc::impl::kTraceParent);
@@ -67,23 +69,23 @@ void SetupSpan(
                 "headers",
                 extraction_result.error()
             );
-            span_holder.emplace(std::move(span_name), utils::impl::SourceLocation::Current());
+            span_holder.emplace(std::string{span_name}, utils::impl::SourceLocation::Current());
         } else {
             auto data = std::move(extraction_result).value();
             span_holder.emplace(
-                std::move(span_name), data.trace_id, data.span_id, utils::impl::SourceLocation::Current()
+                std::string{span_name}, data.trace_id, data.span_id, utils::impl::SourceLocation::Current()
             );
         }
     } else if (const auto* const trace_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaTraceId)) {
         const auto* const parent_span_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaSpanId);
         span_holder.emplace(
-            std::move(span_name),
+            std::string{span_name},
             ugrpc::impl::ToStringView(*trace_id),
             parent_span_id ? ugrpc::impl::ToStringView(*parent_span_id) : std::string_view{},
             utils::impl::SourceLocation::Current()
         );
     } else {
-        span_holder.emplace(std::move(span_name), utils::impl::SourceLocation::Current());
+        span_holder.emplace(std::string{span_name}, utils::impl::SourceLocation::Current());
     }
 
     auto& span = span_holder->Get();
@@ -91,6 +93,11 @@ void SetupSpan(
     if (parent_link) {
         span.SetParentLink(ugrpc::impl::ToStringView(*parent_link));
     }
+
+    span.AddNonInheritableTag(tracing::kSpanKind, tracing::kSpanKindServer);
+    span.AddNonInheritableTag(tracing::kRpcSystem, "grpc");
+    span.AddNonInheritableTag(tracing::kRpcService, std::string{service_name});
+    span.AddNonInheritableTag(tracing::kRpcMethod, std::string{method_name});
 }
 
 grpc::Status ReportHandlerError(const std::exception& ex, CallState& state) noexcept {

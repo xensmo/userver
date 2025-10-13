@@ -45,7 +45,6 @@ void Middleware::OnCallStart(MiddlewareCallContext& context) const {
 
     span.AddTag(ugrpc::impl::kComponentTag, "server");
     span.AddTag("meta_type", std::string{context.GetCallName()});
-    span.AddNonInheritableTag(tracing::kSpanKind, tracing::kSpanKindServer);
 
     if (context.IsClientStreaming()) {
         Logger{settings_.log_level}.Log(

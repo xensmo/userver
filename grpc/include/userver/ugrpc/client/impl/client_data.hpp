@@ -117,6 +117,9 @@ public:
 
     rcu::ReadablePtr<StubState> GetStubState() const { return stub_state_.Read(); }
 
+    /// @returns Target endpoint address string from the channel factory
+    std::string_view GetEndpoint() const { return internals_.endpoint; }
+
 private:
     template <typename Stub>
     static utils::FixedArray<StubPool> MakeDedicatedStubs(
