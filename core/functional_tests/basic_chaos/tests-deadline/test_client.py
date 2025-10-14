@@ -222,7 +222,7 @@ async def test_fake_deadline_expired_with_exception(
     )
 
     assert deadline_warning['body'] == 'Deadline expired'
-    assert deadline_warning['http.response.status_code'] == '504'
+    assert deadline_warning['meta_code'] == '504'
 
 
 async def test_fake_deadline_expired(

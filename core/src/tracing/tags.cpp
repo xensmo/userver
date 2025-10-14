@@ -28,7 +28,7 @@ const std::string kHttpRequestMethod = "http.request.method";
 
 const std::string kHttpStatusCode = "meta_code";
 
-const std::string kHttpResponseStatusCode = "http.response.status_code";
+const std::string kHttpResponseStatusCode = "meta_code";
 
 const std::string kHttpRoute = "http.route";
 
