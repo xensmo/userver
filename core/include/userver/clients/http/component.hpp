@@ -69,7 +69,7 @@ public:
     static yaml_config::Schema GetStaticConfigSchema();
 
 private:
-    void OnConfigUpdate(const dynamic_config::Diff& diff);
+    void OnConfigUpdate(const dynamic_config::Snapshot& config);
 
     void WriteStatistics(utils::statistics::Writer& writer);
 
