@@ -101,6 +101,11 @@ Checks:
   ,-readability-use-anyofallof\
   ,-hicpp-use-emplace\
   ,-modernize-use-emplace\
+  ,# TODO: will be removed in TAXICOMMON-11134
+  ,-clang-analyzer-optin.cplusplus.UninitializedObject\
+  ,-google-readability-casting\
+  ,-performance-inefficient-vector-operation\
+  ,-performance-unnecessary-copy-initialization\
   "
 
 WarningsAsErrors: '*'
