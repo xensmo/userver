@@ -89,7 +89,7 @@ void Tracing::HandleRequest(http::HttpRequest& request, request::RequestContext&
 }
 
 tracing::Span Tracing::MakeSpan(const http::HttpRequest& http_request, std::string_view meta_type) const {
-    const std::string* handler_path = std::get_if<std::string>(&handler_.GetConfig().path);
+    const auto* handler_path = std::get_if<std::string>(&handler_.GetConfig().path);
     std::string span_name;
 
     if (handler_path != nullptr) {
