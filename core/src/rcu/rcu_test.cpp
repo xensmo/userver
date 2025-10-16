@@ -590,6 +590,14 @@ TEST(Rcu, StdMutexChangeRead) {
     EXPECT_EQ(std::make_pair(3, 2), *reader);
 }
 
+TEST(Rcu, StdMutexWrite) {
+    std::thread new_thread{[] {
+        rcu::Variable<int, rcu::BlockingRcuTraits> v;
+        v.Assign(42);
+    }};
+    new_thread.join();
+}
+
 TEST(Rcu, StdMutexConcurrentWrites) {
     rcu::Variable<X, rcu::BlockingRcuTraits> ptr(1, 2);
 
