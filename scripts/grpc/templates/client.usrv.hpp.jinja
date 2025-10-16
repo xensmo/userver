@@ -72,8 +72,9 @@ public:
 
     /// @cond
     // For internal use only
-    {{service.name}}Client(USERVER_NAMESPACE::ugrpc::client::impl::ClientInternals&& internals);
+    explicit {{service.name}}Client(USERVER_NAMESPACE::ugrpc::client::impl::ClientInternals&& internals);
 
+    // For internal use only
     static USERVER_NAMESPACE::ugrpc::impl::StaticServiceMetadata GetMetadata();
     /// @endcond
 
@@ -142,9 +143,11 @@ public:
 
     /// @cond
     // For internal use only
-    {{service.name}}Client(
-        USERVER_NAMESPACE::utils::SharedRef<{{namespace_path}}::{{service.name}}Client> protobuf_client);
+    explicit {{service.name}}Client(
+        USERVER_NAMESPACE::utils::SharedRef<{{namespace_path}}::{{service.name}}Client> protobuf_client
+    );
 
+    // For internal use only
     static USERVER_NAMESPACE::ugrpc::impl::StaticServiceMetadata GetMetadata();
     /// @endcond
 

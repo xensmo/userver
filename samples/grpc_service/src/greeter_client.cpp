@@ -25,7 +25,7 @@ const USERVER_NAMESPACE::dynamic_config::Key<ugrpc::client::ClientQos> kGreeterC
 
 // A user-defined wrapper around api::GreeterServiceClient that provides
 // a simplified interface.
-GreeterClient::GreeterClient(api::GreeterServiceClient&& raw_client) : raw_client_(std::move(raw_client)) {}
+GreeterClient::GreeterClient(api::GreeterServiceClient& raw_client) : raw_client_(raw_client) {}
 
 /// [client]
 std::string GreeterClient::SayHello(std::string name) const {
