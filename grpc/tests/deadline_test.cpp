@@ -323,11 +323,7 @@ UTEST_F(GrpcTestInheritedDedline, TestServerDataExist) {
     const engine::Deadline deadline = engine::Deadline::FromDuration(tests::kLongTimeout);
 
     GetService().SetClientInitialTimeout(tests::kLongTimeout);
-    call_options.SetClientContextFactory([deadline] {
-        auto client_context = std::make_unique<grpc::ClientContext>();
-        client_context->set_deadline(deadline);
-        return client_context;
-    });
+    call_options.SetDeadline(deadline);
 
     // In tests the gpr_timespec <> steady_clock conversions were giving
     // ~0.5ms precision loss once in 10k runs. Thus the 10ms delay.
@@ -345,11 +341,7 @@ UTEST_F(GrpcTestInheritedDedline, TestDeadlineExpiresBeforeCall) {
 
     ugrpc::client::CallOptions call_options;
     const engine::Deadline deadline = engine::Deadline::FromDuration(tests::kShortTimeout);
-    call_options.SetClientContextFactory([deadline] {
-        auto client_context = std::make_unique<grpc::ClientContext>();
-        client_context->set_deadline(deadline);
-        return client_context;
-    });
+    call_options.SetDeadline(deadline);
 
     // Test that the time between client context
     // construction and client request is measured.

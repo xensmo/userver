@@ -14,6 +14,10 @@ void CallOptions::SetTimeout(std::chrono::milliseconds timeout) { timeout_ = tim
 
 std::chrono::milliseconds CallOptions::GetTimeout() const { return timeout_; }
 
+void CallOptions::SetDeadline(engine::Deadline deadline) { deadline_ = deadline; }
+
+engine::Deadline CallOptions::GetDeadline() const { return deadline_; }
+
 void CallOptions::AddMetadata(std::string_view meta_key, std::string_view meta_value) {
     metadata_.emplace_back(ugrpc::impl::ToGrpcString(meta_key), ugrpc::impl::ToGrpcString(meta_value));
 }

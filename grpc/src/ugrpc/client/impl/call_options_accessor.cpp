@@ -10,9 +10,11 @@ std::unique_ptr<grpc::ClientContext> CallOptionsAccessor::CreateClientContext(co
     auto client_context = call_options.client_context_factory_ ? call_options.client_context_factory_()
                                                                : std::make_unique<grpc::ClientContext>();
 
-    const auto timeout = call_options.GetTimeout();
-    if (std::chrono::milliseconds::max() != timeout) {
-        client_context->set_deadline(ugrpc::DurationToTimespec(timeout));
+    // default timeout_ gives unreachable deadline
+    // engine::Deadline::FromDuration(std::chrono::milliseconds::max()) -> !IsReachable
+    const auto deadline = std::min(call_options.deadline_, engine::Deadline::FromDuration(call_options.timeout_));
+    if (deadline.IsReachable()) {
+        client_context->set_deadline(deadline);
     }
 
     for (const auto& [meta_key, meta_value] : call_options.metadata_) {
