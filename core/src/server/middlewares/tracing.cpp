@@ -162,7 +162,7 @@ void Tracing::EnrichLogs(
                 handler_.GetResponseDataForLoggingChecked(request, context, response.GetData())
             );
         }
-        span.AddNonInheritableTag(std::string{kTracingUri}, request.GetUrl());
+        span.AddNonInheritableTag(std::string{kTracingUri}, handler_.GetUrlForLoggingChecked(request, context));
     } catch (const std::exception& ex) {
         LOG_ERROR() << "can't finalize request processing: " << ex;
     }
