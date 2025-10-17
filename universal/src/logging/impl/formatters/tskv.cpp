@@ -1,7 +1,5 @@
 #include <logging/impl/formatters/tskv.hpp>
 
-#include <iostream>
-
 #include <fmt/chrono.h>
 #include <fmt/compile.h>
 #include <fmt/format.h>
@@ -14,49 +12,55 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace {
+
+template <class... Args>
+char* Append(char* output, const Args&... args) {
+    const auto append_impl = [&output](std::string_view data) noexcept {
+        std::memcpy(output, data.data(), data.size());
+        output += data.size();
+    };
+    (append_impl(args), ...);
+    return output;
+};
+
+}  // namespace
+
 namespace logging::impl::formatters {
 
 Tskv::Tskv(Level level, Format format, const utils::impl::SourceLocation& location) : format_(format) {
     switch (format) {
         case Format::kTskv: {
-            constexpr std::string_view kTemplate = "tskv\ttimestamp=0000-00-00T00:00:00.000000\tlevel=";
+            constexpr std::string_view kTemplate = "tskv\ttimestamp=0000-00-00T00:00:00.000000\tlevel=\tmodule= ( : )";
             const auto now = std::chrono::system_clock::now();
             const auto level_string = logging::ToUpperCaseString(level);
-            item_.log_line.resize(kTemplate.size() + level_string.size());
-            fmt::format_to(
-                item_.log_line.data(),
-                FMT_COMPILE("tskv\ttimestamp={}.{:06}\tlevel={}"),
-                GetCurrentLocalTimeString(now).ToStringView(),
-                FractionalMicroseconds(now),
-                level_string
-            );
-            fmt::format_to(
-                std::back_inserter(item_.log_line),
-                FMT_COMPILE("\tmodule={} ( {}:{} )"),
-                location.GetFunctionName(),
-                location.GetFileName(),
-                location.GetLineString()
+            item_.log_line.resize_and_overwrite(
+                kTemplate.size() + level_string.size() + location.GetFunctionName().size() +
+                    location.GetFileName().size() + location.GetLineString().size(),
+                [&](char* output, std::size_t size) {
+                    output = Append(output, "tskv\ttimestamp=", GetCurrentLocalTimeString(now).ToStringView(), ".");
+                    output = fmt::format_to(output, FMT_COMPILE("{:06}"), FractionalMicroseconds(now));
+                    output = Append(output, "\tlevel=", level_string, "\tmodule=", location.GetFunctionName());
+                    output = Append(output, " ( ", location.GetFileName(), ":", location.GetLineString(), " )");
+                    return size;
+                }
             );
             return;
         }
         case Format::kLtsv: {
-            constexpr std::string_view kTemplate = "timestamp:0000-00-00T00:00:00.000000\tlevel:";
+            constexpr std::string_view kTemplate = "timestamp:0000-00-00T00:00:00.000000\tlevel:\tmodule: ( : )";
             const auto now = TimePoint::clock::now();
             const auto level_string = logging::ToUpperCaseString(level);
-            item_.log_line.resize(kTemplate.size() + level_string.size());
-            fmt::format_to(
-                item_.log_line.data(),
-                FMT_COMPILE("timestamp:{}.{:06}\tlevel:{}"),
-                GetCurrentLocalTimeString(now).ToStringView(),
-                FractionalMicroseconds(now),
-                level_string
-            );
-            fmt::format_to(
-                std::back_inserter(item_.log_line),
-                FMT_COMPILE("\tmodule:{} ( {}:{} )"),
-                location.GetFunctionName(),
-                location.GetFileName(),
-                location.GetLineString()
+            item_.log_line.resize_and_overwrite(
+                kTemplate.size() + level_string.size() + location.GetFunctionName().size() +
+                    location.GetFileName().size() + location.GetLineString().size(),
+                [&](char* output, std::size_t size) {
+                    output = Append(output, "timestamp:", GetCurrentLocalTimeString(now).ToStringView(), ".");
+                    output = fmt::format_to(output, FMT_COMPILE("{:06}"), FractionalMicroseconds(now));
+                    output = Append(output, "\tlevel:", level_string, "\tmodule:", location.GetFunctionName());
+                    output = Append(output, " ( ", location.GetFileName(), ":", location.GetLineString(), " )");
+                    return size;
+                }
             );
             return;
         }

@@ -5281,6 +5281,7 @@
   "universal/src/logging/impl/formatters/struct.hpp":"taxi/uservices/userver/universal/src/logging/impl/formatters/struct.hpp",
   "universal/src/logging/impl/formatters/tskv.cpp":"taxi/uservices/userver/universal/src/logging/impl/formatters/tskv.cpp",
   "universal/src/logging/impl/formatters/tskv.hpp":"taxi/uservices/userver/universal/src/logging/impl/formatters/tskv.hpp",
+  "universal/src/logging/impl/formatters/tskv_benchmark.cpp":"taxi/uservices/userver/universal/src/logging/impl/formatters/tskv_benchmark.cpp",
   "universal/src/logging/impl/log_extra_tskv_formatter.cpp":"taxi/uservices/userver/universal/src/logging/impl/log_extra_tskv_formatter.cpp",
   "universal/src/logging/impl/logger_base.cpp":"taxi/uservices/userver/universal/src/logging/impl/logger_base.cpp",
   "universal/src/logging/impl/mem_logger.cpp":"taxi/uservices/userver/universal/src/logging/impl/mem_logger.cpp",
