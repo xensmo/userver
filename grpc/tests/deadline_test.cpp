@@ -423,7 +423,7 @@ UTEST_F(UnitTestClientInfiniteTest, NegativeDeadline) {
     auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
 
     ugrpc::client::CallOptions call_options;
-    call_options.SetTimeout(std::chrono::milliseconds{-10});
+    call_options.SetDeadline(engine::Deadline::FromDuration(std::chrono::milliseconds{-10}));
 
     auto task = engine::AsyncNoSpan([&] { return client.SayHello({}, std::move(call_options)); });
 

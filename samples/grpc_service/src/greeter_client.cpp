@@ -38,9 +38,9 @@ std::string GreeterClient::SayHello(std::string name) const {
 }
 
 ugrpc::client::CallOptions GreeterClient::MakeCallOptions() {
-    // Deadline must be set manually for each RPC
-    // Note that here in all tests the deadline equals 20 sec which works for an
-    // example. However, generally speaking the deadline must be set manually for
+    // Timeout must be set manually for each RPC
+    // Note that here in all tests the timeout equals 20 sec which works for an
+    // example. However, generally speaking the timeout must be set manually for
     // each RPC
     ugrpc::client::CallOptions call_options;
     call_options.SetTimeout(std::chrono::seconds{20});
