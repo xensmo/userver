@@ -545,4 +545,32 @@ UTEST(DynamicConfig, DeadlockOnSubscribeInSendEvent) {
     subscriber.cb = {};  // cleanup to avoid UAF in dtr (in debug)
 }
 
+UTEST(DynamicConfig, DeadlockOnSubscribeInSendEventDiff) {
+    struct LocalSubscriber {
+        void OnDiffUpdate(const dynamic_config::Diff&) {
+            if (cb) cb();
+        }
+
+        std::function<void()> cb;
+    };
+
+    dynamic_config::StorageMock storage{{kDummyConfig, {42, "what"}}, {kIntConfig, 5}};
+    auto source = storage.GetSource();
+    LocalSubscriber subscriber;
+
+    auto scope = source.UpdateAndListen(&subscriber, "test", &LocalSubscriber::OnDiffUpdate);
+
+    LocalSubscriber subscriber2;
+    concurrent::AsyncEventSubscriberScope subscriber2_scope;
+    subscriber.cb = [&] {
+        // Subscribe inside of callback
+        subscriber2_scope = source.UpdateAndListen(&subscriber2, "test2", &LocalSubscriber::OnDiffUpdate);
+    };
+
+    // emit SendEvent() which calls callback which subscribes
+    storage.Extend({});
+
+    subscriber.cb = {};  // cleanup to avoid UAF in dtr (in debug)
+}
+
 USERVER_NAMESPACE_END
