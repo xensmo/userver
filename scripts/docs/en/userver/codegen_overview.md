@@ -13,6 +13,10 @@ You may use code generators for the following activity:
 * @ref scripts/docs/en/userver/chaotic_clients.md
 * @ref scripts/docs/en/userver/sql_files.md 
 
+Aside from that, there is a `userver_embed_file` cmake function for embedding arbitrary data:
+
+@snippet samples/embedded_files/CMakeLists.txt  embedded
+
 ----------
 
 @htmlonly <div class="bottom-nav"> @endhtmlonly
