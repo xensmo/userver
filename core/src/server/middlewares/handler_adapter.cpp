@@ -154,13 +154,12 @@ void HandlerAdapter::LogRequest(const http::HttpRequest& request, request::Reque
             misc::CutTrailingSlash(request.GetRequestPath(), handler_.GetConfig().url_trailing_slash);
 
         logging::LogExtra log_extra{
-            {tracing::kHttpMetaType, std::string{meta_type}},
-            {tracing::kType, std::string{kTracingTypeRequest}},
+            {tracing::kHttpMetaType, meta_type},
+            {tracing::kType, kTracingTypeRequest},
             {"request_body_length", request.RequestBody().length()},
-            {std::string{kTracingBody},
-             handler_.GetRequestBodyForLoggingChecked(request, context, request.RequestBody())},
-            {std::string{kTracingUri}, handler_.GetUrlForLoggingChecked(request, context)},
-            {tracing::kHttpMethod, std::string{request.GetMethodStr()}},
+            {kTracingBody, handler_.GetRequestBodyForLoggingChecked(request, context, request.RequestBody())},
+            {kTracingUri, handler_.GetUrlForLoggingChecked(request, context)},
+            {tracing::kHttpMethod, request.GetMethodStr()},
         };
         log_extra.Extend(GetHeadersLogExtra(
             need_log_request_headers, request, header_whitelist, handler_.GetConfig().request_headers_size_log_limit

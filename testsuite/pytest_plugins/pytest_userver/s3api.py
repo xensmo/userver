@@ -168,7 +168,7 @@ class S3HandleMock:
                 user_defined_meta[meta_key] = meta_value
 
         meta = bucket_storage.put_object(key, data, user_defined_meta)
-        # Some clients like aws sdk cpp can parse not empty body
+        # Some clients like AWS SDK for C++ parse not empty body as XML
         return self._mockserver.make_response('', 200, headers=meta)
 
     def copy_object(self, request):
@@ -185,7 +185,7 @@ class S3HandleMock:
         src_data = src_obj.data
         src_meta = src_obj.meta
         meta = dst_bucket_storage.put_object(key, src_data, src_meta)
-        # Some clients like aws sdk cpp can parse not empty body
+        # Some clients like AWS SDK for C++ parse not empty body as XML
         return self._mockserver.make_response('', 200, headers=meta)
 
     def get_objects(self, request):
@@ -220,7 +220,7 @@ class S3HandleMock:
 
         bucket_storage.delete_object(key)
         # S3 always return 204, even if file doesn't exist
-        # Some clients like aws sdk cpp can parse not empty body
+        # Some clients like AWS SDK for C++ parse not empty body as XML
         return self._mockserver.make_response('', 204)
 
     def get_object_head(self, request):
@@ -231,7 +231,7 @@ class S3HandleMock:
         s3_object = bucket_storage.get_object(key)
         if not s3_object:
             return self._mockserver.make_response('Object not found', 404)
-        # Some clients like aws sdk cpp can parse not empty body
+        # Some clients like AWS SDK for C++ parse not empty body as XML
         return self._mockserver.make_response(
             '',
             200,
