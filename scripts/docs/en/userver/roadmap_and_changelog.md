@@ -46,8 +46,8 @@ Changelog news also go to the
 * Added support for ReplyTo, CorrelationId, Expiration fields. Many thanks to
   [Alexander Aparin](https://github.com/alex-aparin) for the PR! 
 * @ref s3api::Client now supports multipart upload.
-* Redis now understands the GEOPOS command via @ref storages::redis::Client::Geopos().
-* Redis now understands the EXPIRE command via @ref storages::redis::Client::Expire().
+* Redis now understands the `GEOPOS` and `EXPIRE` commands via @ref storages::redis::Client member function `Geopos()`
+  and `Expire()`.
 * Thread Sanitizer suppression file `cmake/tsan.suppressions.txt` is now installed and used in internal CI TSan tests
   for universal, core and gRPC.
 * @ref logging::LogExtra::Value now supports `bool` values. Many thanks to
@@ -89,6 +89,7 @@ Changelog news also go to the
   * Boost, c-ares, libev, libnghttp2, yaml-cpp, openssl now can be downloaded via CPM.
   * Added more tests for gRPC in subdirectories. Many thanks to [Aleksey Ignatiev](https://github.com/ae-ignatiev)
     for providing test samples.
+  * Added CI runs on Arch. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
   * Added CI runs on Debian.
 
 * Documentation and diagnostics
@@ -99,7 +100,7 @@ Changelog news also go to the
   * Clarified ownership of buckets in @ref utils::statistics::Histogram.
   * Added mirrors to the videos at @ref scripts/docs/en/userver/publications.md.
   * Redis now provides much more information in logs.
-  * Added troubleshooting info on SIGUSR1 to @ref ‎scripts/docs/en/userver/faq.md.
+  * Added troubleshooting info on `SIGUSR1` to @ref ‎scripts/docs/en/userver/faq.md .
 
 
 ### Release v2.12
