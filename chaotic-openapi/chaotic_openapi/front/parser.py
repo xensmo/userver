@@ -47,13 +47,12 @@ class Parser:
 
         self._append_schema(parsed)
 
-    @staticmethod
-    def _guess_parser(schema: dict):
+    def _guess_parser(self, schema: dict):
         if 'openapi' in schema or 'components' in schema:
             return openapi.OpenApi
         elif 'swagger' in schema or 'definitions' in schema:
             return swagger.Swagger
-        assert False, schema
+        assert False, f"Don't know about file format ({self._state.full_filepath}): {schema}"
 
     def _convert_openapi_header(
         self,
