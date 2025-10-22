@@ -497,6 +497,7 @@ private:
 
 void TaskContext::CoroFunc(TaskPipe& task_pipe) {
     for (TaskContext* context : task_pipe) {
+        // `context` is accessed in gdb, do not rename
         UASSERT(context);
         context->task_pipe_ = &task_pipe;
 

@@ -56,19 +56,42 @@ In addition, the output has a hierarchical structure that is displayed correctly
 
 * `utask list`: Lists all tasks with their names (corresponding span names) and statuses. Example:
 ```
+(gdb) help utask list 
+usage: utask list [-h] [-s [STATE ...]] [-i ID] [-n NAME] [-b BACKTRACE]
+
+List userver tasks (all or some of them)
+
+options:
+  -h, --help            show this help message and exit
+  -s [STATE ...], --states [STATE ...]
+                        List utasks with specific states only (one of {'invalid', 'new', 'queued', 'running', 'suspended', 'cancelled',
+                        'completed'})
+  -i ID, --id ID        List utask with specific id only
+  -n NAME, --name NAME  List utasks which names match the regex
+  -b BACKTRACE, --backtrace BACKTRACE
+                        List utasks which backtraces match the regex
 (gdb) utask list
-Task           State     Span
-0x10f27fc40800 Suspended task_3
-0x10f27fc3f000 Suspended task_2
-0x10f27fc3d800 Suspended task_1
-0x10f27fc3c000 Suspended task_0
-0x10f27fc38000 Suspended span
-0x10f27fc42000 Running   task_4
+Task ID        State     Span name
+0x10f27fc40800 suspended task_3
+0x10f27fc3f000 suspended task_2
+0x10f27fc3d800 suspended task_1
+0x10f27fc3c000 queued    task_0
+0x10f27fc38000 suspended span
+0x10f27fc42000 running   task_4
+(gdb) utask list -s suspended -s queued -n 'task_\\d+'
+Task ID        State     Span name
+0x10f27fc40800 suspended task_3
+0x10f27fc3f000 suspended task_2
+0x10f27fc3d800 suspended task_1
+0x10f27fc3c000 queued    task_0
+(gdb) utask list -b 'some::ProblemFunction'
+Task ID        State     Span name
+0x10f27fc40800 suspended task_3
 ```
 
 * `utask apply <task> <cmd...>`: Executes `<cmd...>` in the context of selected `<task>`. The `<task>` may be
 specified by its ID ("Task") or name ("Span") (as shown in `utask list`), or set to "all" to apply the command to all
- tasks. `<cmd...>` can be any GDB command, including Python scripts.
+ tasks. `<cmd...>` can be any GDB command, including Python scripts. See `help utask apply` for more details.
 
 
 #### Examples:
