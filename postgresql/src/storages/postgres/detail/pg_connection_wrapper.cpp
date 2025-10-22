@@ -122,6 +122,10 @@ const char* MsgForStatus(ConnStatusType status) {
         case CONNECTION_ALLOCATED:
             return "PQstatus: Waiting for connection attempt to be started";
 #endif
+#if USERVER_LIBPQ_VERSION >= 180000
+        case CONNECTION_AUTHENTICATING:
+            return "PQstatus: Waiting for connection authentification to complete";
+#endif
     }
 
     UINVARIANT(false, "Unhandled ConnStatusType");
