@@ -165,6 +165,7 @@ private:
         done_ = true;
         impl::HandleCallStatistics(state_, status);
         impl::SetStatusForSpan(state_.GetSpan(), status);
+        state_.ResetSpan();
     }
 
     void OnInterrupted() {
@@ -177,6 +178,7 @@ private:
         impl::SetErrorForSpan(state_.GetSpan(), error_message);
         state_.GetStatsScope().OnNetworkError();
         state_.GetStatsScope().Flush();
+        state_.ResetSpan();
     }
 
     void OnCancelled() {
@@ -187,6 +189,7 @@ private:
             state_.GetStatsScope().OnCancelled();
         }
         state_.GetStatsScope().Flush();
+        state_.ResetSpan();
     }
 
     CallOptions call_options_;
