@@ -9,7 +9,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from proto_structs.models import includes_bundles
+from proto_structs.bundles import includes_bundles
 from proto_structs.models import names
 
 

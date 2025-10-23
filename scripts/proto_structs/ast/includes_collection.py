@@ -11,9 +11,9 @@ from typing import Union
 
 from proto_schema_parser import ast
 
+from proto_structs.bundles import includes_bundles
 from proto_structs.models import gen_node
 from proto_structs.models import includes
-from proto_structs.models import includes_bundles
 from proto_structs.models import options
 from proto_structs.models import type_overrides
 from proto_structs.models import type_ref_consts

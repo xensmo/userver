@@ -19,6 +19,3 @@
 #include <userver/proto-structs/io/std/size_t.hpp>
 #include <userver/proto-structs/io/std/uint32_t.hpp>
 #include <userver/proto-structs/io/std/uint64_t.hpp>
-
-// For keyword types.
-#include <userver/proto-structs/io/std/scalar_conv.hpp>
