@@ -4,8 +4,11 @@ In the most cases writing extensive logs and running profilers is sufficient for
 cases it may be useful to do interactive debugging with GDB. Additionally, GDB is the only option for debugging
 coredumps. 🐙 userver provides the capability to perform such debugging.
 
-First of all, you can use GDB on your service based on userver just like any other binary (debug symbols are included
+You can use GDB on your service based on userver just like any other binary (debug symbols are included
 by default in all build types).
+
+If not debugging a production installation, then the environment (databases and configs) could be set up by the
+testsuite via `make start`* commands. After that just detach to a running process via GDB.
 
 
 ## Userver-specific debug features
@@ -142,6 +145,46 @@ Hello from python! current frame: boost::context::fiber::resume() &&
 For now `utask` commands are implemented for only linux x86 platforms, but can be easily extended for other platforms.
 
 In addition, all of the above functionality works for debugging both a live process and coredumps.
+
+
+@anchor stack_usage_debugging_with_gdb 
+## Stack usage debugging with GDB
+
+To debug a high stack usage just run your service under GDB, reproduce the situation with high stack consumption and
+break on it.
+
+After that the following command will show the stack space consumption by frames:
+
+```
+frame apply all -s printf "Frame stack usage is %d bytes\n", (char *)$rbp - (char *)$rsp
+```
+
+For example:
+```
+(gdb) frame apply all -s printf "Frame stack usage %d bytes\n", (char *)$rbp - (char *)$rsp
+#0  0x00007ffff7c9bc1b in pthread_sigmask () from /lib/x86_64-linux-gnu/libc.so.6
+Frame stack usage is 176 bytes
+#1  0x00000000047ea295 in utils::SignalCatcher::~SignalCatcher (this=0x7fffffffd018) at userver/core/src/utils/signal_catcher.cpp:19
+Frame stack usage is 16 bytes
+#2  0x00000000047b92b8 in components::(anonymous namespace)::DoRun() at userver/core/src/components/run.cpp:243
+Frame stack usage is 1728 bytes
+#3  0x00000000047b88d1 in components::Run() at userver/core/src/components/run.cpp:253
+Frame stack usage is 96 bytes
+#4  0x00000000047a1326 in utils::DaemonMain (vm=..., components_list=...) at userver/core/src/utils/daemon_run.cpp:79
+Frame stack usage is 896 bytes
+#5  0x00000000047a0d61 in utils::DaemonMain (argc=3, argv=0x7fffffffdac8, components_list=...) at userver/core/src/utils/daemon_run.cpp:62
+Frame stack usage is 448 bytes
+#6  0x0000000003c30c72 in main (argc=3, argv=0x7fffffffdac8) at services/test/src/main.cpp:70
+Frame stack usage is 496 bytes
+```
+
+Note that the above command may show garbage for last frames:
+```
+#30 0x0000000004567f3f in make_fcontext () at boost/context/src/asm/make_x86_64_sysv_elf_gas.S:149
+Frame stack usage is 208822399 bytes
+#31 0x0000000000000000 in ?? ()
+Frame stack usage is 208822391 bytes
+```
 
 
 ## GDB complains: received signal ?, Unknown signal
