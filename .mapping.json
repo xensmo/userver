@@ -4341,6 +4341,7 @@
   "scripts/gdb/tests/test_printers.py":"taxi/uservices/userver/scripts/gdb/tests/test_printers.py",
   "scripts/gdb/update_gdbinit.py":"taxi/uservices/userver/scripts/gdb/update_gdbinit.py",
   "scripts/generate-debian-directory.sh":"taxi/uservices/userver/scripts/generate-debian-directory.sh",
+  "scripts/githubci_free_space.sh":"taxi/uservices/userver/scripts/githubci_free_space.sh",
   "scripts/grpc/__init__.py":"taxi/uservices/userver/scripts/grpc/__init__.py",
   "scripts/grpc/generator.py":"taxi/uservices/userver/scripts/grpc/generator.py",
   "scripts/grpc/protoc_usrv_plugin.sh":"taxi/uservices/userver/scripts/grpc/protoc_usrv_plugin.sh",
