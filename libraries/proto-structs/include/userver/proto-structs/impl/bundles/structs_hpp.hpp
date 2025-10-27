@@ -19,3 +19,5 @@
 #include <userver/proto-structs/io/std/size_t.hpp>
 #include <userver/proto-structs/io/std/uint32_t.hpp>
 #include <userver/proto-structs/io/std/uint64_t.hpp>
+
+#include <userver/proto-structs/io/userver/utils/box.hpp>

@@ -21,10 +21,7 @@ import utils
         ),
         pytest.param(
             'box/autobox/unbreakable_cycle.proto',
-            [
-                'userver/proto-structs/io/userver/utils/box.hpp',
-                'userver/proto-structs/io/userver/utils/box_conv.hpp',
-            ],
+            [],
         ),
     ],
 )

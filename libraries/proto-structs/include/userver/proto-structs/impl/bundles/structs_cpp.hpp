@@ -17,3 +17,5 @@
 
 // For keyword types.
 #include <userver/proto-structs/io/std/scalar_conv.hpp>
+
+#include <userver/proto-structs/io/userver/utils/box_conv.hpp>
