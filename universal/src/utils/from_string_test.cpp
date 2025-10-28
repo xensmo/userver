@@ -140,6 +140,16 @@ TYPED_TEST(FromStringTest, StrangeDecimalPoints) {
     }
 }
 
+TYPED_TEST(FromStringTest, HasZeroByte) {
+    using T = TypeParam;
+
+    if constexpr (std::is_floating_point_v<T>) {
+        TestInvalid<T>({"1.1\0 <- zero byte", 17});
+    }
+
+    TestInvalid<T>({"1\0 <- zero byte", 15});
+}
+
 TYPED_TEST(FromStringTest, Exponents) {
     using T = TypeParam;
 

@@ -29,17 +29,14 @@ namespace impl {
 ThrowFromStringException(std::string_view message, std::string_view input, std::type_index result_type);
 
 template <typename T>
-std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const char* str) {
+std::enable_if_t<std::is_floating_point_v<T>, T> FromString(utils::zstring_view str) {
     static_assert(!std::is_const_v<T> && !std::is_volatile_v<T>);
     static_assert(!std::is_reference_v<T>);
 
-    if (str == nullptr) {
-        impl::ThrowFromStringException("nullptr string", "<null>", typeid(T));
-    }
-    if (str[0] == '\0') {
+    if (str.empty()) {
         impl::ThrowFromStringException("empty string", str, typeid(T));
     }
-    if (std::isspace(str[0])) {
+    if (std::isspace(str.front())) {
         impl::ThrowFromStringException("leading spaces are not allowed", str, typeid(T));
     }
 
@@ -48,11 +45,11 @@ std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const char* str) {
 
     const auto result = [&] {
         if constexpr (std::is_same_v<T, float>) {
-            return std::strtof(str, &end);
+            return std::strtof(str.c_str(), &end);
         } else if constexpr (std::is_same_v<T, double>) {
-            return std::strtod(str, &end);
+            return std::strtod(str.c_str(), &end);
         } else if constexpr (std::is_same_v<T, long double>) {
-            return std::strtold(str, &end);
+            return std::strtold(str.c_str(), &end);
         }
     }();
 
@@ -60,11 +57,11 @@ std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const char* str) {
         impl::ThrowFromStringException("overflow", str, typeid(T));
     }
 
-    if (end == str) {
+    if (end == str.c_str()) {
         impl::ThrowFromStringException("no number found", str, typeid(T));
     }
 
-    if (*end != '\0') {
+    if (end != str.data() + str.size()) {
         if (std::isspace(*end)) {
             impl::ThrowFromStringException("trailing spaces are not allowed", str, typeid(T));
         } else {
@@ -77,12 +74,12 @@ std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const char* str) {
 
 template <typename T>
 std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const std::string& str) {
-    return impl::FromString<T>(str.c_str());
+    return impl::FromString<T>(utils::zstring_view{str});
 }
 
 template <typename T>
-std::enable_if_t<std::is_floating_point_v<T>, T> FromString(utils::zstring_view str) {
-    return impl::FromString<T>(str.c_str());
+std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const char* str) {
+    return impl::FromString<T>(utils::zstring_view{str});
 }
 
 template <typename T>
@@ -90,14 +87,15 @@ std::enable_if_t<std::is_floating_point_v<T>, T> FromString(std::string_view str
     static constexpr std::size_t kSmallBufferSize = 32;
 
     if (str.size() >= kSmallBufferSize) {
-        return impl::FromString<T>(std::string{str});
+        const std::string buffer{str};
+        return impl::FromString<T>(utils::zstring_view{buffer});
     }
 
     char buffer[kSmallBufferSize];
     std::copy(str.data(), str.data() + str.size(), buffer);
     buffer[str.size()] = '\0';
 
-    return impl::FromString<T>(buffer);
+    return impl::FromString<T>(utils::zstring_view::UnsafeMake(buffer, str.size()));
 }
 
 template <typename T>
