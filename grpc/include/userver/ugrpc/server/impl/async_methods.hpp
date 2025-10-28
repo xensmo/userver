@@ -5,7 +5,6 @@
 #include <utility>
 
 #include <grpcpp/support/async_stream.h>
-#include <grpcpp/support/async_unary_call.h>
 #include <grpcpp/support/status.h>
 
 #include <userver/utils/assert.hpp>
@@ -16,23 +15,6 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::server::impl {
-
-/// @{
-/// @brief Helper type aliases for low-level asynchronous gRPC streams
-/// @see <grpcpp/impl/codegen/async_unary_call_impl.h>
-/// @see <grpcpp/impl/codegen/async_stream_impl.h>
-template <typename Response>
-using RawResponseWriter = grpc::ServerAsyncResponseWriter<Response>;
-
-template <typename Request, typename Response>
-using RawReader = grpc::ServerAsyncReader<Response, Request>;
-
-template <typename Response>
-using RawWriter = grpc::ServerAsyncWriter<Response>;
-
-template <typename Request, typename Response>
-using RawReaderWriter = grpc::ServerAsyncReaderWriter<Response, Request>;
-/// @}
 
 using ugrpc::impl::AsyncMethodInvocation;
 
