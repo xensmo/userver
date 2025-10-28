@@ -51,12 +51,12 @@ def sorted_includes(entity: HasCppIncludes, *, current_hpp: Optional[str] = None
         IncludeKind.FOR_HPP: [
             include.path
             for include in sorted_includes
-            if include.kind == IncludeKind.FOR_HPP and include.path not in includes_bundles.BUNDLE_HPP
+            if include.kind == IncludeKind.FOR_HPP and include.path not in includes_bundles.bundle_hpp()
         ],
         IncludeKind.FOR_CPP: [
             include.path
             for include in sorted_includes
-            if include.kind == IncludeKind.FOR_CPP and include.path not in includes_bundles.BUNDLE_CPP
+            if include.kind == IncludeKind.FOR_CPP and include.path not in includes_bundles.bundle_cpp()
         ],
     }
 

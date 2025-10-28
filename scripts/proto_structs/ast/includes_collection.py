@@ -28,8 +28,8 @@ def collect(*, file_ast: ast.File, plugin_options: Optional[Any]) -> List[str]:
     """
     parsed_options = options.PluginOptions(**plugin_options) if plugin_options else options.PluginOptions()
     includes_set = set(include.path for include in collect_file(file_ast, plugin_options=parsed_options))
-    includes_set.difference_update(includes_bundles.BUNDLE_HPP)
-    includes_set.difference_update(includes_bundles.BUNDLE_CPP)
+    includes_set.difference_update(includes_bundles.bundle_hpp())
+    includes_set.difference_update(includes_bundles.bundle_cpp())
     return sorted(includes_set)
 
 

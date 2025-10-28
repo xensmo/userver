@@ -1,23 +1,32 @@
 """Sets of includes that are in C++ bundles."""
 
+import functools
 import re
-import typing
-from typing import Callable
 from typing import Set
 
-import library.python.resource
+from proto_structs.bundles import resources
 
 _INCLUDE_CONTENTS_REGEX = re.compile(r'#include <([^>]+)>')
 
 
-def _extract_includes(resource_id: str) -> Set[str]:
-    find_resource = typing.cast(Callable[[str], bytes], library.python.resource.find)
-    file_contents: bytes = find_resource(resource_id)
-    return {match.group(1) for match in _INCLUDE_CONTENTS_REGEX.finditer(file_contents.decode())}
+def _extract_includes(path_relative_to_userver: str, *, sanity_check_has_include: str) -> Set[str]:
+    file_contents = resources.read_file_text(path_relative_to_userver)
+    includes = {match.group(1) for match in _INCLUDE_CONTENTS_REGEX.finditer(file_contents)}
+    assert sanity_check_has_include in includes, f'{path_relative_to_userver} must contain {sanity_check_has_include}'
+    return includes
 
 
-BUNDLE_HPP: Set[str] = _extract_includes('userver/proto-structs/impl/bundles/structs_hpp.hpp')
-assert 'userver/proto-structs/io/std/string.hpp' in BUNDLE_HPP, BUNDLE_HPP  # Sanity check.
+@functools.cache
+def bundle_hpp() -> Set[str]:
+    return _extract_includes(
+        'libraries/proto-structs/include/userver/proto-structs/impl/bundles/structs_hpp.hpp',
+        sanity_check_has_include='userver/proto-structs/io/std/string.hpp',
+    )
 
-BUNDLE_CPP: Set[str] = _extract_includes('userver/proto-structs/impl/bundles/structs_cpp.hpp')
-assert 'userver/proto-structs/io/std/string_conv.hpp' in BUNDLE_CPP, BUNDLE_CPP  # Sanity check.
+
+@functools.cache
+def bundle_cpp() -> Set[str]:
+    return _extract_includes(
+        'libraries/proto-structs/include/userver/proto-structs/impl/bundles/structs_cpp.hpp',
+        sanity_check_has_include='userver/proto-structs/io/std/string_conv.hpp',
+    )
