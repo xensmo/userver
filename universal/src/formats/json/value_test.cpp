@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <userver/formats/json/array.hpp>
 #include <userver/formats/json/exception.hpp>
+#include <userver/formats/json/object.hpp>
 #include <userver/formats/json/serialize.hpp>
 #include <userver/formats/json/serialize_container.hpp>
 #include <userver/formats/json/value.hpp>
