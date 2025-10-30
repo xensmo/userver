@@ -45,6 +45,7 @@ def collect_file(file: ast.File, /, *, plugin_options: options.PluginOptions) ->
     package: Optional[str] = None
     for element in file.file_elements:
         if isinstance(element, ast.Package):
+            assert package is None
             package = element.name
     context = FileContext(syntax=file.syntax or 'proto2', package=package or '', plugin_options=plugin_options)
 
@@ -83,6 +84,7 @@ def collect_field(field: ast.Field, /, *, context: FileContext) -> Iterable[incl
     yield from _collect_field_cardinality(field)
 
 
+# Example: contains 'google.protobuf' because of 'google.protobuf.Timestamp' in `WELL_KNOWN_TYPES`.
 _WELL_KNOWN_PACKAGES = {type_name.rsplit('.', 1)[0] for type_name in type_ref_consts.WELL_KNOWN_TYPES.keys()}
 
 
