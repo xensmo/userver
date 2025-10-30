@@ -40,8 +40,7 @@ public:
     const utils::FixedArray<StubAny>& GetStubs() const { return stubs_; }
 
 private:
-    StubPool(utils::FixedArray<std::shared_ptr<grpc::Channel>>&& channels, utils::FixedArray<StubAny>&& stubs)
-        : channels_{std::move(channels)}, stubs_{std::move(stubs)} {}
+    StubPool(utils::FixedArray<std::shared_ptr<grpc::Channel>>&& channels, utils::FixedArray<StubAny>&& stubs);
 
     utils::FixedArray<std::shared_ptr<grpc::Channel>> channels_;
 

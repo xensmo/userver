@@ -103,7 +103,7 @@ public:
         auto& queue = method_data_.service_data.internals.completion_queues.GetQueue(method_data_.queue_id);
 
         // the request for an incoming RPC must be performed synchronously
-        method_data_.service_data.async_service.template Prepare<CallTraits>(
+        method_data_.service_data.async_service.template RequestCall<CallTraits>(
             method_data_.method_id,
             context_,
             initial_request_,
