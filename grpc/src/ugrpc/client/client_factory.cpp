@@ -1,5 +1,7 @@
 #include <userver/ugrpc/client/client_factory.hpp>
 
+#include <userver/testsuite/grpc_control.hpp>
+
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client {
