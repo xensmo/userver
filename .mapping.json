@@ -2364,6 +2364,8 @@
   "grpc/src/ugrpc/datetime_utils.cpp":"taxi/uservices/userver/grpc/src/ugrpc/datetime_utils.cpp",
   "grpc/src/ugrpc/impl/async_method_invocation.cpp":"taxi/uservices/userver/grpc/src/ugrpc/impl/async_method_invocation.cpp",
   "grpc/src/ugrpc/impl/code_statistics.cpp":"taxi/uservices/userver/grpc/src/ugrpc/impl/code_statistics.cpp",
+  "grpc/src/ugrpc/impl/compat/protobuf_logging.cpp":"taxi/uservices/userver/grpc/src/ugrpc/impl/compat/protobuf_logging.cpp",
+  "grpc/src/ugrpc/impl/compat/protobuf_logging.hpp":"taxi/uservices/userver/grpc/src/ugrpc/impl/compat/protobuf_logging.hpp",
   "grpc/src/ugrpc/impl/completion_queue_pool_base.cpp":"taxi/uservices/userver/grpc/src/ugrpc/impl/completion_queue_pool_base.cpp",
   "grpc/src/ugrpc/impl/grpc_native_logging.cpp":"taxi/uservices/userver/grpc/src/ugrpc/impl/grpc_native_logging.cpp",
   "grpc/src/ugrpc/impl/grpc_native_logging.hpp":"taxi/uservices/userver/grpc/src/ugrpc/impl/grpc_native_logging.hpp",
