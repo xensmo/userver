@@ -544,12 +544,12 @@ UTEST_MT(Rcu, Core, 3) {
 
         // reader task
         tasks.push_back(engine::AsyncNoSpan([&] {
-            auto* t_ptr_ = &non_null;
+            auto* t_ptr = &non_null;
             // mimics storing current_ address into a hazard pointer
-            hazard_pointer.store(t_ptr_, std::memory_order_seq_cst);
+            hazard_pointer.store(t_ptr, std::memory_order_seq_cst);
 
             // mimics checking if the previously read current_ is still current
-            if (t_ptr_ == is_old_value_current.load()) {
+            if (t_ptr == is_old_value_current.load()) {
                 // success - check that "the object is alive"
                 EXPECT_EQ(old_value, 42);
             }

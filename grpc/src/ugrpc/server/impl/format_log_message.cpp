@@ -84,7 +84,7 @@ logging::impl::LogExtraTskvFormatter FormatLogMessage(
     grpc::StatusCode code,
     const logging::LogExtra* log_extra
 ) {
-    static const auto timezone = utils::datetime::LocalTimezoneTimestring(start_time, "%z");
+    static const auto kTimezone = utils::datetime::LocalTimezoneTimestring(start_time, "%z");
 
     const auto it = metadata.find("user-agent");
     std::string_view user_agent;
@@ -114,7 +114,7 @@ logging::impl::LogExtraTskvFormatter FormatLogMessage(
         "\tgrpc_status={}"
         "\tgrpc_status_code={}",
         GetCurrentTimeString(start_time),
-        timezone,
+        kTimezone,
         EscapeForAccessTskvLog(user_agent),
         ip,
         ip,

@@ -40,8 +40,8 @@ const tracing::TracingManagerBase* GetTracingManager(const ClientSettings& setti
         return settings.tracing_manager;
     }
 
-    static const tracing::GenericTracingManager noop_tracing{tracing::Format{0}, tracing::Format{0}};
-    return &noop_tracing;
+    static const tracing::GenericTracingManager kNoopTracing{tracing::Format{0}, tracing::Format{0}};
+    return &kNoopTracing;
 }
 
 }  // namespace

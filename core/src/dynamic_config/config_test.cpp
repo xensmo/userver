@@ -337,8 +337,8 @@ UTEST(DynamicConfig, GetEventChannel) {
     EXPECT_EQ(subscribers[1].GetCounter(), 1);
     EXPECT_EQ(subscribers[2].GetCounter(), 2);
 
-    auto& mainChannel = source.GetEventChannel();
-    scopes[3] = mainChannel.AddListener(
+    auto& main_channel = source.GetEventChannel();
+    scopes[3] = main_channel.AddListener(
         concurrent::FunctionId(&subscribers[3]),
         "",
         [&](const dynamic_config::Snapshot& snapshot) {

@@ -141,7 +141,7 @@ void NoticeReceiver(void* conn_wrapper_ptr, PGresult const* pg_res) {
 }
 
 struct Openssl {
-    static void Init() noexcept { [[maybe_unused]] static const Openssl lock; }
+    static void Init() noexcept { [[maybe_unused]] static const Openssl kLock; }
 
 private:
     Openssl() {

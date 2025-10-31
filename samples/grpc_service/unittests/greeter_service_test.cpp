@@ -139,8 +139,8 @@ GreeterMock::SayHelloResponseStreamResult GreeterMock::SayHelloResponseStream(
     samples::api::GreetingResponse response;
     std::string message = "Mocked response";
 
-    const int kCountSend = 5;
-    for (auto i = 0; i < kCountSend; ++i) {
+    const int count_send = 5;
+    for (auto i = 0; i < count_send; ++i) {
         message.push_back('!');
         response.set_greeting(grpc::string(message));
         writer.Write(response);

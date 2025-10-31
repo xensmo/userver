@@ -258,13 +258,13 @@ UTEST_F(Span, ScopeTime) {
 }
 
 UTEST_F(Span, ScopeTimeDoesntOverrideTotalTime) {
-    const int kSleepMs = 11;
+    const int sleep_ms = 11;
     {
         tracing::Span span("span_name");
-        engine::SleepFor(std::chrono::milliseconds(kSleepMs));
+        engine::SleepFor(std::chrono::milliseconds(sleep_ms));
         {
             auto st = span.CreateScopeTime("xxx");
-            engine::SleepFor(std::chrono::milliseconds(kSleepMs));
+            engine::SleepFor(std::chrono::milliseconds(sleep_ms));
         }
     }
 
@@ -289,7 +289,7 @@ UTEST_F(Span, ScopeTimeDoesntOverrideTotalTime) {
     ASSERT_TRUE(xxx_time.has_value());
     ASSERT_TRUE(total_time.has_value());
 
-    EXPECT_LE(xxx_time.value() + kSleepMs, total_time.value());
+    EXPECT_LE(xxx_time.value() + sleep_ms, total_time.value());
 }
 
 UTEST_F(Span, GetElapsedTime) {
@@ -431,17 +431,17 @@ UTEST_F(Span, NoLogPrefixes) {
     constexpr const char* kLogSpan2 = "span";
     constexpr const char* kLogSpan3 = "ign";
 
-    const std::string kIgnorePrefix0 = "ignore_";
-    const std::string kIgnorePrefix1 = "ignore1_";
-    const std::string kIgnorePrefix2 = "ignore2_";
+    const std::string ignore_prefix0 = "ignore_";
+    const std::string ignore_prefix1 = "ignore1_";
+    const std::string ignore_prefix2 = "ignore2_";
 
-    const std::string kIgnoreSpan = "ignor5span";
+    const std::string ignore_span = "ignor5span";
 
     tracing::NoLogSpans no_logs;
     no_logs.prefixes = {
-        kIgnorePrefix0,
-        kIgnorePrefix1,
-        kIgnorePrefix2,
+        ignore_prefix0,
+        ignore_prefix1,
+        ignore_prefix2,
 
         "ignor",
         "ignor0",
@@ -458,18 +458,18 @@ UTEST_F(Span, NoLogPrefixes) {
     tracing::SetNoLogSpans(std::move(no_logs));
 
     // clang-format off
-    { const tracing::Span a{kIgnorePrefix0 + "foo"}; }
+    { const tracing::Span a{ignore_prefix0 + "foo"}; }
     { const tracing::Span a{kLogSpan0}; }
     { const tracing::Span a{kLogSpan1}; }
-    { const tracing::Span a{kIgnorePrefix2 + "XXX"}; }
+    { const tracing::Span a{ignore_prefix2 + "XXX"}; }
     { const tracing::Span a{kLogSpan2}; }
-    { const tracing::Span a{kIgnorePrefix1 + "74dfljzs"}; }
-    { const tracing::Span a{kIgnorePrefix0 + "bar"}; }
+    { const tracing::Span a{ignore_prefix1 + "74dfljzs"}; }
+    { const tracing::Span a{ignore_prefix0 + "bar"}; }
     { const tracing::Span a{kLogSpan3}; }
-    { const tracing::Span a{kIgnorePrefix0}; }
-    { const tracing::Span a{kIgnorePrefix1}; }
-    { const tracing::Span a{kIgnorePrefix2}; }
-    { const tracing::Span a{kIgnoreSpan}; }
+    { const tracing::Span a{ignore_prefix0}; }
+    { const tracing::Span a{ignore_prefix1}; }
+    { const tracing::Span a{ignore_prefix2}; }
+    { const tracing::Span a{ignore_span}; }
     // clang-format on
 
     logging::LogFlush();
@@ -480,10 +480,10 @@ UTEST_F(Span, NoLogPrefixes) {
     EXPECT_THAT(output, HasSubstr(kLogSpan2));
     EXPECT_THAT(output, HasSubstr(kLogSpan3));
 
-    EXPECT_THAT(output, Not(HasSubstr("=" + kIgnorePrefix0)));
-    EXPECT_THAT(output, Not(HasSubstr(kIgnorePrefix1)));
-    EXPECT_THAT(output, Not(HasSubstr(kIgnorePrefix2)));
-    EXPECT_THAT(output, Not(HasSubstr(kIgnoreSpan)));
+    EXPECT_THAT(output, Not(HasSubstr("=" + ignore_prefix0)));
+    EXPECT_THAT(output, Not(HasSubstr(ignore_prefix1)));
+    EXPECT_THAT(output, Not(HasSubstr(ignore_prefix2)));
+    EXPECT_THAT(output, Not(HasSubstr(ignore_span)));
 }
 
 UTEST_F(Span, NoLogMixed) {
@@ -502,23 +502,23 @@ UTEST_F(Span, NoLogMixed) {
 
     constexpr const char* kIgnoreSpan = "i_am_a_span_to_ignore";
 
-    const std::string kIgnorePrefix0 = "ignore";
-    const std::string kIgnorePrefix1 = "skip";
-    const std::string kIgnorePrefix2 = "do_not_keep";
+    const std::string ignore_prefix0 = "ignore";
+    const std::string ignore_prefix1 = "skip";
+    const std::string ignore_prefix2 = "do_not_keep";
 
     // clang-format off
-    { const tracing::Span a{kIgnorePrefix0 + "oops"}; }
+    { const tracing::Span a{ignore_prefix0 + "oops"}; }
     { const tracing::Span a{kLogSpan0}; }
     { const tracing::Span a{kLogSpan1}; }
-    { const tracing::Span a{kIgnorePrefix2 + "I"}; }
+    { const tracing::Span a{ignore_prefix2 + "I"}; }
     { const tracing::Span a{kLogSpan2}; }
-    { const tracing::Span a{kIgnorePrefix1 + "did it"}; }
-    { const tracing::Span a{kIgnorePrefix0 + "again"}; }
+    { const tracing::Span a{ignore_prefix1 + "did it"}; }
+    { const tracing::Span a{ignore_prefix0 + "again"}; }
     { const tracing::Span a{kLogSpan3}; }
     { const tracing::Span a{kLogSpan4}; }
-    { const tracing::Span a{kIgnorePrefix0}; }
-    { const tracing::Span a{kIgnorePrefix1}; }
-    { const tracing::Span a{kIgnorePrefix2}; }
+    { const tracing::Span a{ignore_prefix0}; }
+    { const tracing::Span a{ignore_prefix1}; }
+    { const tracing::Span a{ignore_prefix2}; }
     { const tracing::Span a{kIgnoreSpan}; }
     // clang-format on
 
@@ -531,9 +531,9 @@ UTEST_F(Span, NoLogMixed) {
     EXPECT_THAT(output, HasSubstr(kLogSpan3));
     EXPECT_THAT(output, HasSubstr(kLogSpan4));
 
-    EXPECT_THAT(output, Not(HasSubstr("=" + kIgnorePrefix0)));
-    EXPECT_THAT(output, Not(HasSubstr(kIgnorePrefix1)));
-    EXPECT_THAT(output, Not(HasSubstr(kIgnorePrefix2)));
+    EXPECT_THAT(output, Not(HasSubstr("=" + ignore_prefix0)));
+    EXPECT_THAT(output, Not(HasSubstr(ignore_prefix1)));
+    EXPECT_THAT(output, Not(HasSubstr(ignore_prefix2)));
     EXPECT_THAT(output, Not(HasSubstr(kIgnoreSpan + std::string("\t"))));
 }
 

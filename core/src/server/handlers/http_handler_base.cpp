@@ -508,12 +508,12 @@ void HttpHandlerBase::BuildMiddlewarePipeline(
 
     ValidateMiddlewaresConfiguration(middlewares_config, handler_middlewares);
 
-    auto* next_middleware_ptr_{&first_middleware_};
-    const auto add_middleware = [this, &middlewares_config, &context, &next_middleware_ptr_](std::string_view name) {
-        *next_middleware_ptr_ = context.FindComponent<middlewares::HttpMiddlewareFactoryBase>(name).CreateChecked(
+    auto* next_middleware_ptr{&first_middleware_};
+    const auto add_middleware = [this, &middlewares_config, &context, &next_middleware_ptr](std::string_view name) {
+        *next_middleware_ptr = context.FindComponent<middlewares::HttpMiddlewareFactoryBase>(name).CreateChecked(
             *this, middlewares_config[name]
         );
-        next_middleware_ptr_ = &(*next_middleware_ptr_)->next_;
+        next_middleware_ptr = &(*next_middleware_ptr)->next_;
     };
 
     for (const auto& middleware_name : handler_middlewares) {

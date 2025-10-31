@@ -168,7 +168,7 @@ private:
 
 // Instance-wide password used to avoid passing unencrypted keys
 [[maybe_unused]] const std::string& GetPkeyPassword() {
-    static const std::string password = [] {
+    static const std::string kPassword = [] {
         CryptoPP::DefaultAutoSeededRNG prng;
         std::string random_bytes;
         random_bytes.resize(32);
@@ -179,7 +179,7 @@ private:
         }
         return random_bytes;
     }();
-    return password;
+    return kPassword;
 }
 
 // Type-dependent implementations to avoid alternate branch instantiation
@@ -238,7 +238,7 @@ RequestState::RequestState(
     easy().set_header_data(this);
 
     // set autodecoding
-    static const bool curl_supports_zstd = [] {
+    static const bool kCurlSupportsZstd = [] {
 #ifdef CURL_VERSION_ZSTD
         return curl_version_info(curl::native::CURLVERSION_NOW)->features & CURL_VERSION_ZSTD;
 #else
@@ -246,7 +246,7 @@ RequestState::RequestState(
 #endif
     }();
 
-    if (curl_supports_zstd) {
+    if (kCurlSupportsZstd) {
         easy().set_accept_encoding("zstd,gzip,deflate,identity");
     } else {
         easy().set_accept_encoding("gzip,deflate,identity");

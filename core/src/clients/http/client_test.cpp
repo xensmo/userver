@@ -594,13 +594,13 @@ UTEST(HttpClient, PostEcho) {
 }
 
 UTEST(HttpClient, StatsOnTimeout) {
-    const int kRetries = 5;
+    const int retries = 5;
     const utest::SimpleServer http_server{&SleepCallback};
     auto http_client_ptr = utest::CreateHttpClient();
 
     auto request = http_client_ptr->CreateRequest()
                        .post(http_server.GetBaseUrl(), kTestData)
-                       .retry(kRetries)
+                       .retry(retries)
                        .verify(true)
                        .http_version(USERVER_NAMESPACE::http::HttpVersion::k11)
                        .timeout(kSmallTimeout);
@@ -609,22 +609,22 @@ UTEST(HttpClient, StatsOnTimeout) {
         auto res = request.perform();
         FAIL() << "Must throw, but returned " << res->status_code();
     } catch (const clients::http::BaseException& e) {
-        EXPECT_EQ(e.GetStats().retries_count, kRetries - 1);
-        EXPECT_EQ(e.GetStats().open_socket_count, kRetries);
+        EXPECT_EQ(e.GetStats().retries_count, retries - 1);
+        EXPECT_EQ(e.GetStats().open_socket_count, retries);
 
         EXPECT_GE(e.GetStats().time_to_process, kSmallTimeout);
-        EXPECT_LT(e.GetStats().time_to_process, kSmallTimeout * kRetries);
+        EXPECT_LT(e.GetStats().time_to_process, kSmallTimeout * retries);
     }
 
     try {
         auto res = request.perform();
         FAIL() << "Must throw again, but returned " << res->status_code();
     } catch (const clients::http::BaseException& e) {
-        EXPECT_EQ(e.GetStats().retries_count, (kRetries - 1) * 2);
-        EXPECT_EQ(e.GetStats().open_socket_count, kRetries * 2);
+        EXPECT_EQ(e.GetStats().retries_count, (retries - 1) * 2);
+        EXPECT_EQ(e.GetStats().open_socket_count, retries * 2);
 
         EXPECT_GE(e.GetStats().time_to_process, kSmallTimeout);
-        EXPECT_LT(e.GetStats().time_to_process, kSmallTimeout * kRetries);
+        EXPECT_LT(e.GetStats().time_to_process, kSmallTimeout * retries);
     }
 }
 

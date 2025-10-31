@@ -38,10 +38,10 @@ auto TestInvalid(const std::string& input) {
 
 template <typename StringType, typename T>
 auto CheckConverts(StringType input, T expected_result) {
-    T actualResult{};
-    ASSERT_NO_THROW(actualResult = utils::FromString<T>(input))
+    T actual_result{};
+    ASSERT_NO_THROW(actual_result = utils::FromString<T>(input))
         << "type = " << compiler::GetTypeName<T>() << ", input = \"" << input << "\"";
-    ASSERT_EQ(actualResult, expected_result)
+    ASSERT_EQ(actual_result, expected_result)
         << "type = " << compiler::GetTypeName<T>() << ", input = \"" << input << "\"";
 }
 
@@ -98,11 +98,11 @@ TYPED_TEST(FromStringTest, Randomized) {
 
     // `randomEngine` is initialized with a fixed default seed
     // NOLINTNEXTLINE(cert-msc51-cpp)
-    std::default_random_engine randomEngine;
+    std::default_random_engine random_engine;
     auto distribution = DistributionForTesting<T>();
 
     for (int i = 0; i < kTestIterations; ++i) {
-        TestPreserves(static_cast<T>(distribution(randomEngine)));
+        TestPreserves(static_cast<T>(distribution(random_engine)));
     }
 }
 

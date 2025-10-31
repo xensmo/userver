@@ -27,8 +27,8 @@ struct Serialization<formats::json::Value> : public ::testing::Test {
     using MemberMissingException = formats::json::MemberMissingException;
     using BadStreamException = formats::json::BadStreamException;
 
-    constexpr static auto FromString = formats::json::FromString;
-    constexpr static auto FromStream = formats::json::FromStream;
+    constexpr static auto kFromString = formats::json::FromString;
+    constexpr static auto kFromStream = formats::json::FromStream;
 };
 
 INSTANTIATE_TYPED_TEST_SUITE_P(FormatsJson, Serialization, formats::json::Value);

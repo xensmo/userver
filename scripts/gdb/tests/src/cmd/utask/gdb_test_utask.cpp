@@ -70,9 +70,9 @@ __attribute__((noinline)) static void TestSleepingCoroutine(bool no_span = false
         auto payload = [&] {
             NotOptimized<void*> new_coro = engine::current_task::impl::GetRawCurrentTaskContext();
             NotOptimized<void*> root_coro_addr = root_coro;
-            NotOptimized<bool> no_span_ = no_span;
+            NotOptimized<bool> no_span_not_optimized = no_span;
             TEST_COMMAND(
-                "no_span = bool(gdb.parse_and_eval('no_span_'))\n"
+                "no_span = bool(gdb.parse_and_eval('no_span_not_optimized'))\n"
                 "new_coro_span = 'new_coro' if not no_span else ''\n"
                 "assert_matches(\n"
                 "   'Task ID\\\\s+State\\\\s+Span name\\n'\n"
@@ -100,7 +100,7 @@ __attribute__((noinline)) static void TestSleepingCoroutine(bool no_span = false
             );
             DoNotOptimize(new_coro);
             DoNotOptimize(root_coro_addr);
-            DoNotOptimize(no_span_);
+            DoNotOptimize(no_span_not_optimized);
             DoNotOptimize(root_frames_addrs);
         };
         if (no_span) {
@@ -201,13 +201,13 @@ __attribute__((noinline)) void BenchmarkHeavyService(size_t tasks_cnt, size_t th
             void operator()(size_t index) const {
                 std::vector<std::vector<int>> some_used_memory(1000, std::vector<int>(memory_per_task / 1000, 1));
                 if (index == tasks_cnt) {
-                    NotOptimized<size_t> tasks_cnt_ = tasks_cnt;
-                    NotOptimized<size_t> threads_cnt_ = threads_cnt;
-                    NotOptimized<size_t> memory_per_task_ = memory_per_task;
+                    NotOptimized<size_t> tasks_cnt_not_optimized = tasks_cnt;
+                    NotOptimized<size_t> threads_cnt_not_optimized = threads_cnt;
+                    NotOptimized<size_t> memory_per_task_not_optimized = memory_per_task;
                     TEST_COMMAND(
-                        "tasks_cnt = int(gdb.parse_and_eval('tasks_cnt_'))\n"
-                        "threads_cnt = int(gdb.parse_and_eval('threads_cnt_'))\n"
-                        "memory_per_task = int(gdb.parse_and_eval('memory_per_task_'))\n"
+                        "tasks_cnt = int(gdb.parse_and_eval('tasks_cnt_not_optimized'))\n"
+                        "threads_cnt = int(gdb.parse_and_eval('threads_cnt_not_optimized'))\n"
+                        "memory_per_task = int(gdb.parse_and_eval('memory_per_task_not_optimized'))\n"
                         "start_benchmark(tasks_cnt, threads_cnt, memory_per_task)\n"
                         "with measure_time('`utask list` (first call)'):\n"
                         "   gdb.execute('utask list', to_string=True)\n"
@@ -218,9 +218,9 @@ __attribute__((noinline)) void BenchmarkHeavyService(size_t tasks_cnt, size_t th
                         "with measure_time('`utask apply all bt` (second call)'):\n"
                         "   gdb.execute('utask apply all bt', to_string=True)\n"
                     );
-                    DoNotOptimize(tasks_cnt_);
-                    DoNotOptimize(threads_cnt_);
-                    DoNotOptimize(memory_per_task_);
+                    DoNotOptimize(tasks_cnt_not_optimized);
+                    DoNotOptimize(threads_cnt_not_optimized);
+                    DoNotOptimize(memory_per_task_not_optimized);
                 } else {
                     utils::Async("task_" + std::to_string(index + 1), &RecursivePayload::operator(), *this, index + 1)
                         .Wait();
