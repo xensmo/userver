@@ -18,4 +18,5 @@
 // For keyword types.
 #include <userver/proto-structs/io/std/scalar_conv.hpp>
 
+#include <userver/proto-structs/io/userver/proto_structs/unbreakable_dependency_cycle_conv.hpp>
 #include <userver/proto-structs/io/userver/utils/box_conv.hpp>

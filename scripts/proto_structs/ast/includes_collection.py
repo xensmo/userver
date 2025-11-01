@@ -111,6 +111,8 @@ def _collect_field_type(proto_type_name: str, /, *, context: FileContext) -> Ite
 
     # Whether `utils::Box` is required depends on the existence of cyclic dependencies. For simplicity, always require.
     yield from type_ref_consts.BOX_TEMPLATE.collect_includes()
+    # Whether `UnbreakableDependencyCycle` is required depends on complex cycles. For simplicity, always require.
+    yield from type_ref_consts.UNBREAKABLE_DEPENDENCY_CYCLE.collect_includes()
 
 
 def _collect_field_cardinality(field: ast.Field) -> Iterable[includes.Include]:

@@ -5,12 +5,12 @@
 #include <userver/proto-structs/convert.hpp>
 #include <userver/proto-structs/type_mapping.hpp>
 
-#include <simple/base.pb.h>
-#include <simple/base.structs.usrv.pb.hpp>
+#include <simple/base/base.pb.h>
+#include <simple/base/base.structs.usrv.pb.hpp>
 
 #include <google/protobuf/any.h>
 
-namespace ss = simple::structs;
+namespace ss = simple::base::structs;
 
 USERVER_NAMESPACE_BEGIN
 

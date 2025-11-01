@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package simple;
+package simple.base;
 
-option go_package = "a.yandex-team.ru/taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/simple;simple";
+option go_package = "a.yandex-team.ru/taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/simple/base;simplebase";
 
 import "simple/subdirectory/subdirectory.proto";
 import "simple/subdirectory/separate_enum.proto";

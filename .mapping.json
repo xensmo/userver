@@ -2653,7 +2653,7 @@
   "libraries/proto-structs/codegen-tests/proto/oneof/custom_oneof_type_name.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/oneof/custom_oneof_type_name.proto",
   "libraries/proto-structs/codegen-tests/proto/oneof/proto2.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/oneof/proto2.proto",
   "libraries/proto-structs/codegen-tests/proto/service/base.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/service/base.proto",
-  "libraries/proto-structs/codegen-tests/proto/simple/base.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/simple/base.proto",
+  "libraries/proto-structs/codegen-tests/proto/simple/base/base.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/simple/base/base.proto",
   "libraries/proto-structs/codegen-tests/proto/simple/subdirectory/separate_enum.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/simple/subdirectory/separate_enum.proto",
   "libraries/proto-structs/codegen-tests/proto/simple/subdirectory/subdirectory.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/simple/subdirectory/subdirectory.proto",
   "libraries/proto-structs/codegen-tests/pytest/ast/test_includes_list.py":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/pytest/ast/test_includes_list.py",

@@ -20,4 +20,5 @@
 #include <userver/proto-structs/io/std/uint32_t.hpp>
 #include <userver/proto-structs/io/std/uint64_t.hpp>
 
+#include <userver/proto-structs/io/userver/proto_structs/unbreakable_dependency_cycle.hpp>
 #include <userver/proto-structs/io/userver/utils/box.hpp>
