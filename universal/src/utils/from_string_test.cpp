@@ -169,14 +169,8 @@ TYPED_TEST(FromStringTest, NonDecimal) {
     TestInvalid<T>("0b10");
     TestInvalid<T>("0o10");
 
-    if constexpr (std::is_floating_point_v<T>) {
-        TestConverts("0x10", T{0x10});
-        TestConverts("0xAB", T{0xAB});
-        TestConverts("0xab", T{0xAB});
-        TestConverts("0xABP2", T{0xABP2});
-    } else {
-        TestInvalid<T>("0x10");
-    }
+    TestInvalid<T>("0x10");
+    TestInvalid<T>("0X10");
 }
 
 TYPED_TEST(FromStringTest, ExtraSpaces) {

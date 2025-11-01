@@ -16,7 +16,6 @@
 #include <typeindex>
 #include <typeinfo>
 
-#include <userver/utils/meta_light.hpp>
 #include <userver/utils/zstring_view.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -25,11 +24,23 @@ namespace utils {
 
 namespace impl {
 
+template <typename T, typename = void>
+struct IsFromCharsConvertible : std::false_type {};
+
+template <typename T>
+struct IsFromCharsConvertible<
+    T,
+    std::void_t<decltype(std::from_chars(std::declval<const char*>(), std::declval<const char*>(), std::declval<T&>())
+    )>> : std::true_type {};
+
+template <class T>
+inline constexpr bool kIsFromCharsConvertible = IsFromCharsConvertible<T>::value;
+
 [[noreturn]] void
 ThrowFromStringException(std::string_view message, std::string_view input, std::type_index result_type);
 
 template <typename T>
-std::enable_if_t<std::is_floating_point_v<T>, T> FromString(utils::zstring_view str) {
+std::enable_if_t<std::is_floating_point_v<T> && !kIsFromCharsConvertible<T>, T> FromString(utils::zstring_view str) {
     static_assert(!std::is_const_v<T> && !std::is_volatile_v<T>);
     static_assert(!std::is_reference_v<T>);
 
@@ -38,6 +49,9 @@ std::enable_if_t<std::is_floating_point_v<T>, T> FromString(utils::zstring_view 
     }
     if (std::isspace(str.front())) {
         impl::ThrowFromStringException("leading spaces are not allowed", str, typeid(T));
+    }
+    if (str.size() > 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+        impl::ThrowFromStringException("extra junk at the end of the string is not allowed", str, typeid(T));
     }
 
     errno = 0;
@@ -73,17 +87,17 @@ std::enable_if_t<std::is_floating_point_v<T>, T> FromString(utils::zstring_view 
 }
 
 template <typename T>
-std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const std::string& str) {
+std::enable_if_t<std::is_floating_point_v<T> && !kIsFromCharsConvertible<T>, T> FromString(const std::string& str) {
     return impl::FromString<T>(utils::zstring_view{str});
 }
 
 template <typename T>
-std::enable_if_t<std::is_floating_point_v<T>, T> FromString(const char* str) {
+std::enable_if_t<std::is_floating_point_v<T> && !kIsFromCharsConvertible<T>, T> FromString(const char* str) {
     return impl::FromString<T>(utils::zstring_view{str});
 }
 
 template <typename T>
-std::enable_if_t<std::is_floating_point_v<T>, T> FromString(std::string_view str) {
+std::enable_if_t<std::is_floating_point_v<T> && !kIsFromCharsConvertible<T>, T> FromString(std::string_view str) {
     static constexpr std::size_t kSmallBufferSize = 32;
 
     if (str.size() >= kSmallBufferSize) {
@@ -99,7 +113,7 @@ std::enable_if_t<std::is_floating_point_v<T>, T> FromString(std::string_view str
 }
 
 template <typename T>
-std::enable_if_t<meta::kIsInteger<T>, T> FromString(std::string_view str) {
+std::enable_if_t<kIsFromCharsConvertible<T>, T> FromString(std::string_view str) {
     static_assert(!std::is_const_v<T> && !std::is_volatile_v<T>);
     static_assert(!std::is_reference_v<T>);
 
