@@ -73,7 +73,7 @@ bool CheckAndSetupDeadline(
     const auto deadline_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(deadline_duration);
 
     const bool cancelled_by_deadline =
-        server_context.IsCancelled() || deadline_duration_ms <= engine::Deadline::Duration{0};
+        engine::current_task::ShouldCancel() || deadline_duration_ms <= engine::Deadline::Duration{0};
 
     span.AddNonInheritableTag("deadline_received_ms", deadline_duration_ms.count());
     statistics_scope.OnDeadlinePropagated();
