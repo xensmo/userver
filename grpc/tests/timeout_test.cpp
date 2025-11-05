@@ -20,7 +20,7 @@ public:
                     << ", deadline=" << context.GetServerContext().deadline();
         if (++request_counter_ % 4) {
             engine::InterruptibleSleepFor(tests::kLongTimeout + tests::kShortTimeout);
-            // this status should not reach client because of 'perAttemptRecvTimeout'
+            // this status should not reach client because of timeout
             LOG_DEBUG() << request_counter_ << ": return ABORTED";
             return grpc::Status(grpc::StatusCode::ABORTED, "");
         }
