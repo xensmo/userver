@@ -58,14 +58,18 @@ public:
                 ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS, *internals_.qos
             );
         } else {
-            ConstructStubState<Service>();
+            SubscribeOnConfigUpdate<Service>(
+                ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS
+            );
         }
     }
 
     template <typename Service>
     ClientData(ClientInternals&& internals, GenericClientTag, std::in_place_type_t<Service>)
         : internals_(std::move(internals)) {
-        ConstructStubState<Service>();
+        SubscribeOnConfigUpdate<Service>(
+            ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS
+        );
     }
 
     ~ClientData();
@@ -147,19 +151,8 @@ private:
 
     template <typename Service>
     void OnConfigUpdate(const dynamic_config::Snapshot& config) {
-        UASSERT(internals_.qos);
-        const auto& client_qos = config[*internals_.qos];
-        auto cfg_proxy_enabled = config[::dynamic_config::EGRESS_GRPC_PROXY_ENABLED];
-        const auto& cfg_no_proxy_targets = config[::dynamic_config::EGRESS_NO_PROXY_TARGETS].targets;
-        ConstructStubState<Service>(cfg_proxy_enabled, cfg_no_proxy_targets, client_qos);
-    }
+        auto client_qos = internals_.qos ? config[*internals_.qos] : ClientQos{};
 
-    template <typename Service>
-    void ConstructStubState(
-        bool proxy_enabled = false,
-        const std::unordered_set<std::string>& no_proxy_targets = {},
-        const ClientQos& client_qos = {}
-    ) {
         std::string target = internals_.endpoint;
 
         auto channel_args = channel_arguments_builder_.has_value()
@@ -168,6 +161,8 @@ private:
 
         const auto& proxy_settings = internals_.proxy_settings;
 
+        auto proxy_enabled = config[::dynamic_config::EGRESS_GRPC_PROXY_ENABLED];
+        const auto& no_proxy_targets = config[::dynamic_config::EGRESS_NO_PROXY_TARGETS].targets;
         if (!proxy_settings.proxy_address.empty() && proxy_enabled && !proxy_settings.no_proxy_targets.count(target) &&
             !no_proxy_targets.count(target)) {
             SetHttpProxy(target, channel_args, internals_.channel_factory.GetAuthType(), proxy_settings.proxy_address);
