@@ -24,11 +24,10 @@ namespace {
 
 void ReportFinishSuccess(const grpc::Status& status, CallState& state) noexcept {
     try {
-        const auto status_code = status.error_code();
-        state.statistics_scope.OnExplicitFinish(status_code);
+        state.statistics_scope.OnExplicitFinish(status.error_code());
 
         auto& span = state.GetSpan();
-        span.AddNonInheritableTag(tracing::kGrpcCode, ugrpc::ToString(status_code));
+        span.AddNonInheritableTag(tracing::kGrpcCode, ugrpc::ToString(status.error_code()));
         if (!status.ok()) {
             span.AddNonInheritableTag(tracing::kErrorFlag, true);
             span.AddNonInheritableTag(tracing::kErrorMessage, status.error_message());
@@ -151,7 +150,7 @@ ReportCustomError(const USERVER_NAMESPACE::server::handlers::CustomHandlerExcept
     }
 }
 
-void CheckFinishStatus(bool finish_op_succeeded, const grpc::Status& status, CallState& state) noexcept {
+void ReportFinish(bool finish_op_succeeded, const grpc::Status& status, CallState& state) noexcept {
     if (finish_op_succeeded) {
         ReportFinishSuccess(status, state);
     } else {
