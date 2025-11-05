@@ -22,7 +22,6 @@
 
 #include <dynamic_config/variables/HTTP_CLIENT_CONNECTION_POOL_SIZE.hpp>
 #include <dynamic_config/variables/HTTP_CLIENT_CONNECT_THROTTLE.hpp>
-#include <dynamic_config/variables/USERVER_HTTP_PROXY.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -112,7 +111,6 @@ HttpClient::HttpClient(const ComponentConfig& component_config, const ComponentC
     }
 
     clients::http::impl::Config bootstrap_config;
-    bootstrap_config.proxy = component_config["bootstrap-http-proxy"].As<std::string>({});
     http_client_.SetConfig(bootstrap_config);
 
     auto& config_component = context.FindComponent<components::DynamicConfig>();
@@ -138,7 +136,6 @@ clients::http::Client& HttpClient::GetHttpClient() { return http_client_; }
 void HttpClient::OnConfigUpdate(const dynamic_config::Snapshot& config) {
     http_client_.SetConfig(clients::http::impl::Config{
         config[::dynamic_config::HTTP_CLIENT_CONNECTION_POOL_SIZE],
-        config[::dynamic_config::USERVER_HTTP_PROXY],
         clients::http::impl::Parse(config[::dynamic_config::HTTP_CLIENT_CONNECT_THROTTLE]),
     });
 }
@@ -180,10 +177,6 @@ properties:
         type: string
         description: User-Agent HTTP header to show on all requests, result of utils::GetUserverIdentifier() if empty
         defaultDescription: empty
-    bootstrap-http-proxy:
-        type: string
-        description: HTTP proxy to use at service start. Will be overridden by @ref USERVER_HTTP_PROXY at runtime config update
-        defaultDescription: ''
     testsuite-enabled:
         type: boolean
         description: enable testsuite testing support

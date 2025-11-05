@@ -213,7 +213,10 @@ public:
     /// @overload
     Request user_agent(utils::zstring_view value) &&;
 
-    /// Sets proxy to use. Example: [::1]:1080
+    /// Sets proxy to use.
+    ///
+    /// Example: [::1]:1080
+    /// Empty string disables proxy.
     Request& proxy(utils::zstring_view value) &;
     /// @overload
     Request proxy(utils::zstring_view value) &&;

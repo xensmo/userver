@@ -251,6 +251,10 @@ RequestState::RequestState(
     } else {
         easy().set_accept_encoding("gzip,deflate,identity");
     }
+
+    // Even if proxy is an empty string we should set it, because empty proxy
+    // for CURL disables the use of *_proxy env variables.
+    easy().set_proxy("");
 }
 
 RequestState::~RequestState() {

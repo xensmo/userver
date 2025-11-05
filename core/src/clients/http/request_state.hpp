@@ -146,6 +146,7 @@ public:
 
     void SetTracingManager(const tracing::TracingManagerBase&);
 
+    /// true if proxy was set using proxy method
     bool IsProxySet() const;
 
     PluginRequest GetEditableRequestInstance();
