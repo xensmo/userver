@@ -153,12 +153,21 @@ CheckOptions:
   - key: readability-identifier-naming.ConstexprVariablePrefix
     value: k
   # Allow lower_case for constexpr. Probably needs to be reconsidered in the future.
-  # Allow SimpleExceptionMessage: expands from Y_ENSURE macro in ydb tests.
+  # Allow SimpleExceptionMessage: expands from Y_ENSURE macro.
   - key: readability-identifier-naming.ConstexprVariableIgnoredRegexp
-    value: "^([a-z]+[_]?)+$|^SimpleExceptionMessage$"
-  # Allow kCamelCase for global constants.
+    value: "^[a-z0-9]+([_]?[a-z0-9]+)*$|^SimpleExceptionMessage$"
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  # Allow kCamelCase for global variables. Probably needs to be reconsidered in the future.
   - key: readability-identifier-naming.GlobalVariableIgnoredRegexp
-    value: ^k([A-Z][a-z]+)+$
+    value: "^k([A-Z]($|[a-z0-9]+))+$"
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: k
+  # Allow lower_case for global constants. Probably needs to be reconsidered in the future.
+  - key: readability-identifier-naming.GlobalConstantIgnoredRegexp
+    value: "^[a-z0-9]+([_]?[a-z0-9]+)*$"
   - key: readability-identifier-naming.StaticConstantCase
     value: CamelCase
   - key: readability-identifier-naming.StaticConstantPrefix
@@ -172,7 +181,7 @@ CheckOptions:
     value: ^(N([A-Z][a-z]+)+|Headers)$
   # Allow kCamelCase.
   - key: readability-identifier-naming.ValueTemplateParameterIgnoredRegexp
-    value: ^k([A-Z][a-z]+)+$
+    value: "^k([A-Z]($|[a-z0-9]+))+$"
   - key: readability-identifier-naming.ConceptCase
     value: CamelCase
   - key: readability-identifier-naming.TemplateParameterCase
