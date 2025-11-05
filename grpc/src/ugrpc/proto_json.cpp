@@ -282,6 +282,13 @@ google::protobuf::Struct Parse(const json::Value& value, To<google::protobuf::St
     return std::move(*protobuf_value.mutable_struct_value());
 }
 
+google::protobuf::ListValue Parse(const json::Value& value, To<google::protobuf::ListValue>) {
+    value.CheckArray();
+    auto protobuf_value = ParseImpl(value);
+    UASSERT(protobuf_value.has_list_value());
+    return std::move(*protobuf_value.mutable_list_value());
+}
+
 }  // namespace formats::parse
 
 USERVER_NAMESPACE_END

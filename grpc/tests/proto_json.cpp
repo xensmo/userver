@@ -103,42 +103,58 @@ google::protobuf::Struct MakeTestStruct() {
     list_value.mutable_list_value()->add_values()->set_string_value("listString");
 
     google::protobuf::Struct message;
-    message.mutable_fields()->insert({"nullValue", std::move(null_value)});
-    message.mutable_fields()->insert({"numberValue", std::move(number_value)});
-    message.mutable_fields()->insert({"stringValue", std::move(string_value)});
-    message.mutable_fields()->insert({"boolValue", std::move(bool_value)});
-    message.mutable_fields()->insert({"structValue", std::move(struct_value)});
-    message.mutable_fields()->insert({"listValue", std::move(list_value)});
+    message.mutable_fields()->insert({"nullExample", std::move(null_value)});
+    message.mutable_fields()->insert({"numberExample", std::move(number_value)});
+    message.mutable_fields()->insert({"stringExample", std::move(string_value)});
+    message.mutable_fields()->insert({"boolExample", std::move(bool_value)});
+    message.mutable_fields()->insert({"structExample", std::move(struct_value)});
+    message.mutable_fields()->insert({"listExample", std::move(list_value)});
     return message;
 }
 
-formats::json::Value MakeTestJson() {
+formats::json::Value MakeTestStructJson() {
     return R"(
         {
-            "nullValue": null,
-            "numberValue": 42,
-            "stringValue": "string",
-            "boolValue": true,
-            "structValue": {
+            "nullExample": null,
+            "numberExample": 42,
+            "stringExample": "string",
+            "boolExample": true,
+            "structExample": {
                 "structKey": "structString"
             },
-            "listValue": [
+            "listExample": [
                 "listString"
             ]
         }
     )"_json;
 }
 
+google::protobuf::Value MakeTestValue() {
+    google::protobuf::Value protobuf_value;
+    *protobuf_value.mutable_struct_value() = MakeTestStruct();
+    return protobuf_value;
+}
+
+formats::json::Value MakeTestValueJson() { return MakeTestStructJson(); }
+
+google::protobuf::ListValue MakeTestListValue() {
+    google::protobuf::ListValue gt_protobuf_list_value;
+    *gt_protobuf_list_value.add_values()->mutable_struct_value() = MakeTestStruct();
+    return gt_protobuf_list_value;
+}
+
+formats::json::Value MakeTestListValueJson() { return formats::json::MakeArray(MakeTestValueJson()); }
+
 }  // namespace
 
 UTEST(ProtoJson, ProtobufStructToJson) {
     const auto protobuf_struct = MakeTestStruct();
     const auto protobuf_struct_as_json = formats::json::ValueBuilder{protobuf_struct}.ExtractValue();
-    EXPECT_EQ(protobuf_struct_as_json, MakeTestJson());
+    EXPECT_EQ(protobuf_struct_as_json, MakeTestStructJson());
 }
 
 UTEST(ProtoJson, JsonToProtobufStruct) {
-    const auto json = MakeTestJson();
+    const auto json = MakeTestStructJson();
     const auto json_as_protobuf_struct = json.As<google::protobuf::Struct>();
     const auto gt_protobuf_struct = MakeTestStruct();
     EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(json_as_protobuf_struct, gt_protobuf_struct))
@@ -149,22 +165,41 @@ UTEST(ProtoJson, JsonToProtobufStruct) {
 }
 
 UTEST(ProtoJson, ProtobufValueToJson) {
-    google::protobuf::Value protobuf_value;
-    *protobuf_value.mutable_struct_value() = MakeTestStruct();
+    const auto protobuf_value = MakeTestValue();
     const auto protobuf_value_as_json = formats::json::ValueBuilder{protobuf_value}.ExtractValue();
-    EXPECT_EQ(protobuf_value_as_json, MakeTestJson());
+    EXPECT_EQ(protobuf_value_as_json, MakeTestValueJson());
 }
 
 UTEST(ProtoJson, JsonToProtobufValue) {
-    const auto json = MakeTestJson();
+    const auto json = MakeTestValueJson();
     const auto json_as_protobuf_value = json.As<google::protobuf::Value>();
-    google::protobuf::Value gt_protobuf_value;
-    *gt_protobuf_value.mutable_struct_value() = MakeTestStruct();
+    const auto gt_protobuf_value = MakeTestValue();
     EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(json_as_protobuf_value, gt_protobuf_value))
         << "Expected:\n"
         << gt_protobuf_value.Utf8DebugString()  //
         << "\nActual:\n"
         << json_as_protobuf_value.Utf8DebugString();
+}
+
+UTEST(ProtoJson, ProtobufListValueToJson) {
+    if constexpr (GOOGLE_PROTOBUF_VERSION < 4022000) {
+        GTEST_SKIP() << "Somehow, an extra \"values\":[] appears in the resulting JSON. "
+                        "This is clearly a bug in MessageToJsonString.";
+    }
+    const auto protobuf_list_value = MakeTestListValue();
+    const auto protobuf_list_value_as_json = formats::json::ValueBuilder{protobuf_list_value}.ExtractValue();
+    EXPECT_EQ(protobuf_list_value_as_json, MakeTestListValueJson());
+}
+
+UTEST(ProtoJson, JsonToProtobufListValue) {
+    const auto json = MakeTestListValueJson();
+    const auto json_as_protobuf_list_value = json.As<google::protobuf::ListValue>();
+    const auto gt_protobuf_list_value = MakeTestListValue();
+    EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(json_as_protobuf_list_value, gt_protobuf_list_value))
+        << "Expected:\n"
+        << gt_protobuf_list_value.Utf8DebugString()  //
+        << "\nActual:\n"
+        << json_as_protobuf_list_value.Utf8DebugString();
 }
 
 USERVER_NAMESPACE_END

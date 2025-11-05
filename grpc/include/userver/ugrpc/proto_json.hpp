@@ -88,7 +88,8 @@ namespace formats::serialize {
 /// @brief Conversion from any `google::protobuf::Message` to @ref formats::json::Value.
 /// Uses the same format as @ref ugrpc::MessageToJson with its default options.
 ///
-/// Works for `google::protobuf::Value`, `google::protobuf::Struct` and messages containing them as well.
+/// Works for `google::protobuf::Value`, `google::protobuf::Struct`, `google::protobuf::ListValue`
+/// (top-level and nested) as well, converts them without extra objects in JSON representation.
 ///
 /// Use as:
 /// @code{.cpp}
@@ -103,14 +104,15 @@ namespace formats::parse {
 /// @brief Conversion from @ref formats::json::Value to `google::protobuf::Message`.
 /// Uses the same format as @ref ugrpc::JsonToMessage with its default options.
 ///
-/// Works for `google::protobuf::Value`, `google::protobuf::Struct` and messages containing them as well.
+/// Works for `google::protobuf::Value`, `google::protobuf::Struct`, `google::protobuf::ListValue`
+/// (top-level and nested) as well, converts them without extra objects in JSON representation.
 ///
 /// Use as:
 /// @code{.cpp}
 /// auto value = json.As<google::protobuf::Value>();
 /// @endcode
 template <typename Message, typename = std::enable_if_t<std::is_base_of_v<google::protobuf::Message, Message>>>
-Message Parse(const json::Value& value, To<google::protobuf::Value>) {
+Message Parse(const json::Value& value, To<Message>) {
     return ugrpc::JsonToMessage<Message>(value);
 }
 
@@ -120,6 +122,9 @@ google::protobuf::Value Parse(const json::Value& value, To<google::protobuf::Val
 
 // Implementation detail: optimization for `google::protobuf::Struct` specifically.
 google::protobuf::Struct Parse(const json::Value& value, To<google::protobuf::Struct>);
+
+// Implementation detail: optimization for `google::protobuf::ListValue` specifically.
+google::protobuf::ListValue Parse(const json::Value& value, To<google::protobuf::ListValue>);
 /// @endcond
 
 }  // namespace formats::parse
