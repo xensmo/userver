@@ -189,6 +189,8 @@ public:
 
     CountedCoroutinePtr& GetCoroutinePtr() noexcept;
 
+    bool WasStartedAsCritical() const;
+
 private:
     class YieldReasonGuard;
     class LocalStorageGuard;
@@ -201,7 +203,6 @@ private:
 
     static WakeupSource GetPrimaryWakeupSource(SleepState::Flags sleep_flags);
 
-    bool WasStartedAsCritical() const;
     void SetState(Task::State);
 
     void Schedule();
