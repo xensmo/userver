@@ -24,6 +24,7 @@ struct ClientConfig {
     std::string config_url;
     bool append_path_to_url{true};
     std::string stage_name;
+    bool is_prestable{false};
 };
 
 /// @ingroup userver_clients

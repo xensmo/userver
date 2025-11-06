@@ -82,6 +82,11 @@ Client::FetchConfigs(const std::optional<Timestamp>& last_update, const std::vec
             body.Key("service");
             WriteToStream(config_.service_name, body);
         }
+
+        if (config_.is_prestable) {
+            body.Key("is_prestable");
+            WriteToStream(true, body);
+        }
     }
 
     LOG_TRACE() << "request body: " << body.GetStringView();

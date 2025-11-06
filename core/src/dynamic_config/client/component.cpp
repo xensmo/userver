@@ -3,7 +3,9 @@
 #include <userver/clients/http/component.hpp>
 #include <userver/components/component.hpp>
 #include <userver/formats/json.hpp>
+#include <userver/fs/read.hpp>
 #include <userver/logging/log.hpp>
+#include <userver/utils/text_light.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -22,6 +24,22 @@ std::string ReadStageName(const std::string& filepath) {
         throw;
     }
 }
+
+#ifdef ARCADIA_ROOT
+bool IsClownductorPrestable() {
+    auto filepath = "/etc/clownductor_group";
+    auto& tp = engine::current_task::GetBlockingTaskProcessor();
+
+    if (!fs::FileExists(tp, filepath)) {
+        return false;
+    }
+    auto content = fs::ReadFileContents(tp, filepath);
+    utils::text::Trim(content);
+    return utils::text::EndsWith(content, "_pre_stable");
+}
+#else
+bool IsClownductorPrestable() { return false; }
+#endif
 
 }  // namespace
 
@@ -42,6 +60,7 @@ DynamicConfigClient::DynamicConfigClient(const ComponentConfig& config, const Co
             client_config.stage_name = *stage_name;
         }
     }
+    client_config.is_prestable = IsClownductorPrestable();
     client_config.config_url = config["config-url"].As<std::string>();
 
     if (!client_config.stage_name.empty() && client_config.get_configs_overrides_for_service) {
