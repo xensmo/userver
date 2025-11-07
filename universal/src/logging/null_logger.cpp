@@ -20,10 +20,8 @@ public:
     impl::formatters::LoggerItemRef ExtractLoggerItem() override { return item; }
 
 private:
-    static impl::formatters::LoggerItemBase item;
+    static inline impl::formatters::LoggerItemBase item;
 };
-
-impl::formatters::LoggerItemBase NullFormatter::item;
 
 class NullLogger final : public impl::TextLogger {
 public:
@@ -37,6 +35,13 @@ public:
     void Flush() override {}
 };
 
+class NoopLogger final : public impl::TextLogger {
+public:
+    NoopLogger() noexcept : TextLogger(Format::kRaw) { SetLevel(Level::kInfo); }
+    void Log(Level, impl::formatters::LoggerItemRef) override {}
+    void Flush() override {}
+};
+
 }  // namespace
 
 TextLoggerRef GetNullLogger() noexcept {
@@ -45,6 +50,12 @@ TextLoggerRef GetNullLogger() noexcept {
 }
 
 TextLoggerPtr MakeNullLogger() { return TextLoggerPtr(std::shared_ptr<void>{}, &logging::GetNullLogger()); }
+
+namespace impl {
+
+TextLoggerPtr MakeNoopLoggerForTests() { return std::make_shared<NoopLogger>(); }
+
+}  // namespace impl
 
 }  // namespace logging
 
