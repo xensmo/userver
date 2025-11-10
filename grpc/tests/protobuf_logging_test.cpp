@@ -12,6 +12,8 @@
 
 USERVER_NAMESPACE_BEGIN
 
+static constexpr std::string_view kTruncateMarker = "...(truncated)";
+
 UTEST(ProtobufLogging, GetMessageWithData) {
     google::protobuf::StringValue test_message;
     test_message.set_value("test string with some content");
@@ -36,7 +38,7 @@ UTEST(ProtobufLogging, GetMessageSizeLimit) {
     const auto small_result = ugrpc::ToLimitedDebugString(test_message, 10);
     const auto large_result = ugrpc::ToLimitedDebugString(test_message, 1000);
 
-    EXPECT_LE(small_result.size(), 10u);
+    EXPECT_LE(small_result.size(), kTruncateMarker.size());
     EXPECT_GT(large_result.size(), small_result.size());
     EXPECT_THAT(large_result, testing::HasSubstr("test string with some content"));
 }
@@ -87,7 +89,22 @@ UTEST(ProtobufLogging, EdgeCasesZeroMaxSize) {
     test_message.set_value("test string with some content");
 
     const auto result = ugrpc::ToLimitedDebugString(test_message, 0);
-    EXPECT_TRUE(result.empty());
+    EXPECT_EQ(result, kTruncateMarker);
+}
+
+UTEST(ProtobufLogging, EdgeCasesSmallMaxSizes) {
+    google::protobuf::StringValue test_message;
+    test_message.set_value("test string with some content");
+
+    const auto one = ugrpc::ToLimitedDebugString(test_message, 1);
+    const auto five = ugrpc::ToLimitedDebugString(test_message, 5);
+    const auto seven = ugrpc::ToLimitedDebugString(test_message, 7);  // Length of <EMPTY>
+    const auto nine = ugrpc::ToLimitedDebugString(test_message, 9);
+
+    EXPECT_EQ(one, kTruncateMarker);
+    EXPECT_EQ(five, kTruncateMarker);
+    EXPECT_EQ(seven, kTruncateMarker);
+    EXPECT_EQ(nine, kTruncateMarker);
 }
 
 UTEST(ProtobufLogging, GetErrorDetailsSizeLimiting) {
