@@ -24,7 +24,8 @@ def validate_nonobject_body(service: model.Service) -> None:
                 schema = body
 
             if not isinstance(
-                schema, (types.SchemaObject, types.OneOfWithDiscriminator, types.OneOfWithoutDiscriminator)  # noqa: COM812
+                schema,
+                (types.SchemaObject, types.OneOfWithDiscriminator, types.OneOfWithoutDiscriminator),  # noqa: COM812
             ):
                 report_error('non-object-body', schema.source_location(), 'Non-object type in body root is forbidden')
 
@@ -41,7 +42,9 @@ def validate_dash_in_field_name(service: model.Service) -> None:
                     continue
 
                 report_error(
-                    'dash-in-field-name', child.source_location(), 'Dash in field name is useless for JS/Typescript'  # noqa: COM812
+                    'dash-in-field-name',
+                    child.source_location(),
+                    'Dash in field name is useless for JS/Typescript',  # noqa: COM812
                 )
 
     for operation in service.operations:

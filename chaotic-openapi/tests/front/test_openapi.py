@@ -103,7 +103,9 @@ def test_openapi_security(simple_parser):
         description='',
         security={
             '<inline>#/components/securitySchemes/api_key': model.ApiKeySecurity(
-                description='', name='api_key', in_=model.SecurityIn.header  # noqa: COM812
+                description='',
+                name='api_key',
+                in_=model.SecurityIn.header,  # noqa: COM812
             ),
             '<inline>#/components/securitySchemes/oauth': model.OAuthSecurity(
                 description='',

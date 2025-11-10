@@ -57,7 +57,9 @@ def parse_struct_reference(field_type: descriptor.Descriptor) -> type_ref.TypeRe
 
 
 def parse_type_reference(
-    field: descriptor.FieldDescriptor, *, plugin_options: options.PluginOptions  # noqa: COM812
+    field: descriptor.FieldDescriptor,
+    *,
+    plugin_options: options.PluginOptions,  # noqa: COM812
 ) -> type_ref.TypeReference:
     """Parses `field` type, not applying any wrappings or replacements yet."""
     type_kind = typing.cast(int, field.type)
@@ -78,7 +80,9 @@ def parse_type_reference(
 
 
 def _apply_type_overrides(
-    parsed_type: type_ref.TypeReference, proto_type: TypeDescriptor, plugin_options: options.PluginOptions  # noqa: COM812
+    parsed_type: type_ref.TypeReference,
+    proto_type: TypeDescriptor,
+    plugin_options: options.PluginOptions,  # noqa: COM812
 ) -> type_ref.TypeReference:
     full_type_name: str = proto_type.full_name
     type_override = type_overrides.get_type_override(proto_type_name=full_type_name, plugin_options=plugin_options)

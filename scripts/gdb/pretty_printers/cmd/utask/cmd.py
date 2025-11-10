@@ -24,7 +24,8 @@ if not hasattr(gdb.unwinder, 'FrameId'):
 
 
 arch_name: str = re.search(
-    'boost.*context.*/asm/jump_([a-z_0-9]+)', gdb.execute('info sources boost.*context.*/asm/jump_', to_string=True)  # noqa: COM812
+    'boost.*context.*/asm/jump_([a-z_0-9]+)',
+    gdb.execute('info sources boost.*context.*/asm/jump_', to_string=True),  # noqa: COM812
 ).group(1)
 registers_offsets = {
     'x86_64_sysv_elf_gas': {
@@ -462,7 +463,9 @@ class UtaskListCmd(gdb.Command):
                 raise argparse.ArgumentTypeError(e)
 
         parser = argparse.ArgumentParser(
-            'utask list', description='List userver tasks (all or some of them)', exit_on_error=False  # noqa: COM812
+            'utask list',
+            description='List userver tasks (all or some of them)',
+            exit_on_error=False,  # noqa: COM812
         )
         parser.add_argument(
             '-s',
@@ -476,7 +479,10 @@ class UtaskListCmd(gdb.Command):
         parser.add_argument('-i', '--id', help='List utask with specific id only')
         parser.add_argument('-n', '--name', type=_regexp_parser, help='List utasks which names match the regex')
         parser.add_argument(
-            '-b', '--backtrace', type=_regexp_parser, help='List utasks which backtraces match the regex'  # noqa: COM812
+            '-b',
+            '--backtrace',
+            type=_regexp_parser,
+            help='List utasks which backtraces match the regex',  # noqa: COM812
         )
         return parser
 

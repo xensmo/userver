@@ -131,7 +131,8 @@ class Translator:
             )
 
         match = re.fullmatch(
-            '/paths/\\[([^\\]]*)\\]/([a-zA-Z]*)/responses/([0-9]*)/headers/([-a-zA-Z0-9_]*)/schema', name  # noqa: COM812
+            '/paths/\\[([^\\]]*)\\]/([a-zA-Z]*)/responses/([0-9]*)/headers/([-a-zA-Z0-9_]*)/schema',
+            name,  # noqa: COM812
         )
         if match:
             return '{}::{}::{}::Response{}Header{}'.format(

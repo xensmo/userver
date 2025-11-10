@@ -171,7 +171,10 @@ _allocated_ports = set()
 
 @pytest.fixture(scope='session')
 def choose_free_port(
-    pytestconfig, get_free_port, _testsuite_socket_cleanup, _testsuite_default_af  # noqa: COM812
+    pytestconfig,
+    get_free_port,
+    _testsuite_socket_cleanup,
+    _testsuite_default_af,  # noqa: COM812
 ) -> Callable[[Optional[int]], int]:
     """
     A function that chooses a free port based on the optional hint given in the parameter.

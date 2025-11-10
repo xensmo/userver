@@ -13,7 +13,9 @@ from proto_structs.models import type_ref_consts
 
 
 def get_type_override(
-    *, proto_type_name: str, plugin_options: options.PluginOptions  # noqa: COM812
+    *,
+    proto_type_name: str,
+    plugin_options: options.PluginOptions,  # noqa: COM812
 ) -> Optional[type_ref.TypeReference]:
     """
     If we wish to use a custom C++ type for the referenced Protobuf type, returns it. Otherwise, returns `None`.

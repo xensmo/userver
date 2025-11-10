@@ -64,7 +64,9 @@ def parse_enum(enum: descriptor.EnumDescriptor) -> gen_node.EnumNode:
     for value in typing.cast(List[descriptor.EnumValueDescriptor], enum.values):
         values.append(parse_enum_value(value))
     return gen_node.EnumNode(
-        vanilla_name=type_mapping.parse_type_name(enum), proto_file=pathlib.Path(proto_file_name), values=values  # noqa: COM812
+        vanilla_name=type_mapping.parse_type_name(enum),
+        proto_file=pathlib.Path(proto_file_name),
+        values=values,  # noqa: COM812
     )
 
 
@@ -94,7 +96,9 @@ def _cut_enum_value_name(value_name: str, *, enum_name: str) -> str:
 
 
 def parse_message(
-    message: descriptor.Descriptor, *, plugin_options: options.PluginOptions  # noqa: COM812
+    message: descriptor.Descriptor,
+    *,
+    plugin_options: options.PluginOptions,  # noqa: COM812
 ) -> Optional[gen_node.TypeNode]:
     if _is_map_entry(message):
         return None
@@ -187,7 +191,10 @@ def _io_kind_oneof() -> io.IoKind:
 
 
 def _apply_options_to_field(
-    field: descriptor.FieldDescriptor, struct_field: gen_node.StructField, *, plugin_options: options.PluginOptions  # noqa: COM812
+    field: descriptor.FieldDescriptor,
+    struct_field: gen_node.StructField,
+    *,
+    plugin_options: options.PluginOptions,  # noqa: COM812
 ) -> gen_node.StructField:
     message_type = _get_optional_message_type(field)
     if message_type:
@@ -302,7 +309,8 @@ def parse_oneof(
 
     oneof_field_short_name = names.escape_id(typing.cast(str, oneof.name))
     oneof_type_short_name = oneof_options.generated_type_name or _synthesize_oneof_type_name(
-        oneof_field_short_name, taken_member_names  # noqa: COM812
+        oneof_field_short_name,
+        taken_member_names,  # noqa: COM812
     )
 
     oneof_type_name = names.make_nested_type_name(containing_type_name, oneof_type_short_name)

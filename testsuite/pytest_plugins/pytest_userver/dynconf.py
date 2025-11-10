@@ -308,7 +308,8 @@ class DynamicConfig:
             self._kill_switches_disabled.add(key)
 
         config_dict = _create_config_dict(
-            values={key: self._values.get(key, None) for key in keys}, kill_switches_disabled=set(keys)  # noqa: COM812
+            values={key: self._values.get(key, None) for key in keys},
+            kill_switches_disabled=set(keys),  # noqa: COM812
         )
         self._changelog.add_entries(config_dict)
         self._sync_with_service()

@@ -50,7 +50,8 @@ def test_parameters(translate_single_schema):
                                 type='integer',
                             ),
                             validators=cpp_types.CppPrimitiveValidator(
-                                prefix='Parameter0', namespace='::test_namespace::root_::get'  # noqa: COM812
+                                prefix='Parameter0',
+                                namespace='::test_namespace::root_::get',  # noqa: COM812
                             ),
                         ),
                         parser='openapi::TrivialParameter<openapi::In::kQuery, kparam, int, int>',
@@ -116,7 +117,8 @@ def test_parameters_ref(translate_single_schema):
                                 type='integer',
                             ),
                             validators=cpp_types.CppPrimitiveValidator(
-                                prefix='ParameterParameter', namespace='::test_namespace'  # noqa: COM812
+                                prefix='ParameterParameter',
+                                namespace='::test_namespace',  # noqa: COM812
                             ),
                         ),
                         parser='openapi::TrivialParameter<openapi::In::kQuery, kparam, int, int>',

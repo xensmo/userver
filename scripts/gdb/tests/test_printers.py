@@ -61,7 +61,8 @@ test_coredumps = get_paths_from_env('TESTS_COREDUMP')
 
 
 @pytest.mark.parametrize(
-    'test_key,test_coredump', [(key, False) for key in test_params] + [(key, True) for key in test_coredumps]  # noqa: COM812
+    'test_key,test_coredump',
+    [(key, False) for key in test_params] + [(key, True) for key in test_coredumps],  # noqa: COM812
 )
 def test_gdb_printers(capsys: pytest.CaptureFixture[str], test_key: str, test_coredump: str):
     test_program, test_source = test_params[test_key]

@@ -55,7 +55,8 @@ def test_headers(translate_single_schema):
                                         type='integer',
                                     ),
                                     validators=cpp_types.CppPrimitiveValidator(
-                                        namespace='::test_namespace::root_::get', prefix='Response200HeaderHeader'  # noqa: COM812
+                                        namespace='::test_namespace::root_::get',
+                                        prefix='Response200HeaderHeader',  # noqa: COM812
                                     ),
                                 ),
                                 parser='openapi::TrivialParameter<openapi::In::kHeader, kHeader, int, int>',

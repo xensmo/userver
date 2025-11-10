@@ -258,7 +258,9 @@ def test_swagger_securuty(simple_parser):
         description='',
         security={
             '<inline>#/securityDefinitions/api_key': model.ApiKeySecurity(
-                description='', name='api_key', in_=model.SecurityIn.header  # noqa: COM812
+                description='',
+                name='api_key',
+                in_=model.SecurityIn.header,  # noqa: COM812
             ),
             '<inline>#/securityDefinitions/oauth_implicit': model.OAuthSecurity(
                 description='',
