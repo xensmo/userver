@@ -33,7 +33,7 @@ class Middleware(abc.ABC):
         """
         Generated `Request` member name for middleware data.
         """
-        pass
+        pass  # noqa: PIE790
 
     @property
     @abc.abstractmethod
@@ -41,7 +41,7 @@ class Middleware(abc.ABC):
         """
         C++ type of `request_member_name`.
         """
-        pass
+        pass  # noqa: PIE790
 
     @property
     @abc.abstractmethod
@@ -49,7 +49,7 @@ class Middleware(abc.ABC):
         """
         C++ include path used to access `request_member_cpp_type`.
         """
-        pass
+        pass  # noqa: PIE790
 
     @abc.abstractmethod
     def write_member_command(
@@ -65,7 +65,7 @@ class Middleware(abc.ABC):
         sink - variable name of `ParameterSinkHttpClient` type
         http_request - variable name of `clients::http::Request` type
         """
-        pass
+        pass  # noqa: PIE790
 
 
 class MiddlewarePlugin(abc.ABC):
@@ -84,7 +84,7 @@ class MiddlewarePlugin(abc.ABC):
         Returns `x-usrv-middleware` property name that is responsible for
         middleware activation and parameters storage.
         """
-        pass
+        pass  # noqa: PIE790
 
     @abc.abstractmethod
     def create(self, args: dict) -> Middleware:
@@ -93,4 +93,4 @@ class MiddlewarePlugin(abc.ABC):
         "x-usrv-middleware." + field property is discovered.
         It creates a per-operation `Middleware` object.
         """
-        pass
+        pass  # noqa: PIE790

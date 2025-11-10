@@ -2,7 +2,7 @@ import re
 
 import pytest
 import pytest_userver.client
-import pytest_userver.grpc
+import pytest_userver.grpc  # noqa: F401
 
 SAY_HELLO = "'samples.api.GreeterService/SayHello'"
 

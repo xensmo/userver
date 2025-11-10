@@ -37,7 +37,7 @@ def _is_ydb_metric(line: str) -> bool:
     if line.startswith('#') or not line:
         return False
 
-    return line.startswith('ydb.') or line.startswith('distlock.')
+    return line.startswith('ydb.') or line.startswith('distlock.')  # noqa: PIE810
 
 
 def _normalize_metrics(metrics: str) -> str:

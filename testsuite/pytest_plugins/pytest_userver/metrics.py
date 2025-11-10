@@ -86,7 +86,7 @@ class Metric:
     _type: MetricType = MetricType.UNSPECIFIED
     # @endcond
 
-    def __eq__(self, other: typing.Any) -> bool:
+    def __eq__(self, other: typing.Any) -> bool:  # noqa: PYI032
         if not isinstance(other, Metric):
             return NotImplemented
         return self.labels == other.labels and self.value == other.value and _type_eq(self._type, other._type)
@@ -97,7 +97,7 @@ class Metric:
     # @cond
     def __post_init__(self):
         if isinstance(self.value, Histogram):
-            assert self._type == MetricType.HIST_RATE or self._type == MetricType.UNSPECIFIED
+            assert self._type == MetricType.HIST_RATE or self._type == MetricType.UNSPECIFIED  # noqa: PLR1714
         else:
             assert self._type is not MetricType.HIST_RATE
 
@@ -346,7 +346,7 @@ class MetricsSnapshot:
 
 
 def _type_eq(lhs: MetricType, rhs: MetricType) -> bool:
-    return lhs == rhs or lhs == MetricType.UNSPECIFIED or rhs == MetricType.UNSPECIFIED
+    return lhs == rhs or lhs == MetricType.UNSPECIFIED or rhs == MetricType.UNSPECIFIED  # noqa: PLR1714
 
 
 def _get_labels_tuple(metric: Metric) -> typing.Tuple:
@@ -357,7 +357,7 @@ def _get_labels_tuple(metric: Metric) -> typing.Tuple:
 def _do_compute_percentile(hist: Histogram, percent: float) -> float:
     # This implementation is O(hist.count()), which is less than perfect.
     # So far, this was not a big enough pain to rewrite it.
-    value_lists = [[bound] * bucket for (bucket, bound) in zip(hist.buckets, hist.bounds)] + [[math.inf] * hist.inf]
+    value_lists = [[bound] * bucket for (bucket, bound) in zip(hist.buckets, hist.bounds)] + [[math.inf] * hist.inf]  # noqa: B905
     values = [item for sublist in value_lists for item in sublist]
 
     # Implementation taken from:
@@ -393,7 +393,7 @@ _FlattenedSnapshot = typing.Set[typing.Tuple[str, Metric]]
 
 
 def _flatten_snapshot(values, ignore_zeros: bool) -> _FlattenedSnapshot:
-    return set(
+    return set(  # noqa: C401
         (path, metric)
         for path, metrics in values.items()
         for metric in metrics

@@ -213,7 +213,7 @@ class _RedisClusterNode:
 
 class RedisClusterTopology:
     def __init__(self, ports, cluster_ports):
-        all_ports = [(port, cport) for port, cport in zip(ports, cluster_ports)]
+        all_ports = [(port, cport) for port, cport in zip(ports, cluster_ports)]  # noqa: B905
         self.nodes = [_RedisClusterNode(REDIS_CLUSTER_HOST, port, cluster_port) for port, cluster_port in all_ports]
         self.nodes_by_names = {node.get_address(): node for node in self.nodes}
         self.added_master = None
@@ -466,7 +466,7 @@ class RedisClusterTopology:
                     logging.warning(f'failed get nodes (wrong count) {ret}')
                     return False
                 ids = set()
-                for node, data in ret.items():
+                for node, data in ret.items():  # noqa: PERF102
                     if data['flags'] == 'handshake':
                         logging.warning(f'failed get nodes (handshake) {ret}')
                         return False

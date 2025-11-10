@@ -207,10 +207,10 @@ async def test_http1_ping(service_client):
 
 async def test_http1_broken_bytes(service_client, create_socket):
     async with create_socket() as sock:
-        await sock.sendall('GET / HTTP/1.1'.encode('utf-8'))
+        await sock.sendall('GET / HTTP/1.1'.encode('utf-8'))  # noqa: UP012
         with pytest.raises(asyncio.TimeoutError):
             await sock.recv(1024, timeout=1.0)
-        await sock.sendall('garbage'.encode('utf-8'))
+        await sock.sendall('garbage'.encode('utf-8'))  # noqa: UP012
         r = await sock.recv(1024)
         assert 'HTTP/1.1 400 Bad Request' in r.decode('utf-8')
 
@@ -241,7 +241,7 @@ async def test_settings_and_ping(service_client, create_socket):
         assert max_streams == events[1].changed_settings[3].new_value
         assert isinstance(events[2], h2.events.SettingsAcknowledged)
 
-        ping_data = '12345678'.encode()
+        ping_data = '12345678'.encode()  # noqa: UP012
         conn.ping(ping_data)
 
         events = []

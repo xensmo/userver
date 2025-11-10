@@ -58,7 +58,7 @@ def service_env():
     @snippet samples/redis_service/testsuite/conftest.py  service_env
     @ingroup userver_testsuite_fixtures
     """
-    return None
+    return None  # noqa: RET501
 
 
 @pytest.fixture(scope='session')

@@ -51,4 +51,4 @@ async def _gate_ready(service_client, _gate):
     _gate.start_accepting()
 
     await _gate.wait_for_connections(timeout=5.0)
-    yield _gate
+    yield _gate  # noqa: PT022

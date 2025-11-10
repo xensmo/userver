@@ -70,7 +70,7 @@ class _CodeGenerator:
         except Exception:
             raise Exception(
                 f'userver proto structs codegen failed for file: {self.file_descriptor.name} '
-                '(see details in the exception above)'
+                '(see details in the exception above)'  # noqa: COM812
             )
 
     @staticmethod
@@ -96,10 +96,10 @@ def generate(loader: jinja2.BaseLoader) -> None:
 
     response = plugin_pb2.CodeGeneratorResponse()  # pyright: ignore
     if hasattr(response, 'FEATURE_PROTO3_OPTIONAL'):  # pyright: ignore
-        setattr(
+        setattr(  # noqa: B010
             response,  # pyright: ignore
             'supported_features',
-            getattr(response, 'FEATURE_PROTO3_OPTIONAL'),  # pyright: ignore
+            getattr(response, 'FEATURE_PROTO3_OPTIONAL'),  # pyright: ignore  # noqa: B009
         )
 
     jinja_env = jinja2.Environment(
@@ -124,7 +124,7 @@ def generate(loader: jinja2.BaseLoader) -> None:
     except Exception:
         raise Exception(
             f'userver proto structs codegen failed to parse options for files: {", ".join(files)} '
-            '(see details in the exception above)'
+            '(see details in the exception above)'  # noqa: COM812
         )
 
     # pylint: disable=no-member

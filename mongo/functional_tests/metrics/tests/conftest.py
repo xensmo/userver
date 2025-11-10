@@ -4,7 +4,7 @@ import pytest
 
 _BASE_TIME_SEC = 100
 _RECENT_PERIOD_WAIT_INTERVAL_SEC = 6
-_DEFAULT_NOW = datetime.datetime.utcfromtimestamp(_BASE_TIME_SEC)
+_DEFAULT_NOW = datetime.datetime.utcfromtimestamp(_BASE_TIME_SEC)  # noqa: DTZ004
 
 pytest_plugins = ['pytest_userver.plugins.mongo']
 
@@ -49,7 +49,7 @@ async def force_metrics_to_appear(
     _metrics_setup_once_flag.append(True)
 
     old_now = mocked_time.now()
-    now = datetime.datetime.utcfromtimestamp(
+    now = datetime.datetime.utcfromtimestamp(  # noqa: DTZ004
         _BASE_TIME_SEC - _RECENT_PERIOD_WAIT_INTERVAL_SEC,
     )
     mocked_time.set(now)

@@ -61,7 +61,7 @@ bottom_matter = f"""
 
 #endif  // __ELF__
 // NOLINTEND
-// clang-format on"""
+// clang-format on"""  # noqa: F541
 
 # Write the inline asm header
 with open(printers_header, 'wt') as header:

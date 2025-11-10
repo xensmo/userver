@@ -12,7 +12,7 @@ from typing import NoReturn
 from typing import Optional
 
 import google.protobuf.descriptor
-import google.protobuf.descriptor_pool
+import google.protobuf.descriptor_pool  # noqa: F401
 import google.protobuf.message
 import grpc
 
@@ -96,8 +96,8 @@ async def _raise_unimplemented_error(
     if state.asyncexc_append is not None:
         state.asyncexc_append(
             testsuite.mockserver.exceptions.HandlerNotFoundError(
-                f"gRPC mockserver handler is not installed for '{_get_full_method_name(method_descriptor)}'."
-            )
+                f"gRPC mockserver handler is not installed for '{_get_full_method_name(method_descriptor)}'."  # noqa: COM812
+            )  # noqa: COM812
         )
     # This error is identical to the builtin pytest error.
     await context.abort(grpc.StatusCode.UNIMPLEMENTED, 'Method not found!')
@@ -204,7 +204,7 @@ def _check_is_valid_response(
         raise ValueError(
             f'In grpc_mockserver handler for {_get_full_method_name(method_descriptor)}: '
             'Expected a protobuf Message response, '
-            f'got: {response!r} ({type(response).__qualname__})'
+            f'got: {response!r} ({type(response).__qualname__})'  # noqa: COM812
         )
     descriptor = type(response).DESCRIPTOR
     assert isinstance(descriptor, google.protobuf.descriptor.Descriptor)
@@ -212,7 +212,7 @@ def _check_is_valid_response(
         raise ValueError(
             f'In grpc_mockserver handler for {_get_full_method_name(method_descriptor)}: '
             f'Expected a response of type "{method_descriptor.output_type.full_name}", '
-            f'got: "{descriptor.full_name}"'
+            f'got: "{descriptor.full_name}"'  # noqa: COM812
         )
     return response
 
@@ -225,7 +225,7 @@ def _check_response_is_asyncgen(
         raise ValueError(
             f'In grpc_mockserver handler for {_get_full_method_name(method_descriptor)}: '
             'Expected an async generator response for server streaming, '
-            f'got: {response_iterator!r} ({type(response_iterator).__qualname__})'
+            f'got: {response_iterator!r} ({type(response_iterator).__qualname__})'  # noqa: COM812
         )
     return typing.cast(AsyncIterator, response_iterator)
 

@@ -131,7 +131,7 @@ async def _dns_mock(dns_info):
         yield server
 
 
-@pytest.fixture(scope='function', name='dns_mock2_lazy')
+@pytest.fixture(scope='function', name='dns_mock2_lazy')  # noqa: PT003
 async def _dns_mock2_lazy(dns_info2):
     return create_server(dns_info2, 'secondary')
 
@@ -146,7 +146,7 @@ def _dns_info2(for_dns_gate_port2) -> DnsInfo:
     return DnsInfo('::1', for_dns_gate_port2)
 
 
-@pytest.fixture(scope='function', name='dns_mock_stats')
+@pytest.fixture(scope='function', name='dns_mock_stats')  # noqa: PT003
 def _dns_mock_stats(dns_mock):
     dns_mock.reset_stats()
 
@@ -184,10 +184,10 @@ async def _gate_ready(service_client, _gate_started):
     await _gate_started.to_client_pass()
     await _gate_started.sockets_close()  # close keepalive connections
 
-    yield _gate_started
+    yield _gate_started  # noqa: PT022
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='function')  # noqa: PT003
 def gen_domain_name():
     def _gen_domain_name(length: int = 10, tld: str = '.com'):
         domain = ''.join(sys_random.choice(string.ascii_lowercase) for _ in range(length))

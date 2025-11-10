@@ -23,7 +23,7 @@ versions_md_path = Path('scripts/docs/en/versions.md')
 versions_md_path.parent.mkdir(parents=True, exist_ok=True)
 
 versions_md_content = (
-    '\\page versions Versions\n\n'
+    '\\page versions Versions\n\n'  # noqa: ISC003
     + '- [trunk/develop](index.html)\n'
     + '\n'.join(f'- [{ver}](docs/{ver}/index.html)' for ver in reversed(versions))
     + '\n'

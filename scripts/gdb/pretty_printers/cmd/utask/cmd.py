@@ -1,4 +1,4 @@
-import argparse
+import argparse  # noqa: I001
 from contextlib import contextmanager
 from dataclasses import dataclass
 import functools
@@ -24,7 +24,7 @@ if not hasattr(gdb.unwinder, 'FrameId'):
 
 
 arch_name: str = re.search(
-    'boost.*context.*/asm/jump_([a-z_0-9]+)', gdb.execute('info sources boost.*context.*/asm/jump_', to_string=True)
+    'boost.*context.*/asm/jump_([a-z_0-9]+)', gdb.execute('info sources boost.*context.*/asm/jump_', to_string=True)  # noqa: COM812
 ).group(1)
 registers_offsets = {
     'x86_64_sysv_elf_gas': {
@@ -36,7 +36,7 @@ registers_offsets = {
         'rbp': 0x38,
         'pc': 0x40,
         'sp': 0x48,
-    }
+    }  # noqa: COM812
 }[arch_name]
 
 USERVER_NAMESPACE = (
@@ -46,7 +46,7 @@ USERVER_NAMESPACE = (
     )
 ) and match.group(1)
 if USERVER_NAMESPACE is None:
-    warnings.warn('Failed to detect USERVER_NAMESPACE')
+    warnings.warn('Failed to detect USERVER_NAMESPACE')  # noqa: B028
     USERVER_NAMESPACE = ''
 
 
@@ -280,7 +280,7 @@ class Span:
         if not data_ptr:
             return None
         task_local_spans = gdb.lookup_static_symbol(
-            f'{USERVER_NAMESPACE}tracing::(anonymous namespace)::task_local_spans'
+            f'{USERVER_NAMESPACE}tracing::(anonymous namespace)::task_local_spans'  # noqa: COM812
         ).value()
         data_key = task_local_spans['impl_']['key_']
         data_base = (data_ptr + data_key)['ptr']
@@ -320,11 +320,11 @@ class Span:
         )
         try:
             return gdb.lookup_type(
-                template.format(kNormal=f'({USERVER_NAMESPACE}engine::impl::task_local::VariableKind)0')
+                template.format(kNormal=f'({USERVER_NAMESPACE}engine::impl::task_local::VariableKind)0')  # noqa: COM812
             )
         except gdb.error:
             return gdb.lookup_type(
-                template.format(kNormal=f'{USERVER_NAMESPACE}engine::impl::task_local::VariableKind::kNormal')
+                template.format(kNormal=f'{USERVER_NAMESPACE}engine::impl::task_local::VariableKind::kNormal')  # noqa: COM812
             )
 
     @functools.cache
@@ -374,7 +374,7 @@ def lookup_mappings():
     if is_coredump:
         command = 'maintenance info sections READONLY'
         regexp = re.compile(
-            rf'\s+\[[0-9]+\]\s+({hex_re})->({hex_re})\s+at\s+{hex_re}:\s+load[0-9]+\s+ALLOC\s+LOAD\s+READONLY\s+HAS_CONTENTS\s*$'
+            rf'\s+\[[0-9]+\]\s+({hex_re})->({hex_re})\s+at\s+{hex_re}:\s+load[0-9]+\s+ALLOC\s+LOAD\s+READONLY\s+HAS_CONTENTS\s*$'  # noqa: COM812
         )
     else:
         command = 'info proc mappings'
@@ -390,7 +390,7 @@ def lookup_mappings():
             stack_end = guard_page_end + ALLOC_STACK_SIZE
             try:
                 if b'ThisIsCoroAlloc\0' in bytes(
-                    gdb.selected_inferior().read_memory(stack_end - TAIL_STACK_SIZE, TAIL_STACK_SIZE)
+                    gdb.selected_inferior().read_memory(stack_end - TAIL_STACK_SIZE, TAIL_STACK_SIZE)  # noqa: COM812
                 ):
                     cb_ptr = stack_end - CB_SIZE
                     if task := get_task_from_control_block(cb_ptr):
@@ -462,7 +462,7 @@ class UtaskListCmd(gdb.Command):
                 raise argparse.ArgumentTypeError(e)
 
         parser = argparse.ArgumentParser(
-            'utask list', description='List userver tasks (all or some of them)', exit_on_error=False
+            'utask list', description='List userver tasks (all or some of them)', exit_on_error=False  # noqa: COM812
         )
         parser.add_argument(
             '-s',
@@ -476,7 +476,7 @@ class UtaskListCmd(gdb.Command):
         parser.add_argument('-i', '--id', help='List utask with specific id only')
         parser.add_argument('-n', '--name', type=_regexp_parser, help='List utasks which names match the regex')
         parser.add_argument(
-            '-b', '--backtrace', type=_regexp_parser, help='List utasks which backtraces match the regex'
+            '-b', '--backtrace', type=_regexp_parser, help='List utasks which backtraces match the regex'  # noqa: COM812
         )
         return parser
 
@@ -537,7 +537,7 @@ class UtaskApplyCmd(gdb.Command):
             args = arg.split(maxsplit=1)
             if len(args) < 2:
                 print('Usage: utask apply <utask_id|span_name|"all"> <gdbcmd>')
-                return
+                return  # noqa: RET502
             which_task, cmd = args[0], args[1]
 
             if which_task == 'all':
@@ -568,7 +568,7 @@ class UtaskApplyCmd(gdb.Command):
         with task.switch_to():
             try:
                 gdb.set_convenience_variable('this_utask', task.task)
-                gdb.set_convenience_variable('this_utask_name', (task.attached_span and task.attached_span.name or ''))
+                gdb.set_convenience_variable('this_utask_name', (task.attached_span and task.attached_span.name or ''))  # noqa: RUF021
                 gdb.execute(cmd, from_tty)
             finally:
                 gdb.set_convenience_variable('this_utask', None)

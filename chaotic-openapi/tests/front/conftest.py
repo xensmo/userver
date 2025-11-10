@@ -1,4 +1,4 @@
-from chaotic_openapi.front import parser as front_parser
+from chaotic_openapi.front import parser as front_parser  # noqa: I001
 import pytest
 
 

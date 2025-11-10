@@ -455,7 +455,7 @@ class _SocketsPaired:
                 task.result()
         except GateInterceptException as exc:
             logger.info('In "%s": %s', self._proxy_name, exc)
-        except socket.error as exc:
+        except socket.error as exc:  # noqa: UP024
             logger.error('Exception in "%s": %s', self._proxy_name, exc)
         except Exception:
             logger.exception('interceptor failed')
@@ -468,7 +468,7 @@ class _SocketsPaired:
             for sock in self._server, self._client:
                 try:
                     sock.close()
-                except socket.error:
+                except socket.error:  # noqa: UP024
                     logger.exception('Exception in "%s" on closing %s:', self._proxy_name, sock)
 
 

@@ -101,7 +101,7 @@ async def test_rebalance_after_failure(
     )
     assert len(first_consumer_messages) == 2
 
-    assert set(['key-3', 'key-4']) == set(
+    assert set(['key-3', 'key-4']) == set(  # noqa: C405
         parse_message_keys(first_consumer_messages),
     )
 

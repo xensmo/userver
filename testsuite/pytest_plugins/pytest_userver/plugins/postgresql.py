@@ -144,7 +144,7 @@ def userver_pg_trx(
         should_fail = registered.is_failure_enabled(data['trx_name'])
         return {'trx_should_fail': should_fail}
 
-    yield registered
+    yield registered  # noqa: PT022
 
 
 @pytest.fixture
@@ -160,4 +160,4 @@ def userver_pg_ntrx(testpoint) -> typing.Generator[RegisteredNtrx, None, None]:
     @ingroup userver_testsuite_fixtures
     """  # noqa: E501
 
-    yield RegisteredNtrx(testpoint)
+    yield RegisteredNtrx(testpoint)  # noqa: PT022

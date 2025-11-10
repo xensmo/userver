@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass  # noqa: I001
 
 import gdb
 import gdb.printing

@@ -64,7 +64,7 @@ class Translator:
                 namespaces={schema.source_location().filepath: '' for schema in service.schemas.values()},
                 infile_to_name_func=self.map_infile_path_to_cpp_type,
                 include_dirs=self._include_dirs,
-            )
+            )  # noqa: COM812
         )
         self._spec.schemas = gen.generate_types(resolved_schemas)
         self._raw_schemas = {str(schema.source_location()): schema for schema in service.schemas.values()}
@@ -131,7 +131,7 @@ class Translator:
             )
 
         match = re.fullmatch(
-            '/paths/\\[([^\\]]*)\\]/([a-zA-Z]*)/responses/([0-9]*)/headers/([-a-zA-Z0-9_]*)/schema', name
+            '/paths/\\[([^\\]]*)\\]/([a-zA-Z]*)/responses/([0-9]*)/headers/([-a-zA-Z0-9_]*)/schema', name  # noqa: COM812
         )
         if match:
             return '{}::{}::{}::Response{}Header{}'.format(
@@ -249,7 +249,7 @@ class Translator:
                 namespaces={schema.source_location().filepath: ''},
                 infile_to_name_func=self.map_infile_path_to_cpp_type,
                 include_dirs=self._include_dirs,
-            )
+            )  # noqa: COM812
         )
         gen_types = gen.generate_types(
             resolved_schemas,
@@ -272,7 +272,7 @@ class Translator:
             response = self._raw_responses[response.ref]
 
         headers = []
-        for name, header in response.headers.items():
+        for name, header in response.headers.items():  # noqa: PERF102
             headers.append(self._translate_parameter(header))
 
         body = {}

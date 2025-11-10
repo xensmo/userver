@@ -1,4 +1,4 @@
-from chaotic_openapi.front import errors
+from chaotic_openapi.front import errors  # noqa: I001
 import pydantic
 import pytest
 

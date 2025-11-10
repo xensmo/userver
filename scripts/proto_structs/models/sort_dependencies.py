@@ -45,7 +45,7 @@ class _Cycle:
     @property
     def edges(self) -> Iterable[Tuple[_GraphNode, _GraphNode]]:
         """Graph edges (node -> dependency) that form the cycle."""
-        return zip(self.nodes[:-1], self.nodes[1:])
+        return zip(self.nodes[:-1], self.nodes[1:])  # noqa: B905
 
 
 def _iter_struct_fields(node: gen_node.CodegenNode) -> Iterable[gen_node.StructField]:
@@ -147,7 +147,7 @@ class _Graph:
                 self.can_break_dependency(node, dependency=dependency) for node, dependency in cycle.edges
             ]
             can_break_any_dependency = any(can_break_dependencies)
-            for (node, dependency), can_break in zip(cycle.edges, can_break_dependencies):
+            for (node, dependency), can_break in zip(cycle.edges, can_break_dependencies):  # noqa: B905
                 if can_break or not can_break_any_dependency:
                     self.break_dependency(node, dependency=dependency)
                     self._graph[node].discard(dependency)

@@ -170,10 +170,10 @@ def generate(
 
     response = plugin.CodeGeneratorResponse()
     if hasattr(response, 'FEATURE_PROTO3_OPTIONAL'):
-        setattr(
+        setattr(  # noqa: B010
             response,
             'supported_features',
-            getattr(response, 'FEATURE_PROTO3_OPTIONAL'),
+            getattr(response, 'FEATURE_PROTO3_OPTIONAL'),  # noqa: B009
         )
 
     jinja_env = jinja2.Environment(

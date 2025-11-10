@@ -374,7 +374,7 @@ class SchemaParser:
 
         fields = set(input_.keys())
         fields.remove('$ref')
-        if 'description' in fields:
+        if 'description' in fields:  # noqa: FURB132
             # description is explicitly allowed in $ref
             fields.remove('description')
 
