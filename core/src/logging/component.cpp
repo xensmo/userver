@@ -1,7 +1,7 @@
 #include <userver/logging/component.hpp>
 
 #include <chrono>
-#include <iostream>
+#include <cstdio>
 #include <stdexcept>
 
 #include <fmt/chrono.h>
@@ -48,10 +48,14 @@ void ReportReopeningErrorAndThrow(
     const std::vector<std::string_view>& failed_loggers,
     const std::string& result_messages
 ) {
-    std::cerr << fmt::format(
-        "[{:%Y-%m-%d %H:%M:%S %Z}] loggers [{}] failed to reopen the log file: logs are getting lost now",
-        std::chrono::system_clock::now(),
-        fmt::join(failed_loggers, ", ")
+    std::fputs(
+        fmt::format(
+            "[{:%Y-%m-%d %H:%M:%S %Z}] loggers [{}] failed to reopen the log file: logs are getting lost now",
+            std::chrono::system_clock::now(),
+            fmt::join(failed_loggers, ", ")
+        )
+            .c_str(),
+        stderr
     );
 
     throw std::runtime_error("ReopenAll errors: " + result_messages);
