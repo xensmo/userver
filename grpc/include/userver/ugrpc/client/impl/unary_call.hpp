@@ -51,6 +51,9 @@ public:
     void Perform() { CallWithRetries(); }
 
     Response&& ExtractResponse() {
+        if (inherited_deadline_reached_) {
+            USERVER_NAMESPACE::server::request::MarkTaskInheritedDeadlineExpired();
+        }
         if (interrupted_) {
             throw RpcInterruptedError(state_.GetCallName(), "UnaryCall");
         }
@@ -69,8 +72,8 @@ private:
     void CallWithRetries() {
         const utils::FastScopeGuard commit_state_guard([this]() noexcept { state_.Commit(); });
 
-        const auto deadline =
-            std::min(call_options_.GetDeadline(), USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline());
+        const auto inherited_deadline = USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline();
+        const auto deadline = std::min(call_options_.GetDeadline(), inherited_deadline);
         const int max_attempts = call_options_.GetAttempts();
         state_.GetSpan().AddTag(tracing::kMaxAttempts, max_attempts);
 
@@ -108,6 +111,9 @@ private:
 
             const auto delay = retry_backoff.NextAttemptDelay();
             if (deadline.IsReachable() && deadline.TimeLeft() <= delay) {
+                if (deadline == inherited_deadline) {
+                    inherited_deadline_reached_ = true;
+                }
                 OnDone(status_);
                 return;
             }
@@ -203,6 +209,7 @@ private:
     grpc::Status status_;
     bool done_{false};
     bool interrupted_{false};
+    bool inherited_deadline_reached_{false};
 
     std::atomic<bool> abandoned_{false};
 };
