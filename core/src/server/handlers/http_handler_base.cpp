@@ -315,7 +315,12 @@ void HttpHandlerBase::ReportMalformedRequest(http::HttpRequest& http_request) co
 
         SetFormattedErrorResponse(
             response,
-            GetFormattedExternalErrorBody({HandlerErrorCode::kRequestParseError, ExternalBody{response.GetData()}})
+            GetFormattedExternalErrorBody(http::CustomHandlerException{
+                HandlerErrorCode::kRequestParseError,
+                // Response status and body is expected to have been set prior to ReportMalformedRequest call.
+                response.GetStatus(),
+                ExternalBody{response.GetData()},
+            })
         );
     } catch (const std::exception& ex) {
         LOG_ERROR() << "unable to handle ready request: " << ex;
