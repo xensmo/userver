@@ -57,11 +57,9 @@ ClientFactoryConfig Parse(const yaml_config::YamlConfig& value, formats::parse::
         config.ssl_credentials_options = MakeCredentialsOptions(value["ssl-credentials-options"]);
     }
     config.retry_config = value["retry-config"].As<RetryConfig>();
-    LOG_INFO() << "RetryConfig: attempts=" << config.retry_config.attempts;
     config.channel_args = MakeChannelArgs(value["channel-args"]);
     config.default_service_config = value["default-service-config"].As<std::optional<std::string>>();
     config.channel_count = value["channel-count"].As<std::size_t>(config.channel_count);
-    LOG_INFO() << "ChannelCount: " << config.channel_count;
     return config;
 }
 
