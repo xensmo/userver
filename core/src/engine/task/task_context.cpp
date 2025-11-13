@@ -117,11 +117,14 @@ TaskContext::TaskContext(
       cancel_deadline_(deadline),
       trace_csw_left_(task_processor_.GetTaskTraceMaxCswForNewTask()) {
     UASSERT(payload_);
+
+    task_processor_.HookTaskCreate(*this);
     LOG_TRACE() << "task with task_id=" << ReadableTaskId(current_task::GetCurrentTaskContextUnchecked())
                 << " created task with task_id=" << ReadableTaskId(this) << logging::LogExtra::Stacktrace();
 }
 
 TaskContext::~TaskContext() noexcept {
+    task_processor_.HookTaskDestroy(*this);
     LOG_TRACE() << "Task with task_id=" << ReadableTaskId(this) << " stopped" << logging::LogExtra::Stacktrace();
     UASSERT(magic_ == kMagic);
 
@@ -320,14 +323,18 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
 
     yield_reason_ = YieldReason::kTaskWaiting;
     UASSERT(task_pipe_);
+
     TraceStateTransition(Task::State::kSuspended);
-    ProfilerStopExecution();
+    ProfilerStopExecution();  // TODO: move to hook
+    GetTaskProcessor().HookBeforeSleep(*this);
 
     auto& task_pipe_ref = *task_pipe_;
     [[maybe_unused]] TaskContext* context = task_pipe_ref().get();
 
-    ProfilerStartExecution();
+    GetTaskProcessor().HookAfterWakeup(*this);
+    ProfilerStartExecution();  // TODO: move to hook
     TraceStateTransition(Task::State::kRunning);
+
     UASSERT(context == this);
     UASSERT(state_ == Task::State::kRunning);
 

@@ -50,6 +50,8 @@ class Manager;
 /// userver_experiments.*NAME* | whether to enable certain userver experiments; these are gradually enabled by userver team, for internal use only | false
 /// graceful_shutdown_interval | at shutdown, first hang for this duration with /ping 5xx to give the balancer a chance to redirect new requests to other hosts | 0s
 /// enable_trx_tracker | Enable checking of heavy operations (like http calls) while having active database transactions. | true
+/// enable_component_load_tracing | whether trace all components coroutines during boot, and dump alive coroutines stacktraces on slow boot. Can slow down service startup. | false
+/// component_load_print_interval | how often to print "still loading components: ..." log message during startup | 10s
 ///
 /// ## Static task_processor options:
 /// Name | Description | Default value

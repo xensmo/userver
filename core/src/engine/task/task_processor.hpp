@@ -10,11 +10,13 @@
 
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
+#include <engine/plugin_manager.hpp>
 #include <engine/task/task_counter.hpp>
 #include <engine/task/task_processor_config.hpp>
 #include <engine/task/task_queue.hpp>
 #include <engine/task/task_queue_tsan.hpp>
 #include <engine/task/work_stealing_queue/task_queue.hpp>
+#include <engine/tracer_plugin.hpp>
 #include <userver/concurrent/impl/interference_shield.hpp>
 #include <userver/engine/impl/detached_tasks_sync_block.hpp>
 #include <userver/logging/logger.hpp>
@@ -83,6 +85,20 @@ public:
 
     void SetBlockingTaskProcessor(TaskProcessor& task_processor);
 
+    void HookBeforeSleep(const impl::TaskContext& task) noexcept;
+
+    void HookAfterWakeup(const impl::TaskContext& task) noexcept;
+
+    void HookTaskCreate(const impl::TaskContext& task) noexcept;
+
+    void HookTaskDestroy(const impl::TaskContext& task) noexcept;
+
+    void RegisterPlugin(PluginBase& plugin);
+
+    void UnregisterPlugin(PluginBase& plugin) noexcept;
+
+    const TracePlugin& GetTracePlugin() const;
+
 private:
     // Contains queue size cache when overloaded by length, 0 otherwise.
     using OverloadByLength = std::size_t;
@@ -134,6 +150,10 @@ private:
 
     std::unique_ptr<utils::statistics::ThreadPoolCpuStatsStorage> cpu_stats_storage_{nullptr};
     TaskProcessor* fs_task_processor_{nullptr};
+
+    PluginManager plugin_manager_;
+    // TracePlugin must start before any task is created to account it
+    TracePlugin trace_plugin_;
 };
 
 /// Register a function that runs on all threads on task processor creation.

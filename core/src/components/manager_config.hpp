@@ -31,6 +31,8 @@ struct ManagerConfig {
     bool disable_phdr_cache{false};
     bool preheat_stacktrace_collector{true};
     bool enable_trx_tracker{true};
+    bool enable_component_load_tracing{false};
+    std::chrono::milliseconds component_load_print_interval{10000};
 
     static ManagerConfig FromString(
         const std::string&,
