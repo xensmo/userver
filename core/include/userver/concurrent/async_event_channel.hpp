@@ -13,6 +13,7 @@
 
 #include <userver/concurrent/async_event_source.hpp>
 #include <userver/concurrent/variable.hpp>
+#include <userver/engine/semaphore.hpp>
 #include <userver/engine/shared_mutex.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/engine/task/task_with_result.hpp>
@@ -175,7 +176,12 @@ public:
             for (const auto& [_, listener] : listeners) {
                 tasks.push_back(Task{
                     listener,  // an intentional copy
-                    utils::Async(listener->task_name, [&, &callback = listener->callback, lock] { callback(args...); }),
+                    utils::Async(
+                        listener->task_name,
+                        [&, &callback = listener->callback, lock, sema_lock = std::shared_lock(listener->sema)] {
+                            callback(args...);
+                        }
+                    ),
                 });
             }
         }
@@ -191,9 +197,15 @@ public:
 
 private:
     struct Listener final {
+        // 'sema' with data_.Lock() are used to synchronize removal 'Listener' from ListenersData::listeners
+        mutable engine::Semaphore sema;
+
         std::string name;
         Function callback;
         std::string task_name;
+
+        Listener(std::string name, Function callback, std::string task_name)
+            : sema(1), name(std::move(name)), callback(std::move(callback)), task_name(std::move(task_name)) {}
     };
 
     struct ListenersData final {
@@ -218,9 +230,14 @@ private:
             }
 
             listener = iter->second;
+
             on_listener_removal = data->on_listener_removal;
 
             listeners.erase(iter);
+
+            // Lock and unlock sema under data_.Lock(),
+            // now we're sure that SendEvent() will not trigger listener->callback()
+            (void)std::shared_lock(listener->sema);
         }
         // Unlock data_ here to be able to (un)subscribe to *this in listener->callback (in debug)
         // without deadlock
@@ -246,7 +263,7 @@ private:
         auto& listeners = data->listeners;
         auto task_name = impl::MakeAsyncChannelName(name_, name);
         const auto [iterator, success] = listeners.emplace(
-            id, std::make_shared<const Listener>(Listener{std::string{name}, std::move(func), std::move(task_name)})
+            id, std::make_shared<const Listener>(std::string{name}, std::move(func), std::move(task_name))
         );
         if (!success) impl::ReportAlreadySubscribed(Name(), name);
         return AsyncEventSubscriberScope(utils::impl::InternalTag{}, *this, id);
