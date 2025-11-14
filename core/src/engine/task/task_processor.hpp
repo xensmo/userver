@@ -55,6 +55,8 @@ public:
 
     std::shared_ptr<impl::TaskProcessorPools> GetTaskProcessorPools() { return pools_; }
 
+    impl::TaskProcessorPools& GetTaskProcessorPoolsRef() { return *pools_; }
+
     const std::string& Name() const { return config_.name; }
 
     impl::TaskCounter& GetTaskCounter() noexcept { return task_counter_; }

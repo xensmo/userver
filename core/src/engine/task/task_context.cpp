@@ -20,6 +20,7 @@
 #include <userver/utils/assert.hpp>
 #include <userver/utils/underlying_value.hpp>
 
+#include <engine/deadlock_detector.hpp>
 #include <engine/ev/thread_pool.hpp>
 #include <engine/impl/future_utils.hpp>
 #include <engine/impl/generic_wait_list.hpp>
@@ -174,6 +175,9 @@ FutureStatus TaskContext::WaitUntil(Deadline deadline) const noexcept {
 
     static_assert(noexcept(current_task::GetCurrentTaskContext()));
     auto& current = current_task::GetCurrentTaskContext();
+
+    std::optional<deadlock_detector::WaitScope> scope;
+    if (!deadline.IsReachable()) scope.emplace(*this);
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     auto& target = const_cast<TaskContext&>(*this);
@@ -680,6 +684,8 @@ void TaskContext::ResetPayload() noexcept {
 }
 
 CountedCoroutinePtr& TaskContext::GetCoroutinePtr() noexcept { return coro_; }
+
+utils::StringLiteral TaskContext::GetActorType() const { return "Task"; }
 
 void intrusive_ptr_add_ref(TaskContext* p) noexcept {
     UASSERT(p);

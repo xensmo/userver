@@ -33,6 +33,7 @@ struct ManagerConfig {
     bool enable_trx_tracker{true};
     bool enable_component_load_tracing{false};
     std::chrono::milliseconds component_load_print_interval{10000};
+    engine::DeadlockDetector deadlock_detector{engine::DeadlockDetector::kOff};
 
     static ManagerConfig FromString(
         const std::string&,

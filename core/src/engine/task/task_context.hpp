@@ -10,6 +10,7 @@
 #include <boost/smart_ptr/intrusive_ref_counter.hpp>
 
 #include <engine/coro/pool.hpp>
+#include <engine/deadlock_detector/actor.hpp>
 #include <engine/ev/thread_control.hpp>
 #include <engine/task/context_timer.hpp>
 #include <engine/task/counted_coroutine_ptr.hpp>
@@ -63,7 +64,7 @@ protected:
     ~WaitStrategy() = default;
 };
 
-class TaskContext final : public ContextAccessor {
+class TaskContext final : public ContextAccessor, public deadlock_detector::Actor {
 public:
     struct NoEpoch {};
     using TaskPipe = coro::Pool::TaskPipe;
@@ -82,7 +83,7 @@ public:
 
     TaskContext(TaskProcessor&, Task::Importance, Task::WaitMode, Deadline, utils::impl::WrappedCallBase& payload);
 
-    ~TaskContext() noexcept;
+    ~TaskContext() noexcept override;
 
     TaskContext(const TaskContext&) = delete;
     TaskContext(TaskContext&&) = delete;
@@ -190,6 +191,8 @@ public:
     CountedCoroutinePtr& GetCoroutinePtr() noexcept;
 
     bool WasStartedAsCritical() const;
+
+    utils::StringLiteral GetActorType() const override;
 
 private:
     class YieldReasonGuard;
