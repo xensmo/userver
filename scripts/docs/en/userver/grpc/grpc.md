@@ -168,12 +168,14 @@ Use @ref ugrpc::client::MiddlewareBase to implement new middlewares.
 
 #### List of standard client middlewares:
 
-1. `grpc-client-logging` with component ugrpc::client::middlewares::log::Component - logs requests and responses.
-2. `grpc-client-deadline-propagation` with component ugrpc::client::middlewares::deadline_propagation::Component - activates
-   @ref scripts/docs/en/userver/deadline_propagation.md.
-3. `grpc-client-baggage` with component ugrpc::client::middlewares::baggage::Component - passes request baggage to subrequests.
-4. `grpc-client-headers-propagator` with component ugrpc::client::middlewares::headers_propagator::Component - propagates headers.
-5. `grpc-client-middleware-testsuite` with component ugrpc::client::middlewares::testsuite::Component - supports testsuite errors thrown from the mockserver.
+1. `grpc-client-logging` with component @ref ugrpc::client::middlewares::log::Component - logs requests and responses.
+2. `grpc-client-deadline-propagation` with component @ref ugrpc::client::middlewares::deadline_propagation::Component - 
+   activates @ref scripts/docs/en/userver/deadline_propagation.md.
+3. `grpc-client-baggage` with component @ref ugrpc::client::middlewares::baggage::Component - passes request baggage to subrequests.
+4. `grpc-client-headers-propagator` with component @ref ugrpc::client::middlewares::headers_propagator::Component - propagates headers.
+5. `grpc-client-origin` with component @ref ugrpc::client::middlewares::origin::Component - sets `x-origin` metadata.
+6. `grpc-client-middleware-testsuite` with component @ref ugrpc::client::middlewares::testsuite::Component -
+   supports testsuite errors thrown from the mockserver.
 
 
 ## gRPC services

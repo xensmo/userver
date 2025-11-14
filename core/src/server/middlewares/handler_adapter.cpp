@@ -31,7 +31,6 @@ constexpr utils::StringLiteral kTracingTypeRequest = "request";
 constexpr utils::StringLiteral kTracingBody = "body";
 constexpr utils::StringLiteral kTracingUri = "uri";
 
-constexpr utils::StringLiteral kUserAgentTag = "useragent";
 constexpr utils::StringLiteral kAcceptLanguageTag = "acceptlang";
 
 std::string GetHeadersLogString(
@@ -108,7 +107,7 @@ logging::LogExtra GetHeadersLogExtra(
 
     const auto& user_agent = http_request.GetHeader(USERVER_NAMESPACE::http::headers::kUserAgent);
     if (!user_agent.empty()) {
-        headers_log_extra.Extend(std::string{kUserAgentTag}, user_agent);
+        headers_log_extra.Extend(std::string{tracing::kUserAgent}, user_agent);
     }
     const auto& accept_language = http_request.GetHeader(USERVER_NAMESPACE::http::headers::kAcceptLanguage);
     if (!accept_language.empty()) {

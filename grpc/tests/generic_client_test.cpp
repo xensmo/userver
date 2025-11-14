@@ -96,14 +96,29 @@ UTEST_F(GenericClientTest, MetricsDefaultCallNameIsFake) {
 
 namespace {
 
-using GenericClientLoggingTest = utest::LogCaptureFixture<ugrpc::tests::ServiceFixture<UnitTestService>>;
+template <typename ServiceType>
+class WithClientLogMiddleware : public ugrpc::tests::ServiceFixture<ServiceType> {
+public:
+    WithClientLogMiddleware()
+        : ugrpc::tests::ServiceFixture<ServiceType>(
+              {},
+              {},
+              {
+                  std::make_shared<ugrpc::client::middlewares::log::Middleware>(
+                      ugrpc::client::middlewares::log::Settings{}
+                  ),
+              }
+          ) {}
+};
+
+using GenericClientLoggingTest = utest::LogCaptureFixture<WithClientLogMiddleware<UnitTestService>>;
 
 }  // namespace
 
 UTEST_F(GenericClientLoggingTest, Logs) {
     PerformGenericUnaryCall(*this);
 
-    const auto span_log = GetSingleLog(GetLogCapture().Filter(
+    const auto span_log = utest::GetSingleLog(GetLogCapture().Filter(
         "",
         {{{std::string_view("stopwatch_name"), kSayHelloCallName},
           {std::string_view("span_kind"), std::string_view("client")}}}

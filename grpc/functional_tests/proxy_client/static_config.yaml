@@ -39,6 +39,9 @@ components_manager:
             skip-headers:
                 skipped-header: true
 
+        grpc-client-origin:
+            user-agent: proxy-client-service
+
         grpc-client-factory:
             middlewares:
                 grpc-client-deadline-propagation:
