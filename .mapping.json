@@ -4130,6 +4130,7 @@
   "scripts/docker/ubuntu-22.04.dockerfile":"taxi/uservices/userver/scripts/docker/ubuntu-22.04.dockerfile",
   "scripts/docker/ubuntu-24.04-base.dockerfile":"taxi/uservices/userver/scripts/docker/ubuntu-24.04-base.dockerfile",
   "scripts/docker/ubuntu-24.04-userver.dockerfile":"taxi/uservices/userver/scripts/docker/ubuntu-24.04-userver.dockerfile",
+  "scripts/docker/ubuntu_install_grpc.sh":"taxi/uservices/userver/scripts/docker/ubuntu_install_grpc.sh",
   "scripts/docs/README.md":"taxi/uservices/userver/scripts/docs/README.md",
   "scripts/docs/clean_doxygen_logs.py":"taxi/uservices/userver/scripts/docs/clean_doxygen_logs.py",
   "scripts/docs/customdoxygen.css":"taxi/uservices/userver/scripts/docs/customdoxygen.css",
