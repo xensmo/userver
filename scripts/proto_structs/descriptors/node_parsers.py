@@ -3,15 +3,12 @@
 # Documentation on Protobuf descriptors:
 # https://googleapis.dev/python/protobuf/latest/google/protobuf/descriptor.html
 
+from collections.abc import Mapping
+from collections.abc import MutableSet
 import pathlib
 import re
 import typing
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Mapping
-from typing import MutableSet
-from typing import Optional
 
 import google.protobuf.descriptor as descriptor
 
@@ -30,10 +27,10 @@ from proto_structs.models import vanilla
 
 
 def parse_file(file: descriptor.FileDescriptor, *, plugin_options: options.PluginOptions) -> gen_node.File:
-    types: List[gen_node.TypeNode] = []
-    for enum in typing.cast(Dict[str, descriptor.EnumDescriptor], file.enum_types_by_name).values():
+    types: list[gen_node.TypeNode] = []
+    for enum in typing.cast(dict[str, descriptor.EnumDescriptor], file.enum_types_by_name).values():
         types.append(parse_enum(enum))
-    for message in typing.cast(Dict[str, descriptor.Descriptor], file.message_types_by_name).values():
+    for message in typing.cast(dict[str, descriptor.Descriptor], file.message_types_by_name).values():
         if message_type := parse_message(message, plugin_options=plugin_options):
             types.append(message_type)
 
@@ -60,8 +57,8 @@ def parse_file(file: descriptor.FileDescriptor, *, plugin_options: options.Plugi
 def parse_enum(enum: descriptor.EnumDescriptor) -> gen_node.EnumNode:
     proto_file_descriptor: descriptor.FileDescriptor = enum.file
     proto_file_name: str = proto_file_descriptor.name
-    values: List[gen_node.EnumValue] = []
-    for value in typing.cast(List[descriptor.EnumValueDescriptor], enum.values):
+    values: list[gen_node.EnumValue] = []
+    for value in typing.cast(list[descriptor.EnumValueDescriptor], enum.values):
         values.append(parse_enum_value(value))
     return gen_node.EnumNode(
         vanilla_name=type_mapping.parse_type_name(enum),
@@ -99,7 +96,7 @@ def parse_message(
     message: descriptor.Descriptor,
     *,
     plugin_options: options.PluginOptions,  # noqa: COM812
-) -> Optional[gen_node.TypeNode]:
+) -> gen_node.TypeNode | None:
     if _is_map_entry(message):
         return None
 
@@ -109,21 +106,21 @@ def parse_message(
 
     taken_member_names = _collect_taken_member_names(message)
 
-    nested_types: List[gen_node.TypeNode] = []
-    for nested_enum in typing.cast(List[descriptor.EnumDescriptor], message.enum_types):
+    nested_types: list[gen_node.TypeNode] = []
+    for nested_enum in typing.cast(list[descriptor.EnumDescriptor], message.enum_types):
         nested_types.append(parse_enum(nested_enum))
-    for nested_message in typing.cast(List[descriptor.Descriptor], message.nested_types):
+    for nested_message in typing.cast(list[descriptor.Descriptor], message.nested_types):
         if message_type := parse_message(nested_message, plugin_options=plugin_options):
             nested_types.append(message_type)
 
     nested_types = sort_dependencies.sort_types_topologically(nested_types)
 
-    fields: List[gen_node.StructField] = []
+    fields: list[gen_node.StructField] = []
 
-    for field in typing.cast(List[descriptor.FieldDescriptor], message.fields):
-        if oneof := typing.cast(Optional[descriptor.OneofDescriptor], field.containing_oneof):
+    for field in typing.cast(list[descriptor.FieldDescriptor], message.fields):
+        if oneof := typing.cast(descriptor.OneofDescriptor | None, field.containing_oneof):
             if not _is_synthetic_oneof(oneof):
-                oneof_fields = typing.cast(List[descriptor.FieldDescriptor], oneof.fields)
+                oneof_fields = typing.cast(list[descriptor.FieldDescriptor], oneof.fields)
                 assert len(oneof_fields) >= 1
                 if oneof_fields[0] is field:
                     fields.append(
@@ -213,7 +210,7 @@ def _apply_options_to_field(
 
 def _is_synthetic_oneof(oneof: descriptor.OneofDescriptor) -> bool:
     # https://protobuf.com/docs/descriptors#synthetic-oneofs
-    oneof_fields = typing.cast(List[descriptor.FieldDescriptor], oneof.fields)
+    oneof_fields = typing.cast(list[descriptor.FieldDescriptor], oneof.fields)
     if len(oneof_fields) != 1:
         return False
 
@@ -222,7 +219,7 @@ def _is_synthetic_oneof(oneof: descriptor.OneofDescriptor) -> bool:
     return _SYNTHETIC_ONEOF_NAME_REGEX.fullmatch(oneof_name) is not None
 
 
-def _try_transform_enum_wrapper(struct: gen_node.StructNode) -> Optional[gen_node.EnumNode]:
+def _try_transform_enum_wrapper(struct: gen_node.StructNode) -> gen_node.EnumNode | None:
     # FooBarEnum { enum FooBar { ... } } -> FooBarEnum
     if len(struct.fields) != 0:
         return None
@@ -275,7 +272,7 @@ def parse_field(
 def _try_parse_map_field_type(
     field: descriptor.FieldDescriptor,
     plugin_options: options.PluginOptions,
-) -> Optional[type_ref.TypeReference]:
+) -> type_ref.TypeReference | None:
     # https://protobuf.com/docs/descriptors#map-fields
     if typing.cast(int, field.type) != descriptor.FieldDescriptor.TYPE_MESSAGE:
         return None
@@ -293,14 +290,14 @@ def _try_parse_map_field_type(
 def parse_oneof(
     oneof: descriptor.OneofDescriptor,
     taken_member_names: MutableSet[str],
-    nested_types_to_generate: List[gen_node.TypeNode],
+    nested_types_to_generate: list[gen_node.TypeNode],
     plugin_options: options.PluginOptions,
 ) -> gen_node.StructField:
     oneof_options = option_parsers.parse_oneof(oneof, plugin_options)
 
-    fields: List[gen_node.StructField] = []
+    fields: list[gen_node.StructField] = []
 
-    for field in typing.cast(List[descriptor.FieldDescriptor], oneof.fields):
+    for field in typing.cast(list[descriptor.FieldDescriptor], oneof.fields):
         assert typing.cast(int, field.label) == descriptor.FieldDescriptor.LABEL_OPTIONAL
         fields.append(parse_field(field, plugin_options=plugin_options, ignore_label=True))
 
@@ -344,13 +341,13 @@ def _synthesize_oneof_type_name(oneof_field_short_name: str, taken_member_names:
 def _collect_taken_member_names(message: descriptor.Descriptor) -> MutableSet[str]:
     result: MutableSet[str] = set()
     result.add(typing.cast(str, message.name))
-    for nested_type in typing.cast(List[descriptor.Descriptor], message.nested_types):
+    for nested_type in typing.cast(list[descriptor.Descriptor], message.nested_types):
         result.add(typing.cast(str, nested_type.name))
-    for enum_type in typing.cast(List[descriptor.Descriptor], message.enum_types):
+    for enum_type in typing.cast(list[descriptor.Descriptor], message.enum_types):
         result.add(typing.cast(str, enum_type.name))
-    for neighbour_field in typing.cast(List[descriptor.FieldDescriptor], message.fields):
+    for neighbour_field in typing.cast(list[descriptor.FieldDescriptor], message.fields):
         result.add(typing.cast(str, neighbour_field.name))
-    for oneof in typing.cast(List[descriptor.OneofDescriptor], message.oneofs):
+    for oneof in typing.cast(list[descriptor.OneofDescriptor], message.oneofs):
         result.add(typing.cast(str, oneof.name))
     return result
 
@@ -362,7 +359,7 @@ def _make_unique_member_name(base_name: str, taken_member_names: MutableSet[str]
     return base_name
 
 
-def _get_optional_message_type(field: descriptor.FieldDescriptor) -> Optional[descriptor.Descriptor]:
+def _get_optional_message_type(field: descriptor.FieldDescriptor) -> descriptor.Descriptor | None:
     type_kind: int = field.type
     if type_kind == descriptor.FieldDescriptor.TYPE_MESSAGE or type_kind == descriptor.FieldDescriptor.TYPE_GROUP:  # noqa: PLR1714
         # Details on groups:

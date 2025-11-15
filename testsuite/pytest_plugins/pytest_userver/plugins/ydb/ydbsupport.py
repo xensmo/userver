@@ -4,7 +4,6 @@ import contextlib
 import os
 import pathlib
 import subprocess
-from typing import List
 
 import pytest
 import yaml
@@ -190,7 +189,7 @@ def goose_binary_path() -> pathlib.Path:
         return 'goose'
 
 
-def _ydb_fetch_table_names(ydb_service_settings, ydb_cli) -> List[str]:
+def _ydb_fetch_table_names(ydb_service_settings, ydb_cli) -> list[str]:
     try:
         host = ydb_service_settings.host
         port = ydb_service_settings.grpc_port

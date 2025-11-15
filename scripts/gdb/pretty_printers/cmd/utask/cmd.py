@@ -5,7 +5,7 @@ import functools
 import itertools
 import re
 import traceback
-from typing import Iterator
+from collections.abc import Iterator
 import warnings
 
 import gdb

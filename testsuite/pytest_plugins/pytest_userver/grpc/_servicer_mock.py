@@ -1,15 +1,14 @@
+from collections.abc import AsyncIterator
+from collections.abc import Callable
+from collections.abc import Collection
 import contextlib
 import dataclasses
 import functools
 import inspect
 import typing
 from typing import Any
-from typing import AsyncIterator
-from typing import Callable
-from typing import Collection
-from typing import Dict
 from typing import NoReturn
-from typing import Optional
+from typing import TypeAlias
 
 import google.protobuf.descriptor
 import google.protobuf.descriptor_pool  # noqa: F401
@@ -22,18 +21,18 @@ import testsuite.utils.callinfo
 from ._mocked_errors import MockedError
 from ._reflection import _reflect_servicer
 
-Handler = Callable[[Any, grpc.aio.ServicerContext], Any]
-MockDecorator = Callable[[Handler], testsuite.utils.callinfo.AsyncCallQueue]
-AsyncExcAppend = Callable[[Exception], None]
+Handler: TypeAlias = Callable[[Any, grpc.aio.ServicerContext], Any]
+MockDecorator: TypeAlias = Callable[[Handler], testsuite.utils.callinfo.AsyncCallQueue]
+AsyncExcAppend: TypeAlias = Callable[[Exception], None]
 
 _ERROR_CODE_KEY = 'x-testsuite-error-code'
-_MethodDescriptor = google.protobuf.descriptor.MethodDescriptor
+_MethodDescriptor: TypeAlias = google.protobuf.descriptor.MethodDescriptor
 
 
 @dataclasses.dataclass
 class _ServiceMockState:
-    mocked_methods: Dict[str, Handler] = dataclasses.field(default_factory=dict)
-    asyncexc_append: Optional[AsyncExcAppend] = None
+    mocked_methods: dict[str, Handler] = dataclasses.field(default_factory=dict)
+    asyncexc_append: AsyncExcAppend | None = None
 
 
 class _ServiceMock:
@@ -84,7 +83,7 @@ class _ServiceMock:
 
         return decorator
 
-    def set_asyncexc_append(self, asyncexc_append: Optional[AsyncExcAppend]) -> None:
+    def set_asyncexc_append(self, asyncexc_append: AsyncExcAppend | None) -> None:
         self._state.asyncexc_append = asyncexc_append
 
 

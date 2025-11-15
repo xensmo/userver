@@ -5,8 +5,6 @@ Plugin that imports the required fixtures for checking SQL/YQL coverage. See
 @ingroup userver_testsuite_fixtures
 """
 
-from typing import Set
-
 import pytest
 
 from . import coverage
@@ -27,7 +25,7 @@ def on_uncovered():
     @ingroup userver_testsuite_fixtures
     """
 
-    def _on_uncovered(uncovered_statements: Set[str]):
+    def _on_uncovered(uncovered_statements: set[str]):
         msg = f'Uncovered SQL/YQL statements: {uncovered_statements}'
         raise coverage.UncoveredError(msg)
 
@@ -39,10 +37,10 @@ class Coverage:
     Contains data about the current coverage of statements.
     """
 
-    def __init__(self, files: Set[str]):
-        self.covered_statements: Set[str] = set()
-        self.uncovered_statements: Set[str] = files
-        self.extra_covered_statements: Set[str] = set()
+    def __init__(self, files: set[str]):
+        self.covered_statements: set[str] = set()
+        self.uncovered_statements: set[str] = files
+        self.extra_covered_statements: set[str] = set()
 
     def cover(self, statement: str) -> None:
         if statement in self.uncovered_statements:

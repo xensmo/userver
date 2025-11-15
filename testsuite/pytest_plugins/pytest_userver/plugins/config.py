@@ -13,11 +13,9 @@ import string
 import subprocess
 import types
 from typing import Any
-from typing import Callable
-from typing import List
-from typing import Mapping
-from typing import Optional
-from typing import Union
+from collections.abc import Callable
+from collections.abc import Mapping
+from typing import TypeAlias
 
 import pytest
 import yaml
@@ -48,7 +46,7 @@ USERVER_CONFIG_HOOKS = [
     'userver_config_testsuite_middleware',
 ]
 
-ServiceConfigPatch = Callable[[dict, dict], None]
+ServiceConfigPatch: TypeAlias = Callable[[dict, dict], None]
 
 
 # @cond
@@ -161,7 +159,7 @@ def db_dump_schema_path(service_binary, service_tmpdir) -> pathlib.Path:
 
 
 @pytest.fixture(scope='session')
-def service_config_vars_path(pytestconfig) -> Optional[pathlib.Path]:
+def service_config_vars_path(pytestconfig) -> pathlib.Path | None:
     """
     Returns the path to config_vars.yaml file set by command line
     `--service-config-vars` option.
@@ -175,7 +173,7 @@ def service_config_vars_path(pytestconfig) -> Optional[pathlib.Path]:
 
 
 @pytest.fixture(scope='session')
-def service_secdist_path(pytestconfig) -> Optional[pathlib.Path]:
+def service_secdist_path(pytestconfig) -> pathlib.Path | None:
     """
     Returns the path to secure_data.json file set by command line
     `--service-secdist` option.
@@ -461,7 +459,7 @@ def userver_config_substitutions(_service_config_substitution_vars) -> ServiceCo
     @ingroup userver_testsuite_fixtures
     """
 
-    def _substitute(key, value, parent: Union[list, dict]) -> None:
+    def _substitute(key, value, parent: list | dict) -> None:
         if isinstance(value, str):
             parent[key] = string.Template(value).safe_substitute(_service_config_substitution_vars)
         elif isinstance(value, dict):
@@ -505,7 +503,7 @@ def userver_config_http_server(service_port, monitor_port) -> ServiceConfigPatch
 
 
 @pytest.fixture(scope='session')
-def allowed_url_prefixes_extra() -> List[str]:
+def allowed_url_prefixes_extra() -> list[str]:
     """
     By default, userver HTTP client is only allowed to talk to mockserver
     when running in testsuite. This makes tests repeatable and encapsulated.

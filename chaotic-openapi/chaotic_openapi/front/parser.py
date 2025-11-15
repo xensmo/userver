@@ -1,10 +1,8 @@
+from collections.abc import Callable
 import dataclasses
 import re
 import typing
 from typing import Any
-from typing import Callable
-from typing import Optional
-from typing import Union
 
 import pydantic
 
@@ -57,7 +55,7 @@ class Parser:
     def _convert_openapi_header(
         self,
         name: str,
-        header: Union[openapi.Header, openapi.Ref],
+        header: openapi.Header | openapi.Ref,
         infile_path: str,
     ) -> model.Parameter:
         if isinstance(header, openapi.Ref):
@@ -111,7 +109,7 @@ class Parser:
 
     def _convert_openapi_parameter(
         self,
-        parameter: Union[openapi.Parameter, openapi.Ref],
+        parameter: openapi.Parameter | openapi.Ref,
         infile_path: str,
     ) -> model.Parameter:
         if isinstance(parameter, openapi.Ref):
@@ -133,8 +131,8 @@ class Parser:
 
     def _is_swagger_request_body(
         self,
-        parameter: Union[swagger.Parameter, swagger.Ref],
-        global_params: dict[str, Union[model.Parameter, list[model.RequestBody]]],
+        parameter: swagger.Parameter | swagger.Ref,
+        global_params: dict[str, model.Parameter | list[model.RequestBody]],
     ) -> bool:
         if isinstance(parameter, swagger.Ref):
             return isinstance(global_params[self._locate_ref(parameter.ref)], list)
@@ -143,10 +141,12 @@ class Parser:
 
     def _convert_swagger_request_body(
         self,
-        request_body: Union[swagger.Parameter, swagger.Ref],
+        request_body: swagger.Parameter | swagger.Ref,
         infile_path: str,
-        consumes: list[str] = [],
-    ) -> Union[list[model.RequestBody], model.Ref]:
+        consumes: list[str] | None = None,
+    ) -> list[model.RequestBody] | model.Ref:
+        consumes = consumes or []
+
         if isinstance(request_body, swagger.Ref):
             ref_ = ref_resolver.normalize_ref(
                 self._state.full_filepath,
@@ -195,7 +195,7 @@ class Parser:
 
     def _convert_swagger_parameter(
         self,
-        parameter: Union[swagger.Parameter, swagger.Ref],
+        parameter: swagger.Parameter | swagger.Ref,
         infile_path: str,  # noqa: COM812
     ) -> model.Parameter:
         if isinstance(parameter, swagger.Ref):
@@ -235,9 +235,9 @@ class Parser:
 
     def _convert_openapi_response(
         self,
-        response: Union[openapi.Response, openapi.Ref],
+        response: openapi.Response | openapi.Ref,
         infile_path: str,
-    ) -> Union[model.Response, model.Ref]:
+    ) -> model.Response | model.Ref:
         assert infile_path.count('#') <= 1
 
         if isinstance(response, openapi.Ref):
@@ -268,10 +268,10 @@ class Parser:
 
     def _convert_swagger_response(
         self,
-        response: Union[swagger.Response, swagger.Ref],
+        response: swagger.Response | swagger.Ref,
         produces: list[str],
         infile_path: str,  # noqa: COM812
-    ) -> Union[model.Response, model.Ref]:
+    ) -> model.Response | model.Ref:
         assert infile_path.count('#') <= 1
 
         if isinstance(response, swagger.Ref):
@@ -303,9 +303,9 @@ class Parser:
 
     def _convert_openapi_request_body(
         self,
-        request_body: Union[openapi.RequestBody, openapi.Ref],
+        request_body: openapi.RequestBody | openapi.Ref,
         infile_path: str,
-    ) -> Union[list[model.RequestBody], model.Ref]:
+    ) -> list[model.RequestBody] | model.Ref:
         if isinstance(request_body, openapi.Ref):
             ref_ = ref_resolver.normalize_ref(
                 self._state.full_filepath,
@@ -353,8 +353,8 @@ class Parser:
 
     def _convert_openapi_securuty(
         self,
-        security_scheme: Union[openapi.SecurityScheme, openapi.Ref],
-        flows_scopes: Optional[list[str]] = None,  # noqa: COM812
+        security_scheme: openapi.SecurityScheme | openapi.Ref,
+        flows_scopes: list[str] | None = None,  # noqa: COM812
     ) -> model.Security:
         if isinstance(security_scheme, openapi.Ref):
             return self._state.service.security[self._locate_ref(security_scheme.ref)]
@@ -384,7 +384,7 @@ class Parser:
     def _convert_swagger_security(
         self,
         security_def: swagger.SecurityDef,
-        flows_scopes: Optional[list[str]] = None,  # noqa: COM812
+        flows_scopes: list[str] | None = None,  # noqa: COM812
     ) -> model.Security:
         description = security_def.description or ''
         if security_def.type == swagger.SecurityType.basic:
@@ -420,7 +420,7 @@ class Parser:
 
     def _append_schema(
         self,
-        parsed: Union[openapi.OpenApi, swagger.Swagger],
+        parsed: openapi.OpenApi | swagger.Swagger,
     ) -> None:
         components_schemas: dict[str, Any] = {}
         components_schemas_path = ''
@@ -448,7 +448,7 @@ class Parser:
                 security_scheme = self._convert_openapi_securuty(sec_scheme)
                 self._state.service.security[self._state.full_filepath + '#' + infile_path] = security_scheme
 
-            def _convert_op_security(security: Optional[openapi.Security]) -> list[model.Security]:
+            def _convert_op_security(security: openapi.Security | None) -> list[model.Security]:
                 if not security:
                     security = default_security
 
@@ -508,7 +508,7 @@ class Parser:
             consumes = parsed.consumes
 
             # parameters
-            global_params: dict[str, Union[model.Parameter, list[model.RequestBody]]] = {}
+            global_params: dict[str, model.Parameter | list[model.RequestBody]] = {}
             for name, sw_parameter in parsed.parameters.items():
                 if self._is_swagger_request_body(sw_parameter, global_params):
                     infile_path = '/requestBodies/' + name
@@ -540,7 +540,7 @@ class Parser:
                 security_def = self._convert_swagger_security(sec_def)
                 self._state.service.security[self._state.full_filepath + '#' + infile_path] = security_def
 
-            def _convert_op_security(security: Optional[swagger.Security]) -> list[model.Security]:
+            def _convert_op_security(security: swagger.Security | None) -> list[model.Security]:
                 if not security:
                     security = default_security
 
@@ -554,7 +554,7 @@ class Parser:
             for sw_path, sw_path_item in parsed.paths.items():
                 infile_path = f'/paths/[{sw_path}]'
                 sw_path_params: dict[tuple[str, model.In], model.Parameter] = {}
-                sw_path_body: Union[list[model.RequestBody], model.Ref] = []
+                sw_path_body: list[model.RequestBody] | model.Ref = []
                 for i, sw_path_parameter in enumerate(sw_path_item.parameters):
                     if self._is_swagger_request_body(sw_path_parameter, global_params):
                         sw_path_body = self._convert_swagger_request_body(
@@ -569,7 +569,7 @@ class Parser:
                     op_params: swagger.Parameters,
                     infile_path: str,
                     consumes: list[str],
-                ) -> tuple[list[model.Parameter], Union[list[model.RequestBody], model.Ref]]:
+                ) -> tuple[list[model.Parameter], list[model.RequestBody] | model.Ref]:
                     params = sw_path_params.copy()
                     body = sw_path_body
                     for i, sw_parameter in enumerate(op_params):
@@ -659,7 +659,7 @@ class Parser:
                 raise Exception(f'Operation {operation.method.upper()} {operation.path} is duplicated')
             seen.add(new)
 
-    def _parse_schema(self, schema: Any, infile_path: str, allow_file=False) -> Union[types.Schema, types.Ref]:
+    def _parse_schema(self, schema: Any, infile_path: str, allow_file=False) -> types.Schema | types.Ref:
         parser = chaotic_parser.SchemaParser(
             config=chaotic_parser.ParserConfig(
                 erase_prefix='',
@@ -688,8 +688,8 @@ class Parser:
         self,
         path: str,
         method: str,
-        operation: Optional[openapi.Operation],
-        security_converter: Callable[[Optional[openapi.Security]], list[model.Security]],
+        operation: openapi.Operation | None,
+        security_converter: Callable[[openapi.Security | None], list[model.Security]],
         path_params: dict[tuple[str, model.In], model.Parameter],
     ) -> None:
         if not operation:
@@ -732,11 +732,11 @@ class Parser:
         self,
         path: str,
         method: str,
-        operation: Optional[swagger.Operation],
-        security_converter: Callable[[Optional[swagger.Security]], list[model.Security]],
+        operation: swagger.Operation | None,
+        security_converter: Callable[[swagger.Security | None], list[model.Security]],
         params_converter: Callable[
             [swagger.Parameters, str, list[str]],
-            tuple[list[model.Parameter], Union[list[model.RequestBody], model.Ref]],
+            tuple[list[model.Parameter], list[model.RequestBody] | model.Ref],
         ],
     ) -> None:
         if not operation:

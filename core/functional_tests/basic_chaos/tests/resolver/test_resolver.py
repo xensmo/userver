@@ -1,5 +1,4 @@
 import enum
-import typing
 
 import pytest
 
@@ -19,7 +18,7 @@ class CheckQuery(enum.Enum):
 @pytest.fixture(name='call')
 def _call(service_client, gen_domain_name, dns_mock_stats):
     async def _call(
-        resolve: typing.Optional[str] = None,
+        resolve: str | None = None,
         htype: str = 'resolve',
         check_query: CheckQuery = CheckQuery.NO_CHECK,
         **args,
@@ -71,7 +70,7 @@ async def _do_flush(flush_resolver_cache):
 
 @pytest.fixture(name='check_restore')
 def _check_restore(gate, call, flush_resolver_cache, gen_domain_name):
-    async def _do_restore(domain: typing.Optional[str] = None):
+    async def _do_restore(domain: str | None = None):
         await gate.to_server_pass()
         await gate.to_client_pass()
 

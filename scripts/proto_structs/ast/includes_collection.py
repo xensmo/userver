@@ -6,9 +6,6 @@
 from collections.abc import Iterable
 import dataclasses
 from typing import Any
-from typing import List
-from typing import Optional
-from typing import Union
 
 from proto_schema_parser import ast
 
@@ -20,7 +17,7 @@ from proto_structs.models import type_overrides
 from proto_structs.models import type_ref_consts
 
 
-def collect(*, file_ast: ast.File, plugin_options: Optional[Any]) -> List[str]:
+def collect(*, file_ast: ast.File, plugin_options: Any | None) -> list[str]:
     """
     Recursively collect all includes that will be present in the generated structs hpp or cpp file.
     Includes to other structs or vanilla protobuf files are NOT accounted for.
@@ -42,7 +39,7 @@ class FileContext:
 
 
 def collect_file(file: ast.File, /, *, plugin_options: options.PluginOptions) -> Iterable[includes.Include]:
-    package: Optional[str] = None
+    package: str | None = None
     for element in file.file_elements:
         if isinstance(element, ast.Package):
             assert package is None
@@ -63,7 +60,7 @@ def collect_enum(enum: ast.Enum, /, *, context: FileContext) -> Iterable[include
     yield includes.Include(path='limits', kind=includes.IncludeKind.FOR_HPP)
 
 
-def collect_message(message: Union[ast.Message, ast.Group], /, *, context: FileContext) -> Iterable[includes.Include]:
+def collect_message(message: ast.Message | ast.Group, /, *, context: FileContext) -> Iterable[includes.Include]:
     yield from gen_node.COMMON_STRUCT_INCLUDES
 
     for element in message.elements:

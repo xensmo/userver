@@ -2,7 +2,6 @@ import re
 import sys
 import traceback
 import typing
-from typing import Union
 
 from chaotic import cpp_names
 from chaotic import error as chaotic_error
@@ -266,7 +265,7 @@ class Translator:
 
     def _translate_response(
         self,
-        response: Union[model.Response, model.Ref],
+        response: model.Response | model.Ref,
         status: int,
     ) -> types.Response:
         if isinstance(response, model.Ref):

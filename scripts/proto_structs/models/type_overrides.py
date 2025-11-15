@@ -5,8 +5,6 @@ e.g. `std::chrono::time_point` or `decimal64::Decimal`.
 This module deals with such replacements.
 """
 
-from typing import Optional
-
 from proto_structs.models import options
 from proto_structs.models import type_ref
 from proto_structs.models import type_ref_consts
@@ -16,7 +14,7 @@ def get_type_override(
     *,
     proto_type_name: str,
     plugin_options: options.PluginOptions,  # noqa: COM812
-) -> Optional[type_ref.TypeReference]:
+) -> type_ref.TypeReference | None:
     """
     If we wish to use a custom C++ type for the referenced Protobuf type, returns it. Otherwise, returns `None`.
     `proto_type_name` is the full Protobuf type name in the form `package.of.Type.Nested`.

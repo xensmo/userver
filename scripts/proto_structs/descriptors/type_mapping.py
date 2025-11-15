@@ -3,13 +3,11 @@
 # Documentation on Protobuf descriptors:
 # https://googleapis.dev/python/protobuf/latest/google/protobuf/descriptor.html
 
+from collections.abc import Mapping
 from collections.abc import Sequence
 import pathlib
 import typing
-from typing import List
-from typing import Mapping
-from typing import Optional
-from typing import Union
+from typing import TypeAlias
 
 import google.protobuf.descriptor as descriptor
 
@@ -20,7 +18,7 @@ from proto_structs.models import type_overrides
 from proto_structs.models import type_ref
 from proto_structs.models import type_ref_consts
 
-TypeDescriptor = Union[descriptor.Descriptor, descriptor.EnumDescriptor]
+TypeDescriptor: TypeAlias = descriptor.Descriptor | descriptor.EnumDescriptor
 
 
 PRIMITIVE_TYPES_TO_PROTOBUF_NAME: Mapping[int, str] = {
@@ -141,9 +139,9 @@ def parse_type_name(proto_type: TypeDescriptor) -> names.TypeName:
 
 
 def _get_outer_structs_names(proto_type: TypeDescriptor) -> Sequence[str]:
-    names_list: List[str] = []
+    names_list: list[str] = []
     parent_type = proto_type
-    while parent_type := typing.cast(Optional[descriptor.Descriptor], parent_type.containing_type):
+    while parent_type := typing.cast(descriptor.Descriptor | None, parent_type.containing_type):
         names_list.append(typing.cast(str, parent_type.name))
     return list(reversed(names_list))
 

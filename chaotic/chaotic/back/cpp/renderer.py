@@ -2,7 +2,6 @@ import collections
 import dataclasses
 import os
 import pathlib
-from typing import Optional
 
 import jinja2
 
@@ -170,7 +169,7 @@ class OneToOneFileRenderer:
 
         def visitor(
             schema: types.Schema,
-            _parent: Optional[types.Schema],
+            _parent: types.Schema | None,
         ) -> None:
             if not isinstance(schema, types.Ref):
                 return
@@ -200,7 +199,7 @@ class OneToOneFileRenderer:
         self,
         types: dict[str, cpp_types.CppType],
         local_pair_header=True,
-        pair_header: Optional[str] = None,
+        pair_header: str | None = None,
     ) -> list[CppOutput]:
         files: dict[str, dict[str, cpp_types.CppType]] = collections.defaultdict(dict)
 

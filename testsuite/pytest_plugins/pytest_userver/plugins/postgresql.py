@@ -3,9 +3,9 @@ Plugin that imports the required fixtures to start the database
 and adjusts the PostgreSQL "dbconnection" static config value.
 """
 
+from collections.abc import Generator
 from contextlib import contextmanager
 from enum import Enum
-import typing
 
 import pytest
 
@@ -123,9 +123,7 @@ def userver_pg_config(pgsql_local):
 
 
 @pytest.fixture
-def userver_pg_trx(
-    testpoint,
-) -> typing.Generator[sql.RegisteredTrx, None, None]:
+def userver_pg_trx(testpoint) -> Generator[sql.RegisteredTrx, None, None]:
     """
     The fixture maintains transaction fault injection state using
     RegisteredTrx class.
@@ -148,7 +146,7 @@ def userver_pg_trx(
 
 
 @pytest.fixture
-def userver_pg_ntrx(testpoint) -> typing.Generator[RegisteredNtrx, None, None]:
+def userver_pg_ntrx(testpoint) -> Generator[RegisteredNtrx, None, None]:
     """
     The fixture maintains single query fault injection state using
     RegisteredNtrx class.

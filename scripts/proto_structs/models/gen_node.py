@@ -9,7 +9,6 @@ import dataclasses
 import pathlib
 from typing import Final
 from typing import final
-from typing import Optional
 
 from typing_extensions import override
 
@@ -264,9 +263,9 @@ class StructField:
     #: C++ code for the field initializer, e.g. '', '{}' or '{5}'.
     initializer: Final[str]
     #: Low-level numeric ID of the field for serialization. Absent for fields of type "oneof".
-    number: Final[Optional[int]]
+    number: Final[int | None]
     #: If this struct field maps to oneof, lists the fields of the oneof type.
-    oneof_fields: Final[Optional[Sequence[StructField]]]
+    oneof_fields: Final[Sequence[StructField] | None]
     #: IoKind:
     io_kinds: Final[io.IoKind]
 

@@ -4,10 +4,10 @@
 # https://googleapis.dev/python/protobuf/latest/google/protobuf/descriptor.html
 # https://googleapis.dev/python/protobuf/latest/google/protobuf/message.html
 
+from collections.abc import Callable
+from collections.abc import Mapping
 import typing
 from typing import Any
-from typing import Callable
-from typing import Mapping
 from typing import Type
 from typing import TypeVar
 

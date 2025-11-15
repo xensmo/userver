@@ -3,7 +3,7 @@ import asyncio
 import enum
 import gzip
 import logging
-import typing
+from typing import Any
 
 from aiohttp import client_exceptions as exceptions
 import pytest
@@ -43,13 +43,13 @@ class ErrorType(enum.Enum):
 def _call(modified_service_client, gate):
     async def _call(
         htype: str = 'common',
-        data: typing.Any = None,
+        data: Any = None,
         timeout: float = DEFAULT_TIMEOUT,
         testsuite_skip_prepare: bool = False,
-        headers: typing.Optional[typing.Dict[str, str]] = None,
-        args: typing.Dict[str, str] = {},
+        headers: dict[str, str] | None = None,
+        args: dict[str, str] | None = None,
         url: str = '/chaos/httpserver',
-    ) -> typing.Union[http.ClientResponse, ErrorType]:
+    ) -> http.ClientResponse | ErrorType:
         try:
             if not data:
                 data = DEFAULT_DATA
@@ -59,7 +59,7 @@ def _call(modified_service_client, gate):
                 url,
                 headers=headers,
                 timeout=timeout,
-                params={'type': htype, **args},
+                params={'type': htype, **(args or {})},
                 data=data,
                 testsuite_skip_prepare=testsuite_skip_prepare,
             )
