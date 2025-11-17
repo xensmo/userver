@@ -1404,13 +1404,16 @@ class _StateManager:
             [],
         )
         for cache_name, action in actions:
-            if action == caches.CacheControlAction.INCREMENTAL:
-                force_incremental_names.append(cache_name)
-            elif action == caches.CacheControlAction.EXCLUDE:
-                if cache_names is not None:
-                    cache_names.remove(cache_name)
-                else:
-                    exclude_names.append(cache_name)
+            match action:
+                case caches.CacheControlAction.FULL:
+                    pass
+                case caches.CacheControlAction.INCREMENTAL:
+                    force_incremental_names.append(cache_name)
+                case caches.CacheControlAction.EXCLUDE:
+                    if cache_names is not None:
+                        cache_names.remove(cache_name)
+                    else:
+                        exclude_names.append(cache_name)
 
     def _update_state(self, body: dict[str, Any]) -> None:
         body_invalidate_caches = body.get('invalidate_caches', {})

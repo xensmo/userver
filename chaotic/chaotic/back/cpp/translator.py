@@ -326,17 +326,15 @@ class Generator:
                 enums=emum_items,
             )
 
-        if schema.format is None:
-            raw_cpp_type = 'int'
-        elif schema.format.value == 32:
-            raw_cpp_type = 'std::int32_t'
-        elif schema.format.value == 64:
-            raw_cpp_type = 'std::int64_t'
-        else:
-            self._raise(
-                schema,
-                f'"format: {schema.format.value}" is not implemented',
-            )
+        match schema.format:
+            case None:
+                raw_cpp_type = 'int'
+            case types.IntegerFormat.INT32:
+                raw_cpp_type = 'std::int32_t'
+            case types.IntegerFormat.INT64:
+                raw_cpp_type = 'std::int64_t'
+            case _:
+                self._raise(schema, f'"format: {schema.format}" is not implemented')
 
         typedef_tag = schema.get_x_property_str(
             'x-usrv-cpp-typedef-tag',
@@ -459,23 +457,21 @@ class Generator:
             validators.pattern = '^[a-z][-a-z0-9+.]*:.*'
 
         if schema.format and schema.format not in {types.StringFormat.BINARY, types.StringFormat.URI}:
-            if schema.format == types.StringFormat.BYTE:
-                format_cpp_type = 'crypto::base64::String64'
-            elif schema.format == types.StringFormat.UUID:
-                format_cpp_type = 'boost::uuids::uuid'
-            elif schema.format == types.StringFormat.DATE:
-                format_cpp_type = 'userver::utils::datetime::Date'
-            elif schema.format == types.StringFormat.DATE_TIME:
-                format_cpp_type = 'userver::utils::datetime::TimePointTz'
-            elif schema.format == types.StringFormat.DATE_TIME_ISO_BASIC:
-                format_cpp_type = 'userver::utils::datetime::TimePointTzIsoBasic'
-            elif schema.format == types.StringFormat.DATE_TIME_FRACTION:
-                format_cpp_type = 'userver::utils::datetime::TimePointTzFraction'
-            else:
-                self._raise(
-                    schema,
-                    f'"format: {schema.format}" is unsupported yet',
-                )
+            match schema.format:
+                case types.StringFormat.BYTE:
+                    format_cpp_type = 'crypto::base64::String64'
+                case types.StringFormat.UUID:
+                    format_cpp_type = 'boost::uuids::uuid'
+                case types.StringFormat.DATE:
+                    format_cpp_type = 'userver::utils::datetime::Date'
+                case types.StringFormat.DATE_TIME:
+                    format_cpp_type = 'userver::utils::datetime::TimePointTz'
+                case types.StringFormat.DATE_TIME_ISO_BASIC:
+                    format_cpp_type = 'userver::utils::datetime::TimePointTzIsoBasic'
+                case types.StringFormat.DATE_TIME_FRACTION:
+                    format_cpp_type = 'userver::utils::datetime::TimePointTzFraction'
+                case _:
+                    self._raise(schema, f'"format: {schema.format}" is unsupported yet')
             return cpp_types.CppStringWithFormat(
                 json_schema=schema,
                 nullable=schema.nullable,

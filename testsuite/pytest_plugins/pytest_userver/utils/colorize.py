@@ -304,12 +304,13 @@ def colorize_main():
     else:
         stream = open(args.log, 'r')
 
-    if args.color == ColorArg.AUTO:
-        colors_enabled = sys.stdout.isatty()
-    elif args.color == ColorArg.ALWAYS:
-        colors_enabled = True
-    else:
-        colors_enabled = False
+    match args.color:
+        case ColorArg.AUTO:
+            colors_enabled = sys.stdout.isatty()
+        case ColorArg.ALWAYS:
+            colors_enabled = True
+        case _:
+            colors_enabled = False
 
     with contextlib.closing(stream):
         colorize(stream, verbose=args.verbose, colors_enabled=colors_enabled)

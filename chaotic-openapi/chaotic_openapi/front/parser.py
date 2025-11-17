@@ -360,26 +360,27 @@ class Parser:
             return self._state.service.security[self._locate_ref(security_scheme.ref)]
 
         description = security_scheme.description or ''
-        if security_scheme.type == openapi.SecurityType.http:
-            assert security_scheme.scheme_
-            return model.HttpSecurity(description, security_scheme.scheme_, security_scheme.bearerFormat)
-        elif security_scheme.type == openapi.SecurityType.apiKey:
-            assert security_scheme.name
-            assert security_scheme.in_
-            security_in = model.SecurityIn(security_scheme.in_.name)
-            return model.ApiKeySecurity(description, security_scheme.name, security_in)
-        elif security_scheme.type == openapi.SecurityType.oauth2:
-            assert security_scheme.flows
-            flows = self._convert_openapi_flows(security_scheme.flows)
-            if flows_scopes:
-                for flow in flows:
-                    flow.scopes = {key: flow.scopes[key] for key in flows_scopes if key in flow.scopes}
-            return model.OAuthSecurity(description, flows)
-        elif security_scheme.type == openapi.SecurityType.openIdConnect:
-            assert security_scheme.openIdConnectUrl
-            return model.OpenIdConnectSecurity(description, security_scheme.openIdConnectUrl)
-        else:
-            assert False
+        match security_scheme.type:
+            case openapi.SecurityType.http:
+                assert security_scheme.scheme_
+                return model.HttpSecurity(description, security_scheme.scheme_, security_scheme.bearerFormat)
+            case openapi.SecurityType.apiKey:
+                assert security_scheme.name
+                assert security_scheme.in_
+                security_in = model.SecurityIn(security_scheme.in_.name)
+                return model.ApiKeySecurity(description, security_scheme.name, security_in)
+            case openapi.SecurityType.oauth2:
+                assert security_scheme.flows
+                flows = self._convert_openapi_flows(security_scheme.flows)
+                if flows_scopes:
+                    for flow in flows:
+                        flow.scopes = {key: flow.scopes[key] for key in flows_scopes if key in flow.scopes}
+                return model.OAuthSecurity(description, flows)
+            case openapi.SecurityType.openIdConnect:
+                assert security_scheme.openIdConnectUrl
+                return model.OpenIdConnectSecurity(description, security_scheme.openIdConnectUrl)
+            case _:
+                assert False
 
     def _convert_swagger_security(
         self,
@@ -387,36 +388,40 @@ class Parser:
         flows_scopes: list[str] | None = None,  # noqa: COM812
     ) -> model.Security:
         description = security_def.description or ''
-        if security_def.type == swagger.SecurityType.basic:
-            return model.Security(description)
-        elif security_def.type == swagger.SecurityType.apiKey:
-            assert security_def.name
-            assert security_def.in_
-            security_in = model.SecurityIn(security_def.in_.name)
-            return model.ApiKeySecurity(description, security_def.name, security_in)
-        elif security_def.type == swagger.SecurityType.oauth2:
-            flow: model.Flow
-            if security_def.flow == swagger.OAuthFlow.implicit:
-                assert security_def.authorizationUrl
-                flow = model.ImplicitFlow('', security_def.scopes, security_def.authorizationUrl)
-            elif security_def.flow == swagger.OAuthFlow.password:
-                assert security_def.tokenUrl
-                flow = model.PasswordFlow('', security_def.scopes, security_def.tokenUrl)
-            elif security_def.flow == swagger.OAuthFlow.application:
-                assert security_def.tokenUrl
-                flow = model.ClientCredFlow('', security_def.scopes, security_def.tokenUrl)
-            elif security_def.flow == swagger.OAuthFlow.accessCode:
-                assert security_def.authorizationUrl
-                assert security_def.tokenUrl
-                flow = model.AuthCodeFlow('', security_def.scopes, security_def.authorizationUrl, security_def.tokenUrl)
-            else:
-                assert False
+        match security_def.type:
+            case swagger.SecurityType.basic:
+                return model.Security(description)
+            case swagger.SecurityType.apiKey:
+                assert security_def.name
+                assert security_def.in_
+                security_in = model.SecurityIn(security_def.in_.name)
+                return model.ApiKeySecurity(description, security_def.name, security_in)
+            case swagger.SecurityType.oauth2:
+                flow: model.Flow
+                match security_def.flow:
+                    case swagger.OAuthFlow.implicit:
+                        assert security_def.authorizationUrl
+                        flow = model.ImplicitFlow('', security_def.scopes, security_def.authorizationUrl)
+                    case swagger.OAuthFlow.password:
+                        assert security_def.tokenUrl
+                        flow = model.PasswordFlow('', security_def.scopes, security_def.tokenUrl)
+                    case swagger.OAuthFlow.application:
+                        assert security_def.tokenUrl
+                        flow = model.ClientCredFlow('', security_def.scopes, security_def.tokenUrl)
+                    case swagger.OAuthFlow.accessCode:
+                        assert security_def.authorizationUrl
+                        assert security_def.tokenUrl
+                        flow = model.AuthCodeFlow(
+                            '', security_def.scopes, security_def.authorizationUrl, security_def.tokenUrl
+                        )
+                    case _:
+                        assert False
 
-            if flows_scopes:
-                flow.scopes = {key: flow.scopes[key] for key in flows_scopes if key in flow.scopes}
-            return model.OAuthSecurity(description, [flow])
-        else:
-            assert False
+                if flows_scopes:
+                    flow.scopes = {key: flow.scopes[key] for key in flows_scopes if key in flow.scopes}
+                return model.OAuthSecurity(description, [flow])
+            case _:
+                assert False
 
     def _append_schema(
         self,

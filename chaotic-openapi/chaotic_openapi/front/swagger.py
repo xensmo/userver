@@ -127,28 +127,30 @@ class SecurityDef(base_model.BaseModel):
     scopes: dict[str, str] = pydantic.Field(default_factory=dict)
 
     def model_post_init(self, context: Any, /) -> None:
-        if self.type == SecurityType.apiKey:
-            if not self.name:
-                raise ValueError(errors.missing_field_msg('name'))
-            if not self.in_:
-                raise ValueError(errors.missing_field_msg('in'))
-        elif self.type == SecurityType.oauth2:
-            if not self.flow:
-                raise ValueError(errors.missing_field_msg('flow'))
-            if self.flow == OAuthFlow.implicit:
-                if not self.authorizationUrl:
-                    raise ValueError(errors.missing_field_msg('authorizationUrl'))
-            elif self.flow == OAuthFlow.password:
-                if not self.tokenUrl:
-                    raise ValueError(errors.missing_field_msg('tokenUrl'))
-            elif self.flow == OAuthFlow.application:
-                if not self.tokenUrl:
-                    raise ValueError(errors.missing_field_msg('tokenUrl'))
-            elif self.flow == OAuthFlow.accessCode:
-                if not self.tokenUrl:
-                    raise ValueError(errors.missing_field_msg('tokenUrl'))
-                if not self.authorizationUrl:
-                    raise ValueError(errors.missing_field_msg('authorizationUrl'))
+        match self.type:
+            case SecurityType.apiKey:
+                if not self.name:
+                    raise ValueError(errors.missing_field_msg('name'))
+                if not self.in_:
+                    raise ValueError(errors.missing_field_msg('in'))
+            case SecurityType.oauth2:
+                match self.flow:
+                    case None:
+                        raise ValueError(errors.missing_field_msg('flow'))
+                    case OAuthFlow.implicit:
+                        if not self.authorizationUrl:
+                            raise ValueError(errors.missing_field_msg('authorizationUrl'))
+                    case OAuthFlow.password:
+                        if not self.tokenUrl:
+                            raise ValueError(errors.missing_field_msg('tokenUrl'))
+                    case OAuthFlow.application:
+                        if not self.tokenUrl:
+                            raise ValueError(errors.missing_field_msg('tokenUrl'))
+                    case OAuthFlow.accessCode:
+                        if not self.tokenUrl:
+                            raise ValueError(errors.missing_field_msg('tokenUrl'))
+                        if not self.authorizationUrl:
+                            raise ValueError(errors.missing_field_msg('authorizationUrl'))
 
 
 # https://spec.openapis.org/oas/v2.0.html#security-requirement-object

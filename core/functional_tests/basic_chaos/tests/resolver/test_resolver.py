@@ -33,16 +33,17 @@ def _call(service_client, gen_domain_name, dns_mock_stats):
             params={'type': htype, 'host_to_resolve': resolve, **args},
         )
 
-        if check_query == CheckQuery.FROM_MOCK:
-            # Could be two different requests for IPv4 and IPv6,
-            # or a single one, or some retries.
-            assert dns_mock_stats.get_stats() > dns_times_called
-            queries = dns_mock_stats.get_queries()
-            assert resolve in queries[-dns_times_called:]
-        elif check_query == CheckQuery.FROM_CACHE:
-            assert dns_mock_stats.get_stats() == dns_times_called
-        elif check_query == CheckQuery.NO_CHECK:
-            pass
+        match check_query:
+            case CheckQuery.FROM_MOCK:
+                # Could be two different requests for IPv4 and IPv6,
+                # or a single one, or some retries.
+                assert dns_mock_stats.get_stats() > dns_times_called
+                queries = dns_mock_stats.get_queries()
+                assert resolve in queries[-dns_times_called:]
+            case CheckQuery.FROM_CACHE:
+                assert dns_mock_stats.get_stats() == dns_times_called
+            case CheckQuery.NO_CHECK:
+                pass
 
         return response
 

@@ -212,20 +212,21 @@ class SecurityScheme(base_model.BaseModel):
     def model_post_init(self, context: Any, /) -> None:
         super().model_post_init(context)
 
-        if self.type == SecurityType.apiKey:
-            if not self.name:
-                raise ValueError(errors.missing_field_msg('name'))
-            if not self.in_:
-                raise ValueError(errors.missing_field_msg('in'))
-        elif self.type == SecurityType.oauth2:
-            if not self.flows:
-                raise ValueError(errors.missing_field_msg('flows'))
-        elif self.type == SecurityType.http:
-            if not self.scheme_:
-                raise ValueError(errors.missing_field_msg('scheme'))
-        elif self.type == SecurityType.openIdConnect:
-            if not self.openIdConnectUrl:
-                raise ValueError(errors.missing_field_msg('openIdConnectUrl'))
+        match self.type:
+            case SecurityType.apiKey:
+                if not self.name:
+                    raise ValueError(errors.missing_field_msg('name'))
+                if not self.in_:
+                    raise ValueError(errors.missing_field_msg('in'))
+            case SecurityType.oauth2:
+                if not self.flows:
+                    raise ValueError(errors.missing_field_msg('flows'))
+            case SecurityType.http:
+                if not self.scheme_:
+                    raise ValueError(errors.missing_field_msg('scheme'))
+            case SecurityType.openIdConnect:
+                if not self.openIdConnectUrl:
+                    raise ValueError(errors.missing_field_msg('openIdConnectUrl'))
 
 
 SecuritySchemes: TypeAlias = dict[str, SecurityScheme | Ref]

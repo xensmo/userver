@@ -88,20 +88,21 @@ class DnsServerProtocol:
         response += struct.pack('!H', 1)  # class IN
         response += struct.pack('!I', 99999)  # TTL
 
-        if query_type == b'\x00\x01':  # type A record
-            response += struct.pack('!H', 4)  # data length (IPv4)
-            response += socket.inet_pton(
-                socket.AF_INET,
-                '77.88.55.55',
-            )  # our fake IPv4 address
-        elif query_type == b'\x00\x1c':  # type AAAA record
-            response += struct.pack('!H', 16)  # data length (IPv6)
-            response += socket.inet_pton(
-                socket.AF_INET6,
-                '2a02:6b8:a::a',
-            )  # our fake IPv6 address
-        else:
-            raise Exception('unknown type')
+        match query_type:
+            case b'\x00\x01':  # type A record
+                response += struct.pack('!H', 4)  # data length (IPv4)
+                response += socket.inet_pton(
+                    socket.AF_INET,
+                    '77.88.55.55',
+                )  # our fake IPv4 address
+            case b'\x00\x1c':  # type AAAA record
+                response += struct.pack('!H', 16)  # data length (IPv6)
+                response += socket.inet_pton(
+                    socket.AF_INET6,
+                    '2a02:6b8:a::a',
+                )  # our fake IPv6 address
+            case _:
+                raise Exception('unknown type')
 
         logger.info(
             f'Dns "{self.name}" sends {len(response)} bytes to {addr} '

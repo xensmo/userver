@@ -582,17 +582,19 @@ class UtaskApplyCmd(gdb.Command):
 
     def complete(self, text: str, word: str) -> list[str] | int | None:
         complete_args_count = len(text.split()) - int(bool(word))
-        if complete_args_count == 0:  # utask apply
-            return ['all'] + [
-                task.attached_span.name if task.attached_span else task.task_id
-                for task in get_all_tasks()
-                if not word
-                or (task.attached_span and task.attached_span.name.startswith(word))
-                or task.task_id.startswith(word)
-            ]
-        elif complete_args_count == 1:  # utask apply <task_id>
-            return gdb.COMPLETE_COMMAND
-        return None
+        match complete_args_count:
+            case 0:  # utask apply
+                return ['all'] + [
+                    task.attached_span.name if task.attached_span else task.task_id
+                    for task in get_all_tasks()
+                    if not word
+                    or (task.attached_span and task.attached_span.name.startswith(word))
+                    or task.task_id.startswith(word)
+                ]
+            case 1:  # utask apply <task_id>
+                return gdb.COMPLETE_COMMAND
+            case _:
+                return None
 
 
 if __name__ == '__main__':
