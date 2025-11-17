@@ -284,7 +284,7 @@ Log tags of the request's `tracing::Span`:
 
 To disable deadline propagation in the static config:
 
-* `http-client.set-deadline-propagation-header: false`
+* `http-client-core.set-deadline-propagation-header: false`
 * timeouts are updated from the task-inherited deadline regardless of this config
 
 To disable deadline propagation in the dynamic config:

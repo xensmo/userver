@@ -216,7 +216,6 @@ RequestState::RequestState(
     RequestStats&& req_stats,
     const std::shared_ptr<DestinationStatistics>& dest_stats,
     clients::dns::Resolver* resolver,
-    const std::vector<utils::NotNull<clients::http::Plugin*>>& plugins,
     const tracing::TracingManagerBase& tracing_manager
 )
     : easy_(std::move(wrapper)),
@@ -227,8 +226,7 @@ RequestState::RequestState(
       tracing_manager_{tracing_manager},
       is_cancelled_(false),
       errorbuffer_(),
-      resolver_{resolver},
-      plugin_pipeline_(plugins) {
+      resolver_{resolver} {
     // Libcurl calls sigaction(2)  way too frequently unless this option is used.
     easy().set_no_signal(true);
     easy().set_error_buffer(errorbuffer_.data());

@@ -86,6 +86,9 @@ components_manager:
 # /// [Sample http client component config]
 # yaml
     http-client:
+      core-component: http-client-core
+      plugins: {}
+    http-client-core:
       pool-statistics-disable: false
       thread-name-prefix: http-client
       threads: 2
@@ -178,6 +181,8 @@ components_manager:
       fs-task-processor: fs-task-processor
 # /// [Sample dynamic config component config]
     http-client-statistics:
+      core-component: http-client-statistics-core
+    http-client-statistics-core:
       fs-task-processor: fs-task-processor
 # /// [Sample system statistics component config]
 # yaml

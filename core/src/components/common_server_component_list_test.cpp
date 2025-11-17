@@ -85,7 +85,7 @@ components_manager:
     dump-configurator:
       dump-root: $userver-dumps-root
     testsuite-support:
-    http-client:
+    http-client-core:
       pool-statistics-disable: true
       thread-name-prefix: http-client
       threads: 2
@@ -113,7 +113,7 @@ components_manager:
         service-name: config-service
     statistics-storage:
       # Nothing
-    http-client-statistics:
+    http-client-statistics-core:
       fs-task-processor: main-task-processor
     system-statistics-collector:
       fs-task-processor: main-task-processor

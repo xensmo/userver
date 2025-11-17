@@ -50,7 +50,6 @@ public:
         RequestStats&& req_stats,
         const std::shared_ptr<DestinationStatistics>& dest_stats,
         clients::dns::Resolver* resolver,
-        const std::vector<utils::NotNull<clients::http::Plugin*>>& plugins,
         const tracing::TracingManagerBase& tracing_manager
     );
     ~RequestState();

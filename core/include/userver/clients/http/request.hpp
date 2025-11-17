@@ -9,7 +9,6 @@
 
 #include <userver/clients/dns/resolver_fwd.hpp>
 #include <userver/clients/http/error.hpp>
-#include <userver/clients/http/plugin.hpp>
 #include <userver/clients/http/response.hpp>
 #include <userver/clients/http/response_future.hpp>
 #include <userver/concurrent/queue.hpp>
@@ -17,6 +16,7 @@
 #include <userver/crypto/private_key.hpp>
 #include <userver/http/http_version.hpp>
 #include <userver/utils/impl/source_location.hpp>
+#include <userver/utils/not_null.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -35,6 +35,7 @@ struct DeadlinePropagationConfig;
 class RequestStats;
 class DestinationStatistics;
 struct TestsuiteConfig;
+class Plugin;
 
 namespace impl {
 class EasyWrapper;
@@ -91,7 +92,6 @@ public:
         RequestStats&& req_stats,
         const std::shared_ptr<DestinationStatistics>& dest_stats,
         clients::dns::Resolver* resolver,
-        const std::vector<utils::NotNull<clients::http::Plugin*>>& plugins,
         const tracing::TracingManagerBase& tracing_manager
     );
     /// @endcond
@@ -366,7 +366,7 @@ public:
 
     /// Perform request asynchronously.
     ///
-    /// Works well with engine::WaitAny, engine::WaitAnyFor, and engine::WaitUntil functions:
+    /// Works well with @ref engine::WaitAny(), @ref engine::WaitAnyFor(), and @ref engine::WaitUntil() functions:
     /// @snippet src/clients/http/client_wait_test.cpp HTTP Client - waitany
     ///
     /// Request object could be reused after retrieval of data from ResponseFuture, all the setup holds:

@@ -33,7 +33,7 @@ struct ClientConfig {
 /// @ref scripts/docs/en/userver/dynamic_config.md "dynamic configs" service.
 ///
 /// It is safe to concurrently invoke members of the same client because this
-/// client is a thin wrapper around clients::http::Client.
+/// client is a thin wrapper around @ref clients::http::Client.
 class Client final {
 public:
     Client(clients::http::Client& http_client, const ClientConfig&);

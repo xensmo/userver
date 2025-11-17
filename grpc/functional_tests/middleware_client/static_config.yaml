@@ -63,6 +63,7 @@ components_manager:
 
         # http client (for testsuite support)
         http-client:
+        http-client-core:
             fs-task-processor: main-task-processor
 
         dns-client:

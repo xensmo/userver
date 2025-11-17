@@ -524,26 +524,28 @@ def userver_config_http_client(
 ) -> ServiceConfigPatch:
     """
     Returns a function that adjusts the static configuration file for testsuite.
-    Sets increased timeout and limits allowed URLs for `http-client` component.
+    Sets increased timeout and limits allowed URLs for `http-client-core` component.
 
     @ingroup userver_testsuite_fixtures
     """
 
     def patch_config(config, config_vars):
         components: dict = config['components_manager']['components']
-        if not {'http-client', 'testsuite-support'}.issubset(
+        if not {'http-client-core', 'testsuite-support'}.issubset(
             components.keys(),
         ):
             return
-        http_client = components['http-client'] or {}
-        http_client['testsuite-enabled'] = True
-        http_client['testsuite-timeout'] = '10s'
+        if components['http-client-core'] is None:
+            components['http-client-core'] = {}
+        http_client_core = components['http-client-core']
+        http_client_core['testsuite-enabled'] = True
+        http_client_core['testsuite-timeout'] = '10s'
 
         allowed_urls = [mockserver_info.base_url]
         if mockserver_ssl_info:
             allowed_urls.append(mockserver_ssl_info.base_url)
         allowed_urls += allowed_url_prefixes_extra
-        http_client['testsuite-allowed-url-prefixes'] = allowed_urls
+        http_client_core['testsuite-allowed-url-prefixes'] = allowed_urls
 
     return patch_config
 
@@ -658,7 +660,9 @@ def userver_config_testsuite(pytestconfig, mockserver_info) -> ServiceConfigPatc
         components: dict = config['components_manager']['components']
         if 'testsuite-support' not in components:
             return
-        testsuite_support = components['testsuite-support'] or {}
+        if components['testsuite-support'] is None:
+            components['testsuite-support'] = {}
+        testsuite_support = components['testsuite-support']
         testsuite_support['testsuite-increased-timeout'] = '30s'
         testsuite_support['testsuite-grpc-is-tls-enabled'] = False
         _set_postgresql_options(testsuite_support)

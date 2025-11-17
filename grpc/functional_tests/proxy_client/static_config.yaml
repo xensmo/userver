@@ -71,6 +71,7 @@ components_manager:
             throttling_enabled: false
 
         http-client:
+        http-client-core:
             fs-task-processor: main-task-processor
 
         dns-client:
