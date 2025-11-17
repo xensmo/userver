@@ -70,7 +70,7 @@ UTEST(TaskBuilder, Background) {
     EXPECT_EQ(task.Get(), nullptr);
 }
 
-UTEST(TaskBuilder, Misuse) {
+UTEST_DEATH(TaskBuilderDeathTest, Misuse) {
     utils::TaskBuilder builder;
     EXPECT_UINVARIANT_FAILURE((void)builder.Build([] {}));
 }
