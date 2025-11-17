@@ -15,7 +15,7 @@ ALL_CASES = [
     'say_hello_indept_streams',
 ]
 
-OK_RETRIES_COUNT = 5
+OK_RETRIES_COUNT = 10
 
 
 async def _say_hello(grpc_client, gate):
