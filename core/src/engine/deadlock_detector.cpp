@@ -2,6 +2,8 @@
 
 #include <list>
 
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <boost/stacktrace.hpp>
 
 #include <engine/task/task_context.hpp>

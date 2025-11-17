@@ -1,6 +1,7 @@
 #include <ugrpc/server/middlewares/log/middleware.hpp>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <userver/logging/log_extra.hpp>
 #include <userver/tracing/tags.hpp>
