@@ -33,6 +33,12 @@ struct IsFromCharsConvertible<
     std::void_t<decltype(std::from_chars(std::declval<const char*>(), std::declval<const char*>(), std::declval<T&>())
     )>> : std::true_type {};
 
+// libstdc++ before 13.1 parse long double incorrectly
+#if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 13
+template <>
+struct IsFromCharsConvertible<long double> : std::false_type {};
+#endif
+
 template <class T>
 inline constexpr bool kIsFromCharsConvertible = IsFromCharsConvertible<T>::value;
 
