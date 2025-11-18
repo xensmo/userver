@@ -4,9 +4,8 @@
 #include <fmt/compile.h>
 #include <fmt/format.h>
 
-#include <logging/timestamp.hpp>
-
 #include <userver/compiler/thread_local.hpp>
+#include <userver/logging/impl/timestamp.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/encoding/tskv.hpp>
 
@@ -49,7 +48,7 @@ Tskv::Tskv(Level level, Format format, const utils::impl::SourceLocation& locati
         }
         case Format::kLtsv: {
             constexpr std::string_view kTemplate = "timestamp:0000-00-00T00:00:00.000000\tlevel:\tmodule: ( : )";
-            const auto now = TimePoint::clock::now();
+            const auto now = std::chrono::system_clock::now();
             const auto level_string = logging::ToUpperCaseString(level);
             item_.log_line.resize_and_overwrite(
                 kTemplate.size() + level_string.size() + location.GetFunctionName().size() +

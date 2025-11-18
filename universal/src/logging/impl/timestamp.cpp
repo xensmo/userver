@@ -1,18 +1,20 @@
-#include <logging/timestamp.hpp>
+#include <userver/logging/impl/timestamp.hpp>
 
 #include <fmt/chrono.h>
 #include <fmt/compile.h>
 #include <fmt/format.h>
 
+#include <userver/compiler/thread_local.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/strerror.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
-namespace logging {
+namespace logging::impl {
 
 namespace {
 
+using TimePoint = std::chrono::system_clock::time_point;
 using SecondsTimePoint = std::chrono::time_point<TimePoint::clock, std::chrono::seconds>;
 
 struct CachedTime final {
@@ -42,20 +44,20 @@ compiler::ThreadLocal thread_local_cached_gmt_time = [] { return CachedTime{}; }
 compiler::ThreadLocal thread_local_cached_local_time = [] { return CachedTime{}; };
 }  // namespace
 
-unsigned long FractionalMicroseconds(TimePoint time) noexcept {
+std::chrono::microseconds::rep FractionalMicroseconds(std::chrono::system_clock::time_point time) noexcept {
     return std::chrono::time_point_cast<std::chrono::microseconds>(time).time_since_epoch().count() % 1'000'000;
 }
 
-TimeString GetCurrentGMTimeString(TimePoint now) noexcept {
+TimeString GetCurrentGMTimeString(std::chrono::system_clock::time_point now) noexcept {
     auto cached_time = thread_local_cached_gmt_time.Use();
     return GetCurrentTimeString<gmtime_r>(now, cached_time);
 }
 
-TimeString GetCurrentLocalTimeString(TimePoint now) noexcept {
+TimeString GetCurrentLocalTimeString(std::chrono::system_clock::time_point now) noexcept {
     auto cached_time = thread_local_cached_local_time.Use();
     return GetCurrentTimeString<localtime_r>(now, cached_time);
 }
 
-}  // namespace logging
+}  // namespace logging::impl
 
 USERVER_NAMESPACE_END
