@@ -558,6 +558,10 @@ const std::string& Request::GetData() const& { return pimpl_->easy().get_post_da
 
 std::string Request::ExtractData() { return pimpl_->easy().extract_post_data(); }
 
+void Request::SetWaitToken(utils::impl::InternalTag, utils::impl::WaitTokenStorageLock&& wait_token) {
+    pimpl_->SetWaitToken(std::move(wait_token));
+}
+
 }  // namespace clients::http
 
 USERVER_NAMESPACE_END

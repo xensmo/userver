@@ -1096,6 +1096,8 @@ void RequestState::SetTracingManager(const tracing::TracingManagerBase& m) { tra
 
 PluginRequest RequestState::GetEditableRequestInstance() { return PluginRequest(*this); }
 
+void RequestState::SetWaitToken(utils::impl::WaitTokenStorageLock&& wait_token) { wait_token_ = std::move(wait_token); }
+
 }  // namespace clients::http
 
 USERVER_NAMESPACE_END

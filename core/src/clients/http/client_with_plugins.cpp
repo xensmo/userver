@@ -13,11 +13,12 @@ ClientWithPlugins::ClientWithPlugins(
 )
     : client_core_(std::move(client_core)), plugins_(std::move(plugins)) {}
 
-ClientWithPlugins::~ClientWithPlugins() = default;
+ClientWithPlugins::~ClientWithPlugins() { wts_.WaitForAllTokens(); }
 
 Request ClientWithPlugins::CreateRequest() {
     auto request = client_core_->CreateRequest();
     request.SetPluginsList(plugins_);
+    request.SetWaitToken(utils::impl::InternalTag{}, wts_.GetToken());
     return request;
 }
 

@@ -25,6 +25,7 @@
 #include <userver/tracing/manager.hpp>
 #include <userver/tracing/span.hpp>
 #include <userver/tracing/tags.hpp>
+#include <userver/utils/impl/wait_token_storage.hpp>
 #include <userver/utils/not_null.hpp>
 #include <userver/utils/zstring_view.hpp>
 
@@ -145,6 +146,8 @@ public:
 
     void SetTracingManager(const tracing::TracingManagerBase&);
 
+    void SetWaitToken(utils::impl::WaitTokenStorageLock&&);
+
     /// true if proxy was set using proxy method
     bool IsProxySet() const;
 
@@ -264,6 +267,8 @@ private:
     };
 
     std::variant<FullBufferedData, StreamData> data_;
+
+    utils::impl::WaitTokenStorageLock wait_token_;
 };
 
 }  // namespace clients::http

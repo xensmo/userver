@@ -15,6 +15,7 @@
 #include <userver/crypto/certificate.hpp>
 #include <userver/crypto/private_key.hpp>
 #include <userver/http/http_version.hpp>
+#include <userver/utils/impl/internal_tag.hpp>
 #include <userver/utils/impl/source_location.hpp>
 #include <userver/utils/not_null.hpp>
 
@@ -23,6 +24,10 @@ USERVER_NAMESPACE_BEGIN
 namespace tracing {
 class TracingManagerBase;
 }  // namespace tracing
+
+namespace utils::impl {
+class WaitTokenStorageLock;
+}  // namespace utils::impl
 
 /// HTTP client helpers
 namespace clients::http {
@@ -350,6 +355,8 @@ public:
 
     // Set deadline propagation settings. For internal use only.
     void SetDeadlinePropagationConfig(const DeadlinePropagationConfig& deadline_propagation_config) &;
+
+    void SetWaitToken(utils::impl::InternalTag, utils::impl::WaitTokenStorageLock&&);
     /// @endcond
 
     /// Disable auto-decoding of received replies. Useful to proxy replies 'as is'.

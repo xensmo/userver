@@ -10,6 +10,7 @@
 #include <userver/clients/http/client.hpp>
 #include <userver/clients/http/plugin.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
+#include <userver/utils/impl/wait_token_storage.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -46,6 +47,7 @@ public:
 private:
     std::shared_ptr<ClientCore> client_core_;
     std::vector<utils::NotNull<clients::http::Plugin*>> plugins_;
+    utils::impl::WaitTokenStorage wts_;
 };
 
 }  // namespace clients::http
