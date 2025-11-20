@@ -76,9 +76,9 @@ struct MethodData final {
     typename CallTraits::ServiceBase& service;
     const typename CallTraits::ServiceMethod service_method;
 
-    std::string_view call_name{GetMethodFullName(service_data.metadata, method_id)};
+    utils::StringLiteral call_name{ugrpc::impl::GetMethodFullName(service_data.metadata, method_id)};
     // Remove name of the service and slash
-    std::string_view method_name{GetMethodName(service_data.metadata, method_id)};
+    utils::StringLiteral method_name{ugrpc::impl::GetMethodName(service_data.metadata, method_id)};
     ugrpc::impl::MethodStatistics& statistics{service_data.service_statistics.GetMethodStatistics(method_id)};
 };
 
