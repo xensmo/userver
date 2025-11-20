@@ -1,10 +1,10 @@
 import pytest
 
-import samples.greeter_pb2 as greeter_pb2  # noqa: E402, E501
+import samples.greeter_pb2 as greeter_pb2
 
 
 @pytest.mark.parametrize(
-    'metadata,logs,',
+    'metadata,logs',
     [
         [(('x-yatraceid', 'traceid'),), {'trace_id': 'traceid'}],
         [
@@ -21,13 +21,7 @@ import samples.greeter_pb2 as greeter_pb2  # noqa: E402, E501
         ],
     ],
 )
-async def test_tracing_metadata(
-    grpc_client,
-    service_client,
-    gate,
-    metadata,
-    logs,
-):
+async def test_tracing_metadata(grpc_client, service_client, metadata, logs):
     request = greeter_pb2.GreetingRequest(name='Python')
     async with service_client.capture_logs() as capture:
         response = await grpc_client.SayHello(
