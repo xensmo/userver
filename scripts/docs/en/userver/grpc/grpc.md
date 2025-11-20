@@ -199,8 +199,6 @@ Each method receives:
     * Also contains grpc::ClientContext from grpcpp library
 * A request (for single-request RPCs only)
 
-When using a server stream, always call `Finish` or `FinishWithError`. Otherwise the client will receive `UNKNOWN` error, which signifies an internal server error.
-
 Read the documentation on gRPC streams:
 * Single request, single response @ref ugrpc::server::Response
 * Request stream, single response @ref ugrpc::server::Reader + @ref ugrpc::server::Result
