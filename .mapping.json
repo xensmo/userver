@@ -2605,6 +2605,7 @@
   "kafka/utest/include/userver/kafka/utest/kafka_fixture.hpp":"taxi/uservices/userver/kafka/utest/include/userver/kafka/utest/kafka_fixture.hpp",
   "kafka/utest/src/kafka/utest/kafka_fixture.cpp":"taxi/uservices/userver/kafka/utest/src/kafka/utest/kafka_fixture.cpp",
   "kafka/wrapper/include/librdkafka/rdkafka.h":"taxi/uservices/userver/kafka/wrapper/include/librdkafka/rdkafka.h",
+  "kafka/wrapper/include/librdkafka/rdkafka_mock.h":"taxi/uservices/userver/kafka/wrapper/include/librdkafka/rdkafka_mock.h",
   "libraries/CMakeLists.txt":"taxi/uservices/userver/libraries/CMakeLists.txt",
   "libraries/easy/CMakeLists.txt":"taxi/uservices/userver/libraries/easy/CMakeLists.txt",
   "libraries/easy/include/userver/easy.hpp":"taxi/uservices/userver/libraries/easy/include/userver/easy.hpp",
