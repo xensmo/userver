@@ -198,6 +198,8 @@ private:
 
     void ResolveTargetAddress(clients::dns::Resolver& resolver);
 
+    // should be the first member to prevent HttpClient destruction before destruction of RequestState fields
+    utils::impl::WaitTokenStorageLock wait_token_;
     /// curl handler wrapper
     impl::EasyWrapper easy_;
     RequestStats stats_;
@@ -267,8 +269,6 @@ private:
     };
 
     std::variant<FullBufferedData, StreamData> data_;
-
-    utils::impl::WaitTokenStorageLock wait_token_;
 };
 
 }  // namespace clients::http
