@@ -504,11 +504,11 @@ class Generator:
         # Field name must not be the same as the type
         type_name = field_name.title()
         if type_name == field_name:
-            type_name = type_name + '_'  # noqa: PLR6104
+            type_name += '_'
 
         # Struct X may not have subtype X
         if type_name == class_name.in_local_scope():
-            type_name = type_name + '_'  # noqa: PLR6104
+            type_name += '_'
 
         type_name = self._normalize_name(type_name)
 
@@ -613,7 +613,7 @@ class Generator:
         elif schema.mapping.is_int():
             mapping_values = schema.mapping.as_ints()
 
-        for field_value, refs in zip(schema.oneOf, mapping_values):  # noqa: B905
+        for field_value, refs in zip(schema.oneOf, mapping_values, strict=True):
             for ref_ in refs:
                 variants[ref_] = self._gen_ref(
                     type_name.TypeName(''),

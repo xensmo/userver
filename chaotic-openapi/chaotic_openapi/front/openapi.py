@@ -339,14 +339,14 @@ class OpenApi(base_model.BaseModel):
         for name, values in security.items():
             if name not in self.components.securitySchemes:
                 raise ValueError(
-                    f'Undefined security name="{name}". Expected on of: {self.components.securitySchemes.keys()}'  # noqa: COM812
+                    f'Undefined security name="{name}". Expected on of: {self.components.securitySchemes.keys()}',
                 )
             sec_scheme = self.components.securitySchemes[name]
 
             if isinstance(sec_scheme, Ref):
                 if sec_scheme not in self.components.securitySchemes:
                     raise ValueError(
-                        f'Invalid reference "{sec_scheme}". Expected one of: "{self.components.securitySchemes.keys()}"'  # noqa: COM812
+                        f'Invalid reference "{sec_scheme}". Expected one of: "{self.components.securitySchemes.keys()}"',
                     )
             elif isinstance(sec_scheme, SecurityScheme):
                 if sec_scheme.type not in [SecurityType.oauth2, SecurityType.openIdConnect]:

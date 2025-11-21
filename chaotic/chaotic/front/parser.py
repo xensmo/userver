@@ -372,9 +372,8 @@ class SchemaParser:
 
         fields = set(input_.keys())
         fields.remove('$ref')
-        if 'description' in fields:  # noqa: FURB132
-            # description is explicitly allowed in $ref
-            fields.remove('description')
+        # description is explicitly allowed in $ref
+        fields.discard('description')
 
         if 'x-usrv-cpp-indirect' in fields:
             indirect = True

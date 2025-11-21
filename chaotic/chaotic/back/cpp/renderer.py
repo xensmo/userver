@@ -53,7 +53,7 @@ def open_namespace(new_ns: str) -> str:
         res = ''
         for namespace in new_ns.split('::'):
             if namespace:
-                res = res + f'namespace {namespace} {{'  # noqa: PLR6104
+                res += f'namespace {namespace} {{'
         return res
     else:
         return ''

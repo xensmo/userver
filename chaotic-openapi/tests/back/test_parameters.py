@@ -1,4 +1,4 @@
-from chaotic_openapi.back.cpp_client import types  # noqa: I001
+from chaotic_openapi.back.cpp_client import types
 import pytest
 
 from chaotic.back.cpp import type_name
@@ -51,17 +51,17 @@ def test_parameters(translate_single_schema):
                             ),
                             validators=cpp_types.CppPrimitiveValidator(
                                 prefix='Parameter0',
-                                namespace='::test_namespace::root_::get',  # noqa: COM812
+                                namespace='::test_namespace::root_::get',
                             ),
                         ),
                         parser='openapi::TrivialParameter<openapi::In::kQuery, kparam, int, int>',
                         required=False,
                         query_log_mode_hide=False,
-                    )  # noqa: COM812
+                    ),
                 ],
                 request_bodies=[],
                 responses=[],
-            )  # noqa: COM812
+            ),
         ],
     )
 
@@ -92,7 +92,7 @@ def test_parameters_ref(translate_single_schema):
                         'type': 'integer',
                     },
                 },
-            }  # noqa: COM812
+            },
         },
     }
     assert translate_single_schema(schema) == types.ClientSpec(
@@ -118,17 +118,17 @@ def test_parameters_ref(translate_single_schema):
                             ),
                             validators=cpp_types.CppPrimitiveValidator(
                                 prefix='ParameterParameter',
-                                namespace='::test_namespace',  # noqa: COM812
+                                namespace='::test_namespace',
                             ),
                         ),
                         parser='openapi::TrivialParameter<openapi::In::kQuery, kparam, int, int>',
                         required=False,
                         query_log_mode_hide=False,
-                    )  # noqa: COM812
+                    ),
                 ],
                 request_bodies=[],
                 responses=[],
-            )  # noqa: COM812
+            ),
         ],
     )
 
@@ -159,7 +159,7 @@ def test_parameters_schemas_ref(translate_single_schema):
                 'Parameter': {
                     'type': 'integer',
                 },
-            }  # noqa: COM812
+            },
         },
     }
     assert translate_single_schema(schema) == types.ClientSpec(
@@ -206,11 +206,11 @@ def test_parameters_schemas_ref(translate_single_schema):
                         parser='openapi::TrivialParameter<openapi::In::kQuery, kparam, int, int>',
                         required=False,
                         query_log_mode_hide=False,
-                    )  # noqa: COM812
+                    ),
                 ],
                 request_bodies=[],
                 responses=[],
-            )  # noqa: COM812
+            ),
         ],
         internal_schemas={
             '::test_namespace::root_::get::Parameter0': cpp_types.CppRef(
@@ -264,7 +264,7 @@ def test_parameters_schemas_ref(translate_single_schema):
                 indirect=False,
                 self_ref=False,
                 cpp_name=None,
-            )  # noqa: COM812
+            ),
         },
         schemas={
             '::test_namespace::Parameter': cpp_types.CppPrimitiveType(

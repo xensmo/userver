@@ -12,7 +12,7 @@ async def test_send(service_binary):
             service_binary,
             '--port',
             str(server.getsockname()[1]),
-            stdin=asyncio.subprocess.PIPE,  # noqa: COM812
+            stdin=asyncio.subprocess.PIPE,
         )
 
         subprocess.stdin.write(b'PING\n')
@@ -41,7 +41,7 @@ async def test_listen(service_binary):
         '-l',
         '--port',
         str(port),
-        stdout=asyncio.subprocess.PIPE,  # noqa: COM812
+        stdout=asyncio.subprocess.PIPE,
     )
     await asyncio.sleep(0.3)  # give time to open listening socket
 

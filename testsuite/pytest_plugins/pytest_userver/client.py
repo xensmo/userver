@@ -744,7 +744,7 @@ def _subtract_metric_values_hist(
     assert current_value.bounds == initial_value.bounds
     return metric_module.Histogram(
         bounds=current_value.bounds,
-        buckets=[t[0] - t[1] for t in zip(current_value.buckets, initial_value.buckets)],  # noqa: B905
+        buckets=[t[0] - t[1] for t in zip(current_value.buckets, initial_value.buckets, strict=True)],
         inf=current_value.inf - initial_value.inf,
     )
 
@@ -945,7 +945,7 @@ class AiohttpClient(service_client.AiohttpClient):
     ) -> None:
         if cache_names is None and clean_update:
             if self._allow_all_caches_invalidation:
-                warnings.warn(CACHE_INVALIDATION_MESSAGE, DeprecationWarning)  # noqa: B028
+                warnings.warn(CACHE_INVALIDATION_MESSAGE, DeprecationWarning, stacklevel=2)
             else:
                 __tracebackhide__ = True
                 raise RuntimeError(CACHE_INVALIDATION_MESSAGE)
@@ -1432,10 +1432,7 @@ class _StateManager:
         if 'mock_now' in body:
             self._state.now = body['mock_now']
 
-        testpoints: list[str] | None = body.get(  # noqa: SIM910
-            'testpoints',
-            None,
-        )
+        testpoints: list[str] | None = body.get('testpoints')
         if testpoints is not None:
             self._state.testpoints = frozenset(testpoints)
 

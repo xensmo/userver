@@ -918,7 +918,7 @@ class CppVariantWithDiscriminator(CppType):
 
     def parser_type(self, ns: str, name: str) -> str:
         variants_list = []
-        for _, variant in self.variants.items():  # noqa: PERF102
+        for variant in self.variants.values():
             variants_list.append(variant.parser_type(ns, name))
         variants = ', '.join(variants_list)
 

@@ -48,14 +48,14 @@ def pytest_addoption(parser) -> None:
 
 
 @pytest.fixture(scope='session')
-def service_env():
+def service_env() -> dict[str, str]:
     """
     Override this to pass extra environment variables to the service.
 
     @snippet samples/redis_service/testsuite/conftest.py  service_env
     @ingroup userver_testsuite_fixtures
     """
-    return None  # noqa: RET501
+    return {}
 
 
 @pytest.fixture(scope='session')
