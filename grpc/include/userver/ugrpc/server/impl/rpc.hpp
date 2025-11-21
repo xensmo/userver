@@ -10,6 +10,7 @@
 #include <userver/ugrpc/server/impl/async_methods.hpp>
 #include <userver/ugrpc/server/impl/call_kind.hpp>
 #include <userver/ugrpc/server/impl/call_state.hpp>
+#include <userver/ugrpc/server/impl/status_utils.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -81,11 +82,13 @@ public:
 
     /// @brief Complete the RPC with an error
     ///
+    /// Trims whitespaces from gRPC status messages before transmission.
+    ///
     /// `Finish` must not be called multiple times.
     ///
-    /// @param status error details
+    /// @param status error details. Whitespaces may be trimmed in the status message.
     /// @returns `true` if the status is going to the wire, `false` if the RPC is dead.
-    [[nodiscard]] bool FinishWithError(const grpc::Status& status);
+    [[nodiscard]] bool FinishWithError(grpc::Status& status);
 
     /// @brief Complete the RPC successfully, sending the given response message to the client.
     ///
@@ -167,10 +170,14 @@ void Responder<CallTraits>::DoWrite(Response& response, const grpc::WriteOptions
 }
 
 template <typename CallTraits>
-[[nodiscard]] bool Responder<CallTraits>::FinishWithError(const grpc::Status& status) {
+[[nodiscard]] bool Responder<CallTraits>::FinishWithError(grpc::Status& status) {
     UASSERT(!status.ok());
     UINVARIANT(!is_finished_, "'FinishWithError' called on a finished stream");
     is_finished_ = true;
+
+    // Trim whitespaces from gRPC status messages before transmission
+    // to ensure compliance with HTTP/2 RFC9113 8.2.1
+    impl::TrimStatusErrorMessage(status);
 
     if constexpr (impl::IsServerStreaming(kCallKind)) {
         return impl::Finish(raw_responder_, status);
