@@ -87,7 +87,12 @@ namespace components {
 ///    will be triggered each `update-interval` (adjusted by jitter).
 ///  * `only-incremental`: only `update-interval` must be specified. UpdateType::kFull is triggered
 ///    on the first update, afterwards UpdateType::kIncremental will be triggered
-///    each `update-interval` (adjusted by jitter).
+///    each `update-interval` (adjusted by jitter). Warning: use carefully.
+///    If the cache loses any data, it is lost until service restart (in the worst case). If possible,
+///    use `full-and-incremental` with rare full updates, and completely avoid `only-incremental`.
+///    Also you have to explicitly remove outdated items from the cache container, otherwise
+///    the cache might grow indefinitely and eventually will lead to OOM.
+///    If not sure, just use `full-and-incremental`.
 ///
 /// ### Avoiding memory leaks
 ///
