@@ -19,7 +19,7 @@ See also:
 * Creating asynchronous gRPC clients and services;
 * Forwarding gRPC Core logs to userver logs;
 * Caching and reusing connections;
-* @ref scripts/docs/en/userver/grpc/grpc_retries.md;
+* @ref scripts/docs/en/userver/grpc/timeouts_retries.md;
 * Collection of metrics on driver usage;
 * Cancellation support;
 * Automatic authentication using middlewares;
@@ -53,7 +53,7 @@ In a component constructor, find @ref ugrpc::client::ClientFactoryComponent and 
 
 Client creation in an expensive operation! Either create them once at the server boot time or cache them. An automated
 solution for client creation and caching is the @ref ugrpc::client::SimpleClientComponent. It also allows to
-specify dynamic config for @ref ugrpc::client::ClientQos:
+specify dynamic config for @ref ugrpc::client::ClientQos :
 
 @snippet samples/grpc_service/src/greeter_client.hpp  component
 
