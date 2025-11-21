@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 
 #include <userver/cache/cache_update_trait.hpp>
+#include <userver/cache/data_provider.hpp>
 #include <userver/cache/exceptions.hpp>
 #include <userver/compiler/demangle.hpp>
 #include <userver/components/component_base.hpp>
@@ -150,7 +151,7 @@ namespace components {
 
 template <typename T>
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
-class CachingComponentBase : public ComponentBase, protected cache::CacheUpdateTrait {
+class CachingComponentBase : public ComponentBase, public cache::DataProvider<T>, protected cache::CacheUpdateTrait {
 public:
     CachingComponentBase(const ComponentConfig& config, const ComponentContext&);
     ~CachingComponentBase() override;
@@ -165,7 +166,7 @@ public:
     /// returns `true`.
     /// @throws cache::EmptyCacheError if the contents are `nullptr`, and
     /// `MayReturnNull` returns `false` (which is the default behavior).
-    utils::SharedReadablePtr<T> Get() const;
+    utils::SharedReadablePtr<T> Get() const final;
 
     /// @return cache contents. May be nullptr regardless of `MayReturnNull`.
     utils::SharedReadablePtr<T> GetUnsafe() const;
@@ -181,15 +182,23 @@ public:
     static yaml_config::Schema GetStaticConfigSchema();
 
 protected:
-    /// Sets the new value of cache. As a result the Get() member function starts
-    /// returning the value passed into this function after the Update() finishes.
+    /// Sets the new value of cache. As a result the `Get()` member function starts
+    /// returning the value passed into this function after the `Update()` finishes.
     ///
-    /// @warning Do not forget to update cache::UpdateStatisticsScope, otherwise
+    /// @warning Do not forget to update @ref cache::UpdateStatisticsScope, otherwise
     /// the behavior is undefined.
     void Set(std::unique_ptr<const T> value_ptr);
 
     /// @overload
     void Set(T&& value);
+
+    /// Attach the value of cache. As a result the `Get()` member function starts returning the value passed into
+    /// this function after the `Update()` finishes. Does not take over into sole ownership. Do not use unless
+    /// absolutely necessary. The object must be strictly thread-safe.
+    ///
+    /// @warning Do not forget to update @ref cache::UpdateStatisticsScope, otherwise
+    /// the behavior is undefined.
+    void Attach(const std::shared_ptr<const T>& value_ptr);
 
     /// @overload Set()
     template <typename... Args>
@@ -284,8 +293,16 @@ utils::SharedReadablePtr<T> CachingComponentBase<T>::GetUnsafe() const {
 
 template <typename T>
 void CachingComponentBase<T>::Set(std::unique_ptr<const T> value_ptr) {
-    const std::shared_ptr<const T> new_value = TransformNewValue(std::move(value_ptr));
+    Attach(TransformNewValue(std::move(value_ptr)));
+}
 
+template <typename T>
+void CachingComponentBase<T>::Set(T&& value) {
+    Emplace(std::move(value));
+}
+
+template <typename T>
+void CachingComponentBase<T>::Attach(const std::shared_ptr<const T>& new_value) {
     if (HasPreAssignCheck()) {
         auto old_value = cache_.Read();
         PreAssignCheck(old_value->get(), new_value.get());
@@ -294,11 +311,6 @@ void CachingComponentBase<T>::Set(std::unique_ptr<const T> value_ptr) {
     cache_.Assign(new_value);
     event_channel_.SendEvent(new_value);
     OnCacheModified();
-}
-
-template <typename T>
-void CachingComponentBase<T>::Set(T&& value) {
-    Emplace(std::move(value));
 }
 
 template <typename T>
