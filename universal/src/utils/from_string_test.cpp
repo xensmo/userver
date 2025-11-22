@@ -32,7 +32,7 @@ std::string ToString(T value) {
 
 template <typename T>
 auto TestInvalid(const std::string& input) {
-    ASSERT_THROW(utils::FromString<T>(input), std::runtime_error)
+    ASSERT_THROW(utils::FromString<T>(input), utils::FromStringException)
         << "type = " << compiler::GetTypeName<T>() << ", input = \"" << input << "\"";
 }
 
@@ -227,7 +227,7 @@ TYPED_TEST(FromStringTest, ExceptionDetails) {
 
     try {
         utils::FromString<T>(".blah");
-    } catch (const std::runtime_error& e) {
+    } catch (const utils::FromStringException& e) {
         what = e.what();
     } catch (const std::exception& e) {
         // swallow

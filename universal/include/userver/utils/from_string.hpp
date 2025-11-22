@@ -22,6 +22,11 @@ USERVER_NAMESPACE_BEGIN
 
 namespace utils {
 
+class FromStringException : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
 namespace impl {
 
 template <typename T, typename = void>
