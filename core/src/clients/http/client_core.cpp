@@ -54,7 +54,8 @@ ClientCore::ClientCore(utils::impl::InternalTag, ClientSettings settings, engine
       fs_task_processor_(fs_task_processor),
       user_agent_(utils::GetUserverIdentifier()),
       connect_rate_limiter_(std::make_shared<curl::ConnectRateLimiter>()),
-      tracing_manager_(GetTracingManager(settings)) {
+      tracing_manager_(GetTracingManager(settings))
+{
     const auto io_threads = settings.io_threads;
     const auto& thread_name_prefix = settings.thread_name_prefix;
 
@@ -102,8 +103,7 @@ ClientCore::~ClientCore() {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
-    while (TryDequeueIdle())
-        ;
+    while (TryDequeueIdle());
 
     multis_.clear();
     thread_pool_.reset();
@@ -120,21 +120,24 @@ Request ClientCore::CreateRequest() {
                 statistics_[idx].CreateRequestStats(),
                 destination_statistics_,
                 resolver_,
-                *tracing_manager_.GetBase()};
+                *tracing_manager_.GetBase()
+            };
         } else {
             auto i = utils::RandRange(multis_.size());
             auto& multi = multis_[i];
 
             try {
-                auto wrapper = engine::AsyncNoSpan(fs_task_processor_, [this, &multi] {
-                                   return impl::EasyWrapper{easy_.Get()->GetBoundBlocking(*multi), *this};
-                               }).Get();
+                auto wrapper =
+                    engine::AsyncNoSpan(fs_task_processor_, [this, &multi] {
+                        return impl::EasyWrapper{easy_.Get()->GetBoundBlocking(*multi), *this};
+                    }).Get();
                 return Request{
                     std::move(wrapper),
                     statistics_[i].CreateRequestStats(),
                     destination_statistics_,
                     resolver_,
-                    *tracing_manager_.GetBase()};
+                    *tracing_manager_.GetBase()
+                };
             } catch (engine::WaitInterruptedException&) {
                 throw clients::http::CancelException("wait interrupted", {}, ErrorKind::kCancel);
             } catch (engine::TaskCancelledException&) {
@@ -195,7 +198,9 @@ InstanceStatistics ClientCore::GetMultiStatistics(size_t n) const {
 
 size_t ClientCore::FindMultiIndex(const curl::multi* multi) const {
     for (size_t i = 0; i < multis_.size(); i++) {
-        if (multis_[i].get() == multi) return i;
+        if (multis_[i].get() == multi) {
+            return i;
+        }
     }
     UASSERT_MSG(false, "Unknown multi");
     throw std::logic_error("Unknown multi");
@@ -245,20 +250,19 @@ void ClientCore::SetAllowedUrlsExtra(std::vector<std::string>&& urls) { allowed_
 void ClientCore::SetConfig(const impl::Config& config) {
     const auto pool_size = ClampToLong(config.connection_pool_size / multis_.size());
     if (pool_size * multis_.size() != config.connection_pool_size) {
-        LOG_DEBUG() << "SetConnectionPoolSize() rounded pool size for each multi (" << config.connection_pool_size
-                    << "/" << multis_.size() << " rounded to " << pool_size << ")";
+        LOG_DEBUG()
+            << "SetConnectionPoolSize() rounded pool size for each multi (" << config.connection_pool_size << "/"
+            << multis_.size() << " rounded to " << pool_size << ")";
     }
     for (auto& multi : multis_) {
         multi->SetConnectionCacheSize(pool_size);
     }
 
     connect_rate_limiter_->SetGlobalHttpLimits(config.throttle.http_connect_limit, config.throttle.http_connect_rate);
-    connect_rate_limiter_->SetGlobalHttpsLimits(
-        config.throttle.https_connect_limit, config.throttle.https_connect_rate
-    );
-    connect_rate_limiter_->SetPerHostLimits(
-        config.throttle.per_host_connect_limit, config.throttle.per_host_connect_rate
-    );
+    connect_rate_limiter_
+        ->SetGlobalHttpsLimits(config.throttle.https_connect_limit, config.throttle.https_connect_rate);
+    connect_rate_limiter_
+        ->SetPerHostLimits(config.throttle.per_host_connect_limit, config.throttle.per_host_connect_rate);
 }
 
 void ClientCore::ResetUserAgent(std::optional<std::string> user_agent) { user_agent_ = std::move(user_agent); }

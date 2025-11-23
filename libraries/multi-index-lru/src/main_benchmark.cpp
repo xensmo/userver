@@ -44,8 +44,9 @@ std::string GenerateEmail() { return "email" + std::to_string(utils::RandRange<i
 using UserCache = multi_index_lru::Container<
     User,
     boost::multi_index::indexed_by<
-        boost::multi_index::
-            ordered_unique<boost::multi_index::tag<IdTag>, boost::multi_index::member<User, int, &User::id>>,
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<IdTag>,
+            boost::multi_index::member<User, int, &User::id>>,
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<EmailTag>,
             boost::multi_index::member<User, std::string, &User::email>>,

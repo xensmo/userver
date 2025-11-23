@@ -39,8 +39,8 @@ grpc::Status ReportHandlerError(const std::exception& ex, CallState& state) noex
 
 void ReportRpcInterruptedError(CallState& state) noexcept;
 
-grpc::Status
-ReportCustomError(const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex, CallState& state) noexcept;
+grpc::Status ReportCustomError(const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex, CallState& state)
+    noexcept;
 
 void ReportFinish(bool finish_op_succeeded, const grpc::Status& status, CallState& state) noexcept;
 
@@ -87,10 +87,15 @@ public:
           context_(utils::impl::InternalTag{}, state_),
           initial_request_(initial_request),
           service_(service),
-          service_method_(service_method) {
+          service_method_(service_method)
+    {
         // TODO Move setting up Span a middleware?
         SetupSpan(
-            state_.span_storage, state_.server_context, state_.call_name, state_.service_name, state_.method_name
+            state_.span_storage,
+            state_.server_context,
+            state_.call_name,
+            state_.service_name,
+            state_.method_name
         );
     }
 

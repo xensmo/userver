@@ -11,7 +11,8 @@ public:
     Plugin(std::string key, std::string value)
         : clients::http::Plugin("add-header"),
           key_(std::make_unique<std::string>(std::move(key))),
-          value_(std::make_unique<std::string>(std::move(value))) {}
+          value_(std::make_unique<std::string>(std::move(value)))
+    {}
 
     void HookPerformRequest(clients::http::PluginRequest& request) override { request.SetHeader(*key_, *value_); }
 
@@ -36,7 +37,8 @@ public:
 
     PluginComponent(const components::ComponentConfig& config, const components::ComponentContext& context)
         : ComponentBase(config, context),
-          plugin_(std::make_unique<Plugin>(config["key"].As<std::string>(), config["value"].As<std::string>())) {}
+          plugin_(std::make_unique<Plugin>(config["key"].As<std::string>(), config["value"].As<std::string>()))
+    {}
 
     ~PluginComponent() override = default;
 

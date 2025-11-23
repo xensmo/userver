@@ -18,14 +18,17 @@ TEST(DeadlockDetectorDeathTest, Smoke) {
 
         auto task = engine::AsyncNoSpan([&mutex] { std::unique_lock lock(mutex); });
         EXPECT_DEATH(
-            task.Get(), R"(Mutex \(ptr=0x[a-z0-9]*\) => Task \(ptr=0x[a-z0-9]*\) => Task \(ptr=0x[a-z0-9]*\))"
+            task.Get(),
+            R"(Mutex \(ptr=0x[a-z0-9]*\) => Task \(ptr=0x[a-z0-9]*\) => Task \(ptr=0x[a-z0-9]*\))"
         );
     });
 }
 
 struct CycleDetected : public std::runtime_error {
     CycleDetected(std::vector<const engine::deadlock_detector::Actor*> cycle)
-        : std::runtime_error(""), cycle(std::move(cycle)) {}
+        : std::runtime_error(""),
+          cycle(std::move(cycle))
+    {}
 
     std::vector<const engine::deadlock_detector::Actor*> cycle;
 };
@@ -41,7 +44,9 @@ struct CycleDetected : public std::runtime_error {
 
 class MockState final : public engine::deadlock_detector::StateBase {
 public:
-    MockState() : StateBase(engine::DeadlockDetector::kOn) {}
+    MockState()
+        : StateBase(engine::DeadlockDetector::kOn)
+    {}
 
 protected:
     void OnCycleFound(const std::vector<const engine::deadlock_detector::Actor*>& cycle) override {

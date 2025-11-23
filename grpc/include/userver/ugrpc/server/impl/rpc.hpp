@@ -19,7 +19,9 @@ namespace ugrpc::server::impl {
 /// @brief A non-typed base class for any gRPC call.
 class ResponderBase {
 protected:
-    ResponderBase(utils::impl::InternalTag, CallState& state) : state_(state) {}
+    ResponderBase(utils::impl::InternalTag, CallState& state)
+        : state_(state)
+    {}
 
     // Prevent ownership via pointer to base.
     ~ResponderBase() = default;
@@ -116,7 +118,9 @@ private:
 
 template <typename CallTraits>
 Responder<CallTraits>::Responder(CallState& state, RawResponder& raw_responder)
-    : ResponderBase(utils::impl::InternalTag{}, state), raw_responder_(raw_responder) {}
+    : ResponderBase(utils::impl::InternalTag{}, state),
+      raw_responder_(raw_responder)
+{}
 
 template <typename CallTraits>
 Responder<CallTraits>::~Responder() {

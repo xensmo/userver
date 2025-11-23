@@ -201,7 +201,8 @@ TEST_F(ComponentList, Common) {
     const std::string config_vars_path = temp_root.GetPath() + "/config_vars.json";
 
     fs::blocking::RewriteFileContents(
-        dynamic_config_cache_path, formats::json::ToString(dynamic_config::impl::GetDefaultDocsMap().AsJson())
+        dynamic_config_cache_path,
+        formats::json::ToString(dynamic_config::impl::GetDefaultDocsMap().AsJson())
     );
 
     fs::blocking::RewriteFileContents(
@@ -226,7 +227,8 @@ TEST_F(ComponentList, ValidationWithConfigVars) {
     const std::string config_vars_path = temp_root.GetPath() + "/config_vars.json";
 
     fs::blocking::RewriteFileContents(
-        dynamic_config_cache_path, formats::json::ToString(dynamic_config::impl::GetDefaultDocsMap().AsJson())
+        dynamic_config_cache_path,
+        formats::json::ToString(dynamic_config::impl::GetDefaultDocsMap().AsJson())
     );
 
     fs::blocking::RewriteFileContents(

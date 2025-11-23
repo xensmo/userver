@@ -12,11 +12,12 @@ USERVER_NAMESPACE_BEGIN
 
 namespace {
 
-class ClientMiddlewaresHooksTest : public tests::MiddlewaresFixture<
-                                       tests::client::ClientMiddlewareBaseMock,
-                                       ::testing::NiceMock<tests::UnitTestServiceGmock>,
-                                       sample::ugrpc::UnitTestServiceClient,
-                                       /*N=*/1> {
+class ClientMiddlewaresHooksTest
+    : public tests::MiddlewaresFixture<
+          tests::client::ClientMiddlewareBaseMock,
+          ::testing::NiceMock<tests::UnitTestServiceGmock>,
+          sample::ugrpc::UnitTestServiceClient,
+          /*N=*/1> {
 public:
     using CallContext = ugrpc::server::CallContext;
 

@@ -257,7 +257,9 @@ private:
     impl::PluginPipeline plugin_pipeline_;
 
     struct StreamData {
-        StreamData(Queue::Producer&& queue_producer) : queue_producer(std::move(queue_producer)) {}
+        StreamData(Queue::Producer&& queue_producer)
+            : queue_producer(std::move(queue_producer))
+        {}
 
         Queue::Producer queue_producer;
         std::atomic<bool> headers_promise_set{false};

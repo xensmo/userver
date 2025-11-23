@@ -11,15 +11,16 @@ USERVER_NAMESPACE_BEGIN
 namespace utest {
 namespace {
 
-std::shared_ptr<clients::http::ClientCore>
-CreateCore(engine::TaskProcessor& fs_task_processor, const tracing::TracingManagerBase& tracing_manager) {
+std::shared_ptr<clients::http::ClientCore> CreateCore(
+    engine::TaskProcessor& fs_task_processor,
+    const tracing::TracingManagerBase& tracing_manager
+) {
     clients::http::ClientSettings static_config;
     static_config.io_threads = 1;
     static_config.tracing_manager = &tracing_manager;
 
-    return std::make_shared<clients::http::ClientCore>(
-        utils::impl::InternalTag{}, std::move(static_config), fs_task_processor
-    );
+    return std::make_shared<
+        clients::http::ClientCore>(utils::impl::InternalTag{}, std::move(static_config), fs_task_processor);
 }
 
 std::shared_ptr<clients::http::Client> Create(
@@ -28,16 +29,20 @@ std::shared_ptr<clients::http::Client> Create(
     clients::http::Plugin* plugin
 ) {
     std::vector<utils::NotNull<clients::http::Plugin*>> plugins;
-    if (plugin) plugins.emplace_back(plugin);
+    if (plugin) {
+        plugins.emplace_back(plugin);
+    }
 
     return std::make_shared<clients::http::ClientWithPlugins>(
-        utils::impl::InternalTag{}, CreateCore(fs_task_processor, tracing_manager), plugins
+        utils::impl::InternalTag{},
+        CreateCore(fs_task_processor, tracing_manager),
+        plugins
     );
 }
 
 const tracing::GenericTracingManager& GetDefaultTracingManager() {
-    static const tracing::GenericTracingManager kDefaultTracingManager{
-        tracing::Format::kYandexTaxi, tracing::Format::kYandexTaxi};
+    static const tracing::GenericTracingManager
+        kDefaultTracingManager{tracing::Format::kYandexTaxi, tracing::Format::kYandexTaxi};
     return kDefaultTracingManager;
 }
 

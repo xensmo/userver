@@ -29,9 +29,13 @@ struct ValueWithHook {
 
     const ValueWithHook* GetPointerToSelf() const { return this; };
 
-    explicit ValueWithHook(const Value& val) : value(val) {}
+    explicit ValueWithHook(const Value& val)
+        : value(val)
+    {}
 
-    explicit ValueWithHook(Value&& val) : value(std::move(val)) {}
+    explicit ValueWithHook(Value&& val)
+        : value(std::move(val))
+    {}
 
     ValueWithHook() = delete;
     ValueWithHook(const ValueWithHook&) = delete;
@@ -70,7 +74,9 @@ struct InternalPtrTag {};
 template <typename Value, typename IndexSpecifierList, typename Allocator = std::allocator<impl::ValueWithHook<Value>>>
 class Container {
 public:
-    explicit Container(size_t max_size) : max_size(max_size) {}
+    explicit Container(size_t max_size)
+        : max_size(max_size)
+    {}
 
     template <typename... Args>
     bool emplace(Args&&... args) {

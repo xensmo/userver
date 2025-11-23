@@ -302,7 +302,9 @@ TYPED_TEST_P(Parsing, TimeOfDayNormalized) {
 
 struct DontDefaultMe {
     DontDefaultMe() { Fail(); }
-    explicit DontDefaultMe(int value) : value(value) {}
+    explicit DontDefaultMe(int value)
+        : value(value)
+    {}
     int value = 0;
 
     static void Fail() { FAIL() << "Extra default constructor invoked by As"; }

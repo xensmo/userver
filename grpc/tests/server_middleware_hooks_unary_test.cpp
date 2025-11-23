@@ -27,7 +27,8 @@ namespace {
 
 const grpc::Status kUnknownErrorStatus{
     grpc::StatusCode::UNKNOWN,
-    "The service method has exited unexpectedly, without providing a status"};
+    "The service method has exited unexpectedly, without providing a status"
+};
 
 const grpc::Status kUnimplementedStatus{grpc::StatusCode::UNIMPLEMENTED, "This method is unimplemented"};
 
@@ -36,12 +37,13 @@ struct Flags final {
 };
 
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
-class ServerMiddlewareHooksUnaryTest : public tests::MiddlewaresFixture<
-                                           tests::server::ServerMiddlewareBaseMock,
-                                           ::testing::NiceMock<tests::UnitTestServiceGmock>,
-                                           sample::ugrpc::UnitTestServiceClient,
-                                           /*N=*/3>,
-                                       public testing::WithParamInterface<Flags> {
+class ServerMiddlewareHooksUnaryTest
+    : public tests::MiddlewaresFixture<
+          tests::server::ServerMiddlewareBaseMock,
+          ::testing::NiceMock<tests::UnitTestServiceGmock>,
+          sample::ugrpc::UnitTestServiceClient,
+          /*N=*/3>,
+      public testing::WithParamInterface<Flags> {
 protected:
     void SetSuccessHandler() {
         ON_CALL(Service(), SayHello).WillByDefault([](ugrpc::server::CallContext&, ::sample::ugrpc::GreetingRequest&&) {
@@ -218,7 +220,8 @@ UTEST_P(ServerMiddlewareHooksUnaryTest, ApplyTheLastErrorStatus) {
             } else {
                 EXPECT_EQ(status.error_code(), grpc::StatusCode::UNKNOWN);
                 EXPECT_EQ(
-                    status.error_message(), "The service method has exited unexpectedly, without providing a status"
+                    status.error_message(),
+                    "The service method has exited unexpectedly, without providing a status"
                 );
             }
             context.SetError(grpc::Status{kUnknownErrorStatus});

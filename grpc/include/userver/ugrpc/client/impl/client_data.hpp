@@ -52,24 +52,26 @@ public:
               internals_.default_service_config,
               internals_.retry_config,
               metadata
-          ) {
+          )
+    {
         if (internals_.qos) {
             SubscribeOnConfigUpdate<Service>(
-                ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS, *internals_.qos
+                ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED,
+                ::dynamic_config::EGRESS_NO_PROXY_TARGETS,
+                *internals_.qos
             );
         } else {
-            SubscribeOnConfigUpdate<Service>(
-                ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS
-            );
+            SubscribeOnConfigUpdate<
+                Service>(::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS);
         }
     }
 
     template <typename Service>
     ClientData(ClientInternals&& internals, GenericClientTag, std::in_place_type_t<Service>)
-        : internals_(std::move(internals)) {
-        SubscribeOnConfigUpdate<Service>(
-            ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS
-        );
+        : internals_(std::move(internals))
+    {
+        SubscribeOnConfigUpdate<
+            Service>(::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS);
     }
 
     ~ClientData();
@@ -144,9 +146,9 @@ private:
 
     template <typename Service, typename... Keys>
     void SubscribeOnConfigUpdate(const Keys&... keys) {
-        config_subscription_ = internals_.config_source.UpdateAndListen(
-            this, internals_.client_name, &ClientData::OnConfigUpdate<Service>, keys...
-        );
+        config_subscription_ =
+            internals_.config_source
+                .UpdateAndListen(this, internals_.client_name, &ClientData::OnConfigUpdate<Service>, keys...);
     }
 
     template <typename Service>
@@ -155,26 +157,31 @@ private:
 
         std::string target = internals_.endpoint;
 
-        auto channel_args = channel_arguments_builder_.has_value()
-                                ? channel_arguments_builder_->Build(client_qos)
-                                : BuildChannelArguments(internals_.channel_args, internals_.default_service_config);
+        auto channel_args =
+            channel_arguments_builder_.has_value()
+                ? channel_arguments_builder_->Build(client_qos)
+                : BuildChannelArguments(internals_.channel_args, internals_.default_service_config);
 
         const auto& proxy_settings = internals_.proxy_settings;
 
         auto proxy_enabled = config[::dynamic_config::EGRESS_GRPC_PROXY_ENABLED];
         const auto& no_proxy_targets = config[::dynamic_config::EGRESS_NO_PROXY_TARGETS].targets;
         if (!proxy_settings.proxy_address.empty() && proxy_enabled && !proxy_settings.no_proxy_targets.count(target) &&
-            !no_proxy_targets.count(target)) {
+            !no_proxy_targets.count(target))
+        {
             SetHttpProxy(target, channel_args, internals_.channel_factory.GetAuthType(), proxy_settings.proxy_address);
         }
-        auto stubs = MakeStubs<typename Service::Stub>(
-            internals_.channel_count, internals_.channel_factory, target, channel_args
-        );
+        auto stubs = MakeStubs<
+            typename Service::Stub>(internals_.channel_count, internals_.channel_factory, target, channel_args);
 
         auto dedicated_stubs =
             metadata_.has_value()
                 ? MakeDedicatedStubs<typename Service::Stub>(
-                      *metadata_, internals_.dedicated_methods_config, internals_.channel_factory, target, channel_args
+                      *metadata_,
+                      internals_.dedicated_methods_config,
+                      internals_.channel_factory,
+                      target,
+                      channel_args
                   )
                 : utils::FixedArray<StubPool>{};
 

@@ -18,7 +18,9 @@ namespace ugrpc::server::impl {
 namespace {
 
 std::string EscapeForAccessTskvLog(std::string_view str) {
-    if (str.empty()) return "-";
+    if (str.empty()) {
+        return "-";
+    }
 
     std::string encoded_str;
     EncodeTskv(encoded_str, str, utils::encoding::EncodeTskvMode::kValue);
@@ -28,8 +30,12 @@ std::string EscapeForAccessTskvLog(std::string_view str) {
 std::string ParseIp(std::string_view sv) {
     static constexpr std::string_view kIpv6 = "ipv6:";
     static constexpr std::string_view kIpv4 = "ipv4:";
-    if (utils::text::StartsWith(sv, kIpv6)) sv = sv.substr(kIpv6.size());
-    if (utils::text::StartsWith(sv, kIpv4)) sv = sv.substr(kIpv4.size());
+    if (utils::text::StartsWith(sv, kIpv6)) {
+        sv = sv.substr(kIpv6.size());
+    }
+    if (utils::text::StartsWith(sv, kIpv4)) {
+        sv = sv.substr(kIpv4.size());
+    }
 
     auto pos1 = sv.find("%5B");
     auto pos2 = sv.find("%5D");

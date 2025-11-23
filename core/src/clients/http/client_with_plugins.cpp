@@ -11,7 +11,9 @@ ClientWithPlugins::ClientWithPlugins(
     std::shared_ptr<ClientCore> client_core,
     std::vector<utils::NotNull<clients::http::Plugin*>> plugins
 )
-    : client_core_(std::move(client_core)), plugins_(std::move(plugins)) {}
+    : client_core_(std::move(client_core)),
+      plugins_(std::move(plugins))
+{}
 
 ClientWithPlugins::~ClientWithPlugins() { wts_.WaitForAllTokens(); }
 

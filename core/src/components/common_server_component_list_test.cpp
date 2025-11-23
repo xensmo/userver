@@ -247,7 +247,8 @@ class CommonServerComponentList : public ComponentList {
 protected:
     CommonServerComponentList() {
         fs::blocking::RewriteFileContents(
-            GetDynamicConfigCachePath(), formats::json::ToString(dynamic_config::impl::GetDefaultDocsMap().AsJson())
+            GetDynamicConfigCachePath(),
+            formats::json::ToString(dynamic_config::impl::GetDefaultDocsMap().AsJson())
         );
     }
 
@@ -390,9 +391,10 @@ TEST_F(CommonServerComponentList, BlockingDefaultLogger) {
     );
 
     const components::InMemoryConfig config{std::string{kStaticConfig} + GetConfigVarsPath()};
-    const auto component_list = components::CommonComponentList()
-                                    .AppendComponentList(components::CommonServerComponentList())
-                                    .Append<server::handlers::Ping>();
+    const auto component_list =
+        components::CommonComponentList()
+            .AppendComponentList(components::CommonServerComponentList())
+            .Append<server::handlers::Ping>();
     UEXPECT_THROW_MSG(components::RunOnce(config, component_list), std::exception, "efault logger");
 }
 

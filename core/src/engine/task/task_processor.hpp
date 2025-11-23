@@ -126,11 +126,12 @@ private:
 
     OverloadByLength GetOverloadByLength(std::size_t max_queue_length) noexcept;
 
-    OverloadByLength
-    ComputeOverloadByLength(OverloadByLength old_overload_by_length, std::size_t max_queue_length) noexcept;
+    OverloadByLength ComputeOverloadByLength(OverloadByLength old_overload_by_length, std::size_t max_queue_length)
+        noexcept;
 
     concurrent::impl::InterferenceShield<impl::DetachedTasksSyncBlock> detached_contexts_{
-        impl::DetachedTasksSyncBlock::StopMode::kCancel};
+        impl::DetachedTasksSyncBlock::StopMode::kCancel
+    };
     concurrent::impl::InterferenceShield<OverloadedCache> overloaded_cache_;
     std::variant<TaskQueue, WorkStealingTaskQueue, TaskQueueTSan> task_queue_;
     impl::TaskCounter task_counter_;

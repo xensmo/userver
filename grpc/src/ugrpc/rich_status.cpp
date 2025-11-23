@@ -144,7 +144,9 @@ std::optional<T> TryUnpackImpl(const ::google::protobuf::Any& any) {
 
 }  // namespace
 
-RichStatus::RichStatus(const grpc::Status& grpc_status) : google_status_{GrpcStatusToGoogleRpcStatus(grpc_status)} {}
+RichStatus::RichStatus(const grpc::Status& grpc_status)
+    : google_status_{GrpcStatusToGoogleRpcStatus(grpc_status)}
+{}
 
 grpc::Status RichStatus::ToGrpcStatus() const { return ugrpc::ToGrpcStatus(google_status_); }
 
@@ -156,7 +158,9 @@ google::rpc::ErrorInfo ErrorInfo::ToGoogleErrorDetail() && {
 
 std::optional<ErrorInfo> ErrorInfo::TryUnpack(const ::google::protobuf::Any& any) {
     const auto pb_error_info_opt = TryUnpackImpl<google::rpc::ErrorInfo>(any);
-    if (!pb_error_info_opt) return std::nullopt;
+    if (!pb_error_info_opt) {
+        return std::nullopt;
+    }
 
     return ErrorInfo{
         pb_error_info_opt->reason(),
@@ -173,7 +177,9 @@ google::rpc::RetryInfo RetryInfo::ToGoogleErrorDetail() const {
 
 std::optional<RetryInfo> RetryInfo::TryUnpack(const ::google::protobuf::Any& any) {
     const auto pb_retry_info_opt = TryUnpackImpl<google::rpc::RetryInfo>(any);
-    if (!pb_retry_info_opt) return std::nullopt;
+    if (!pb_retry_info_opt) {
+        return std::nullopt;
+    }
 
     return RetryInfo{ToDuration<std::chrono::nanoseconds>(pb_retry_info_opt->retry_delay())};
 }
@@ -186,7 +192,9 @@ google::rpc::DebugInfo DebugInfo::ToGoogleErrorDetail() && {
 
 std::optional<DebugInfo> DebugInfo::TryUnpack(const ::google::protobuf::Any& any) {
     const auto pb_debug_info_opt = TryUnpackImpl<google::rpc::DebugInfo>(any);
-    if (!pb_debug_info_opt) return std::nullopt;
+    if (!pb_debug_info_opt) {
+        return std::nullopt;
+    }
 
     return DebugInfo{
         {pb_debug_info_opt->stack_entries().begin(), pb_debug_info_opt->stack_entries().end()},
@@ -204,7 +212,9 @@ google::rpc::QuotaFailure QuotaFailure::ToGoogleErrorDetail() && {
 
 std::optional<QuotaFailure> QuotaFailure::TryUnpack(const ::google::protobuf::Any& any) {
     const auto pb_quota_failure_opt = TryUnpackImpl<google::rpc::QuotaFailure>(any);
-    if (!pb_quota_failure_opt) return std::nullopt;
+    if (!pb_quota_failure_opt) {
+        return std::nullopt;
+    }
 
     const auto& pb_violations = pb_quota_failure_opt->violations();
 
@@ -226,15 +236,17 @@ google::rpc::PreconditionFailure PreconditionFailure::ToGoogleErrorDetail() && {
 
 std::optional<PreconditionFailure> PreconditionFailure::TryUnpack(const ::google::protobuf::Any& any) {
     auto pb_precondition_failure_opt = TryUnpackImpl<google::rpc::PreconditionFailure>(any);
-    if (!pb_precondition_failure_opt) return std::nullopt;
+    if (!pb_precondition_failure_opt) {
+        return std::nullopt;
+    }
 
     const auto& pb_violations = pb_precondition_failure_opt->violations();
 
     PreconditionFailure result;
     result.violations.reserve(pb_violations.size());
     for (const auto& pb_violation : pb_violations) {
-        result.violations.push_back(PreconditionViolation{
-            pb_violation.type(), pb_violation.subject(), pb_violation.description()});
+        result.violations
+            .push_back(PreconditionViolation{pb_violation.type(), pb_violation.subject(), pb_violation.description()});
     }
     return result;
 }
@@ -247,7 +259,9 @@ google::rpc::BadRequest BadRequest::ToGoogleErrorDetail() && {
 
 std::optional<BadRequest> BadRequest::TryUnpack(const ::google::protobuf::Any& any) {
     auto pb_bad_request_opt = TryUnpackImpl<google::rpc::BadRequest>(any);
-    if (!pb_bad_request_opt) return std::nullopt;
+    if (!pb_bad_request_opt) {
+        return std::nullopt;
+    }
 
     const auto& pb_field_violations = pb_bad_request_opt->field_violations();
 
@@ -267,7 +281,9 @@ google::rpc::RequestInfo RequestInfo::ToGoogleErrorDetail() && {
 
 std::optional<RequestInfo> RequestInfo::TryUnpack(const ::google::protobuf::Any& any) {
     auto pb_request_info_opt = TryUnpackImpl<google::rpc::RequestInfo>(any);
-    if (!pb_request_info_opt) return std::nullopt;
+    if (!pb_request_info_opt) {
+        return std::nullopt;
+    }
 
     return RequestInfo{
         pb_request_info_opt->request_id(),
@@ -285,7 +301,9 @@ google::rpc::ResourceInfo ResourceInfo::ToGoogleErrorDetail() && {
 
 std::optional<ResourceInfo> ResourceInfo::TryUnpack(const ::google::protobuf::Any& any) {
     auto pb_resource_info_opt = TryUnpackImpl<google::rpc::ResourceInfo>(any);
-    if (!pb_resource_info_opt) return std::nullopt;
+    if (!pb_resource_info_opt) {
+        return std::nullopt;
+    }
 
     return ResourceInfo{
         pb_resource_info_opt->resource_type(),
@@ -301,7 +319,9 @@ google::rpc::Help Help::ToGoogleErrorDetail() && { return HelpToGoogleErrorDetai
 
 std::optional<Help> Help::TryUnpack(const ::google::protobuf::Any& any) {
     auto pb_help_opt = TryUnpackImpl<google::rpc::Help>(any);
-    if (!pb_help_opt) return std::nullopt;
+    if (!pb_help_opt) {
+        return std::nullopt;
+    }
 
     const auto& pb_links = pb_help_opt->links();
 
@@ -323,7 +343,9 @@ google::rpc::LocalizedMessage LocalizedMessage::ToGoogleErrorDetail() && {
 
 std::optional<LocalizedMessage> LocalizedMessage::TryUnpack(const ::google::protobuf::Any& any) {
     auto pb_localized_message_opt = TryUnpackImpl<google::rpc::LocalizedMessage>(any);
-    if (!pb_localized_message_opt) return std::nullopt;
+    if (!pb_localized_message_opt) {
+        return std::nullopt;
+    }
 
     return LocalizedMessage{
         pb_localized_message_opt->locale(),

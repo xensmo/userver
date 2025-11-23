@@ -38,7 +38,8 @@ public:
           state_{std::move(params), CallKind::kUnaryCall},
           context_{utils::impl::InternalTag{}, state_},
           prepare_unary_call_{std::move(prepare_unary_call)},
-          request_{request} {}
+          request_{request}
+    {}
 
     ~UnaryCall() = default;
 

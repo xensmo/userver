@@ -98,7 +98,10 @@ CallParams CreateCallParams(const ClientData& client_data, std::size_t method_id
         ApplyRetryConfiguration(call_options, qos, client_data.GetRetryConfig(), client_data.GetTestsuiteControl());
     } else {
         ApplyRetryConfigurationStreaming(
-            call_options, qos, client_data.GetRetryConfig(), client_data.GetTestsuiteControl()
+            call_options,
+            qos,
+            client_data.GetRetryConfig(),
+            client_data.GetTestsuiteControl()
         );
     }
 

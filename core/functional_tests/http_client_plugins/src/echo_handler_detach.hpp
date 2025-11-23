@@ -12,7 +12,8 @@ public:
     EchoHandlerDetach(const components::ComponentConfig& config, const components::ComponentContext& context)
         : HttpHandlerBase(config, context),
           echo_url_{config["echo-url"].As<std::string>()},
-          http_client_(context.FindComponent<components::HttpClient>().GetHttpClient()) {}
+          http_client_(context.FindComponent<components::HttpClient>().GetHttpClient())
+    {}
 
     std::string HandleRequestThrow(const server::http::HttpRequest&, server::request::RequestContext&) const override {
         http_client_.CreateRequest().get(echo_url_).async_perform().Detach();

@@ -69,11 +69,11 @@ void RunUnaryRPCTest(Client& client) {
         const auto& status = e.GetStatus();
         auto gstatus = ugrpc::ToGoogleRpcStatus(status);
         EXPECT_TRUE(gstatus.has_value());
-        EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(*gstatus, kExpectedGoogleStatus))
-            << "Expected:\n"
-            << gstatus->Utf8DebugString()  //
-            << "\nActual:\n"
-            << kExpectedGoogleStatus.Utf8DebugString();
+        EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(*gstatus, kExpectedGoogleStatus)
+        ) << "Expected:\n"
+          << gstatus->Utf8DebugString()  //
+          << "\nActual:\n"
+          << kExpectedGoogleStatus.Utf8DebugString();
         ;
     }
 }

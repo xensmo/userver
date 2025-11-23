@@ -22,8 +22,12 @@ namespace {
 
 std::optional<cache::AllowedUpdateTypes> ParseDeduplicateUpdateTypes(const yaml_config::YamlConfig& value) {
     const auto str = value.As<std::optional<std::string>>();
-    if (!str) return cache::AllowedUpdateTypes::kFullAndIncremental;
-    if (str == "none") return std::nullopt;
+    if (!str) {
+        return cache::AllowedUpdateTypes::kFullAndIncremental;
+    }
+    if (str == "none") {
+        return std::nullopt;
+    }
     return value.As<cache::AllowedUpdateTypes>();
 }
 
@@ -69,7 +73,8 @@ DynamicConfigClientUpdater::DynamicConfigClientUpdater(
       deduplicate_update_types_(ParseDeduplicateUpdateTypes(component_config["deduplicate-update-types"])),
       config_client_(component_context.FindComponent<components::DynamicConfigClient>().GetClient()),
       docs_map_defaults_(component_context.FindComponent<components::DynamicConfig>().GetDefaultDocsMap()),
-      docs_map_keys_(utils::AsContainer<DocsMapKeys>(docs_map_defaults_.GetNames())) {
+      docs_map_keys_(utils::AsContainer<DocsMapKeys>(docs_map_defaults_.GetNames()))
+{
     StartPeriodicUpdates();
 }
 
@@ -145,7 +150,9 @@ std::vector<std::string> DynamicConfigClientUpdater::GetDocsMapKeysToFetch(
 }
 
 dynamic_config::AdditionalKeysToken DynamicConfigClientUpdater::SetAdditionalKeys(std::vector<std::string> keys) {
-    if (!load_only_my_values_ || keys.empty()) return dynamic_config::AdditionalKeysToken{nullptr};
+    if (!load_only_my_values_ || keys.empty()) {
+        return dynamic_config::AdditionalKeysToken{nullptr};
+    }
 
     auto keys_ptr = std::make_shared<std::vector<std::string>>(std::move(keys));
     {

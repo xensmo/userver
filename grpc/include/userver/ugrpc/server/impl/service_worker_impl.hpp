@@ -55,7 +55,9 @@ void ParseGenericCallName(
 template <typename GrpcppService>
 struct ServiceData final {
     ServiceData(ServiceInternals&& internals, const ugrpc::impl::StaticServiceMetadata& metadata)
-        : internals(std::move(internals)), metadata(metadata) {}
+        : internals(std::move(internals)),
+          metadata(metadata)
+    {}
 
     ~ServiceData() { wait_tokens.WaitForAllTokens(); }
 
@@ -64,7 +66,8 @@ struct ServiceData final {
     AsyncService<GrpcppService> async_service{GetMethodsCount(metadata)};
     utils::impl::WaitTokenStorage wait_tokens;
     ugrpc::impl::ServiceStatistics& service_statistics{
-        internals.statistics_storage.GetServiceStatistics(metadata, std::nullopt)};
+        internals.statistics_storage.GetServiceStatistics(metadata, std::nullopt)
+    };
 };
 
 /// Per-gRPC-method data
@@ -86,7 +89,9 @@ template <typename GrpcppService, typename CallTraits>
 class CallData final {
 public:
     explicit CallData(const MethodData<GrpcppService, CallTraits>& method_data)
-        : wait_token_(method_data.service_data.wait_tokens.GetToken()), method_data_(method_data) {
+        : wait_token_(method_data.service_data.wait_tokens.GetToken()),
+          method_data_(method_data)
+    {
         UASSERT(method_data.method_id < GetMethodsCount(method_data.service_data.metadata));
     }
 
@@ -142,7 +147,8 @@ public:
 
     static void ListenAsync(const MethodData<GrpcppService, CallTraits>& method_data) {
         engine::DetachUnscopedUnsafe(engine::CriticalAsyncNoSpan(
-            method_data.service_data.internals.task_processor, utils::LazyPrvalue([&] { return CallData(method_data); })
+            method_data.service_data.internals.task_processor,
+            utils::LazyPrvalue([&] { return CallData(method_data); })
         ));
     }
 
@@ -198,9 +204,9 @@ template <typename GrpcppService, typename Service, typename... ServiceMethods>
 void StartServing(ServiceData<GrpcppService>& service_data, Service& service, ServiceMethods... service_methods) {
     for (std::size_t queue_id = 0; queue_id < service_data.internals.completion_queues.GetSize(); ++queue_id) {
         std::size_t method_id = 0;
-        (CallData<GrpcppService, CallTraits<ServiceMethods>>::ListenAsync(
-             {service_data, queue_id, method_id++, service, service_methods}
-         ),
+        (CallData<
+             GrpcppService,
+             CallTraits<ServiceMethods>>::ListenAsync({service_data, queue_id, method_id++, service, service_methods}),
          ...);
     }
 }
@@ -215,9 +221,11 @@ public:
         Service& service,
         ServiceMethods... service_methods
     )
-        : service_data_(std::move(internals), std::move(metadata)), start_([this, &service, service_methods...] {
+        : service_data_(std::move(internals), std::move(metadata)),
+          start_([this, &service, service_methods...] {
               impl::StartServing(service_data_, service, service_methods...);
-          }) {}
+          })
+    {}
 
     grpc::Service& GetService() override { return service_data_.async_service; }
 

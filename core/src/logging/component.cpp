@@ -119,8 +119,9 @@ void Logging::Init(const ComponentConfig& config, const ComponentContext& contex
         }
 
         logger->StartConsumerTask(
-            logger_config.fs_task_processor ? context.GetTaskProcessor(*logger_config.fs_task_processor)
-                                            : fs_task_processor_,
+            logger_config.fs_task_processor
+                ? context.GetTaskProcessor(*logger_config.fs_task_processor)
+                : fs_task_processor_,
             logger_config.message_queue_size,
             logger_config.queue_overflow_behavior
         );
@@ -134,16 +135,19 @@ void Logging::Init(const ComponentConfig& config, const ComponentContext& contex
     flush_task_.Start(
         "log_flusher",
         utils::PeriodicTask::Settings(
-            std::chrono::duration_cast<std::chrono::milliseconds>(kDefaultFlushInterval), {}, logging::Level::kTrace
+            std::chrono::duration_cast<std::chrono::milliseconds>(kDefaultFlushInterval),
+            {},
+            logging::Level::kTrace
         ),
         [this] { FlushLogs(); }
     );
 
     auto* const statistics_storage = context.FindComponentOptional<components::StatisticsStorage>();
     if (statistics_storage) {
-        statistics_holder_ = statistics_storage->GetStorage().RegisterWriter(
-            "logger", [this](utils::statistics::Writer& writer) { return WriteStatistics(writer); }
-        );
+        statistics_holder_ =
+            statistics_storage->GetStorage().RegisterWriter("logger", [this](utils::statistics::Writer& writer) {
+                return WriteStatistics(writer);
+            });
     }
 }
 
@@ -175,7 +179,9 @@ logging::LoggerPtr Logging::GetLogger(const std::string& name) {
     auto it = loggers_.find(name);
     if (it == loggers_.end()) {
         auto logger = extra_loggers_.Get(name);
-        if (logger) return *logger;
+        if (logger) {
+            return *logger;
+        }
 
         throw std::runtime_error("logger '" + name + "' not found");
     }
@@ -185,7 +191,9 @@ logging::LoggerPtr Logging::GetLogger(const std::string& name) {
 logging::TextLoggerPtr Logging::GetTextLogger(const std::string& name) {
     auto logger = GetLogger(name);
     auto text_logger = std::dynamic_pointer_cast<logging::impl::TextLogger>(logger);
-    if (!text_logger) throw std::runtime_error(fmt::format("Invalid logger '{}' type, not a text logger", name));
+    if (!text_logger) {
+        throw std::runtime_error(fmt::format("Invalid logger '{}' type, not a text logger", name));
+    }
     return text_logger;
 }
 

@@ -12,14 +12,15 @@
 #include <plugin.hpp>
 
 int main(int argc, char* argv[]) {
-    const auto component_list = components::MinimalServerComponentList()
-                                    .Append<EchoHandler>()
-                                    .Append<EchoHandlerDetach>()
-                                    .Append<components::TestsuiteSupport>()
-                                    .Append<server::handlers::TestsControl>()
-                                    .Append<clients::dns::Component>()
-                                    .Append<PluginComponent>()
-                                    .Append<components::HttpClientCore>()
-                                    .Append<components::HttpClient>();
+    const auto component_list =
+        components::MinimalServerComponentList()
+            .Append<EchoHandler>()
+            .Append<EchoHandlerDetach>()
+            .Append<components::TestsuiteSupport>()
+            .Append<server::handlers::TestsControl>()
+            .Append<clients::dns::Component>()
+            .Append<PluginComponent>()
+            .Append<components::HttpClientCore>()
+            .Append<components::HttpClient>();
     return utils::DaemonMain(argc, argv, component_list);
 }

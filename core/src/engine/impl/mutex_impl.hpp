@@ -53,7 +53,10 @@ template <>
 class MutexImpl<WaitList>::MutexWaitStrategy final : public WaitStrategy {
 public:
     MutexWaitStrategy(MutexImpl<WaitList>& mutex, TaskContext& current)
-        : mutex_(mutex), current_(current), waiter_token_(mutex_.lock_waiters_) {}
+        : mutex_(mutex),
+          current_(current),
+          waiter_token_(mutex_.lock_waiters_)
+    {}
 
     EarlyWakeup SetupWakeups() override {
         WaitList::Lock lock(mutex_.lock_waiters_);
@@ -80,7 +83,10 @@ private:
 template <>
 class MutexImpl<WaitListLight>::MutexWaitStrategy final : public WaitStrategy {
 public:
-    MutexWaitStrategy(MutexImpl<WaitListLight>& mutex, TaskContext& current) : mutex_(mutex), current_(current) {}
+    MutexWaitStrategy(MutexImpl<WaitListLight>& mutex, TaskContext& current)
+        : mutex_(mutex),
+          current_(current)
+    {}
 
     EarlyWakeup SetupWakeups() override {
         if (TryLock()) {
@@ -111,7 +117,9 @@ private:
 };
 
 template <class Waiters>
-MutexImpl<Waiters>::MutexImpl() : owner_(nullptr) {
+MutexImpl<Waiters>::MutexImpl()
+    : owner_(nullptr)
+{
 #if USERVER_IMPL_HAS_TSAN
     __tsan_mutex_create(this, __tsan_mutex_not_static);
 #endif
@@ -191,7 +199,9 @@ bool MutexImpl<Waiters>::try_lock() {
 #endif
 
     auto& dd_state = deadlock_detector::GetState();
-    if (result) dd_state.HookBeforeAddDependency(*this, current_task::GetCurrentTaskContext());
+    if (result) {
+        dd_state.HookBeforeAddDependency(*this, current_task::GetCurrentTaskContext());
+    }
 
     return result;
 }
@@ -210,7 +220,9 @@ bool MutexImpl<Waiters>::try_lock_until(Deadline deadline) {
 #endif
 
     std::optional<deadlock_detector::WaitScope> scope;
-    if (!deadline.IsReachable()) scope.emplace(*this);
+    if (!deadline.IsReachable()) {
+        scope.emplace(*this);
+    }
 
     auto& current = current_task::GetCurrentTaskContext();
     UINVARIANT(
@@ -223,7 +235,9 @@ bool MutexImpl<Waiters>::try_lock_until(Deadline deadline) {
     scope.reset();
 
     auto& dd_state = deadlock_detector::GetState();
-    if (result) dd_state.HookBeforeAddDependency(*this, current_task::GetCurrentTaskContext());
+    if (result) {
+        dd_state.HookBeforeAddDependency(*this, current_task::GetCurrentTaskContext());
+    }
 
     return result;
 }

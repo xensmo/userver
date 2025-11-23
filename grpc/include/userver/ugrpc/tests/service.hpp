@@ -116,12 +116,15 @@ template <typename GrpcService>
 class Service : public ServiceBase {
 public:
     /// Default-constructs the service.
-    Service() : Service(std::in_place) {}
+    Service()
+        : Service(std::in_place)
+    {}
 
     /// Passes @a args to the service.
     template <typename... Args>
     explicit Service(std::in_place_t, Args&&... args)
-        : Service(server::ServerConfig{}, std::in_place, std::forward<Args>(args)...) {}
+        : Service(server::ServerConfig{}, std::in_place, std::forward<Args>(args)...)
+    {}
 
     /// Passes @a args to the service, @a server_config to @ref ServiceBase::ServiceBase.
     template <typename... Args>
@@ -132,7 +135,8 @@ public:
               GetDefaultClientMiddlewares(),
               std::in_place,
               std::forward<Args>(args)...
-          ) {}
+          )
+    {}
 
     /// Passes @a args to the service, @a server_config to @ref ServiceBase::ServiceBase, sets custom middlewares.
     template <typename... Args>
@@ -143,7 +147,9 @@ public:
         std::in_place_t = std::in_place,
         Args&&... args
     )
-        : ServiceBase(std::move(server_config)), service_(std::forward<Args>(args)...) {
+        : ServiceBase(std::move(server_config)),
+          service_(std::forward<Args>(args)...)
+    {
         SetServerMiddlewares(std::move(server_middlewares));
         SetClientMiddlewares(std::move(client_middlewares));
         RegisterService(service_);

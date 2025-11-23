@@ -27,7 +27,8 @@ namespace {
 
 const grpc::Status kUnknownErrorStatus{
     grpc::StatusCode::UNKNOWN,
-    "The service method has exited unexpectedly, without providing a status"};
+    "The service method has exited unexpectedly, without providing a status"
+};
 
 using ChatReaderWriter = tests::UnitTestServiceGmock::ChatReaderWriter;
 
@@ -35,11 +36,12 @@ struct Flags final {
     bool set_error{true};
 };
 
-class ServerMiddlewareHooksStreamingTest : public tests::MiddlewaresFixture<
-                                               tests::server::ServerMiddlewareBaseMock,
-                                               ::testing::NiceMock<tests::UnitTestServiceGmock>,
-                                               sample::ugrpc::UnitTestServiceClient,
-                                               /*N=*/3> {
+class ServerMiddlewareHooksStreamingTest
+    : public tests::MiddlewaresFixture<
+          tests::server::ServerMiddlewareBaseMock,
+          ::testing::NiceMock<tests::UnitTestServiceGmock>,
+          sample::ugrpc::UnitTestServiceClient,
+          /*N=*/3> {
 protected:
     void SetSuccessHandler() {
         ON_CALL(Service(), Chat).WillByDefault([](ugrpc::server::CallContext& /*context*/, ChatReaderWriter& bs) {
@@ -81,8 +83,9 @@ protected:
 };
 
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
-class ServerMiddlewareHooksStreamingWithParamTest : public ServerMiddlewareHooksStreamingTest,
-                                                    public testing::WithParamInterface<Flags> {
+class ServerMiddlewareHooksStreamingWithParamTest
+    : public ServerMiddlewareHooksStreamingTest,
+      public testing::WithParamInterface<Flags> {
 protected:
     void SetErrorOrThrowRuntimeError(
         ugrpc::server::MiddlewareCallContext& context,

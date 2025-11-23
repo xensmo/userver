@@ -52,14 +52,17 @@ private:
 
 struct GenericServiceWorker::Impl {
     Impl(GenericServiceBase& service, ServiceInternals&& internals)
-        : service(service), service_data(std::move(internals), kGenericMetadataFake) {}
+        : service(service),
+          service_data(std::move(internals), kGenericMetadataFake)
+    {}
 
     GenericServiceBase& service;
     ServiceData<GenericServiceTag> service_data;
 };
 
 GenericServiceWorker::GenericServiceWorker(GenericServiceBase& service, ServiceInternals&& internals)
-    : impl_(service, std::move(internals)) {}
+    : impl_(service, std::move(internals))
+{}
 
 GenericServiceWorker::GenericServiceWorker(GenericServiceWorker&&) noexcept = default;
 

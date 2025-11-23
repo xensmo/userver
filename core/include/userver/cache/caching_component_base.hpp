@@ -179,8 +179,11 @@ public:
     /// Subscribes to cache updates using a member function. Also immediately
     /// invokes the function with the current cache contents.
     template <class Class>
-    concurrent::AsyncEventSubscriberScope
-    UpdateAndListen(Class* obj, std::string name, void (Class::*func)(const std::shared_ptr<const T>&));
+    concurrent::AsyncEventSubscriberScope UpdateAndListen(
+        Class* obj,
+        std::string name,
+        void (Class::*func)(const std::shared_ptr<const T>&)
+    );
 
     concurrent::AsyncEventChannel<const std::shared_ptr<const T>&>& GetEventChannel();
 
@@ -248,10 +251,16 @@ template <typename T>
 CachingComponentBase<T>::CachingComponentBase(const ComponentConfig& config, const ComponentContext& context)
     : ComponentBase(config, context),
       cache::CacheUpdateTrait(config, context),
-      event_channel_(components::GetCurrentComponentName(context), [this](const auto& function) {
-          const auto ptr = cache_.ReadCopy();
-          if (ptr) function(ptr);
-      }) {
+      event_channel_(
+          components::GetCurrentComponentName(context),
+          [this](const auto& function) {
+              const auto ptr = cache_.ReadCopy();
+              if (ptr) {
+                  function(ptr);
+              }
+          }
+      )
+{
     const auto initial_config = GetConfig();
 }
 
@@ -275,11 +284,8 @@ utils::SharedReadablePtr<T> CachingComponentBase<T>::Get() const {
 
 template <typename T>
 template <typename Class>
-concurrent::AsyncEventSubscriberScope CachingComponentBase<T>::UpdateAndListen(
-    Class* obj,
-    std::string name,
-    void (Class::*func)(const std::shared_ptr<const T>&)
-) {
+concurrent::AsyncEventSubscriberScope CachingComponentBase<
+    T>::UpdateAndListen(Class* obj, std::string name, void (Class::*func)(const std::shared_ptr<const T>&)) {
     return event_channel_.DoUpdateAndListen(obj, std::move(name), func, [&] {
         auto ptr = Get();  // TODO: extra ref
         (obj->*func)(ptr);
@@ -337,7 +343,9 @@ bool CachingComponentBase<T>::MayReturnNull() const {
 template <typename T>
 void CachingComponentBase<T>::GetAndWrite(dump::Writer& writer) const {
     const auto contents = GetUnsafe();
-    if (!contents) throw cache::EmptyCacheError(Name());
+    if (!contents) {
+        throw cache::EmptyCacheError(Name());
+    }
     WriteContents(writer, *contents);
 }
 
@@ -435,11 +443,13 @@ std::shared_ptr<const T> CachingComponentBase<T>::TransformNewValue(std::unique_
             std::default_delete<const T>{}(raw_ptr);
         };
         return std::shared_ptr<const T>(
-            new_value.release(), impl::MakeAsyncDeleter<T>(GetCacheTaskProcessor(), std::move(deleter_with_token))
+            new_value.release(),
+            impl::MakeAsyncDeleter<T>(GetCacheTaskProcessor(), std::move(deleter_with_token))
         );
     } else {
         return std::shared_ptr<const T>(
-            new_value.release(), impl::MakeAsyncDeleter<T>(GetCacheTaskProcessor(), std::default_delete<const T>{})
+            new_value.release(),
+            impl::MakeAsyncDeleter<T>(GetCacheTaskProcessor(), std::default_delete<const T>{})
         );
     }
 }

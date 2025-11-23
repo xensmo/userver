@@ -91,7 +91,9 @@ UTEST_F(RedisClusterClientTest, MgetCrossSlot) {
 
     size_t idx[2] = {0, 1};
     auto shard = client->ShardByKey(MakeKey(idx[0]));
-    while (client->ShardByKey(MakeKey(idx[1])) != shard) ++idx[1];
+    while (client->ShardByKey(MakeKey(idx[1])) != shard) {
+        ++idx[1];
+    }
 
     for (const unsigned long i : idx) {
         auto req = client->Set(MakeKey(i), std::to_string(add + i), kDefaultCc);
@@ -165,7 +167,9 @@ UTEST_F(RedisClusterClientTest, TransactionCrossSlot) {
 
     size_t idx[2] = {0, 1};
     auto shard = client->ShardByKey(MakeKey(idx[0]));
-    while (client->ShardByKey(MakeKey(idx[1])) != shard) ++idx[1];
+    while (client->ShardByKey(MakeKey(idx[1])) != shard) {
+        ++idx[1];
+    }
 
     for (size_t i = 0; i < 2; ++i) {
         auto set = transaction->Set(MakeKey(idx[i]), std::to_string(add + i));

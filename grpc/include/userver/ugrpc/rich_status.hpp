@@ -389,7 +389,9 @@ template <typename TRichErrorDetail>
 std::optional<TRichErrorDetail> RichStatus::TryGetDetail(const google::rpc::Status& status) {
     for (const auto& detail : status.details()) {
         const auto rich_error_detail_opt = TRichErrorDetail::TryUnpack(detail);
-        if (rich_error_detail_opt) return *rich_error_detail_opt;
+        if (rich_error_detail_opt) {
+            return *rich_error_detail_opt;
+        }
     }
     return std::nullopt;
 }

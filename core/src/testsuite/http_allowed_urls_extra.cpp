@@ -13,7 +13,9 @@ void HttpAllowedUrlsExtra::RegisterHttpClient(std::shared_ptr<clients::http::Cli
 }
 
 void HttpAllowedUrlsExtra::SetAllowedUrlsExtra(std::vector<std::string>&& urls) {
-    if (http_client_) http_client_->SetAllowedUrlsExtra(std::move(urls));
+    if (http_client_) {
+        http_client_->SetAllowedUrlsExtra(std::move(urls));
+    }
 }
 
 }  // namespace testsuite

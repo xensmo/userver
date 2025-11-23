@@ -71,9 +71,8 @@ void SetupSpan(
             span_holder.emplace(std::string{span_name}, utils::impl::SourceLocation::Current());
         } else {
             auto data = std::move(extraction_result).value();
-            span_holder.emplace(
-                std::string{span_name}, data.trace_id, data.span_id, utils::impl::SourceLocation::Current()
-            );
+            span_holder
+                .emplace(std::string{span_name}, data.trace_id, data.span_id, utils::impl::SourceLocation::Current());
         }
     } else if (const auto* const trace_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaTraceId)) {
         const auto* const parent_span_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaSpanId);
@@ -118,8 +117,9 @@ void ReportRpcInterruptedError(CallState& state) noexcept {
     try {
         // RPC interruption leads to asynchronous task cancellation by RpcFinishedEvent,
         // so the task either is already cancelled, or is going to be cancelled.
-        LOG_WARNING() << "RPC interrupted in '" << state.call_name
-                      << "'. The previously logged cancellation or network exception, if any, is likely caused by it.";
+        LOG_WARNING()
+            << "RPC interrupted in '" << state.call_name
+            << "'. The previously logged cancellation or network exception, if any, is likely caused by it.";
         state.statistics_scope.OnNetworkError();
         auto& span = state.GetSpan();
         span.AddNonInheritableTag(tracing::kErrorMessage, "RPC interrupted");
@@ -130,8 +130,8 @@ void ReportRpcInterruptedError(CallState& state) noexcept {
     }
 }
 
-grpc::Status
-ReportCustomError(const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex, CallState& state) noexcept {
+grpc::Status ReportCustomError(const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex, CallState& state)
+    noexcept {
     try {
         grpc::Status status{CustomStatusToGrpc(ex.GetCode()), ex.GetExternalErrorBody()};
 

@@ -21,8 +21,12 @@ class DataProviderMock : public DataProvider<T> {
 public:
     using DataProvider<T>::DataType;
 
-    explicit DataProviderMock(DataType data) : data_{std::make_shared<DataType>(std::move(data))} {}
-    explicit DataProviderMock(std::shared_ptr<DataType> data) : data_{std::move(data)} {}
+    explicit DataProviderMock(DataType data)
+        : data_{std::make_shared<DataType>(std::move(data))}
+    {}
+    explicit DataProviderMock(std::shared_ptr<DataType> data)
+        : data_{std::move(data)}
+    {}
 
     utils::SharedReadablePtr<DataType> Get() const final {
         return utils::SharedReadablePtr<DataType>(data_.ReadCopy());

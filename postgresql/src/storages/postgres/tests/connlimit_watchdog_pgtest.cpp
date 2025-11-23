@@ -85,7 +85,8 @@ public:
     Watchdog()
         : cluster_(
               CreateClusterImpl(this->GetDsnListFromEnv(), this->GetTaskProcessor(), kHostsCount * 2, testsuite_tasks_)
-          ) {
+          )
+    {
         // Do the step of ConnlimitWatchdog to create the table.
         testsuite_tasks_.RunTask(kWatchdogTaskName);
 
@@ -150,8 +151,8 @@ UTEST_F(Watchdog, AllPermutations) {
     EXPECT_EQ(kTestsuiteConnlimit, DoStepV1());
     EXPECT_EQ(kTestsuiteConnlimit / 2, DoStepV2());
 
-    std::vector<MigrationVersion> combinations{
-        MigrationVersion::V1, MigrationVersion::V1, MigrationVersion::V2, MigrationVersion::V2};
+    std::vector<MigrationVersion>
+        combinations{MigrationVersion::V1, MigrationVersion::V1, MigrationVersion::V2, MigrationVersion::V2};
     auto do_step = [this](MigrationVersion version) {
         if (version == MigrationVersion::V1) {
             EXPECT_EQ(kTestsuiteConnlimit / 2, DoStepV1());

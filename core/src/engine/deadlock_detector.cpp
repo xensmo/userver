@@ -23,7 +23,9 @@ class CycleDetector final {
 public:
     using Vertex = const Actor*;
 
-    explicit CycleDetector(const std::unordered_map<const Actor*, std::list<const Actor*>>& edges) : edges_(edges) {}
+    explicit CycleDetector(const std::unordered_map<const Actor*, std::list<const Actor*>>& edges)
+        : edges_(edges)
+    {}
 
     std::optional<std::vector<Vertex>> FindCycle(Vertex start) {
         HandleVertex(start, nullptr);
@@ -48,7 +50,9 @@ private:
 
     struct CycleException final : public std::runtime_error {
         explicit CycleException(std::vector<Vertex> cycle)
-            : std::runtime_error("cycle detected"), cycle(std::move(cycle)) {}
+            : std::runtime_error("cycle detected"),
+              cycle(std::move(cycle))
+        {}
 
         std::vector<Vertex> cycle;
     };
@@ -114,7 +118,9 @@ StateBase::StateBase(DeadlockDetector dd) {
 StateBase::~StateBase() = default;
 
 void StateBase::HookBeforeAddDependency(const Actor& subject, const Actor& object) {
-    if (!impl_->enabled) return;
+    if (!impl_->enabled) {
+        return;
+    }
 
     const auto* current = current_task::GetCurrentTaskContextUnchecked();
     if (current && current == &subject && impl_->collect_stacktrace) {
@@ -137,8 +143,8 @@ void StateBase::HookBeforeAddDependency(const Actor& subject, const Actor& objec
         for (const auto& actor : *cycle) {
             auto it = bt->find(actor);
             if (it != bt->end()) {
-                LOG_CRITICAL() << "Deadlocked task " << ToAssertString(*actor)
-                               << boost::stacktrace::to_string(it->second);
+                LOG_CRITICAL()
+                    << "Deadlocked task " << ToAssertString(*actor) << boost::stacktrace::to_string(it->second);
             }
         }
 
@@ -147,7 +153,9 @@ void StateBase::HookBeforeAddDependency(const Actor& subject, const Actor& objec
 }
 
 void StateBase::HookBeforeRemoveDependency(const Actor& subject, const Actor& object) noexcept {
-    if (!impl_->enabled) return;
+    if (!impl_->enabled) {
+        return;
+    }
 
     auto edges = impl_->active_dependencies.Lock();
     auto& v = (*edges)[&subject];
@@ -155,11 +163,15 @@ void StateBase::HookBeforeRemoveDependency(const Actor& subject, const Actor& ob
     auto it = std::find(v.begin(), v.end(), &object);
     if (it == v.end()) {
         utils::AbortWithStacktrace(fmt::format(
-            "Trying to stop waiting while not waiting! {} => {}", ToAssertString(subject), ToAssertString(object)
+            "Trying to stop waiting while not waiting! {} => {}",
+            ToAssertString(subject),
+            ToAssertString(object)
         ));
     }
     v.erase(it);
-    if (v.empty()) edges->erase(&subject);
+    if (v.empty()) {
+        edges->erase(&subject);
+    }
 }
 
 void StateBase::HookActorDestroy(const Actor& object) {
@@ -188,7 +200,9 @@ State& GetState() {
     return pool.GetDeadlockDetectorState();
 }
 
-WaitScope::WaitScope(const Actor& a) : actor_(a) {
+WaitScope::WaitScope(const Actor& a)
+    : actor_(a)
+{
     auto& dd_state = GetState();
     dd_state.HookBeforeAddDependency(current_task::GetCurrentTaskContext(), actor_);
 }

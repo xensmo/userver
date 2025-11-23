@@ -51,8 +51,10 @@ public:
 
     yaml_config::Schema GetMiddlewareConfigSchema() const override;
 
-    std::shared_ptr<const MiddlewareBase>
-    CreateMiddleware(const ugrpc::client::ClientInfo&, const yaml_config::YamlConfig& middleware_config) const override;
+    std::shared_ptr<const MiddlewareBase> CreateMiddleware(
+        const ugrpc::client::ClientInfo&,
+        const yaml_config::YamlConfig& middleware_config
+    ) const override;
 };
 
 }  // namespace ugrpc::client::middlewares::log
@@ -61,7 +63,7 @@ template <>
 inline constexpr bool components::kHasValidate<ugrpc::client::middlewares::log::Component> = true;
 
 template <>
-inline constexpr auto components::kConfigFileMode<ugrpc::client::middlewares::log::Component> =
-    ConfigFileMode::kNotRequired;
+inline constexpr auto
+    components::kConfigFileMode<ugrpc::client::middlewares::log::Component> = ConfigFileMode::kNotRequired;
 
 USERVER_NAMESPACE_END

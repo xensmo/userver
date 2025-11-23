@@ -16,8 +16,10 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client::impl {
 
-ugrpc::impl::AsyncMethodInvocation::WaitStatus
-WaitAndTryCancelIfNeeded(ugrpc::impl::AsyncMethodInvocation& invocation, grpc::ClientContext& context) noexcept;
+ugrpc::impl::AsyncMethodInvocation::WaitStatus WaitAndTryCancelIfNeeded(
+    ugrpc::impl::AsyncMethodInvocation& invocation,
+    grpc::ClientContext& context
+) noexcept;
 
 void CheckOk(StreamingCallState& state, ugrpc::impl::AsyncMethodInvocation::WaitStatus status, std::string_view stage);
 
@@ -96,7 +98,8 @@ void Finish(
 }
 
 template <typename GrpcStream>
-void FinishAbandoned(GrpcStream& stream, StreamingCallState& state) noexcept try {
+void FinishAbandoned(GrpcStream& stream, StreamingCallState& state) noexcept try
+{
     if (state.IsFinished()) {
         return;
     }

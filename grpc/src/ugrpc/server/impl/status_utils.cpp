@@ -18,8 +18,10 @@ namespace ugrpc::server::impl {
 
 void TrimStatusErrorMessage(grpc::Status& status) {
     const auto& error_message = status.error_message();
-    if (!error_message.empty() && ((error_message.front() == kForbiddenBoundaryHttp2Whitespace) ||
-                                   (error_message.back() == kForbiddenBoundaryHttp2Whitespace))) {
+    if (!error_message.empty() &&
+        ((error_message.front() == kForbiddenBoundaryHttp2Whitespace) ||
+         (error_message.back() == kForbiddenBoundaryHttp2Whitespace)))
+    {
         status = grpc::Status{
             status.error_code(),
             boost::trim_copy_if(error_message, [](auto c) { return c == kForbiddenBoundaryHttp2Whitespace; }),

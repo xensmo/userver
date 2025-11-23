@@ -80,7 +80,9 @@ void CheckExactValues(int bits) {
         auto json = formats::json::FromString(json_str);
         auto dval = json["value"].As<double>();
         auto ival = static_cast<int64_t>(dval);
-        if (ival != value) throw TestIncorrectValueException("test");
+        if (ival != value) {
+            throw TestIncorrectValueException("test");
+        }
     }
 }
 

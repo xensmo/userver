@@ -80,7 +80,9 @@ public:
     // the object state must be completely torn down.
     static void Push(std::unique_ptr<T> obj) noexcept {
         auto pool = local_storage_pool.Use();
-        if (pool->IsFull()) return;
+        if (pool->IsFull()) {
+            return;
+        }
 
         // disarm dtor, transfer ownership (noexcept)
         std::unique_ptr<Storage> raw(reinterpret_cast<Storage*>(obj.release()));
@@ -375,7 +377,9 @@ void LogHelper::PutQuoted(std::string_view value) {
         const size_t escaped_size = needs_escaping ? 2 : 1;
 
         used_size += escaped_size;
-        if (used_size > allowed_size) break;
+        if (used_size > allowed_size) {
+            break;
+        }
 
         if (needs_escaping) {
             Put('\\');

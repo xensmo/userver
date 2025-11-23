@@ -7,11 +7,12 @@
 #include <error_status_server.hpp>
 
 int main(int argc, const char* const argv[]) {
-    const auto component_list = components::MinimalServerComponentList()
-                                    .Append<components::TestsuiteSupport>()
-                                    .Append<congestion_control::Component>()
-                                    .AppendComponentList(ugrpc::server::MinimalComponentList())
-                                    .Append<functional_tests::ErrorStatusServiceComponent>();
+    const auto component_list =
+        components::MinimalServerComponentList()
+            .Append<components::TestsuiteSupport>()
+            .Append<congestion_control::Component>()
+            .AppendComponentList(ugrpc::server::MinimalComponentList())
+            .Append<functional_tests::ErrorStatusServiceComponent>();
 
     return utils::DaemonMain(argc, argv, component_list);
 }

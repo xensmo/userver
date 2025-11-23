@@ -38,7 +38,13 @@ public:
             this->RequestAsyncClientStreaming(method_id, &context, &stream, &call_cq, &notification_cq, tag);
         } else if constexpr (kCallKind == CallKind::kOutputStream) {
             this->RequestAsyncServerStreaming(
-                method_id, &context, &initial_request, &stream, &call_cq, &notification_cq, tag
+                method_id,
+                &context,
+                &initial_request,
+                &stream,
+                &call_cq,
+                &notification_cq,
+                tag
             );
         } else if constexpr (kCallKind == CallKind::kBidirectionalStream) {
             this->RequestAsyncBidiStreaming(method_id, &context, &stream, &call_cq, &notification_cq, tag);

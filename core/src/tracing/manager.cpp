@@ -156,7 +156,9 @@ bool YandexTaxiTryFillSpanBuilderFromRequest(
     span_builder.SetParentSpanId(parent_span_id);
 
     const auto& parent_link = request.GetHeader(http::headers::kXYaRequestId);
-    if (!parent_link.empty()) span_builder.SetParentLink(parent_link);
+    if (!parent_link.empty()) {
+        span_builder.SetParentLink(parent_link);
+    }
 
     return true;
 }

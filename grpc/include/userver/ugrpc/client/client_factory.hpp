@@ -64,8 +64,10 @@ public:
     /// @endcond
 
 private:
-    impl::ClientInternals
-    MakeClientInternals(ClientSettings&& client_settings, std::optional<ugrpc::impl::StaticServiceMetadata> meta);
+    impl::ClientInternals MakeClientInternals(
+        ClientSettings&& client_settings,
+        std::optional<ugrpc::impl::StaticServiceMetadata> meta
+    );
 
     ClientFactorySettings client_factory_settings_;
     engine::TaskProcessor& channel_task_processor_;

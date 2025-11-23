@@ -27,7 +27,9 @@ std::string GetMessageForLogging(const google::protobuf::Message& message, const
 
 class Logger {
 public:
-    explicit Logger(logging::Level log_level) : log_level_threshold_(log_level) {}
+    explicit Logger(logging::Level log_level)
+        : log_level_threshold_(log_level)
+    {}
 
     void Log(logging::Level level, std::string_view message, logging::LogExtra&& extra) const {
         if (level < log_level_threshold_) {
@@ -53,7 +55,9 @@ void AppendOriginMetadata(const CallContextBase& context, logging::LogExtra& ext
 
 }  // namespace
 
-Middleware::Middleware(const Settings& settings) : settings_(settings) {}
+Middleware::Middleware(const Settings& settings)
+    : settings_(settings)
+{}
 
 void Middleware::OnCallStart(MiddlewareCallContext& context) const {
     auto& span = context.GetSpan();
@@ -105,9 +109,8 @@ void Middleware::OnCallFinish(MiddlewareCallContext& context, const grpc::Status
     const Logger logger{settings_.log_level};
     if (status.ok()) {
         if (context.IsServerStreaming()) {
-            logger.Log(
-                settings_.msg_log_level, "gRPC response stream finished", logging::LogExtra{{"type", "response"}}
-            );
+            logger
+                .Log(settings_.msg_log_level, "gRPC response stream finished", logging::LogExtra{{"type", "response"}});
         }
     } else {
         auto error_details = ugrpc::ToLimitedDebugString(status, settings_.max_msg_size);

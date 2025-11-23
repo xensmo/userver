@@ -138,7 +138,8 @@ auto TaskBuilder::BuildShared(Function&& f, Args&&... args) {
 template <typename Task, typename Function, typename... Args>
 Task TaskBuilder::BuildTask(Function&& f, Args&&... args) {
     UINVARIANT(
-        span_, "Exactly one of the following methods of TaskBuilder must be called: SpanName(), NoSpan(), HideSpan()"
+        span_,
+        "Exactly one of the following methods of TaskBuilder must be called: SpanName(), NoSpan(), HideSpan()"
     );
 
     using HideSpan = utils::impl::SpanWrapCall::HideSpan;

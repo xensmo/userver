@@ -28,15 +28,17 @@ namespace {
 
 constexpr size_t kDestinationMetricsAutoMaxSizeDefault = 100;
 
-clients::http::ClientSettings
-GetClientSettings(const ComponentConfig& component_config, const ComponentContext& context) {
+clients::http::ClientSettings GetClientSettings(
+    const ComponentConfig& component_config,
+    const ComponentContext& context
+) {
     clients::http::ClientSettings settings;
     settings = component_config.As<clients::http::ClientSettings>();
     auto& tracing_locator = context.FindComponent<tracing::DefaultTracingManagerLocator>();
     settings.tracing_manager = &tracing_locator.GetTracingManager();
-    settings.cancellation_policy = component_config["cancellation-policy"].As<clients::http::CancellationPolicy>(
-        clients::http::CancellationPolicy::kCancel
-    );
+    settings.cancellation_policy =
+        component_config["cancellation-policy"]
+            .As<clients::http::CancellationPolicy>(clients::http::CancellationPolicy::kCancel);
     return settings;
 }
 
@@ -59,12 +61,13 @@ HttpClientCore::HttpClientCore(const ComponentConfig& component_config, const Co
           utils::impl::InternalTag{},
           GetClientSettings(component_config, context),
           GetFsTaskProcessor(component_config, context)
-      )) {
+      ))
+{
     ValidateCurlVersion();
 
-    http_client_->SetDestinationMetricsAutoMaxSize(
-        component_config["destination-metrics-auto-max-size"].As<size_t>(kDestinationMetricsAutoMaxSizeDefault)
-    );
+    http_client_
+        ->SetDestinationMetricsAutoMaxSize(component_config["destination-metrics-auto-max-size"]
+                                               .As<size_t>(kDestinationMetricsAutoMaxSizeDefault));
 
     http_client_->SetDnsResolver(clients::dns::GetResolverPtr(component_config, context));
 
@@ -93,9 +96,10 @@ HttpClientCore::HttpClientCore(const ComponentConfig& component_config, const Co
     http_client_->SetConfig(bootstrap_config);
 
     auto& config_component = context.FindComponent<components::DynamicConfig>();
-    subscriber_scope_ = components::DynamicConfig::NoblockSubscriber{config_component}.GetEventSource().AddListener(
-        this, kName, &HttpClientCore::OnConfigUpdate
-    );
+    subscriber_scope_ =
+        components::DynamicConfig::NoblockSubscriber{config_component}
+            .GetEventSource()
+            .AddListener(this, kName, &HttpClientCore::OnConfigUpdate);
 
     const auto thread_name_prefix = component_config["thread-name-prefix"].As<std::string>("");
     auto stats_name = "httpclient" + (thread_name_prefix.empty() ? "" : ("-" + thread_name_prefix));

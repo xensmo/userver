@@ -198,11 +198,19 @@ public:
     Request headers(const std::initializer_list<std::pair<utils::zstring_view, utils::zstring_view>>& headers) &&;
 
     /// Sets http auth type to use.
-    Request&
-    http_auth_type(HttpAuthType value, bool auth_only, utils::zstring_view user, utils::zstring_view password) &;
+    Request& http_auth_type(
+        HttpAuthType value,
+        bool auth_only,
+        utils::zstring_view user,
+        utils::zstring_view password
+    ) &;
     /// @overload
-    Request
-    http_auth_type(HttpAuthType value, bool auth_only, utils::zstring_view user, utils::zstring_view password) &&;
+    Request http_auth_type(
+        HttpAuthType value,
+        bool auth_only,
+        utils::zstring_view user,
+        utils::zstring_view password
+    ) &&;
 
     /// Set proxy headers for request
     Request& proxy_headers(const Headers& headers) &;

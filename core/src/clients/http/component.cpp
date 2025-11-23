@@ -19,16 +19,18 @@ constexpr std::string_view kHttpClientPluginPrefix = "http-client-plugin-";
 
 using PluginsIndices = std::unordered_map<std::string, std::uint32_t>;
 
-static std::vector<utils::NotNull<clients::http::Plugin*>>
-FindPlugins(const PluginsIndices& plugins_indices, const components::ComponentContext& context) {
+static std::vector<utils::NotNull<clients::http::Plugin*>> FindPlugins(
+    const PluginsIndices& plugins_indices,
+    const components::ComponentContext& context
+) {
     auto names = utils::AsContainer<std::vector<std::string>>(plugins_indices | boost::adaptors::map_keys);
     std::sort(names.begin(), names.end(), [&plugins_indices](const std::string& lhs, const std::string& rhs) {
         return std::tie(plugins_indices.at(lhs), lhs) < std::tie(plugins_indices.at(rhs), rhs);
     });
     std::vector<utils::NotNull<clients::http::Plugin*>> plugins;
     for (const auto& name : names) {
-        auto& component =
-            context.FindComponent<clients::http::plugin::ComponentBase>(std::string{kHttpClientPluginPrefix} + name);
+        auto& component = context.FindComponent<
+            clients::http::plugin::ComponentBase>(std::string{kHttpClientPluginPrefix} + name);
         plugins.emplace_back(&component.GetPlugin());
     }
     return plugins;
@@ -41,12 +43,12 @@ HttpClient::HttpClient(const ComponentConfig& component_config, const ComponentC
       http_client_(
           utils::impl::InternalTag{},
           context
-              .FindComponent<components::HttpClientCore>(
-                  component_config["core-component"].As<std::string>(components::HttpClientCore::kName)
-              )
+              .FindComponent<components::HttpClientCore>(component_config["core-component"]
+                                                             .As<std::string>(components::HttpClientCore::kName))
               .GetHttpClientCore(utils::impl::InternalTag{}),
           FindPlugins(component_config["plugins"].As<PluginsIndices>({}), context)
-      ) {}
+      )
+{}
 
 clients::http::Client& HttpClient::GetHttpClient() { return http_client_; }
 

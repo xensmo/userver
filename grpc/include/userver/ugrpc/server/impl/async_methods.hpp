@@ -62,8 +62,12 @@ void Write(GrpcStream& stream, const Response& response, grpc::WriteOptions opti
 }
 
 template <typename GrpcStream, typename Response>
-[[nodiscard]] bool
-WriteAndFinish(GrpcStream& stream, const Response& response, grpc::WriteOptions options, const grpc::Status& status) {
+[[nodiscard]] bool WriteAndFinish(
+    GrpcStream& stream,
+    const Response& response,
+    grpc::WriteOptions options,
+    const grpc::Status& status
+) {
     ugrpc::impl::AsyncMethodInvocation write_and_finish;
     stream.WriteAndFinish(response, options, status, write_and_finish.GetCompletionTag());
     return write_and_finish.WaitNonCancellable();

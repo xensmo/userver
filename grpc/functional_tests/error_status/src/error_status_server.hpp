@@ -21,11 +21,15 @@ public:
 
     ReturnErrorStatusResult ReturnErrorStatus(CallContext& context, api::ErrorStatusRequest&& request) override;
 
-    ThrowErrorWithStatusExceptionResult
-    ThrowErrorWithStatusException(CallContext& context, api::ErrorStatusRequest&& request) override;
+    ThrowErrorWithStatusExceptionResult ThrowErrorWithStatusException(
+        CallContext& context,
+        api::ErrorStatusRequest&& request
+    ) override;
 
-    ThrowRuntimeErrorExceptionResult
-    ThrowRuntimeErrorException(CallContext& context, api::RuntimeErrorRequest&& request) override;
+    ThrowRuntimeErrorExceptionResult ThrowRuntimeErrorException(
+        CallContext& context,
+        api::RuntimeErrorRequest&& request
+    ) override;
 
     ReturnStreamErrorStatusResult ReturnStreamErrorStatus(
         CallContext& context,

@@ -19,8 +19,9 @@ std::string ReadStageName(const std::string& filepath) {
     try {
         return FromFile(filepath)["env_name"].As<std::string>();
     } catch (const std::exception& exception) {
-        LOG_ERROR() << "Error during config service client initialization. "
-                    << "Got error while reading stage name from file: " << filepath << ", error: " << exception;
+        LOG_ERROR()
+            << "Error during config service client initialization. "
+            << "Got error while reading stage name from file: " << filepath << ", error: " << exception;
         throw;
     }
 }
@@ -44,7 +45,8 @@ bool IsClownductorPrestable() { return false; }
 }  // namespace
 
 DynamicConfigClient::DynamicConfigClient(const ComponentConfig& config, const ComponentContext& context)
-    : ComponentBase(config, context) {
+    : ComponentBase(config, context)
+{
     dynamic_config::ClientConfig client_config;
     client_config.service_name = config["service-name"].As<std::string>();
     client_config.get_configs_overrides_for_service = config["get-configs-overrides-for-service"].As<bool>(true);
@@ -67,8 +69,8 @@ DynamicConfigClient::DynamicConfigClient(const ComponentConfig& config, const Co
         throw std::logic_error("Cannot get overrides for both stage and service yet");
     }
 
-    config_client_ =
-        std::make_unique<dynamic_config::Client>(context.FindComponent<HttpClient>().GetHttpClient(), client_config);
+    config_client_ = std::make_unique<
+        dynamic_config::Client>(context.FindComponent<HttpClient>().GetHttpClient(), client_config);
 }
 
 dynamic_config::Client& DynamicConfigClient::GetClient() const { return *config_client_; }

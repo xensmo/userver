@@ -25,9 +25,11 @@ public:
         return grpc::Status{grpc::StatusCode::INTERNAL, "message", "details"};
     }
 
-    ReadManyResult
-    ReadMany(CallContext& /*context*/, sample::ugrpc::StreamGreetingRequest&& /*request*/, ReadManyWriter& /*writer*/)
-        override {
+    ReadManyResult ReadMany(
+        CallContext& /*context*/,
+        sample::ugrpc::StreamGreetingRequest&& /*request*/,
+        ReadManyWriter& /*writer*/
+    ) override {
         return grpc::Status{grpc::StatusCode::INTERNAL, "message", "details"};
     }
 
@@ -103,9 +105,11 @@ namespace {
 
 class ThrowCustomService final : public sample::ugrpc::UnitTestServiceBase {
 public:
-    ReadManyResult
-    ReadMany(CallContext& /*context*/, sample::ugrpc::StreamGreetingRequest&& /*request*/, ReadManyWriter& /*writer*/)
-        override {
+    ReadManyResult ReadMany(
+        CallContext& /*context*/,
+        sample::ugrpc::StreamGreetingRequest&& /*request*/,
+        ReadManyWriter& /*writer*/
+    ) override {
         throw server::handlers::Unauthorized(server::handlers::ExternalBody{"abba"});
     }
 };

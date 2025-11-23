@@ -10,14 +10,17 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::tests {
 
-ServiceBase::ServiceBase() : ServiceBase(server::ServerConfig{}) {}
+ServiceBase::ServiceBase()
+    : ServiceBase(server::ServerConfig{})
+{}
 
 ServiceBase::ServiceBase(server::ServerConfig&& server_config)
     : config_storage_(dynamic_config::MakeDefaultStorage({})),
       unix_socket_path_(server_config.unix_socket_path),
       server_(std::move(server_config), statistics_storage_, config_storage_.GetSource()),
       testsuite_({}, false),
-      client_statistics_storage_(statistics_storage_, ugrpc::impl::StatisticsDomain::kClient) {}
+      client_statistics_storage_(statistics_storage_, ugrpc::impl::StatisticsDomain::kClient)
+{}
 
 ServiceBase::~ServiceBase() = default;
 

@@ -4,8 +4,10 @@ namespace functional_tests {
 
 static constexpr int kCountSend = 3;
 
-ErrorStatusServiceComponent::ReturnErrorStatusResult
-ErrorStatusServiceComponent::ReturnErrorStatus(CallContext&, api::ErrorStatusRequest&& request) {
+ErrorStatusServiceComponent::ReturnErrorStatusResult ErrorStatusServiceComponent::ReturnErrorStatus(
+    CallContext&,
+    api::ErrorStatusRequest&& request
+) {
     const grpc::StatusCode request_status_code = ugrpc::StatusCodeFromString(request.status_code());
     if (request_status_code == grpc::StatusCode::OK) {
         return api::ErrorStatusResponse{};
@@ -29,8 +31,10 @@ ErrorStatusServiceComponent::ThrowErrorWithStatusException(CallContext&, api::Er
     };
 }
 
-ErrorStatusServiceComponent::ThrowRuntimeErrorExceptionResult
-ErrorStatusServiceComponent::ThrowRuntimeErrorException(CallContext&, api::RuntimeErrorRequest&& request) {
+ErrorStatusServiceComponent::ThrowRuntimeErrorExceptionResult ErrorStatusServiceComponent::ThrowRuntimeErrorException(
+    CallContext&,
+    api::RuntimeErrorRequest&& request
+) {
     throw std::runtime_error(request.message());
 }
 

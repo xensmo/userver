@@ -47,8 +47,11 @@ struct IsFromCharsConvertible<long double> : std::false_type {};
 template <class T>
 inline constexpr bool kIsFromCharsConvertible = IsFromCharsConvertible<T>::value;
 
-[[noreturn]] void
-ThrowFromStringException(std::string_view message, std::string_view input, std::type_index result_type);
+[[noreturn]] void ThrowFromStringException(
+    std::string_view message,
+    std::string_view input,
+    std::type_index result_type
+);
 
 template <typename T>
 std::enable_if_t<std::is_floating_point_v<T> && !kIsFromCharsConvertible<T>, T> FromString(utils::zstring_view str) {
@@ -141,10 +144,14 @@ std::enable_if_t<kIsFromCharsConvertible<T>, T> FromString(std::string_view str)
     if (str.size() > 1 && str[0] == '+' && str[1] == '-') {
         impl::ThrowFromStringException("no number found", str, typeid(T));
     }
-    if (str[0] == '+') offset = 1;
+    if (str[0] == '+') {
+        offset = 1;
+    }
 
     // to process '-0' correctly
-    if (std::is_unsigned_v<T> && str[0] == '-') offset = 1;
+    if (std::is_unsigned_v<T> && str[0] == '-') {
+        offset = 1;
+    }
 
     T result{};
     const auto [end, error_code] = std::from_chars(str.data() + offset, str.data() + str.size(), result);
