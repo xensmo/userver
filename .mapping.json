@@ -421,6 +421,7 @@
   "clickhouse/library.yaml":"taxi/uservices/userver/clickhouse/library.yaml",
   "clickhouse/src/storages/clickhouse/cluster.cpp":"taxi/uservices/userver/clickhouse/src/storages/clickhouse/cluster.cpp",
   "clickhouse/src/storages/clickhouse/component.cpp":"taxi/uservices/userver/clickhouse/src/storages/clickhouse/component.cpp",
+  "clickhouse/src/storages/clickhouse/component.yaml":"taxi/uservices/userver/clickhouse/src/storages/clickhouse/component.yaml",
   "clickhouse/src/storages/clickhouse/execution_result.cpp":"taxi/uservices/userver/clickhouse/src/storages/clickhouse/execution_result.cpp",
   "clickhouse/src/storages/clickhouse/impl/block_wrapper.cpp":"taxi/uservices/userver/clickhouse/src/storages/clickhouse/impl/block_wrapper.cpp",
   "clickhouse/src/storages/clickhouse/impl/block_wrapper.hpp":"taxi/uservices/userver/clickhouse/src/storages/clickhouse/impl/block_wrapper.hpp",
