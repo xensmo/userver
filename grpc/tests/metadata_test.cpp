@@ -57,12 +57,12 @@ public:
         context.GetServerContext().AddInitialMetadata("stream-started", "true");
         context.GetServerContext().AddInitialMetadata("total-items", std::to_string(request.number()));
 
-        sample::ugrpc::StreamGreetingResponse response;
-        response.set_name("Stream response for " + request.name());
-
+        const std::string response_name = "Stream response for " + request.name();
         for (int i = 0; i < request.number(); ++i) {
+            sample::ugrpc::StreamGreetingResponse response;
+            response.set_name(response_name);
             response.set_number(i);
-            writer.Write(response);
+            writer.Write(std::move(response));
         }
 
         context.GetServerContext().AddTrailingMetadata("stream-completed", "true");

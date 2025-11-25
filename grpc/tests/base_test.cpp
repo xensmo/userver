@@ -67,11 +67,12 @@ public:
         ReadManyWriter& writer
     ) override {
         CheckServerContext(context.GetServerContext());
-        sample::ugrpc::StreamGreetingResponse response;
-        response.set_name("Hello again " + request.name());
+        const std::string response_name = "Hello again " + request.name();
         for (int i = 0; i < request.number(); ++i) {
+            sample::ugrpc::StreamGreetingResponse response;
+            response.set_name(response_name);
             response.set_number(i);
-            writer.Write(response);
+            writer.Write(std::move(response));
         }
         return grpc::Status::OK;
     }
@@ -92,13 +93,13 @@ public:
     ChatResult Chat(CallContext& context, ChatReaderWriter& stream) override {
         CheckServerContext(context.GetServerContext());
         sample::ugrpc::StreamGreetingRequest request;
-        sample::ugrpc::StreamGreetingResponse response;
         int count = 0;
         while (stream.Read(request)) {
+            sample::ugrpc::StreamGreetingResponse response;
             ++count;
             response.set_number(count);
             response.set_name("Hello " + request.name());
-            stream.Write(response);
+            stream.Write(std::move(response));
         }
         return grpc::Status::OK;
     }

@@ -142,14 +142,14 @@ GreeterMock::SayHelloResponseStreamResult GreeterMock::SayHelloResponseStream(
     ::samples::api::GreetingRequest&& /*request*/,
     SayHelloResponseStreamWriter& writer
 ) {
-    samples::api::GreetingResponse response;
     std::string message = "Mocked response";
 
     const int count_send = 5;
     for (auto i = 0; i < count_send; ++i) {
+        samples::api::GreetingResponse response;
         message.push_back('!');
         response.set_greeting(grpc::string(message));
-        writer.Write(response);
+        writer.Write(std::move(response));
     }
     return grpc::Status::OK;
 }
@@ -196,12 +196,12 @@ GreeterMock::SayHelloStreamsResult GreeterMock::SayHelloStreams(
     CallContext& /*context*/,
     SayHelloStreamsReaderWriter& stream
 ) {
-    samples::api::GreetingResponse response;
     std::string message = "Mocked response";
     samples::api::GreetingRequest request;
     while (stream.Read(request)) {
+        samples::api::GreetingResponse response;
         response.set_greeting(grpc::string(message));
-        stream.Write(response);
+        stream.Write(std::move(response));
         message.push_back('!');
     }
     return grpc::Status::OK;

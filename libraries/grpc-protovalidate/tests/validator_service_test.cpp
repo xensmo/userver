@@ -29,10 +29,10 @@ public:
         CheckConstraintsStreamingReaderWriter& stream
     ) override {
         types::ConstrainedRequest request;
-        types::ConstrainedResponse response{};
         while (stream.Read(request)) {
+            types::ConstrainedResponse response{};
             response.set_field(request.field());
-            stream.Write(response);
+            stream.Write(std::move(response));
         }
         return grpc::Status::OK;
     }

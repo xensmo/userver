@@ -46,11 +46,11 @@ protected:
     void SetSuccessHandler() {
         ON_CALL(Service(), Chat).WillByDefault([](ugrpc::server::CallContext& /*context*/, ChatReaderWriter& bs) {
             sample::ugrpc::StreamGreetingRequest request;
-            sample::ugrpc::StreamGreetingResponse response;
             while (bs.Read(request)) {
+                sample::ugrpc::StreamGreetingResponse response;
                 response.set_number(request.number());
                 response.set_name("Hello, " + request.name());
-                bs.Write(response);
+                bs.Write(std::move(response));
             }
             return grpc::Status::OK;
         });
@@ -147,7 +147,7 @@ UTEST_F(ServerMiddlewareHooksStreamingTest, SuccessMany) {
             sample::ugrpc::StreamGreetingResponse out;
             out.set_name("userver 42");
             out.set_number(42);
-            bs.Write(out);
+            bs.Write(std::move(out));
         }
         return grpc::Status::OK;
     });
@@ -425,7 +425,7 @@ UTEST_F(ServerMiddlewareHooksStreamingTest, ThrowInHandler) {
         sample::ugrpc::StreamGreetingResponse response;
         response.set_number(request.number());
         response.set_name("Hello, " + request.name());
-        bs.Write(response);
+        bs.Write(std::move(response));
 
         EXPECT_TRUE(bs.Read(request));
         EXPECT_EQ(

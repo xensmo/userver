@@ -43,9 +43,8 @@ ErrorStatusServiceComponent::ReturnStreamErrorStatusResult ErrorStatusServiceCom
     api::ErrorStatusRequest&& request,
     ReturnStreamErrorStatusWriter& writer
 ) {
-    api::ErrorStatusResponse response;
     for (int i = 0; i < kCountSend; ++i) {
-        writer.Write(response);
+        writer.Write(api::ErrorStatusResponse{});
     }
 
     const grpc::StatusCode request_status_code = ugrpc::StatusCodeFromString(request.status_code());
@@ -66,9 +65,8 @@ ErrorStatusServiceComponent::ThrowStreamErrorWithStatusException(
     api::ErrorStatusRequest&& request,
     ThrowStreamErrorWithStatusExceptionWriter& writer
 ) {
-    api::ErrorStatusResponse response;
     for (int i = 0; i < kCountSend; ++i) {
-        writer.Write(response);
+        writer.Write(api::ErrorStatusResponse{});
     }
 
     const grpc::StatusCode request_status_code = ugrpc::StatusCodeFromString(request.status_code());

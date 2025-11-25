@@ -44,12 +44,12 @@ GreeterService::SayHelloResponseStreamResult GreeterService::SayHelloResponseStr
     SayHelloResponseStreamWriter& writer
 ) {
     std::string message = fmt::format("{}, {}", prefix_, request.name());
-    api::GreetingResponse response;
     constexpr auto kCountSend = 5;
     for (auto i = 0; i < kCountSend; ++i) {
+        api::GreetingResponse response;
         message.push_back('!');
         response.set_greeting(grpc::string(message));
-        writer.Write(response);
+        writer.Write(std::move(response));
     }
     return grpc::Status::OK;
 }
@@ -78,11 +78,11 @@ GreeterService::SayHelloStreamsResult GreeterService::SayHelloStreams(
 ) {
     std::string message;
     api::GreetingRequest request;
-    api::GreetingResponse response;
     while (stream.Read(request)) {
+        api::GreetingResponse response;
         message.append(request.name());
         response.set_greeting(fmt::format("{}, {}", prefix_, message));
-        stream.Write(response);
+        stream.Write(std::move(response));
     }
     return grpc::Status::OK;
 }

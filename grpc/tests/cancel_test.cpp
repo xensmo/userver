@@ -30,16 +30,17 @@ class UnitTestServiceCancelEcho final : public sample::ugrpc::UnitTestServiceBas
 public:
     ChatResult Chat(CallContext& /*context*/, ChatReaderWriter& stream) override {
         sample::ugrpc::StreamGreetingRequest request;
-        sample::ugrpc::StreamGreetingResponse response{};
 
-        EXPECT_TRUE(stream.Read(request));
-        // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.UninitializedObject)
-        UEXPECT_NO_THROW(stream.Write(response));
-
-        EXPECT_FALSE(stream.Read(request));
-        // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.UninitializedObject)
-        UEXPECT_THROW(stream.Write(response), ugrpc::server::RpcInterruptedError);
-
+        {
+            sample::ugrpc::StreamGreetingResponse response{};
+            EXPECT_TRUE(stream.Read(request));
+            UEXPECT_NO_THROW(stream.Write(std::move(response)));
+        }
+        {
+            sample::ugrpc::StreamGreetingResponse response{};
+            EXPECT_FALSE(stream.Read(request));
+            UEXPECT_THROW(stream.Write(std::move(response)), ugrpc::server::RpcInterruptedError);
+        }
         return grpc::Status::OK;
     }
 };
@@ -75,8 +76,7 @@ public:
                 return grpc::Status::OK;
             }
             sample::ugrpc::StreamGreetingResponse response{};
-            // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.UninitializedObject)
-            stream.Write(response);
+            stream.Write(std::move(response));
             return grpc::Status::OK;
         }
     }
@@ -120,10 +120,8 @@ public:
         sample::ugrpc::StreamGreetingRequest request;
         EXPECT_TRUE(stream.Read(request));
 
-        sample::ugrpc::StreamGreetingResponse response{};
         for (;;) {
-            // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.UninitializedObject)
-            stream.Write(response);
+            stream.Write(sample::ugrpc::StreamGreetingResponse{});
         }
 
         return grpc::Status::OK;
@@ -166,10 +164,8 @@ public:
     ChatResult Chat(CallContext& /*context*/, ChatReaderWriter& stream) override {
         sample::ugrpc::StreamGreetingRequest request;
         EXPECT_TRUE(stream.Read(request));
-        sample::ugrpc::StreamGreetingResponse response{};
 
-        // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.UninitializedObject)
-        stream.Write(response);
+        stream.Write(sample::ugrpc::StreamGreetingResponse{});
         return grpc::Status::OK;
     }
 };
@@ -197,11 +193,11 @@ class UnitTestServiceEcho final : public sample::ugrpc::UnitTestServiceBase {
 public:
     ChatResult Chat(CallContext& /*context*/, ChatReaderWriter& stream) override {
         sample::ugrpc::StreamGreetingRequest request;
-        sample::ugrpc::StreamGreetingResponse response;
         while (stream.Read(request)) {
+            sample::ugrpc::StreamGreetingResponse response;
             response.set_name(request.name());
             response.set_number(request.number());
-            stream.Write(response);
+            stream.Write(std::move(response));
         }
         return grpc::Status::OK;
     }
