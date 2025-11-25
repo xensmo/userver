@@ -55,7 +55,7 @@ unexpected(E) -> unexpected<E>;
 template <class S, class E>
 class [[nodiscard]] expected {
 public:
-    constexpr expected() noexcept(std::is_void_v<S>);
+    constexpr expected();
     expected(const S& success);
     expected(S&& success);
     expected(const unexpected<E>& error);
@@ -69,6 +69,9 @@ public:
 
     /// @brief Check whether *this contains an expected value
     bool has_value() const noexcept;
+
+    /// @brief Check whether *this contains an expected value
+    explicit operator bool() const noexcept;
 
     /// @brief Return reference to the value or throws bad_expected_access
     /// if it's not available
@@ -91,6 +94,30 @@ public:
 
 private:
     std::variant<S, unexpected<E>> data_;
+};
+
+template <class E>
+class [[nodiscard]] expected<void, E> {
+public:
+    constexpr expected() noexcept;
+    expected(const unexpected<E>& error);
+    expected(unexpected<E>&& error);
+
+    template <class G, typename = std::enable_if_t<std::is_convertible_v<G, E>>>
+    expected(const unexpected<G>& error);
+
+    template <class G, typename = std::enable_if_t<std::is_convertible_v<G, E>>>
+    expected(unexpected<G>&& error);
+
+    bool has_value() const noexcept;
+    explicit operator bool() const noexcept;
+    void value() const;
+
+    E& error();
+    const E& error() const;
+
+private:
+    std::variant<std::monostate, unexpected<E>> data_;
 };
 
 template <class E>
@@ -126,7 +153,7 @@ const E& unexpected<E>::error() const noexcept {
 }
 
 template <class S, class E>
-constexpr expected<S, E>::expected() noexcept(std::is_void_v<S>)
+constexpr expected<S, E>::expected()
     : data_(std::in_place_index<0>)
 {}
 
@@ -168,6 +195,11 @@ bool expected<S, E>::has_value() const noexcept {
 }
 
 template <class S, class E>
+expected<S, E>::operator bool() const noexcept {
+    return has_value();
+}
+
+template <class S, class E>
 S& expected<S, E>::value() & {
     S* result = std::get_if<S>(&data_);
     if (result == nullptr) {
@@ -201,6 +233,66 @@ E& expected<S, E>::error() {
 
 template <class S, class E>
 const E& expected<S, E>::error() const {
+    const auto* result = std::get_if<unexpected<E>>(&data_);
+    if (result == nullptr) {
+        throw bad_expected_access("Trying to get undefined error value from utils::expected");
+    }
+    return result->error();
+}
+
+template <class E>
+constexpr expected<void, E>::expected() noexcept: data_(std::in_place_index<0>) {}
+
+template <class E>
+expected<void, E>::expected(const unexpected<E>& error)
+    : data_(error.error())
+{}
+
+template <class E>
+expected<void, E>::expected(unexpected<E>&& error)
+    : data_(std::forward<unexpected<E>>(error.error()))
+{}
+
+template <class E>
+template <class G, typename>
+expected<void, E>::expected(const unexpected<G>& error)
+    : data_(utils::unexpected<E>(std::forward<G>(error.error())))
+{}
+
+template <class E>
+template <class G, typename>
+expected<void, E>::expected(unexpected<G>&& error)
+    : data_(utils::unexpected<E>(std::forward<G>(error.error())))
+{}
+
+template <class E>
+bool expected<void, E>::has_value() const noexcept {
+    return data_.index() == 0;
+}
+
+template <class E>
+expected<void, E>::operator bool() const noexcept {
+    return has_value();
+}
+
+template <class E>
+void expected<void, E>::value() const {
+    if (!has_value()) {
+        throw bad_expected_access("Trying to get undefined value from utils::expected");
+    }
+}
+
+template <class E>
+E& expected<void, E>::error() {
+    auto* result = std::get_if<unexpected<E>>(&data_);
+    if (result == nullptr) {
+        throw bad_expected_access("Trying to get undefined error value from utils::expected");
+    }
+    return result->error();
+}
+
+template <class E>
+const E& expected<void, E>::error() const {
     const auto* result = std::get_if<unexpected<E>>(&data_);
     if (result == nullptr) {
         throw bad_expected_access("Trying to get undefined error value from utils::expected");

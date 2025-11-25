@@ -5477,6 +5477,7 @@
   "universal/src/utils/encoding/tskv_test.cpp":"taxi/uservices/userver/universal/src/utils/encoding/tskv_test.cpp",
   "universal/src/utils/encoding/tskv_testdata_bin.hpp":"taxi/uservices/userver/universal/src/utils/encoding/tskv_testdata_bin.hpp",
   "universal/src/utils/enumerate_test.cpp":"taxi/uservices/userver/universal/src/utils/enumerate_test.cpp",
+  "universal/src/utils/expected_test.cpp":"taxi/uservices/userver/universal/src/utils/expected_test.cpp",
   "universal/src/utils/fast_pimpl_test.cpp":"taxi/uservices/userver/universal/src/utils/fast_pimpl_test.cpp",
   "universal/src/utils/fast_scope_guard_test.cpp":"taxi/uservices/userver/universal/src/utils/fast_scope_guard_test.cpp",
   "universal/src/utils/filter_bloom_test.cpp":"taxi/uservices/userver/universal/src/utils/filter_bloom_test.cpp",
