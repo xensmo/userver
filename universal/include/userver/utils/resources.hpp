@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/utils/resources.hpp
+/// @brief Functions to embed and retrieve blobs from binary
+
 #include <string>
 
 USERVER_NAMESPACE_BEGIN

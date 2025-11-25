@@ -24,6 +24,7 @@ function(userver_module MODULE)
         UBENCH_DATABASES
         UBENCH_ENV
         DEPENDS
+        EMBED_FILES
     )
     cmake_parse_arguments(ARG "${OPTIONS}" "${ONE_VALUE_ARGS}" "${MULTI_VALUE_ARGS}" ${ARGN})
     if(ARG_UNPARSED_ARGUMENTS)
@@ -149,4 +150,10 @@ function(userver_module MODULE)
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/.."
         )
     endif()
+
+    foreach(FILE ${ARG_EMBED_FILES})
+        string(MAKE_C_IDENTIFIER "userver-${MODULE}-embed_${FILE}" EMBED_TARGET_NAME)
+        userver_embed_file(${EMBED_TARGET_NAME} FILEPATH "${FILE}" HPP_FILENAME "${FILE}")
+        target_link_libraries(userver-${MODULE} PRIVATE "$<BUILD_INTERFACE:${EMBED_TARGET_NAME}>")
+    endforeach()
 endfunction()

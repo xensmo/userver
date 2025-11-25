@@ -10,6 +10,7 @@
 #include <userver/formats/yaml/serialize.hpp>
 #include <userver/formats/yaml/value_builder.hpp>
 #include <userver/utils/assert.hpp>
+#include <userver/utils/resources.hpp>
 #include <userver/utils/trivial_map.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -274,6 +275,10 @@ bool Schema::operator==(const Schema& other) const { return TieSchema(*this) == 
 
 Schema impl::SchemaFromString(const std::string& yaml_string) {
     return formats::yaml::FromString(yaml_string).As<Schema>();
+}
+
+Schema impl::SchemaFromResource(std::string_view resource_name) {
+    return impl::SchemaFromString(utils::FindResource(resource_name));
 }
 
 }  //  namespace yaml_config
