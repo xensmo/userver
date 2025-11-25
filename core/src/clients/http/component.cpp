@@ -9,6 +9,10 @@
 #include <userver/utils/algo.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/clients/http/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -53,24 +57,7 @@ HttpClient::HttpClient(const ComponentConfig& component_config, const ComponentC
 clients::http::Client& HttpClient::GetHttpClient() { return http_client_; }
 
 yaml_config::Schema HttpClient::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Component that manages clients::http::ClientWithPlugins.
-additionalProperties: false
-properties:
-    core-component:
-        type: string
-        description: name of HttpClientCore component to use
-        defaultDescription: http-client-core
-    plugins:
-        type: object
-        description: HTTP client plugins
-        properties: {}
-        additionalProperties:
-            type: integer
-            description: Index by which plugins are sorted
-            minimum: 0
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/clients/http/component.yaml");
 }
 
 }  // namespace components

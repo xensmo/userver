@@ -16,6 +16,10 @@
 #include <userver/server/handlers/auth/handler_auth_config.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/handlers/implicit_options.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::handlers {
@@ -141,27 +145,7 @@ std::string ImplicitOptions::HandleRequestThrow(
 }
 
 yaml_config::Schema ImplicitOptions::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<HttpHandlerBase>(R"(
-type: object
-description: handler-implicit-http-options config
-additionalProperties: false
-properties:
-    auth_checkers:
-        type: object
-        description: server::handlers::auth::HandlerAuthConfig authorization config
-        defaultDescription: auth checker testing is disabled
-        additionalProperties: false
-        properties:
-            type:
-                type: string
-                description: auth type
-            types:
-                type: array
-                description: list of auth types
-                items:
-                    type: string
-                    description: auth type
-)");
+    return yaml_config::MergeSchemasFromResource<HttpHandlerBase>("src/server/handlers/implicit_options.yaml");
 }
 
 }  // namespace server::handlers

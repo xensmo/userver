@@ -9,6 +9,10 @@
 #include <userver/utils/assert.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/baggage/baggage_manager.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace baggage {
@@ -40,12 +44,7 @@ BaggageManagerComponent::BaggageManagerComponent(
 BaggageManager& BaggageManagerComponent::GetManager() { return baggage_manager_; }
 
 yaml_config::Schema BaggageManagerComponent::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Component for interaction with Baggage header.
-additionalProperties: false
-properties: {}
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/baggage/baggage_manager.yaml");
 }
 
 BaggageManager::BaggageManager(const dynamic_config::Source& config_source)

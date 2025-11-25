@@ -6,6 +6,10 @@
 #include <userver/utils/periodic_task.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/testsuite/testsuite_support.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -114,65 +118,7 @@ TestsuiteSupport::GetIncreasedTimeout() const noexcept {
 }
 
 yaml_config::Schema TestsuiteSupport::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<RawComponentBase>(R"(
-type: object
-description: Testsuite support component
-additionalProperties: false
-properties:
-    testsuite-periodic-update-enabled:
-        type: boolean
-        description: whether caches update periodically
-        defaultDescription: true
-    testsuite-periodic-dumps-enabled:
-        type: boolean
-        description: whether dumpable components write dumps periodically
-        defaultDescription: true
-    testsuite-pg-execute-timeout:
-        type: string
-        description: execute timeout override for postgres
-    testsuite-pg-statement-timeout:
-        type: string
-        description: statement timeout override for postgres
-    testsuite-pg-readonly-master-expected:
-        type: boolean
-        description: mutes readonly master detection warning
-        defaultDescription: false
-    testsuite-redis-timeout-connect:
-        type: string
-        description: minimum connection timeout for redis
-    testsuite-redis-timeout-single:
-        type: string
-        description: minimum single shard timeout for redis
-    testsuite-redis-timeout-all:
-        type: string
-        description: minimum command timeout for redis
-    testsuite-grpc-is-tls-enabled:
-        type: boolean
-        description: whether TLS should be enabled
-    testsuite-grpc-client-timeout-ms:
-        type: integer
-        description: forced timeout on client requests
-    testsuite-tasks-enabled:
-        type: boolean
-        description: Weather or not testsuite tasks are enabled
-        defaultDescription: false
-    testsuite-increased-timeout:
-        type: string
-        description: increase timeouts in testing environments. Overrides postgres, redis and grpc timeouts if these are missing
-        defaultDescription: 0ms
-    cache-update-execution:
-        type: string
-        description: |
-           If 'sequential' the caches are updated by testsuite sequentially
-           in the order for cache component registration, which makes sense
-           if service has components that push value into a cache component.
-           If 'concurrent' the caches are updated concurrently with respect
-           to the cache component dependencies.
-        enum:
-          - concurrent
-          - sequential
-        defaultDescription: concurrent
-)");
+    return yaml_config::MergeSchemasFromResource<RawComponentBase>("src/testsuite/testsuite_support.yaml");
 }
 
 void TestsuiteSupport::OnAllComponentsAreStopping() { testsuite_tasks_->CheckNoRunningTasks(); }

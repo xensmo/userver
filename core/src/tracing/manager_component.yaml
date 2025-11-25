@@ -1,0 +1,22 @@
+type: object
+description: component for finding actual tracing manager
+additionalProperties: false
+properties:
+    component-name:
+        type: string
+        description: tracing manager component's name
+    incoming-format:
+        type: array
+        description: Incoming tracing data formats
+        items: &format_items
+            type: string
+            description: tracing formats
+            enum:
+              - b3-alternative
+              - yandex
+              - taxi
+              - opentelemetry
+    new-requests-format:
+        type: array
+        description: Send tracing data in those formats
+        items: *format_items

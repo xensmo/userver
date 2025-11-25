@@ -28,6 +28,10 @@
 #include <logging/tp_logger.hpp>
 #include <logging/tp_logger_utils.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/logging/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -277,73 +281,7 @@ void Logging::FlushLogs() {
 }
 
 yaml_config::Schema Logging::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<RawComponentBase>(R"(
-type: object
-description: Logging component
-additionalProperties: false
-properties:
-    fs-task-processor:
-        type: string
-        description: task processor for disk I/O operations
-        defaultDescription: engine::current_task::GetBlockingTaskProcessor()
-    loggers:
-        type: object
-        description: logger options
-        properties: {}
-        additionalProperties:
-            type: object
-            description: logger options
-            additionalProperties: false
-            properties:
-                file_path:
-                    type: string
-                    description: path to the log file
-                level:
-                    type: string
-                    description: log verbosity
-                    defaultDescription: info
-                format:
-                    type: string
-                    description: log output format
-                    defaultDescription: tskv
-                    enum:
-                      - tskv
-                      - ltsv
-                      - raw
-                      - json
-                      - json_yadeploy
-                flush_level:
-                    type: string
-                    description: messages of this and higher levels get flushed to the file immediately
-                    defaultDescription: warning
-                message_queue_size:
-                    type: integer
-                    description: the size of internal message queue, must be a power of 2
-                    defaultDescription: 65536
-                overflow_behavior:
-                    type: string
-                    description: "message handling policy while the queue is full: `discard` drops messages, `block` waits until message gets into the queue"
-                    defaultDescription: discard
-                    enum:
-                      - discard
-                      - block
-                fs-task-processor:
-                    type: string
-                    description: task processor for disk I/O operations for this logger
-                    defaultDescription: fs-task-processor of the logger component
-                testsuite-capture:
-                    type: object
-                    description: if exists, setups additional TCP log sink for testing purposes
-                    defaultDescription: "{}"
-                    additionalProperties: false
-                    properties:
-                        host:
-                            type: string
-                            description: testsuite hostname, e.g. localhost
-                        port:
-                            type: integer
-                            description: testsuite port
-)");
+    return yaml_config::MergeSchemasFromResource<RawComponentBase>("src/logging/component.yaml");
 }
 
 }  // namespace components

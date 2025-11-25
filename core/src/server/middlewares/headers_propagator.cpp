@@ -8,6 +8,10 @@
 #include <userver/utils/algo.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/middlewares/headers_propagator.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::middlewares {
@@ -45,18 +49,7 @@ std::unique_ptr<HttpMiddlewareBase> HeadersPropagatorFactory::Create(
 }
 
 yaml_config::Schema HeadersPropagatorFactory::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Http service headers propagator middleware
-additionalProperties: false
-properties:
-    headers:
-        type: array
-        description: array of headers to propagate
-        items:
-            type: string
-            description: header
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/server/middlewares/headers_propagator.yaml");
 }
 
 }  // namespace server::middlewares

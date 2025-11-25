@@ -9,6 +9,10 @@
 
 #include <dynamic_config/variables/USERVER_FILES_CONTENT_TYPE_MAP.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/handlers/http_handler_static.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::handlers {
@@ -69,30 +73,7 @@ std::string HttpHandlerStatic::HandleRequestThrow(const http::HttpRequest& reque
 }
 
 yaml_config::Schema HttpHandlerStatic::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<HttpHandlerBase>(R"(
-type: object
-description: |
-    Handler that returns HTTP 200 if file exist
-    and returns file data with mapped content/type
-additionalProperties: false
-properties:
-    fs-cache-component:
-        type: string
-        description: Name of the FsCache component
-        defaultDescription: fs-cache-component
-    expires:
-        type: string
-        description: Cache age in seconds
-        defaultDescription: 600
-    directory-file:
-        type: string
-        description: File to return for directory requests. File name (not path) search in requested directory
-        defaultDescription: index.html
-    not-found-file:
-        type: string
-        description: File to return for missing files
-        defaultDescription: /404.html
-)");
+    return yaml_config::MergeSchemasFromResource<HttpHandlerBase>("src/server/handlers/http_handler_static.yaml");
 }
 
 }  // namespace server::handlers

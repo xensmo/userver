@@ -13,6 +13,10 @@
 #include <components/manager_config.hpp>
 #include <engine/task/task_processor.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/engine/task_processors_load_monitor.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace engine {
@@ -139,17 +143,8 @@ TaskProcessorsLoadMonitor::TaskProcessorsLoadMonitor(
 TaskProcessorsLoadMonitor::~TaskProcessorsLoadMonitor() = default;
 
 yaml_config::Schema TaskProcessorsLoadMonitor::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: task-processors-load-monitor config
-additionalProperties: false
-properties:
-    task-processor:
-        type: string
-        description: name of the TaskProcessor to run monitoring on
-        defaultDescription: |
-          task_processor of ServerMonitor or none, if ServerMonitor is absent
-)");
+    return yaml_config::MergeSchemasFromResource<
+        components::ComponentBase>("src/engine/task_processors_load_monitor.yaml");
 }
 
 }  // namespace engine

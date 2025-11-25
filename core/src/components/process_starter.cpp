@@ -4,6 +4,10 @@
 #include <userver/engine/task/task_base.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/components/process_starter.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -27,16 +31,7 @@ ProcessStarter::ProcessStarter(const ComponentConfig& config, const ComponentCon
 {}
 
 yaml_config::Schema ProcessStarter::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: process-starter
-additionalProperties: false
-properties:
-    task_processor:
-        type: string
-        description: the name of the TaskProcessor for process starting
-        defaultDescription: the 'default_task_processor' value from components::ManagerControllerComponent
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/components/process_starter.yaml");
 }
 
 }  // namespace components

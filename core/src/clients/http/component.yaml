@@ -1,0 +1,16 @@
+type: object
+description: Component that manages clients::http::ClientWithPlugins.
+additionalProperties: false
+properties:
+    core-component:
+        type: string
+        description: name of HttpClientCore component to use
+        defaultDescription: http-client-core
+    plugins:
+        type: object
+        description: HTTP client plugins
+        properties: {}
+        additionalProperties:
+            type: integer
+            description: Index by which plugins are sorted
+            minimum: 0

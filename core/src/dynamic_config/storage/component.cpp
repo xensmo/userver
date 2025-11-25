@@ -29,6 +29,10 @@
 
 #include <dynamic_config/storage_data.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/dynamic_config/storage/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -377,34 +381,7 @@ void DynamicConfig::NotifyLoadingFailed(std::string_view updater, std::string_vi
 }
 
 yaml_config::Schema DynamicConfig::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Component that stores the runtime config.
-additionalProperties: false
-properties:
-    updates-enabled:
-        type: boolean
-        description: should be set to 'true' if there is an updater component
-        defaultDescription: false
-    defaults:
-        type: object
-        description: optional values for configs that override the defaults specified in dynamic_config::Key definitions
-        defaultDescription: values from dynamic_config::Key definitions are used
-        properties: {}
-        additionalProperties: true
-    defaults-path:
-        type: string
-        description: optional file with config values that override the defaults specified in dynamic_config::Key definitions
-        defaultDescription: values from dynamic_config::Key definitions are used
-    fs-cache-path:
-        type: string
-        description: path to the file to read and dump a config cache; set to empty string to disable reading and dumping configs to FS
-        defaultDescription: no fs cache
-    fs-task-processor:
-        type: string
-        description: name of the task processor to run the blocking file write operations
-        defaultDescription: engine::current_task::GetBlockingTaskProcessor()
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/dynamic_config/storage/component.yaml");
 }
 
 }  // namespace components

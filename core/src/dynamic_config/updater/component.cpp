@@ -14,6 +14,10 @@
 #include <userver/utils/string_to_duration.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/dynamic_config/updater/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -286,33 +290,7 @@ bool DynamicConfigClientUpdater::IsDuplicate(cache::UpdateType update_type, cons
 }
 
 yaml_config::Schema DynamicConfigClientUpdater::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<CachingComponentBase>(R"(
-type: object
-description: Component that does a periodic update of runtime configs.
-additionalProperties: false
-properties:
-    updates-sink:
-        type: string
-        description: components::DynamicConfigUpdatesSinkBase descendant to be used for storing received updates
-        defaultDescription: dynamic-config
-    store-enabled:
-        type: boolean
-        description: store the retrieved values into the updates sink component
-        defaultDescription: true
-    load-only-my-values:
-        type: boolean
-        description: request from the client only the values used by this service
-        defaultDescription: true
-    deduplicate-update-types:
-        type: string
-        description: config update types for best-effort deduplication
-        defaultDescription: full-and-incremental
-        enum:
-          - none
-          - only-full
-          - only-incremental
-          - full-and-incremental
-)");
+    return yaml_config::MergeSchemasFromResource<CachingComponentBase>("src/dynamic_config/updater/component.yaml");
 }
 
 }  // namespace components

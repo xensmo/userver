@@ -18,6 +18,10 @@
 #include <dynamic_config/variables/USERVER_RPS_CCONTROL_ACTIVATED_FACTOR_METRIC.hpp>
 #include <dynamic_config/variables/USERVER_RPS_CCONTROL_ENABLED.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/congestion_control/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace congestion_control {
@@ -178,28 +182,7 @@ server::congestion_control::Sensor& Component::GetServerSensor() { return pimpl_
 const congestion_control::Controller& Component::GetServerController() const { return pimpl_->server_controller; }
 
 yaml_config::Schema Component::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: Component to limit too active requests, also known as CC.
-additionalProperties: false
-properties:
-    fake-mode:
-        type: boolean
-        description: if set, an actual throttling is skipped, but FSM is still working and producing informational logs
-        defaultDescription: false
-    min-cpu:
-        type: integer
-        description: force fake-mode if the current cpu number is less than the specified value
-        defaultDescription: 1
-    only-rtc:
-        type: boolean
-        description: if set to true and hostinfo::IsInRtc() returns false then forces the fake-mode
-        defaultDescription: true
-    status-code:
-        type: integer
-        description: HTTP status code for ratelimited responses
-        defaultDescription: 429
-)");
+    return yaml_config::MergeSchemasFromResource<components::ComponentBase>("src/congestion_control/component.yaml");
 }
 
 }  // namespace congestion_control

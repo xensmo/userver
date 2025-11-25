@@ -1,0 +1,29 @@
+type: object
+description: Component that stores security related data (keys, passwords, ...).
+additionalProperties: false
+properties:
+    config:
+        type: string
+        description: path to the config file with data
+        defaultDescription: ''
+    inline:
+        type: object
+        description: inline data
+        additionalProperties: true
+        properties: {}
+    format:
+        type: string
+        description: secdist format
+        defaultDescription: 'json'
+    missing-ok:
+        type: boolean
+        description: do not terminate components load if no file found by the config
+            option
+        defaultDescription: false
+    environment-secrets-key:
+        type: string
+        description: name of environment variable from which to load additional data
+    blocking-task-processor:
+        type: string
+        description: name of task processor for background blocking operations
+        defaultDescription: engine::current_task::GetBlockingTaskProcessor()

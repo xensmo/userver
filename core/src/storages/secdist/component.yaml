@@ -1,0 +1,13 @@
+type: object
+description: Component that stores security related data (keys, passwords, ...).
+additionalProperties: false
+properties:
+    update-period:
+        type: string
+        description: period between data updates in utils::StringToDuration() suitable
+            format ('0s' for no updates)
+        defaultDescription: 10s
+    provider:
+        type: string
+        description: optional secdist provider component name
+        defaultDescription: default-secdist-provider

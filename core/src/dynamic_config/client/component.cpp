@@ -8,6 +8,10 @@
 #include <userver/utils/text_light.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/dynamic_config/client/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -76,40 +80,7 @@ DynamicConfigClient::DynamicConfigClient(const ComponentConfig& config, const Co
 dynamic_config::Client& DynamicConfigClient::GetClient() const { return *config_client_; }
 
 yaml_config::Schema DynamicConfigClient::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Component that starts a clients::dynamic_config::Client client.
-additionalProperties: false
-properties:
-    get-configs-overrides-for-service:
-        type: boolean
-        description: send service-name field
-        defaultDescription: true
-    service-name:
-        type: string
-        description: name of the service to send if the get-configs-overrides-for-service is true
-    http-timeout:
-        type: string
-        description: HTTP request timeout to the remote in utils::StringToDuration() suitable format
-    http-retries:
-        type: integer
-        description: string HTTP retries before reporting the request failure
-    config-url:
-        type: string
-        description: HTTP URL to request configs via POST request
-    configs-stage-filepath:
-        type: string
-        description: |
-          file to read stage name from, overrides static "configs-stage"
-          if both are provided, expected format: json file with "env_name" property
-    configs-stage:
-        type: string
-        description: stage name provided statically, can be overridden from file
-    append-path-to-url:
-        type: boolean
-        description: add default path '/configs/values' to 'config-url'
-        defaultDescription: true
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/dynamic_config/client/component.yaml");
 }
 
 }  // namespace components

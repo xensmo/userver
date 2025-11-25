@@ -16,6 +16,10 @@
 
 #include <utils/statistics/value_builder_helpers.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/handlers/server_monitor.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::handlers {
@@ -145,30 +149,7 @@ ServerMonitor::GetResponseDataForLogging(const http::HttpRequest&, request::Requ
 }
 
 yaml_config::Schema ServerMonitor::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<HttpHandlerBase>(R"(
-type: object
-description: handler-server-monitor config
-additionalProperties: false
-properties:
-    common-labels:
-        type: object
-        description: |
-            A map of label name to label value. Items of the map are
-            added to each metric.
-        additionalProperties: true
-        properties: {}
-    format:
-        type: string
-        description: Default metrics format. Either static option or URL parameter has to be provided.
-        enum:
-          - graphite
-          - prometheus
-          - prometheus-untyped
-          - json
-          - pretty
-          - solomon
-          - internal
-  )");
+    return yaml_config::MergeSchemasFromResource<HttpHandlerBase>("src/server/handlers/server_monitor.yaml");
 }
 
 }  // namespace server::handlers

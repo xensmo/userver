@@ -16,6 +16,10 @@
 #include <server/middlewares/rate_limit.hpp>
 #include <server/middlewares/tracing.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/middlewares/configuration.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::middlewares {
@@ -88,19 +92,8 @@ PipelineBuilder::PipelineBuilder(const components::ComponentConfig& config, cons
 const MiddlewaresList& PipelineBuilder::GetMiddlewaresToAppend() const { return middlewares_to_append_; }
 
 yaml_config::Schema PipelineBuilder::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: Base class for a component to configure server middlewares
-additionalProperties: false
-properties:
-    append:
-        type: array
-        items:
-            type: string
-            description: name of a middleware to append
-        description: list of middlewares to append by default
-        defaultDescription: an empty list
-)");
+    return yaml_config::MergeSchemasFromResource<components::ComponentBase>("src/server/middlewares/configuration.yaml"
+    );
 }
 
 HandlerPipelineBuilder::HandlerPipelineBuilder(

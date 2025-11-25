@@ -3,6 +3,10 @@
 #include <userver/components/component.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/components/dump_configurator.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -15,15 +19,7 @@ DumpConfigurator::DumpConfigurator(const ComponentConfig& config, const Componen
 const std::string& DumpConfigurator::GetDumpRoot() const { return dump_root_; }
 
 yaml_config::Schema DumpConfigurator::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Helper component that manages common configuration for userver dumps.
-additionalProperties: false
-properties:
-    dump-root:
-        type: string
-        description: Components store dumps in subdirectories of this directory
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/components/dump_configurator.yaml");
 }
 
 }  // namespace components

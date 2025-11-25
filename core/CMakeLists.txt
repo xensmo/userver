@@ -116,6 +116,57 @@ if(TARGET Boost::endian)
     )
 endif()
 
+list(APPEND EMBED_FILES
+    src/baggage/baggage_manager.yaml
+    src/cache/caching_component_base.yaml
+    src/cache/lru_cache_component_base.yaml
+    src/clients/http/component.yaml
+    src/clients/http/component_core.yaml
+    src/clients/http/plugins/retry_budget/component.yaml
+    src/components/dump_configurator.yaml
+    src/components/fs_cache.yaml
+    src/components/logging_configurator.yaml
+    src/components/process_starter.yaml
+    src/components/single_threaded_task_processors.yaml
+    src/components/statistics_storage.yaml
+    src/components/tcp_acceptor_base.yaml
+    src/congestion_control/component.yaml
+    src/dump/dumper.yaml
+    src/dynamic_config/client/component.yaml
+    src/dynamic_config/storage/component.yaml
+    src/dynamic_config/updater/component.yaml
+    src/engine/task_processors_load_monitor.yaml
+    src/logging/component.yaml
+    src/middlewares/pipeline.yaml
+    src/server/component.yaml
+    src/server/handlers/auth/auth_checker_settings_component.yaml
+    src/server/handlers/auth/digest/auth_checker_settings_component.yaml
+    src/server/handlers/auth/digest/nonce_cache_settings_component.yaml
+    src/server/handlers/dynamic_debug_log.yaml
+    src/server/handlers/handler_base.yaml
+    src/server/handlers/http_handler_base.yaml
+    src/server/handlers/http_handler_static.yaml
+    src/server/handlers/implicit_options.yaml
+    src/server/handlers/ping.yaml
+    src/server/handlers/server_monitor.yaml
+    src/server/handlers/tests_control.yaml
+    src/server/middlewares/configuration.yaml
+    src/server/middlewares/headers_propagator.yaml
+    src/server/websocket/websocket_handler.yaml
+    src/storages/secdist/component.yaml
+    src/storages/secdist/provider_component.yaml
+    src/testsuite/testsuite_support.yaml
+    src/tracing/component.yaml
+    src/tracing/manager_component.yaml
+    src/utils/statistics/system_statistics_collector.yaml
+)
+
+foreach(FILE ${EMBED_FILES})
+    string(MAKE_C_IDENTIFIER "${PROJECT_NAME}-embed_${FILE}" EMBED_TARGET_NAME)
+    userver_embed_file(${EMBED_TARGET_NAME} FILEPATH "${FILE}" HPP_FILENAME "${FILE}")
+    target_link_libraries(${PROJECT_NAME} PRIVATE "$<BUILD_INTERFACE:${EMBED_TARGET_NAME}>")
+endforeach()
+
 add_subdirectory(${USERVER_THIRD_PARTY_DIRS}/llhttp llhttp)
 
 add_subdirectory(${USERVER_THIRD_PARTY_DIRS}/http-parser http-parser)

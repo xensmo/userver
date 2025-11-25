@@ -38,6 +38,10 @@
 #include <userver/utils/text_light.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/handlers/http_handler_base.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::handlers {
@@ -545,36 +549,7 @@ void HttpHandlerBase::BuildMiddlewarePipeline(
 }
 
 yaml_config::Schema HttpHandlerBase::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<HandlerBase>(R"(
-type: object
-description: Base class for all the userver HTTP handlers
-additionalProperties: false
-properties:
-    log-level:
-        type: string
-        description: overrides log level for this handle
-        defaultDescription: <no override>
-    status-codes-log-level:
-        type: object
-        properties: {}
-        additionalProperties:
-            type: string
-            description: log level
-        description: HTTP status code -> log level map
-    middlewares:
-        type: object
-        properties:
-            pipeline-builder:
-                type: string
-                description: name of a component to build a middleware pipeline for this particular handler
-                defaultDescription: default-handler-middleware-pipeline-builder
-        additionalProperties:
-            type: object
-            properties: {}
-            additionalProperties: true
-            description: per-middleware configuration
-        description: middleware name -> middleware configuration map
-)");
+    return yaml_config::MergeSchemasFromResource<HandlerBase>("src/server/handlers/http_handler_base.yaml");
 }
 
 }  // namespace server::handlers

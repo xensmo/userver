@@ -6,6 +6,10 @@
 #include <userver/yaml_config/merge_schemas.hpp>
 #include <userver/yaml_config/schema.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/handlers/ping.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::handlers {
@@ -64,16 +68,7 @@ void Ping::AppendWeightHeaders(http::HttpResponse& response) const {
 }
 
 yaml_config::Schema Ping::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<PingBase>(R"(
-type: object
-description: ping handler config
-additionalProperties: false
-properties:
-    warmup-time-secs:
-        type: integer
-        description: time to server warmup, set to zero to disable the feature
-        defaultDescription: 0
-)");
+    return yaml_config::MergeSchemasFromResource<PingBase>("src/server/handlers/ping.yaml");
 }
 
 }  // namespace server::handlers

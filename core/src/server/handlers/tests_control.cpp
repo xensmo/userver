@@ -17,6 +17,10 @@
 #include <testsuite/impl/actions/reset_metrics.hpp>
 #include <testsuite/impl/actions/tasks.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/handlers/tests_control.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::handlers {
@@ -125,23 +129,7 @@ formats::json::Value TestsControl::PerformAction(
 }
 
 yaml_config::Schema TestsControl::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<HttpHandlerJsonBase>(R"(
-type: object
-description: tests-control config
-additionalProperties: false
-properties:
-    testpoint-url:
-        type: string
-        description: an URL that should be notified in the TESTPOINT_CALLBACK and TESTPOINT_CALLBACK_NONCORO macros
-    skip-unregistered-testpoints:
-        type: boolean
-        description: do not send testpoints data for paths that were not registered by `testpoint-url`
-        defaultDescription: false
-    testpoint-timeout:
-        type: string
-        description: timeout to use while working with testpoint-url
-        defaultDescription: 1s
-)");
+    return yaml_config::MergeSchemasFromResource<HttpHandlerJsonBase>("src/server/handlers/tests_control.yaml");
 }
 
 }  // namespace server::handlers

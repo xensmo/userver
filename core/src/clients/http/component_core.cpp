@@ -20,6 +20,10 @@
 #include <dynamic_config/variables/HTTP_CLIENT_CONNECTION_POOL_SIZE.hpp>
 #include <dynamic_config/variables/HTTP_CLIENT_CONNECT_THROTTLE.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/clients/http/component_core.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -133,70 +137,7 @@ void HttpClientCore::WriteStatistics(utils::statistics::Writer& writer) {
 }
 
 yaml_config::Schema HttpClientCore::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Component that manages clients::http::ClientCore.
-additionalProperties: false
-properties:
-    pool-statistics-disable:
-        type: boolean
-        description: set to true to disable statistics for connection pool
-        defaultDescription: false
-    thread-name-prefix:
-        type: string
-        description: set OS thread name to this value
-        defaultDescription: ''
-    threads:
-        type: integer
-        description: number of threads to process low level HTTP related IO system calls
-        defaultDescription: 8
-    fs-task-processor:
-        type: string
-        description: task processor to run blocking HTTP related calls, like DNS resolving or hosts reading
-        defaultDescription: engine::current_task::GetBlockingTaskProcessor()
-    destination-metrics-auto-max-size:
-        type: integer
-        description: set max number of automatically created destination metrics
-        defaultDescription: 100
-    user-agent:
-        type: string
-        description: User-Agent HTTP header to show on all requests, result of utils::GetUserverIdentifier() if empty
-        defaultDescription: empty
-    testsuite-enabled:
-        type: boolean
-        description: enable testsuite testing support
-        defaultDescription: false
-    testsuite-timeout:
-        type: string
-        description: if set, force the request timeout regardless of the value passed in code
-    testsuite-allowed-url-prefixes:
-        type: array
-        description: if set, checks that all URLs start with any of the passed prefixes, asserts if not. Set for testing purposes only.
-        items:
-            type: string
-            description: URL prefix
-    dns_resolver:
-        type: string
-        description: server hostname resolver type (getaddrinfo or async)
-        defaultDescription: 'async'
-        enum:
-          - getaddrinfo
-          - async
-    set-deadline-propagation-header:
-        type: boolean
-        description: |
-            Whether to set http::common::kXYaTaxiClientTimeoutMs request header
-            using the original timeout and the value of task-inherited deadline.
-            Note: timeout is always updated from the task-inherited deadline
-            when present.
-        defaultDescription: true
-    cancellation-policy:
-        type: string
-        description: Cancellation policy for new requests
-        enum:
-          - cancel
-          - ignore
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/clients/http/component_core.yaml");
 }
 
 }  // namespace components

@@ -12,6 +12,10 @@
 #include <userver/utils/async.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/storages/secdist/provider_component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace formats::parse {
@@ -211,36 +215,7 @@ DefaultSecdistProvider::DefaultSecdistProvider(const ComponentConfig& config, co
 formats::json::Value DefaultSecdistProvider::Get() const { return loader_.Get(); }
 
 yaml_config::Schema DefaultSecdistProvider::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Component that stores security related data (keys, passwords, ...).
-additionalProperties: false
-properties:
-    config:
-        type: string
-        description: path to the config file with data
-        defaultDescription: ''
-    inline:
-        type: object
-        description: inline data
-        additionalProperties: true
-        properties: {}
-    format:
-        type: string
-        description: secdist format
-        defaultDescription: 'json'
-    missing-ok:
-        type: boolean
-        description: do not terminate components load if no file found by the config option
-        defaultDescription: false
-    environment-secrets-key:
-        type: string
-        description: name of environment variable from which to load additional data
-    blocking-task-processor:
-        type: string
-        description: name of task processor for background blocking operations
-        defaultDescription: engine::current_task::GetBlockingTaskProcessor()
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/storages/secdist/provider_component.yaml");
 }
 
 }  // namespace components

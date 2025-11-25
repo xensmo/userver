@@ -13,6 +13,10 @@
 #include <userver/server/websocket/server.hpp>
 #include "protocol.hpp"
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/server/websocket/websocket_handler.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace server::websocket {
@@ -104,20 +108,8 @@ void WebsocketHandlerBase::WriteMetrics(utils::statistics::Writer& writer) const
 }
 
 yaml_config::Schema WebsocketHandlerBase::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<server::handlers::HttpHandlerBase>(R"(
-type: object
-description: Base class for WebSocket handlers
-additionalProperties: false
-properties:
-    max-remote-payload:
-        type: integer
-        description: max input message payload size
-        defaultDescription: 65536
-    fragment-size:
-        type: integer
-        description: max output fragment size
-        defaultDescription: 65536
-)");
+    return yaml_config::MergeSchemasFromResource<
+        server::handlers::HttpHandlerBase>("src/server/websocket/websocket_handler.yaml");
 }
 
 }  // namespace server::websocket

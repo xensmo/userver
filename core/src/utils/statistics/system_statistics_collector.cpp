@@ -5,6 +5,10 @@
 #include <userver/engine/async.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/utils/statistics/system_statistics_collector.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -51,19 +55,8 @@ void SystemStatisticsCollector::ExtendStatistics(utils::statistics::Writer& writ
 }
 
 yaml_config::Schema SystemStatisticsCollector::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Component for system resource usage statistics collection.
-additionalProperties: false
-properties:
-    fs-task-processor:
-        type: string
-        description: Task processor to use for statistics gathering
-    with-nginx:
-        type: boolean
-        description: Whether to collect and report nginx processes statistics
-        defaultDescription: false
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/utils/statistics/system_statistics_collector.yaml"
+    );
 }
 
 }  // namespace components
