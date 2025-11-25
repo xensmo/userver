@@ -31,6 +31,10 @@
 #include <dynamic_config/variables/POSTGRES_CONNECTION_PIPELINE_EXPERIMENT.hpp>
 #include <dynamic_config/variables/POSTGRES_OMIT_DESCRIBE_IN_EXECUTE.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/storages/postgres/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -285,150 +289,7 @@ void Postgres::OnSecdistUpdate(const storages::secdist::SecdistConfig& secdist) 
 }
 
 yaml_config::Schema Postgres::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: PosgreSQL client component
-additionalProperties: false
-properties:
-    dbalias:
-        type: string
-        description: name of the database in secdist config (if available)
-    name_alias:
-        type: string
-        description: name alias to use in dynamic configs
-        defaultDescription: name of the component
-    dbconnection:
-        type: string
-        description: connection DSN string (used if no dbalias specified)
-    blocking_task_processor:
-        type: string
-        description: name of task processor for background blocking operations
-        defaultDescription: engine::current_task::GetBlockingTaskProcessor()
-    max_replication_lag:
-        type: string
-        description: |
-            replication lag limit for usable replicas. If a replica's lag exceeds this value, it stops receiving
-            new requests
-        defaultDescription: 60s
-    min_pool_size:
-        type: integer
-        description: |
-            number of connections created initially by this component instance to each of the provided PostgreSQL
-            hosts. Connections are kept even without requests
-        defaultDescription: 4
-    max_pool_size:
-        type: integer
-        description: |
-            maximum number of connections that can be created by this component instance to each of the provided
-            PostgreSQL hosts for "connlimit_mode: manual". Should not be less than `min_pool_size`
-        defaultDescription: 15
-    sync-start:
-        type: boolean
-        description: perform initial connections synchronously
-        defaultDescription: false
-    dns_resolver:
-        type: string
-        description: server hostname resolver type (getaddrinfo or async)
-        defaultDescription: 'async'
-        enum:
-          - getaddrinfo
-          - async
-    persistent-prepared-statements:
-        type: boolean
-        description: cache prepared statements or not
-        defaultDescription: true
-    statement-log-mode:
-        type: string
-        enum:
-          - hide
-          - show
-        description: whether to log SQL statements in a span tag
-        defaultDescription: show
-    user-types-enabled:
-        type: boolean
-        description: disabling will disallow use of user-defined types
-        defaultDescription: true
-    check-user-types:
-        type: boolean
-        description: |
-            cancel service start if some user types have not been loaded, which
-            helps to detect missing migrations
-        defaultDescription: false
-    ignore_unused_query_params:
-        type: boolean
-        description: disable check for not-NULL query params that are not used in query
-        defaultDescription: false
-    max-ttl-sec:
-        type: integer
-        minimum: 1
-        description: the maximum lifetime for connections
-    discard-all-on-connect:
-        type: boolean
-        description: execute discard all on new connections
-        defaultDescription: true
-    deadline-propagation-enabled:
-        type: boolean
-        description: whether statement timeout is affected by deadline propagation
-        defaultDescription: true
-    monitoring-dbalias:
-        type: string
-        description: name of the database for monitorings
-        defaultDescription: calculated from dbalias or dbconnection options
-    max_prepared_cache_size:
-        type: integer
-        description: prepared statements cache size limit
-        defaultDescription: 200
-    max_statement_metrics:
-        type: integer
-        description: limit of exported metrics for named statements
-        defaultDescription: 0
-    error-injection:
-        type: object
-        description: error-injection options
-        additionalProperties: false
-        properties:
-            enabled:
-                type: boolean
-                description: enable error injection
-                defaultDescription: false
-            probability:
-                type: number
-                description: thrown exception probability
-                defaultDescription: 0
-            verdicts:
-                type: array
-                description: possible injection verdicts
-                defaultDescription: empty
-                items:
-                    type: string
-                    description: what error injection hook may decide to do
-                    enum:
-                      - timeout
-                      - error
-                      - max-delay
-                      - random-delay
-    max_queue_size:
-        type: integer
-        description: |
-            maximum number of clients waiting for a connection. storages::postgres::PoolError is thrown if a new
-            request exceeds this limit
-        defaultDescription: 200
-    pipeline_enabled:
-        type: boolean
-        description: turns on pipeline connection mode
-        defaultDescription: false
-    connecting_limit:
-        type: integer
-        description: |
-            limit for concurrent establishing connections number per PostgreSQL host (0 - unlimited)
-        defaultDescription: 0
-    connlimit_mode:
-        type: string
-        enum:
-         - auto
-         - manual
-        description: how to learn the `max_pool_size`
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/storages/postgres/component.yaml");
 }
 
 }  // namespace components
