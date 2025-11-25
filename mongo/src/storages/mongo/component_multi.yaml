@@ -1,0 +1,71 @@
+type: object
+description: Dynamically configurable MongoDB client component
+additionalProperties: false
+properties:
+    appname:
+        type: string
+        description: application name for the DB server
+        defaultDescription: userver
+    conn_timeout:
+        type: string
+        description: connection timeout
+        defaultDescription: 2s
+    so_timeout:
+        type: string
+        description: socket timeout
+        defaultDescription: 10s
+    queue_timeout:
+        type: string
+        description: max connection queue wait time
+        defaultDescription: 1s
+    initial_size:
+        type: string
+        description: number of connections created initially (per database)
+        defaultDescription: 16
+    max_size:
+        type: integer
+        description: limit for total connections number (per database)
+        defaultDescription: 128
+    idle_limit:
+        type: integer
+        description: limit for idle connections number (per database)
+        defaultDescription: 64
+    connecting_limit:
+        type: integer
+        description: limit for establishing connections number (per database)
+        defaultDescription: 8
+    local_threshold:
+        type: string
+        description: latency window for instance selection
+        defaultDescription: mongodb default
+    max_replication_lag:
+        type: string
+        description: replication lag limit for usable secondaries, min. 90s
+    stats_verbosity:
+        type: string
+        description: changes the granularity of reported metrics
+        defaultDescription: 'terse'
+        enum:
+          - terse
+          - full
+          - none
+    dns_resolver:
+        type: string
+        description: server hostname resolver type (getaddrinfo or async)
+        defaultDescription: 'async'
+        enum:
+          - getaddrinfo
+          - async
+    congestion_control:
+        description: congestion control settings
+        type: object
+        additionalProperties: false
+        properties:
+            fake-mode:
+                type: boolean
+                description: whether CC limiter is actually working
+                defaultDescription: false
+            enabled:
+                type: boolean
+                description: whether CC is enabled for the database
+                defaultDescription: true

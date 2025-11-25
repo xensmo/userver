@@ -8,6 +8,10 @@
 #include <userver/utils/statistics/writer.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/storages/mongo/dist_lock_component_base.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace storages::mongo {
@@ -86,33 +90,8 @@ void DistLockComponentBase::Start() {
 void DistLockComponentBase::Stop() { worker_->Stop(); }
 
 yaml_config::Schema DistLockComponentBase::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: Base class for mongo-based distlock worker components
-additionalProperties: false
-properties:
-    lockname:
-        type: string
-        description: name of the lock
-    lock-ttl:
-        type: string
-        description: TTL of the lock; must be at least as long as the duration between subsequent cancellation checks, otherwise brain split is possible
-    mongo-timeout:
-        type: string
-        description: timeout, must be at least 2*lock-ttl
-    restart-delay:
-        type: string
-        description: how much time to wait after failed task restart
-        defaultDescription: 100ms
-    task-processor:
-        type: string
-        description: the name of the TaskProcessor for running DoWork
-        defaultDescription: main-task-processor
-    testsuite-support:
-        type: boolean
-        description: Enable testsuite support
-        defaultDescription: false
-)");
+    return yaml_config::MergeSchemasFromResource<
+        components::ComponentBase>("src/storages/mongo/dist_lock_component_base.yaml");
 }
 
 }  // namespace storages::mongo
