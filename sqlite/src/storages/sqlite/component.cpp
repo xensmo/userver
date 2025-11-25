@@ -13,6 +13,10 @@
 #include <userver/storages/sqlite/client.hpp>
 #include <userver/storages/sqlite/options.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/storages/sqlite/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace components {
@@ -136,102 +140,7 @@ SQLite::~SQLite() { statistics_holder_.Unregister(); }
 storages::sqlite::ClientPtr SQLite::GetClient() const { return client_; }
 
 yaml_config::Schema SQLite::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: SQLite client component
-additionalProperties: false
-properties:
-    fs-task-processor:
-        type: string
-        description: name of the task processor to handle the blocking file operations
-        defaultDescription: engine::current_task::GetBlockingTaskProcessor()
-    db-path:
-        type: string
-        description: path to the database file or `::memory::` for in-memory mode
-    create_file:
-        type: boolean
-        description: create the database file if it does not exist at the specified path
-        defaultDescription: true
-    is_read_only:
-        type: boolean
-        description: open the database in read-only mode
-        defaultDescription: false
-    shared_cache:
-        type: boolean
-        description: enable shared in-memory cache for the database
-        defaultDescription: false
-    read_uncommitted:
-        type: boolean
-        description: allow reading uncommitted data (requires shared_cache)
-        defaultDescription: false
-    journal_mode:
-        type: string
-        description: mode for database journaling
-        defaultDescription: wal
-        enum:
-          - delete
-          - truncate
-          - persist
-          - memory
-          - wal
-          - off
-    busy_timeout:
-        type: integer
-        description: timeout duration (in milliseconds) to wait when the database is busy
-        defaultDescription: 5000
-    foreign_keys:
-        type: boolean
-        description: enable enforcement of foreign key constraints
-        defaultDescription: true
-    synchronous:
-        type: string
-        description: set the level of synchronization to ensure data durability
-        defaultDescription: normal
-        enum:
-          - extra
-          - full
-          - normal
-          - off
-    cache_size:
-        type: integer
-        description: maximum cache size, specified in number of pages or in kibibytes (negative value)
-        defaultDescription: -2000
-    journal_size_limit:
-        type: integer
-        description: limit the size of rollback-journal and WAL files (in bytes)
-        defaultDescription: 67108864
-    mmap_size:
-        type: integer
-        description: maximum number of bytes allocated for memory-mapped I/O
-        defaultDescription: 30000000000
-    page_size:
-        type: integer
-        description: size of a database page (in bytes)
-        defaultDescription: 4096
-    temp_store:
-        type: string
-        description: storage location for temporary tables and indexes
-        defaultDescription: memory
-        enum:
-          - memory
-          - file
-    persistent-prepared-statements:
-        type: boolean
-        description: cache prepared statements for reuse
-        defaultDescription: true
-    max_prepared_cache_size:
-        type: integer
-        description: maximum number of prepared statements to cache
-        defaultDescription: 200
-    initial_read_only_pool_size:
-        type: integer
-        description: initial size of the read-only connection pool
-        defaultDescription: 5
-    max_read_only_pool_size:
-        type: integer
-        description: maximum size of the read-only connection pool
-        defaultDescription: 10
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/storages/sqlite/component.yaml");
 }
 
 }  // namespace components

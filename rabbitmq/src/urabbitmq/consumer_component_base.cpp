@@ -9,6 +9,10 @@
 #include <userver/urabbitmq/component.hpp>
 #include <userver/urabbitmq/consumer_base.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/urabbitmq/consumer_component_base.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace urabbitmq {
@@ -69,21 +73,8 @@ void ConsumerComponentBase::OnAllComponentsLoaded() { impl_->Start(this); }
 void ConsumerComponentBase::OnAllComponentsAreStopping() { impl_->Stop(); }
 
 yaml_config::Schema ConsumerComponentBase::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: RabbitMQ consumer component
-additionalProperties: false
-properties:
-    rabbit_name:
-        type: string
-        description: name of the RabbitMQ component to use
-    queue:
-        type: string
-        description: a queue to consume from
-    prefetch_count:
-        type: integer
-        description: prefetch_count for the consumer
-)");
+    return yaml_config::MergeSchemasFromResource<components::ComponentBase>("src/urabbitmq/consumer_component_base.yaml"
+    );
 }
 
 }  // namespace urabbitmq
