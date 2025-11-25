@@ -191,7 +191,7 @@ std::enable_if_t<kIsFromCharsConvertible<T>, T> FromString(std::string_view str)
 /// @tparam T The type of the number to be parsed
 /// @param str The string that contains the number
 /// @return The extracted number
-/// @throw std::runtime_error if the string does not contain an integer or
+/// @throw FromStringException if the string does not contain an integer or
 /// floating-point number in the specified format, or the string contains extra
 /// junk, or the number does not fit into the provided type
 template <
