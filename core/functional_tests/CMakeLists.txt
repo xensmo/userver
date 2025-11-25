@@ -8,6 +8,9 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-basic-chaos)
 add_subdirectory(dump_coroutines)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-dump-coroutines)
 
+add_subdirectory(early_monitor_port_open)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-early-monitor-port-open)
+
 add_subdirectory(dynamic_configs)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-dynamic-configs)
 
