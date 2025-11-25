@@ -37,6 +37,10 @@
 
 #include <boost/range/adaptor/map.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/storages/redis/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace {
@@ -353,85 +357,7 @@ void Redis::OnSecdistUpdate(const storages::secdist::SecdistConfig& cfg) {
 }
 
 yaml_config::Schema Redis::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<ComponentBase>(R"(
-type: object
-description: Redis client component
-additionalProperties: false
-properties:
-    thread_pools:
-        type: object
-        description: thread pools options
-        additionalProperties: false
-        properties:
-            redis_thread_pool_size:
-                type: integer
-                description: thread count to serve Redis requests
-            sentinel_thread_pool_size:
-                type: integer
-                description: thread count to serve sentinel requests
-    groups:
-        type: array
-        description: array of redis clusters to work with excluding subscribers
-        items:
-            type: object
-            description: redis cluster to work with excluding subscribers
-            additionalProperties: false
-            properties:
-                config_name:
-                    type: string
-                    description: key name in secdist with options for this cluster
-                db:
-                    type: string
-                    description: name to refer to the cluster in components::Redis::GetClient()
-                sharding_strategy:
-                    type: string
-                    description: one of RedisStandalone, RedisCluster, KeyShardCrc32, KeyShardTaximeterCrc32 or KeyShardGpsStorageDriver
-                    defaultDescription: "KeyShardTaximeterCrc32"
-                    enum:
-                      - RedisCluster
-                      - KeyShardCrc32
-                      - KeyShardTaximeterCrc32
-                      - KeyShardGpsStorageDriver
-                      - RedisStandalone
-                allow_reads_from_master:
-                    type: boolean
-                    description: allows read requests from master instance
-                    defaultDescription: false
-    metrics_level:
-        type: string
-        description: set metrics detail level
-        defaultDescription: "Instance"
-        enum:
-          - cluster
-          - shard
-          - instance
-    subscribe_groups:
-        type: array
-        description: array of redis clusters to work with in subscribe mode
-        items:
-            type: object
-            description: redis cluster to work with in subscribe mode
-            additionalProperties: false
-            properties:
-                config_name:
-                    type: string
-                    description: key name in secdist with options for this cluster
-                db:
-                    type: string
-                    description: name to refer to the cluster in components::Redis::GetSubscribeClient()
-                sharding_strategy:
-                    type: string
-                    description: either RedisCluster or KeyShardTaximeterCrc32
-                    defaultDescription: "KeyShardTaximeterCrc32"
-                    enum:
-                      - RedisCluster
-                      - KeyShardTaximeterCrc32
-                      - RedisStandalone
-                allow_reads_from_master:
-                    type: boolean
-                    description: allows subscriptions to master instance to distribute load
-                    defaultDescription: false
-)");
+    return yaml_config::MergeSchemasFromResource<ComponentBase>("src/storages/redis/component.yaml");
 }
 
 }  // namespace components
