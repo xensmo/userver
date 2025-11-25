@@ -152,7 +152,11 @@ void Manager::TaskProcessorsStorage::WaitForAllTasksBlocking() const noexcept {
     }
 }
 
-Manager::Manager(std::unique_ptr<ManagerConfig>&& config, std::chrono::steady_clock::time_point start_time)
+Manager::Manager(
+    std::unique_ptr<ManagerConfig>&& config,
+    std::chrono::steady_clock::time_point start_time,
+    const ComponentList& component_list
+)
     : config_(std::move(config)),
       task_processors_storage_(std::make_shared<
                                engine::impl::TaskProcessorPools>(config_->coro_pool, config_->event_thread_pool)),
@@ -215,18 +219,15 @@ Manager::Manager(std::unique_ptr<ManagerConfig>&& config, std::chrono::steady_cl
     }
 
     default_task_processor_ = default_task_processor_it->second.get();
-}
+    RunInCoro(*default_task_processor_, [this, &component_list]() { CreateComponentContext(component_list); });
 
-engine::TaskWithResult<void> Manager::StartComponentSystem(const ComponentList& component_list) {
-    return engine::CriticalAsyncNoSpan(*default_task_processor_, [this, &component_list]() {
-        CreateComponentContext(component_list);
-        if (!config_->disable_phdr_cache) {
-            engine::impl::InitPhdrCache();
-        }
-        LOG_INFO()
-            << "Started components manager. All the components have started "
-               "successfully.";
-    });
+    if (!config_->disable_phdr_cache) {
+        engine::impl::InitPhdrCache();
+    }
+
+    LOG_INFO()
+        << "Started components manager. All the components have started "
+           "successfully.";
 }
 
 Manager::~Manager() {
@@ -324,10 +325,6 @@ void Manager::CreateComponentContext(const ComponentList& component_list) {
     component_context_ = std::make_unique<impl::ComponentContextImpl>(*this, std::move(loading_components));
 
     AddComponents(component_list);
-
-    LOG_INFO()
-        << "Started components manager. All the components have started "
-           "successfully.";
 }
 
 components::ComponentConfigMap Manager::MakeComponentConfigMap(const ComponentList& component_list) {

@@ -13,8 +13,6 @@
 #include <userver/crypto/openssl.hpp>
 #include <userver/dynamic_config/snapshot.hpp>
 #include <userver/dynamic_config/value.hpp>
-#include <userver/engine/exception.hpp>
-#include <userver/engine/task/task_with_result.hpp>
 #include <userver/formats/json/serialize.hpp>
 #include <userver/fs/blocking/read.hpp>
 #include <userver/logging/impl/mem_logger.hpp>
@@ -185,33 +183,6 @@ ManagerConfig ParseManagerConfigAndSetupLogging(
     }
 }
 
-void CatchSignalsLoop(impl::Manager& manager, RunMode run_mode, utils::SignalCatcher& signal_catcher) noexcept {
-    if (run_mode == RunMode::kOnce) {
-        return;
-    }
-
-    LOG_INFO() << "Starting to catch signals";
-    for (;;) {
-        auto signum = signal_catcher.Catch();
-        if (signum == SIGTERM || signum == SIGQUIT) {
-            break;
-        } else if (signum == SIGINT) {
-            if (IsTraced()) {
-                // SIGINT is masked and cannot be used
-                std::raise(SIGTRAP);
-            } else {
-                break;
-            }
-        } else if (signum == SIGUSR1 || signum == SIGUSR2) {
-            LOG_INFO() << "Signal caught: " << utils::strsignal(signum);
-            manager.OnSignal(signum);
-        } else {
-            LOG_WARNING() << "Got unexpected signal: " << signum << " (" << utils::strsignal(signum) << ')';
-            UASSERT_MSG(false, "unexpected signal");
-        }
-    }
-}
-
 void DoRun(
     const PathOrConfig& config,
     const std::optional<std::string>& config_vars_path,
@@ -246,28 +217,34 @@ void DoRun(
             PreheatStacktraceCollector();
         }
 
-        manager.emplace(std::make_unique<ManagerConfig>(std::move(manager_config)), start_time);
-
-        // Start component system in background.
-        // POSIX signals can be already handled while component system is loading.
-        auto start_components_task = manager->StartComponentSystem(component_list);
-
-        // The main event loop.
-        // Other threads handle coroutines.
-        CatchSignalsLoop(*manager, run_mode, signal_catcher);
-
-        if (run_mode == RunMode::kNormal) {
-            start_components_task.RequestCancel();
-        }
-
-        try {
-            start_components_task.BlockingWait();
-            start_components_task.Get();
-        } catch (const engine::WaitInterruptedException&) {
-        }
+        manager.emplace(std::make_unique<ManagerConfig>(std::move(manager_config)), start_time, component_list);
     } catch (const std::exception& ex) {
         LOG_ERROR() << "Loading failed: " << ex;
         throw;
+    }
+
+    if (run_mode == RunMode::kOnce) {
+        return;
+    }
+
+    for (;;) {
+        auto signum = signal_catcher.Catch();
+        if (signum == SIGTERM || signum == SIGQUIT) {
+            break;
+        } else if (signum == SIGINT) {
+            if (IsTraced()) {
+                // SIGINT is masked and cannot be used
+                std::raise(SIGTRAP);
+            } else {
+                break;
+            }
+        } else if (signum == SIGUSR1 || signum == SIGUSR2) {
+            LOG_INFO() << "Signal caught: " << utils::strsignal(signum);
+            manager->OnSignal(signum);
+        } else {
+            LOG_WARNING() << "Got unexpected signal: " << signum << " (" << utils::strsignal(signum) << ')';
+            UASSERT_MSG(false, "unexpected signal");
+        }
     }
 }
 

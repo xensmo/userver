@@ -35,9 +35,6 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-static-service)
 add_subdirectory(slow_start)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-slow-start)
 
-add_subdirectory(signal_during_boot)
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-signal-during-boot)
-
 add_subdirectory(tracing)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-tracing)
 
