@@ -15,6 +15,10 @@
 #include <ugrpc/client/impl/client_factory_config.hpp>
 #include <ugrpc/client/secdist.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/ugrpc/client/client_factory_component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client {
@@ -107,69 +111,8 @@ ClientFactoryComponent::ClientFactoryComponent(
 ClientFactory& ClientFactoryComponent::GetFactory() { return *factory_; }
 
 yaml_config::Schema ClientFactoryComponent::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<impl::MiddlewareRunnerComponentBase>(R"(
-type: object
-description: Provides a ClientFactory in the component system
-additionalProperties: false
-properties:
-    auth-type:
-        type: string
-        description: an optional authentication method
-        defaultDescription: insecure
-        enum:
-          - insecure
-          - ssl
-    ssl-credentials-options:
-        type: object
-        description: SSL options for cases when `auth-type` is `ssl`
-        defaultDescription: '{}'
-        additionalProperties: false
-        properties:
-            pem-root-certs:
-                type: string
-                description: The path to file containing the PEM encoding of the server root certificates
-                defaultDescription: absent
-            pem-private-key:
-                type: string
-                description: The path to file containing the PEM encoding of the client's private key
-                defaultDescription: absent
-            pem-cert-chain:
-                type: string
-                description: The path to file containing the PEM encoding of the client's certificate chain
-                defaultDescription: absent
-    retry-config:
-        type: object
-        description: Retry configuration for outgoing RPCs
-        defaultDescription: '{}'
-        additionalProperties: false
-        properties:
-            attempts:
-                type: integer
-                description: The maximum number of RPC attempts, including the original attempt
-                defaultDescription: 1
-                minimum: 1
-    channel-args:
-        type: object
-        description: a map of channel arguments, see gRPC Core docs
-        defaultDescription: '{}'
-        additionalProperties:
-            type: string
-            description: value of channel argument, must be string or integer
-        properties: {}
-    default-service-config:
-        type: string
-        description: |
-            Default value for gRPC `service config`. See
-            https://github.com/grpc/grpc/blob/master/doc/service_config.md
-            This value is used if the name resolution process can't get value
-            from DNS
-        defaultDescription: absent
-    channel-count:
-        type: integer
-        description: |
-            Number of channels created for each endpoint.
-        defaultDescription: 1
-)");
+    return yaml_config::MergeSchemasFromResource<
+        impl::MiddlewareRunnerComponentBase>("src/ugrpc/client/client_factory_component.yaml");
 }
 
 }  // namespace ugrpc::client

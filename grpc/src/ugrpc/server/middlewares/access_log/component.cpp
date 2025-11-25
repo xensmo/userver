@@ -7,6 +7,10 @@
 
 #include <ugrpc/server/middlewares/access_log/middleware.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/ugrpc/server/middlewares/access_log/component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::server::middlewares::access_log {
@@ -34,15 +38,8 @@ std::shared_ptr<const MiddlewareBase> Component::CreateMiddleware(
 yaml_config::Schema Component::GetMiddlewareConfigSchema() const { return GetStaticConfigSchema(); }
 
 yaml_config::Schema Component::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<MiddlewareFactoryComponentBase>(R"(
-type: object
-description: gRPC server access log middleware
-additionalProperties: false
-properties:
-    access-tskv-logger:
-        type: string
-        description: name of 'access-tskv.log' logger
-)");
+    return yaml_config::MergeSchemasFromResource<
+        MiddlewareFactoryComponentBase>("src/ugrpc/server/middlewares/access_log/component.yaml");
 }
 
 }  // namespace ugrpc::server::middlewares::access_log
