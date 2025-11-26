@@ -346,15 +346,14 @@ void ComponentContextImpl::ProcessSingleComponentLifetimeStageSwitching(
     LOG_DEBUG() << "Preparing to call " << params.stage_switch_handler_name << " for component " << name;
 
     auto wait_cb = [&](ComponentInfo& other_component_info) {
-        auto dependency_from =
-            (params.dependency_type == DependencyType::kNormal ? name : other_component_info.GetName());
-        auto dependency_to =
-            (params.dependency_type == DependencyType::kInverted ? name : other_component_info.GetName());
         if (other_component_info.GetStage() != params.next_stage) {
-            LOG_DEBUG()
-                << "Cannot call " << params.stage_switch_handler_name << " for component '" << name << "' yet. "
-                << "Component '" << dependency_from << "' is waiting for '" << dependency_to
-                << "' component to complete its " << params.stage_switch_handler_name << " call.";
+            LOG_DEBUG(
+                "Cannot call {} for component '{}' yet, waiting for component '{}' to complete its {} call.",
+                params.stage_switch_handler_name,
+                name,
+                other_component_info.GetName(),
+                params.stage_switch_handler_name
+            );
             other_component_info.WaitStage(params.next_stage, params.stage_switch_handler_name);
         }
     };
