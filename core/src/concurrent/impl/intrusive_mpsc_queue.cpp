@@ -54,12 +54,12 @@ bool IntrusiveMpscQueueImpl::PushIfEmpty(NodeRef node) noexcept {
 }
 
 IntrusiveMpscQueueImpl::NodePtr IntrusiveMpscQueueImpl::TryPopBlocking() noexcept {
-    return DoTryPop(PopMode::kRarelyBlocking);
+    return TryPop(PopMode::kRarelyBlocking);
 }
 
-IntrusiveMpscQueueImpl::NodePtr IntrusiveMpscQueueImpl::TryPopWeak() noexcept { return DoTryPop(PopMode::kWeak); }
+IntrusiveMpscQueueImpl::NodePtr IntrusiveMpscQueueImpl::TryPopWeak() noexcept { return TryPop(PopMode::kWeak); }
 
-IntrusiveMpscQueueImpl::NodePtr IntrusiveMpscQueueImpl::DoTryPop(PopMode mode) noexcept {
+IntrusiveMpscQueueImpl::NodePtr IntrusiveMpscQueueImpl::TryPop(PopMode mode) noexcept {
     UASSERT_MSG(!is_consuming_.exchange(true), "Multiple concurrent consumers detected");
     const utils::FastScopeGuard guard([this]() noexcept {
         UASSERT_MSG(is_consuming_.exchange(false), "Multiple concurrent consumers detected");
