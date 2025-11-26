@@ -12,6 +12,7 @@
 #include <userver/storages/postgres/io/buffer_io_base.hpp>
 #include <userver/storages/postgres/io/traits.hpp>
 #include <userver/storages/postgres/io/type_mapping.hpp>
+#include <userver/utils/numeric_cast.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -53,17 +54,21 @@ template <typename T>
 struct IntegralBinaryParser : BufferParserBase<T> {
     using BaseType = BufferParserBase<T>;
     using BaseType::BaseType;
+    using ValueType = typename BaseType::ValueType;
 
     void operator()(const FieldBuffer& buf) {
         switch (buf.length) {
             case 2:
-                this->value = IntegralBySizeParser<2>::ParseBuffer(buf);
+                this->value = USERVER_NAMESPACE::utils::numeric_cast<ValueType>(IntegralBySizeParser<2>::ParseBuffer(buf
+                ));
                 break;
             case 4:
-                this->value = IntegralBySizeParser<4>::ParseBuffer(buf);
+                this->value = USERVER_NAMESPACE::utils::numeric_cast<ValueType>(IntegralBySizeParser<4>::ParseBuffer(buf
+                ));
                 break;
             case 8:
-                this->value = IntegralBySizeParser<8>::ParseBuffer(buf);
+                this->value = USERVER_NAMESPACE::utils::numeric_cast<ValueType>(IntegralBySizeParser<8>::ParseBuffer(buf
+                ));
                 break;
             default:
                 throw InvalidInputBufferSize{fmt::format(
