@@ -109,7 +109,7 @@ public:
 
     void Reset() {
         for (auto& item : items_) {
-            item.Reset();
+            item.Reset(Duration::min());
         }
     }
 
@@ -121,12 +121,14 @@ private:
             std::size_t index = epoch_index_.load();
             const Duration bucket_epoch = items_[index].epoch.load();
 
-            if (epoch != bucket_epoch) {
+            // Second condition allows non-monotonic timeline (that is common for tests)
+            // but still forbids race (rewrite of fresh bucket by sleeped after L113 thread)
+            if (epoch > bucket_epoch || epoch + max_duration_ < bucket_epoch) {
                 const std::size_t new_index = (index + 1) % items_.size();
 
                 if (epoch_index_.compare_exchange_weak(index, new_index)) {
                     items_[new_index].epoch = epoch;
-                    items_[(new_index + 1) % items_.size()].Reset();
+                    items_[(new_index + 1) % items_.size()].Reset(epoch + epoch_duration_);
                     return new_index;
                 }
             } else {
@@ -159,10 +161,10 @@ private:
         std::atomic<Duration> epoch;
         Counter counter;
 
-        EpochBucket() { Reset(); }
+        EpochBucket() { Reset(Duration::min()); }
 
-        void Reset() {
-            epoch = Duration::min();
+        void Reset(Duration epoch_duration) {
+            epoch = epoch_duration;
             if constexpr (kUseReset) {
                 counter.Reset();
             } else {
