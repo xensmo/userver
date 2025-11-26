@@ -1,9 +1,9 @@
 #pragma once
 
+#include <string>
+
 #include <userver/chaotic/convert.hpp>
 #include <userver/chaotic/io/userver/utils/strong_typedef.hpp>
-
-#include <string>
 
 namespace crypto::base64 {
 

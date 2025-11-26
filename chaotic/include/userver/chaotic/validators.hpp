@@ -4,10 +4,10 @@
 #include <stdexcept>
 #include <string>
 
-#include <fmt/format.h>
-
 #include <userver/chaotic/exception.hpp>
 #include <userver/utils/text_light.hpp>
+
+#include <fmt/format.h>
 
 USERVER_NAMESPACE_BEGIN
 

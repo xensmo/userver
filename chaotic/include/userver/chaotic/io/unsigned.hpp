@@ -2,11 +2,11 @@
 
 #include <cstddef>
 
-#include <fmt/format.h>
-
 #include <userver/chaotic/convert/to.hpp>
 #include <userver/chaotic/io/std/uint32_t.hpp>
 #include <userver/utils/numeric_cast.hpp>
+
+#include <fmt/format.h>
 
 USERVER_NAMESPACE_BEGIN
 

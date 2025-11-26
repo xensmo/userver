@@ -1,9 +1,9 @@
 #pragma once
 
+#include <userver/chaotic/convert/to.hpp>
+
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_hash.hpp>
-
-#include <userver/chaotic/convert/to.hpp>
 
 USERVER_NAMESPACE_BEGIN
 

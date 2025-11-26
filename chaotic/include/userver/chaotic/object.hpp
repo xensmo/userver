@@ -3,12 +3,12 @@
 #include <string>
 #include <unordered_map>
 
-#include <fmt/format.h>
-
 #include <userver/chaotic/exception.hpp>
 #include <userver/formats/common/items.hpp>
 #include <userver/formats/json/value_builder.hpp>
 #include <userver/utils/trivial_map.hpp>
+
+#include <fmt/format.h>
 
 USERVER_NAMESPACE_BEGIN
 
