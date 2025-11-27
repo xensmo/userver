@@ -184,7 +184,7 @@ def test_parameters_schemas_ref(translate_single_schema):
                                 ref='<inline>#/components/schemas/Parameter',
                                 indirect=False,
                                 self_ref=False,
-                                schema=chaotic_types.Integer(
+                                schema_=chaotic_types.Integer(
                                     type='integer',
                                 ),
                             ),
@@ -219,7 +219,7 @@ def test_parameters_schemas_ref(translate_single_schema):
                     ref='<inline>#/components/schemas/Parameter',
                     indirect=False,
                     self_ref=False,
-                    schema=chaotic_types.Integer(
+                    schema_=chaotic_types.Integer(
                         type='integer',
                         default=None,
                         nullable=False,

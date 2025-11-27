@@ -230,7 +230,7 @@ class Generator:
     def fixup_refs(self) -> None:
         for ref_ in self._state.ref_objects:
             assert isinstance(ref_.json_schema, types.Ref)
-            schema = ref_.json_schema.schema
+            schema = ref_.json_schema.schema_
             name = self._state.refs.get(schema)
             if name:
                 orig_cpp_type = self._state.types[name]
@@ -688,6 +688,7 @@ class Generator:
             'x-taxi-strict-parsing',
             self._config.strict_parsing_default,
         )
+        assert strict_parsing is not None
 
         return cpp_types.CppStruct(
             raw_cpp_type=name,

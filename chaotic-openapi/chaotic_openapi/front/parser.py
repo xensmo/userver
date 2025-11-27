@@ -41,7 +41,7 @@ class Parser:
         try:
             parsed = parser(**schema)
         except pydantic.ValidationError as exc:
-            raise errors.convert_error(full_filepath, parser.schema_type(), exc) from None
+            raise errors.convert_error(self._state.full_filepath, '', parser.schema_type(), exc) from None
 
         self._append_schema(parsed)
 
@@ -143,10 +143,8 @@ class Parser:
         self,
         request_body: swagger.Parameter | swagger.Ref,
         infile_path: str,
-        consumes: list[str] | None = None,
+        consumes: list[str] = [],
     ) -> list[model.RequestBody] | model.Ref:
-        consumes = consumes or []
-
         if isinstance(request_body, swagger.Ref):
             ref_ = ref_resolver.normalize_ref(
                 self._state.full_filepath,
@@ -680,11 +678,11 @@ class Parser:
 
         if isinstance(schema_ref, types.Ref):
             ref_ = types.Ref(
-                chaotic_parser.SchemaParser._normalize_ref(schema_ref.ref),
+                ref=chaotic_parser.SchemaParser._normalize_ref(schema_ref.ref),
                 indirect=schema_ref.indirect,
                 self_ref=schema_ref.self_ref,
             )
-            ref_._source_location = schema_ref._source_location  # type: ignore
+            ref_.source_location_ = schema_ref.source_location_
             return ref_
         else:
             return schema_ref
