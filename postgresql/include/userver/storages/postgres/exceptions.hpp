@@ -120,6 +120,7 @@ std::string OidPrettyPrint(Oid oid);
  *       - InvalidInputBufferSize
  *       - InvalidParserCategory
  *       - InvalidTupleSizeRequested
+ *       - NarrowingOverflow
  *       - NonSingleColumnResultSet
  *       - NonSingleRowResultSet
  *       - NoBinaryParser
@@ -736,6 +737,13 @@ public:
 class FieldTupleMismatch : public ResultSetError {
 public:
     FieldTupleMismatch(std::size_t field_count, std::size_t tuple_size);
+};
+
+/// @brief A binary buffer contains a numeric value that does not fit
+/// into a given C++ value type.
+class NarrowingOverflow : public ResultSetError {
+public:
+    using ResultSetError::ResultSetError;
 };
 
 //@}

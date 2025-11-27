@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <limits>
-#include <stdexcept>
 
 #include <storages/postgres/detail/connection.hpp>
 #include <storages/postgres/tests/test_buffers.hpp>
@@ -111,7 +110,7 @@ TYPED_TEST(PostgreIOIntegralNarrowing, Fail) {
         UEXPECT_NO_THROW(io::WriteBuffer(types, buffer, src));
         auto fb = pg::test::MakeFieldBuffer(buffer, io::BufferCategory::kPlainBuffer);
         ValueType tgt{0};
-        UEXPECT_THROW(io::ReadBuffer(fb, tgt), std::runtime_error);
+        UEXPECT_THROW(io::ReadBuffer(fb, tgt), storages::postgres::NarrowingOverflow);
     }
 }
 

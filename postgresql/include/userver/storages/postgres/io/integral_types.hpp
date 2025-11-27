@@ -50,6 +50,11 @@ struct IntegralBySizeParser {
     }
 };
 
+template <typename To, typename From>
+To NumericCast(From value) {
+    return USERVER_NAMESPACE::utils::numeric_cast<To, NarrowingOverflow>(value);
+}
+
 template <typename T>
 struct IntegralBinaryParser : BufferParserBase<T> {
     using BaseType = BufferParserBase<T>;
@@ -59,16 +64,13 @@ struct IntegralBinaryParser : BufferParserBase<T> {
     void operator()(const FieldBuffer& buf) {
         switch (buf.length) {
             case 2:
-                this->value = USERVER_NAMESPACE::utils::numeric_cast<ValueType>(IntegralBySizeParser<2>::ParseBuffer(buf
-                ));
+                this->value = NumericCast<ValueType>(IntegralBySizeParser<2>::ParseBuffer(buf));
                 break;
             case 4:
-                this->value = USERVER_NAMESPACE::utils::numeric_cast<ValueType>(IntegralBySizeParser<4>::ParseBuffer(buf
-                ));
+                this->value = NumericCast<ValueType>(IntegralBySizeParser<4>::ParseBuffer(buf));
                 break;
             case 8:
-                this->value = USERVER_NAMESPACE::utils::numeric_cast<ValueType>(IntegralBySizeParser<8>::ParseBuffer(buf
-                ));
+                this->value = NumericCast<ValueType>(IntegralBySizeParser<8>::ParseBuffer(buf));
                 break;
             default:
                 throw InvalidInputBufferSize{fmt::format(

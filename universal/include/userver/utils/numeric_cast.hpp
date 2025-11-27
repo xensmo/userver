@@ -27,7 +27,7 @@ using PrintableValue = std::conditional_t<(sizeof(T) > 1), T, int>;
 /// ## Example usage:
 ///
 /// @snippet utils/numeric_cast_test.cpp  Sample utils::numeric_cast usage
-template <typename To, typename From>
+template <typename To, typename Exception = std::runtime_error, typename From>
 constexpr To numeric_cast(From input) {  // NOLINT(readability-identifier-naming)
     static_assert(std::is_integral_v<From>);
     static_assert(std::is_integral_v<To>);
@@ -51,7 +51,7 @@ constexpr To numeric_cast(From input) {  // NOLINT(readability-identifier-naming
     }
 
     if (!overflow_type.empty()) {
-        throw std::runtime_error(fmt::format(
+        throw Exception(fmt::format(
             "Failed to convert {} {} into {} due to {} integer overflow",
             compiler::GetTypeName<From>(),
             static_cast<impl::PrintableValue<From>>(input),
