@@ -93,7 +93,7 @@ public:
     }
 
     /// @brief Complete the RPC successfully
-    StructsResponse Finish() { return writer_.Finish(); }
+    StructsResponse Finish() { return proto_structs::MessageToStruct<StructsResponse>(writer_.Finish()); }
 
     /// @brief Get call context, useful e.g. for accessing metadata.
     ugrpc::client::CallContext& GetContext() { return writer_.GetContext(); }
