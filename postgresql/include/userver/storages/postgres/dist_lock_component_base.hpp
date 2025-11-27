@@ -14,8 +14,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace storages::postgres {
 
-// clang-format off
-
 /// @ingroup userver_components userver_base_classes
 ///
 /// @brief Base class for postgres-based distlock worker components
@@ -43,18 +41,11 @@ namespace storages::postgres {
 /// ```
 /// See config `POSTGRES_DISTLOCK_SETTINGS`, some of parameters can be dynamically overridden.
 ///
-/// ## Static options:
-/// name           | Description  | Default value
-/// -------------- | ------------ | -------------
-/// cluster        | postgres cluster name | --
-/// table          | table name to store distlocks | --
-/// lockname       | name of the lock | --
-/// lock-ttl       | TTL of the lock; must be at least as long as the duration between subsequent cancellation checks, otherwise brain split is possible | --
-/// pg-timeout     | timeout, must be less than lock-ttl/2 | --
-/// restart-delay  | how much time to wait after failed task restart | 100ms
-/// autostart      | if true, start automatically after component load | false
-/// task-processor | the name of the TaskProcessor for running DoWork | main-task-processor
-/// testsuite-support | Enable testsuite support | false
+/// ## Static options of @ref storages::postgres::DistLockComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/postgresql/src/storages/postgres/dist_lock_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ## Migration example
 ///
@@ -71,9 +62,6 @@ namespace storages::postgres {
 /// ```
 ///
 /// @see @ref scripts/docs/en/userver/periodics.md
-
-// clang-format on
-
 class DistLockComponentBase : public components::ComponentBase {
 public:
     DistLockComponentBase(const components::ComponentConfig&, const components::ComponentContext&);
