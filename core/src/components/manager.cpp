@@ -18,6 +18,7 @@
 #include <engine/task/task_processor_pools.hpp>
 #include <userver/components/component_list.hpp>
 #include <userver/engine/async.hpp>
+#include <userver/engine/task/current_task.hpp>
 #include <userver/hostinfo/cpu_limit.hpp>
 #include <userver/logging/component.hpp>
 #include <userver/logging/log.hpp>
@@ -152,11 +153,7 @@ void Manager::TaskProcessorsStorage::WaitForAllTasksBlocking() const noexcept {
     }
 }
 
-Manager::Manager(
-    std::unique_ptr<ManagerConfig>&& config,
-    std::chrono::steady_clock::time_point start_time,
-    const ComponentList& component_list
-)
+Manager::Manager(std::unique_ptr<ManagerConfig>&& config, std::chrono::steady_clock::time_point start_time)
     : config_(std::move(config)),
       task_processors_storage_(std::make_shared<
                                engine::impl::TaskProcessorPools>(config_->coro_pool, config_->event_thread_pool)),
@@ -219,15 +216,28 @@ Manager::Manager(
     }
 
     default_task_processor_ = default_task_processor_it->second.get();
-    RunInCoro(*default_task_processor_, [this, &component_list]() { CreateComponentContext(component_list); });
+}
 
-    if (!config_->disable_phdr_cache) {
-        engine::impl::InitPhdrCache();
-    }
+engine::TaskWithResult<void> Manager::StartComponentSystem(const ComponentList& component_list, bool signal_on_stop) {
+    return engine::CriticalAsyncNoSpan(*default_task_processor_, [this, &component_list, signal_on_stop]() {
+        try {
+            CreateComponentContext(component_list);
+            if (!config_->disable_phdr_cache) {
+                engine::impl::InitPhdrCache();
+            }
+            LOG_INFO()
+                << "Started components manager. All the components have started "
+                   "successfully.";
+        } catch (const std::exception& e) {
+            LOG_ERROR() << "Failed to start component system (" << e << "). Cleaning up...";
 
-    LOG_INFO()
-        << "Started components manager. All the components have started "
-           "successfully.";
+            if (signal_on_stop && !engine::current_task::ShouldCancel()) {
+                // The main thread will catch SIGTERM and exit()
+                (void)kill(getpid(), SIGTERM);
+            }
+            throw;
+        }
+    });
 }
 
 Manager::~Manager() {
@@ -325,6 +335,10 @@ void Manager::CreateComponentContext(const ComponentList& component_list) {
     component_context_ = std::make_unique<impl::ComponentContextImpl>(*this, std::move(loading_components));
 
     AddComponents(component_list);
+
+    LOG_INFO()
+        << "Started components manager. All the components have started "
+           "successfully.";
 }
 
 components::ComponentConfigMap Manager::MakeComponentConfigMap(const ComponentList& component_list) {
@@ -449,6 +463,7 @@ void Manager::AddComponentImpl(
 
     auto* component = component_context_->AddComponent(name, config_it->second, adder);
     if (auto* signal_processor = dynamic_cast<os_signals::ProcessorComponent*>(component)) {
+        const std::lock_guard<std::shared_timed_mutex> lock(context_mutex_);
         signal_processor_ = signal_processor;
     }
     LOG_DEBUG() << "Started component " << name;
