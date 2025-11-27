@@ -343,6 +343,24 @@ std::string CamelCaseToSnake(std::string_view camel) {
     return snake;
 }
 
+std::string SnakeCaseToCamel(std::string_view snake) {
+    std::string camel;
+
+    bool next_upper = true;
+    for (const char c : snake) {
+        if (next_upper) {
+            camel += static_cast<char>(std::toupper(c));
+            next_upper = false;
+        } else if (c == '_') {
+            next_upper = true;
+        } else {
+            camel += static_cast<char>(std::tolower(c));
+        }
+    }
+
+    return camel;
+}
+
 }  // namespace utils::text
 
 USERVER_NAMESPACE_END

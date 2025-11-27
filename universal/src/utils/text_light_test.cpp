@@ -284,6 +284,20 @@ TEST(TextUtils, CamelCaseToSnake) {
     EXPECT_STREQ(" _ab_f/_bcd_e-_kq_ ", CamelCaseToSnake(" AbF/BcdE-Kq_ ").c_str());
 }
 
+TEST(TextUtils, SnakeCaseToCamel) {
+    using utils::text::SnakeCaseToCamel;
+
+    EXPECT_EQ("", SnakeCaseToCamel(""));
+    EXPECT_EQ("A", SnakeCaseToCamel("a"));
+    EXPECT_EQ("_", SnakeCaseToCamel("_"));
+    EXPECT_EQ("-", SnakeCaseToCamel("-"));
+    EXPECT_EQ("ABCD", SnakeCaseToCamel("a_b_c_d"));
+    EXPECT_EQ("FooBar", SnakeCaseToCamel("foo_bar"));
+    EXPECT_EQ("FooBar", SnakeCaseToCamel("FOO_BAR"));
+    EXPECT_EQ("_A", SnakeCaseToCamel("__A"));
+    EXPECT_EQ(" AbF/BcdE-Kq ", SnakeCaseToCamel(" _AB_F/_BCD_E-_KQ_ "));
+}
+
 TEST(CheckTextTest, Ascii) {
     using utils::text::IsPrintable;
 
