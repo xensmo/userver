@@ -93,7 +93,7 @@ HttpClientCore::HttpClientCore(const ComponentConfig& component_config, const Co
         http_client_->SetTestsuiteConfig({prefixes, timeout});
 
         auto& testsuite = context.FindComponent<components::TestsuiteSupport>();
-        testsuite.GetHttpAllowedUrlsExtra().RegisterHttpClient(http_client_);
+        testsuite.GetHttpAllowedUrlsExtra().RegisterHttpClient(*http_client_);
     }
 
     clients::http::impl::Config bootstrap_config;
