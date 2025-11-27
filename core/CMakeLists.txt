@@ -123,6 +123,7 @@ list(APPEND EMBED_FILES
     src/clients/http/component.yaml
     src/clients/http/component_core.yaml
     src/clients/http/plugins/retry_budget/component.yaml
+    src/components/impl/component_base.yaml
     src/components/dump_configurator.yaml
     src/components/fs_cache.yaml
     src/components/logging_configurator.yaml

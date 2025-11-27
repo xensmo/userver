@@ -18,8 +18,6 @@ class Consumer;
 
 }  // namespace impl
 
-// clang-format off
-
 /// @ingroup userver_components
 ///
 /// @brief Apache Kafka Consumer client component.
@@ -35,11 +33,11 @@ class Consumer;
 ///
 /// @snippet samples/kafka_service/testsuite/conftest.py  Kafka service sample - secdist
 ///
-/// ## Static options:
+/// ## Static options for @ref kafka::ConsumerComponent :
 /// @include{doc} scripts/docs/en/components_schema/kafka/src/kafka/consumer_component.md
-
-// clang-format on
-
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 class ConsumerComponent final : public components::ComponentBase {
 public:
     /// @ingroup userver_component_names

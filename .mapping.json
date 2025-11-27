@@ -1299,6 +1299,7 @@
   "core/src/components/fs_cache.cpp":"taxi/uservices/userver/core/src/components/fs_cache.cpp",
   "core/src/components/fs_cache.yaml":"taxi/uservices/userver/core/src/components/fs_cache.yaml",
   "core/src/components/impl/component_base.cpp":"taxi/uservices/userver/core/src/components/impl/component_base.cpp",
+  "core/src/components/impl/component_base.yaml":"taxi/uservices/userver/core/src/components/impl/component_base.yaml",
   "core/src/components/loggable_component_base.cpp":"taxi/uservices/userver/core/src/components/loggable_component_base.cpp",
   "core/src/components/logging_configurator.cpp":"taxi/uservices/userver/core/src/components/logging_configurator.cpp",
   "core/src/components/logging_configurator.yaml":"taxi/uservices/userver/core/src/components/logging_configurator.yaml",
