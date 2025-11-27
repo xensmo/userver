@@ -3285,6 +3285,7 @@
   "postgresql/dynamic_configs/POSTGRES_CONNLIMIT_MODE_AUTO_ENABLED.yaml":"taxi/uservices/userver/postgresql/dynamic_configs/POSTGRES_CONNLIMIT_MODE_AUTO_ENABLED.yaml",
   "postgresql/dynamic_configs/POSTGRES_DEADLINE_PROPAGATION_VERSION.yaml":"taxi/uservices/userver/postgresql/dynamic_configs/POSTGRES_DEADLINE_PROPAGATION_VERSION.yaml",
   "postgresql/dynamic_configs/POSTGRES_DEFAULT_COMMAND_CONTROL.yaml":"taxi/uservices/userver/postgresql/dynamic_configs/POSTGRES_DEFAULT_COMMAND_CONTROL.yaml",
+  "postgresql/dynamic_configs/POSTGRES_DISTLOCK_SETTINGS.yaml":"taxi/uservices/userver/postgresql/dynamic_configs/POSTGRES_DISTLOCK_SETTINGS.yaml",
   "postgresql/dynamic_configs/POSTGRES_HANDLERS_COMMAND_CONTROL.yaml":"taxi/uservices/userver/postgresql/dynamic_configs/POSTGRES_HANDLERS_COMMAND_CONTROL.yaml",
   "postgresql/dynamic_configs/POSTGRES_OMIT_DESCRIBE_IN_EXECUTE.yaml":"taxi/uservices/userver/postgresql/dynamic_configs/POSTGRES_OMIT_DESCRIBE_IN_EXECUTE.yaml",
   "postgresql/dynamic_configs/POSTGRES_QUERIES_COMMAND_CONTROL.yaml":"taxi/uservices/userver/postgresql/dynamic_configs/POSTGRES_QUERIES_COMMAND_CONTROL.yaml",

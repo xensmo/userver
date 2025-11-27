@@ -5,6 +5,8 @@
 
 #include <userver/components/component_base.hpp>
 #include <userver/dist_lock/dist_locked_worker.hpp>
+#include <userver/dynamic_config/snapshot.hpp>
+#include <userver/dynamic_config/source.hpp>
 #include <userver/storages/postgres/dist_lock_strategy.hpp>
 #include <userver/utils/statistics/entry.hpp>
 
@@ -39,6 +41,7 @@ namespace storages::postgres {
 ///            lock-ttl: 10s
 ///            autostart: true
 /// ```
+/// See config `POSTGRES_DISTLOCK_SETTINGS`, some of parameters can be dynamically overridden.
 ///
 /// ## Static options:
 /// name           | Description  | Default value
@@ -92,7 +95,11 @@ protected:
     /// ```cpp
     /// void MyDistLockComponent::DoWork()
     /// {
-    ///     while (!engine::ShouldCancel())
+    ///     // `IsCancelAdvised` is advisory/soft signal to stop the task.
+    ///     // Check it in every independent processing iteration.
+    ///     // Whereas @ref engine::current_task::ShouldCancel() checks as frequently,
+    ///     // as you can to honor low-level task cancellation.
+    ///     while (!IsCancelAdvised())
     ///     {
     ///         // Start a new trace_id
     ///         auto span = tracing::Span::MakeRootSpan("my-dist-lock");
@@ -125,10 +132,24 @@ protected:
     /// Must be called in dtr
     void StopDistLock();
 
+    /// Check this method when going for the next independent processing
+    /// iteration. Whereas @ref engine::current_task::ShouldCancel()
+    /// checks as frequently, as you can to honor low-level task cancellation.
+    bool IsCancelAdvised() const;
+
 private:
+    bool ShouldRunOnHost(const dynamic_config::Snapshot& config) const;
+    void OnConfigUpdate(const dynamic_config::Diff& diff);
+
+    dynamic_config::Source config_;
+    const std::string name_;
+    const std::string real_host_name_;
     std::unique_ptr<dist_lock::DistLockedWorker> worker_;
     bool autostart_;
     bool testsuite_enabled_{false};
+    dist_lock::DistLockSettings default_settings_;
+
+    concurrent::AsyncEventSubscriberScope subscription_token_;
 
     // Subscriptions must be the last fields.
     USERVER_NAMESPACE::utils::statistics::Entry statistics_holder_;
