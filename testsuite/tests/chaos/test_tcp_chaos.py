@@ -53,7 +53,9 @@ class Server:
         self._sock = sock
 
     async def accept(self) -> AsyncioSocket:
+        logger.debug(f'Accepting connections on {self._sock.getsockname()}')
         server_connection, _ = await self._sock.accept()
+        logger.debug(f'Accepted a connection on {server_connection.getsockname()}')
         return server_connection
 
     def get_port(self) -> int:
