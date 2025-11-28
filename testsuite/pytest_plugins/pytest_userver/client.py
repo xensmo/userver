@@ -80,7 +80,7 @@ class PeriodicTaskFailed(BaseError):
 
 
 class PeriodicTasksState:
-    def __init__(self):
+    def __init__(self) -> None:
         self.suspended_tasks: set[str] = set()
         self.tasks_to_suspend: set[str] = set()
 

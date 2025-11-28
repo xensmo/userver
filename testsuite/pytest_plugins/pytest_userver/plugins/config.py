@@ -529,7 +529,7 @@ def userver_config_http_client(
     @ingroup userver_testsuite_fixtures
     """
 
-    def patch_config(config, config_vars):
+    def patch_config(config, config_vars) -> None:
         components: dict = config['components_manager']['components']
         if not {'http-client-core', 'testsuite-support'}.issubset(
             components.keys(),

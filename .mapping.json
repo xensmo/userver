@@ -4755,6 +4755,7 @@
   "testsuite/pytest_plugins/pytest_userver/plugins/dumps.py":"taxi/uservices/userver/testsuite/pytest_plugins/pytest_userver/plugins/dumps.py",
   "testsuite/pytest_plugins/pytest_userver/plugins/dynamic_config.py":"taxi/uservices/userver/testsuite/pytest_plugins/pytest_userver/plugins/dynamic_config.py",
   "testsuite/pytest_plugins/pytest_userver/plugins/grpc/__init__.py":"taxi/uservices/userver/testsuite/pytest_plugins/pytest_userver/plugins/grpc/__init__.py",
+  "testsuite/pytest_plugins/pytest_userver/plugins/grpc/_hookspec.py":"taxi/uservices/userver/testsuite/pytest_plugins/pytest_userver/plugins/grpc/_hookspec.py",
   "testsuite/pytest_plugins/pytest_userver/plugins/grpc/client.py":"taxi/uservices/userver/testsuite/pytest_plugins/pytest_userver/plugins/grpc/client.py",
   "testsuite/pytest_plugins/pytest_userver/plugins/grpc/mockserver.py":"taxi/uservices/userver/testsuite/pytest_plugins/pytest_userver/plugins/grpc/mockserver.py",
   "testsuite/pytest_plugins/pytest_userver/plugins/kafka.py":"taxi/uservices/userver/testsuite/pytest_plugins/pytest_userver/plugins/kafka.py",

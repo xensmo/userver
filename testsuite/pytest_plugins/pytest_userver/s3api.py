@@ -15,7 +15,7 @@ class S3Object:
 
 
 class S3MockBucketStorage:
-    def __init__(self):
+    def __init__(self) -> None:
         # use Path to normalize keys (e.g. /a//file.json)
         self._storage: dict[pathlib.Path, S3Object] = {}
 
