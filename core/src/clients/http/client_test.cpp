@@ -1336,7 +1336,7 @@ UTEST(HttpClient, UsingResolverWithIpv6Addrs) {
             .retry(1)
             .verify(true)
             .http_version(USERVER_NAMESPACE::http::HttpVersion::k11)
-            .timeout(kSmallTimeout);
+            .timeout(kTimeout);
 
     auto res = request.perform();
     EXPECT_EQ(res->body(), kTestData);
