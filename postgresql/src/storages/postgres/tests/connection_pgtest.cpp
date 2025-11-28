@@ -282,7 +282,7 @@ UTEST_P(PostgreConnection, RollbackOnBusyOeErroredConnection) {
     const DefaultCommandControlScope scope2(pg::CommandControl{std::chrono::seconds{2}, std::chrono::milliseconds{200}}
     );
     GetConn()->Begin({}, {});
-    UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1)"), pg::QueryCancelled);
+    UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1.5)"), pg::QueryCancelled);
     EXPECT_EQ(pg::ConnectionState::kTranError, GetConn()->GetState());
     UEXPECT_NO_THROW(GetConn()->Rollback());
     UEXPECT_NO_THROW(GetConn()->CancelAndCleanup(utest::kMaxTestWaitTime));
@@ -308,7 +308,7 @@ UTEST_P(PostgreConnection, CommitOnBusyOeErroredConnection) {
     const DefaultCommandControlScope scope2(pg::CommandControl{std::chrono::seconds{2}, std::chrono::milliseconds{200}}
     );
     GetConn()->Begin({}, {});
-    UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1)"), pg::QueryCancelled);
+    UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1.5)"), pg::QueryCancelled);
     EXPECT_EQ(pg::ConnectionState::kTranError, GetConn()->GetState());
 
     // Server automatically replaces COMMIT with a ROLLBACK for aborted txns
@@ -333,7 +333,7 @@ UTEST_P(PostgreConnection, StatementTimeout) {
     // Query cancelled
     const DefaultCommandControlScope scope2(pg::CommandControl{std::chrono::seconds{2}, std::chrono::milliseconds{200}}
     );
-    UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1)"), pg::QueryCancelled);
+    UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1.5)"), pg::QueryCancelled);
     EXPECT_EQ(pg::ConnectionState::kIdle, GetConn()->GetState());
     UEXPECT_NO_THROW(GetConn()->CancelAndCleanup(utest::kMaxTestWaitTime));
     EXPECT_EQ(pg::ConnectionState::kIdle, GetConn()->GetState());
