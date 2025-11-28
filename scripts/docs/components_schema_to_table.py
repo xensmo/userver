@@ -18,6 +18,22 @@ def normalize_default_value(data) -> str:
         return data
 
 
+def merge_descriptions(yaml, other):
+    if yaml.get('description') and other.get('description'):
+        description = yaml['description'].strip()
+        if not description.endswith('.'):
+            description += '.'
+        description += ' <i>Each of the elements:</i> ' + other['description']
+
+        value_merged = yaml.copy()
+        value_merged['description'] = description
+        return value_merged
+    elif yaml.get('description'):
+        return yaml
+    else:
+        return other
+
+
 def visit_object(yaml, prefix: str = ''):
     properties = yaml.get('properties', {})
 
@@ -25,19 +41,9 @@ def visit_object(yaml, prefix: str = ''):
         if value.get('type') == 'array':
             if value['items'].get('type') == 'object':
                 yield from visit_object(value['items'], prefix + key + '.[].')
-            elif value.get('description') and value['items'].get('description'):
-                description = value['description'].strip()
-                if not description.endswith('.'):
-                    description += '.'
-                description += ' Each of the array elements: ' + value['items']['description']
-
-                value_cloned = value.copy()
-                value_cloned['description'] = description
-                yield (prefix + key + '.[]', value_cloned)
-            elif value.get('description'):
-                yield (prefix + key + '.[]', value)
             else:
-                yield (prefix + key + '.[]', value['items'])
+                value_merged = merge_descriptions(value, value['items'])
+                yield (prefix + key + '.[]', value_merged)
         elif value.get('type') == 'object':
             yield from visit_object(value, prefix + key + '.')
         else:
@@ -46,8 +52,16 @@ def visit_object(yaml, prefix: str = ''):
     additionals = yaml.get('additionalProperties')
     if additionals is True:
         yield (prefix + '*', yaml)
-    elif additionals:
+    elif not additionals:
+        return
+    elif additionals.get('type') == 'object':
         yield from visit_object(yaml['additionalProperties'], prefix + '*.')
+    elif additionals.get('type') == 'array':
+        value_merged = merge_descriptions(yaml, additionals['items'])
+        yield (prefix + '*.[]', value_merged)
+    else:
+        value_merged = merge_descriptions(yaml, additionals)
+        yield (prefix + '*', value_merged)
 
 
 def format_schema(yaml) -> str:
