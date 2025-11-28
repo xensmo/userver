@@ -33,7 +33,7 @@ async def _assert_receive_timeout(sock: AsyncioSocket) -> None:
     try:
         data = await sock.recv(1, timeout=_NOTICEABLE_DELAY)
         assert not data
-    except asyncio.TimeoutError:  # noqa: UP041
+    except asyncio.TimeoutError:
         pass
 
 

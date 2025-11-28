@@ -10,6 +10,7 @@ testsuite; see
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from collections.abc import Iterator
 import contextlib
 import copy
@@ -18,7 +19,6 @@ import json
 import logging
 import typing
 from typing import Any
-from typing import Awaitable
 from typing import TypeAlias
 import warnings
 

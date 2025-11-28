@@ -63,7 +63,7 @@ def _call(modified_service_client, gate):
                 data=data,
                 testsuite_skip_prepare=testsuite_skip_prepare,
             )
-        except asyncio.TimeoutError:  # noqa: UP041
+        except asyncio.TimeoutError:
             return ErrorType.TIMEOUT
         except exceptions.ServerDisconnectedError:
             return ErrorType.DISCONNECT

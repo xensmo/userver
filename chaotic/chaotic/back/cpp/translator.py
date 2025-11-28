@@ -314,7 +314,7 @@ class Generator:
                         value=val,
                         raw_name=raw_name,
                         cpp_name=to_camel_case(raw_name),
-                    )  # noqa: COM812
+                    ),
                 )
 
             return cpp_types.CppIntEnum(

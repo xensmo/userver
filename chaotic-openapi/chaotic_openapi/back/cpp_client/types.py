@@ -1,5 +1,5 @@
+from collections.abc import Generator
 import dataclasses
-from typing import Generator
 
 from chaotic import cpp_names
 from chaotic import error

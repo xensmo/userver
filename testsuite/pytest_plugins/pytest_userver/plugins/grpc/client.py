@@ -133,7 +133,7 @@ async def grpc_channel(
             grpc_session_channel.channel_ready(),
             timeout=grpc_service_timeout,
         )
-    except asyncio.TimeoutError:  # noqa: UP041
+    except asyncio.TimeoutError:
         raise RuntimeError(
             f'Failed to connect to remote gRPC server by address {grpc_service_endpoint}',
         )
