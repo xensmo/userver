@@ -133,8 +133,8 @@ TaskProcessor::TaskProcessor(TaskProcessorConfig config, std::shared_ptr<impl::T
     : task_queue_(MakeTaskQueue(config)),
       task_counter_(config.worker_threads),
       config_(config),
-      pools_(std::move(pools)),
       plugin_manager_(*this, config.worker_threads),
+      pools_(std::move(pools)),
       trace_plugin_(config.worker_threads)
 {
     utils::impl::FinishStaticRegistration();

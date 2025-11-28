@@ -365,6 +365,11 @@ UTEST(MetricsWriter, LabeledMultiple) {
 }
 
 UTEST(MetricsWriter, CustomTypesOptimization) {
+    if constexpr (utils::statistics::impl::kCheckSubscriptionUB) {
+        return;
+    }
+    // Check for "not called" only if call on registration is not forced
+
     Storage storage;
     auto holder = storage.RegisterWriter("skip", [](Writer& writer) {
         writer = MetricTypeThatMustBeSkipped{"at 'skip' path"};
@@ -432,7 +437,7 @@ UTEST(MetricsWriter, AutomaticUnsubscribingCheckWriterData) {
     }
 
     if constexpr (utils::statistics::impl::kCheckSubscriptionUB) {
-        EXPECT_EQ(counter, 1);
+        EXPECT_EQ(counter, 3);
     } else {
         EXPECT_EQ(counter, 0);
     }
@@ -452,7 +457,7 @@ UTEST(MetricsWriter, AutomaticUnsubscribingCheckExtenderData) {
     }
 
     if constexpr (utils::statistics::impl::kCheckSubscriptionUB) {
-        EXPECT_EQ(counter, 1);
+        EXPECT_EQ(counter, 3);
     } else {
         EXPECT_EQ(counter, 0);
     }

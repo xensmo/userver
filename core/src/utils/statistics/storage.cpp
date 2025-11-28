@@ -43,6 +43,33 @@ public:
     void HandleMetric(std::string_view, LabelsSpan, const MetricValue&) override {}
 };
 
+void WriteWithFakeFormat(impl::MetricsSource& source)
+{
+    static constexpr std::string_view fake_prefix = "fake_prefix";
+    if (source.writer) {
+        FakeFormatBuilder builder;
+        const Request request;
+        impl::WriterState state{builder, request, {}, {}};
+        auto writer = Writer{&state}[fake_prefix];
+        source.writer(writer);
+    }
+    if (source.extender) {
+        source.extender(StatisticsRequest{});
+    }
+}
+
+[[maybe_unused]] void CheckDataUsedByCallbackIsValidBeforeRegistering(impl::MetricsSource& source) noexcept {
+    try {
+        WriteWithFakeFormat(source);
+    } catch (const std::exception& e) {
+        utils::AbortWithStacktrace(fmt::format(
+            "Unhandled exception while statistics holder {} is registering: {}",
+            source.prefix_path,
+            e.what()
+        ));
+    }
+}
+
 // During the `Entry::Unregister` call or destruction of `Entry`, all variables
 // used by the writer or extender callback must be valid (must not be
 // destroyed). A common cause of crashes in this place: there is no manual call
@@ -50,22 +77,14 @@ public:
 // callback.
 [[maybe_unused]] void CheckDataUsedByCallbackHasNotBeenDestroyedBeforeUnregistering(impl::MetricsSource& source
 ) noexcept {
-    static constexpr std::string_view fake_prefix = "fake_prefix";
     try {
-        if (source.writer) {
-            FakeFormatBuilder builder;
-            const Request request;
-            impl::WriterState state{builder, request, {}, {}};
-            auto writer = Writer{&state}[fake_prefix];
-            source.writer(writer);
-        }
-        if (source.extender) {
-            source.extender(StatisticsRequest{});
-        }
+        WriteWithFakeFormat(source);
     } catch (const std::exception& e) {
-        LOG_ERROR()
-            << "Unhandled exception while statistics holder " << source.prefix_path
-            << " is unregistering automatically: " << e.what();
+        utils::AbortWithStacktrace(fmt::format(
+            "Unhandled exception while statistics holder {} is unregistering automatically: {}",
+            source.prefix_path,
+            e.what()
+        ));
     }
 }
 
@@ -185,6 +204,9 @@ Entry Storage::DoRegisterExtender(impl::MetricsSource&& source) {
     );
 
     const std::lock_guard lock(mutex_);
+    if constexpr (impl::kCheckSubscriptionUB) {
+        CheckDataUsedByCallbackIsValidBeforeRegistering(source);
+    }
     const auto res = metrics_sources_.insert(metrics_sources_.end(), std::move(source));
     return Entry(Entry::Impl{this, res});
 }
