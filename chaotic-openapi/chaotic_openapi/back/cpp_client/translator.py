@@ -14,6 +14,9 @@ from chaotic_openapi.back.cpp_client import types
 from chaotic_openapi.front import base_model
 from chaotic_openapi.front import model
 
+# Search for '-' only inside '{...}' (not nested)
+DASH_IN_PATH_RE = re.compile('(-)(?=[^}]*})')
+
 
 class Translator:
     def __init__(
@@ -48,6 +51,10 @@ class Translator:
                 schema_type='openapi/swagger',
                 msg=str(exc),
             )
+
+    def _transform_path(self, path: str) -> str:
+        # <fmt> C++ library doesn't like '-' inside format variable names
+        return re.sub(DASH_IN_PATH_RE, '_', path)
 
     def translate(
         self,
@@ -84,7 +91,7 @@ class Translator:
 
             op = types.Operation(
                 method=operation.method.upper(),
-                path=operation.path,
+                path=self._transform_path(operation.path),
                 operation_id=operation.operationId,
                 description=operation.description,
                 parameters=[self._translate_parameter(parameter) for parameter in operation.parameters],
@@ -349,9 +356,14 @@ class Translator:
         if not parameter.required:
             cpp_type.nullable = True
 
+        if in_ == model.In.path:
+            name = parameter.name.replace('-', '_')
+        else:
+            name = parameter.name
+
         return types.Parameter(
             description=parameter.description,
-            raw_name=parameter.name,
+            raw_name=name,
             cpp_name=cpp_name,
             cpp_type=cpp_type,
             parser=parser,
