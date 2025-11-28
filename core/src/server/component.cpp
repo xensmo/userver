@@ -44,8 +44,6 @@ Server::Server(
         statistics_storage.RegisterWriter("http.handler.total", [this](utils::statistics::Writer& writer) {
             return server_->WriteTotalHandlerStatistics(writer);
         });
-
-    server_->StartMonitorPort();
 }
 
 Server::~Server() {
