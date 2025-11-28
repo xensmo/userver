@@ -125,13 +125,13 @@ inline auto TaskBuilder::MakeSpanFunctor(
 
 template <typename Function, typename... Args>
 auto TaskBuilder::Build(Function&& f, Args&&... args) {
-    using Task = engine::TaskWithResult<decltype(f(args...))>;
+    using Task = engine::TaskWithResult<std::invoke_result_t<Function, Args...>>;
     return BuildTask<Task>(std::forward<Function>(f), std::forward<Args>(args)...);
 }
 
 template <typename Function, typename... Args>
 auto TaskBuilder::BuildShared(Function&& f, Args&&... args) {
-    using Task = engine::SharedTaskWithResult<decltype(f(args...))>;
+    using Task = engine::SharedTaskWithResult<std::invoke_result_t<Function, Args...>>;
     return BuildTask<Task>(std::forward<Function>(f), std::forward<Args>(args)...);
 }
 
