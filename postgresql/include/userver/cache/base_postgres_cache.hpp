@@ -36,8 +36,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace components {
 
-// clang-format off
-
 /// @page pg_cache Caching Component for PostgreSQL
 ///
 /// A typical components::PostgreCache usage consists of trait definition:
@@ -61,13 +59,13 @@ namespace components {
 /// For avoiding "memory leaks", see the respective section
 /// in @ref components::CachingComponentBase.
 ///
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// full-update-op-timeout | timeout for a full update | 1m
-/// incremental-update-op-timeout | timeout for an incremental update | 1s
-/// update-correction | incremental update window adjustment | - (0 for caches with defined GetLastKnownUpdated)
-/// chunk-size | number of rows to request from PostgreSQL via portals, 0 to fetch all rows in one request without portals | 1000
-/// sleep-between-chunks | duration to wait between reading chunks from PostgreSQL | 0ms
+/// @include{doc} scripts/docs/en/components_schema/postgresql/src/cache/base_postgres_cache.md
+///
+/// Options inherited from @ref components::CachingComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/cache/caching_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// @section pg_cc_cache_policy Cache policy
 ///
@@ -124,8 +122,6 @@ namespace components {
 /// @htmlonly <div class="bottom-nav"> @endhtmlonly
 /// ⇦ @ref scripts/docs/en/userver/cache_dumps.md | @ref scripts/docs/en/userver/lru_cache.md ⇨
 /// @htmlonly </div> @endhtmlonly
-
-// clang-format on
 
 namespace pg_cache::detail {
 

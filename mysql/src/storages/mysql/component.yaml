@@ -5,7 +5,7 @@ properties:
     initial_pool_size:
         type: integer
         description: number of connections created initially
-        defaultDescription: 1
+        defaultDescription: 5
     max_pool_size:
         type: integer
         description: maximum number of created connections

@@ -37,7 +37,7 @@ properties:
     sync-start:
         type: boolean
         description: perform initial connections synchronously
-        defaultDescription: false
+        defaultDescription: true
     dns_resolver:
         type: string
         description: server hostname resolver type (getaddrinfo or async)

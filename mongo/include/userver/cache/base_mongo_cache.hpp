@@ -36,8 +36,6 @@ std::chrono::milliseconds GetMongoCacheUpdateCorrection(const ComponentConfig&);
 
 }
 
-// clang-format off
-
 /// @ingroup userver_components
 ///
 /// @brief %Base class for all caches polling mongo collection
@@ -47,11 +45,15 @@ std::chrono::milliseconds GetMongoCacheUpdateCorrection(const ComponentConfig&);
 /// For avoiding "memory leaks", see the respective section
 /// in @ref components::CachingComponentBase.
 ///
-/// ## Static options:
-/// All options of CachingComponentBase and
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// update-correction | adjusts incremental updates window to overlap with previous update | 0
+/// ## Static options or @ref components::MongoCache :
+///
+/// @include{doc} scripts/docs/en/components_schema/mongo/src/cache/base_mongo_cache.md
+///
+/// Options inherited from @ref components::CachingComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/cache/caching_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ## Traits example:
 /// All fields below (except for function overrides) are mandatory.
@@ -115,9 +117,6 @@ std::chrono::milliseconds GetMongoCacheUpdateCorrection(const ComponentConfig&);
 ///   using MongoCollectionsComponent = components::MongoCollections;
 /// };
 /// ```
-
-// clang-format on
-
 template <class MongoCacheTraits>
 class MongoCache : public CachingComponentBase<typename MongoCacheTraits::DataType> {
     using CollectionsType = mongo_cache::impl::CollectionsType<decltype(MongoCacheTraits::kMongoCollectionsField)>;

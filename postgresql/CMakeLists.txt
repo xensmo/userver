@@ -51,6 +51,7 @@ userver_module(
     DEPENDS core
     GENERATE_DYNAMIC_CONFIGS
     EMBED_FILES
+        src/cache/base_postgres_cache.yaml
         src/storages/postgres/component.yaml
         src/storages/postgres/dist_lock_component_base.yaml
 )

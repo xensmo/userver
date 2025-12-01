@@ -6,6 +6,7 @@ properties:
     secdist_alias:
         type: string
         description: name of the key in secdist config
+        defaultDescription: <components name>
     min_pool_size:
         type: integer
         description: minimum connections pool size (per host)

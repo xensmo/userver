@@ -20,6 +20,7 @@ userver_module(
     DEPENDS core
     GENERATE_DYNAMIC_CONFIGS
     EMBED_FILES
+        src/cache/base_mongo_cache.yaml
         src/storages/mongo/component.yaml
         src/storages/mongo/component_multi.yaml
         src/storages/mongo/dist_lock_component_base.yaml
