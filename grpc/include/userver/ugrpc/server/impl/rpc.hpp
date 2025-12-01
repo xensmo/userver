@@ -66,7 +66,7 @@ public:
     Responder& operator=(Responder&&) = delete;
     ~Responder() override;
 
-    bool IsFinished() const { return is_finished_; }
+    bool IsInterrupted() const { return is_interrupted_; }
 
     /// @brief Await and read the next incoming message. Only makes sense for client-streaming RPCs.
     /// @param request where to put the request on success
@@ -113,6 +113,7 @@ private:
     RawResponder& raw_responder_;
     // Separate flags are required to be able to set them in parallel in Read and Write.
     bool are_reads_done_{kCallKind == CallKind::kUnaryCall};
+    bool is_interrupted_{false};
     bool is_finished_{false};
 };
 
@@ -124,7 +125,7 @@ Responder<CallTraits>::Responder(CallState& state, RawResponder& raw_responder)
 
 template <typename CallTraits>
 Responder<CallTraits>::~Responder() {
-    UASSERT(is_finished_ || engine::current_task::ShouldCancel());
+    UASSERT(is_finished_ || is_interrupted_ || engine::current_task::ShouldCancel());
 }
 
 template <typename CallTraits>
@@ -146,7 +147,7 @@ bool Responder<CallTraits>::DoRead(Request& request) {
 template <typename CallTraits>
 void Responder<CallTraits>::DoWrite(Response& response, const grpc::WriteOptions& options) {
     static_assert(impl::IsServerStreaming(kCallKind));
-    UINVARIANT(!is_finished_, "'Write' called on a finished stream");
+    UINVARIANT(!is_interrupted_, "'Write' called on an interrupted stream");
 
     if constexpr (std::is_base_of_v<google::protobuf::Message, Response>) {
         ApplyResponseHook(response);
@@ -156,20 +157,16 @@ void Responder<CallTraits>::DoWrite(Response& response, const grpc::WriteOptions
         // For some reason, gRPC requires explicit 'SendInitialMetadata' in output streams.
         if (!are_reads_done_) {
             are_reads_done_ = true;
-            try {
-                impl::SendInitialMetadata(raw_responder_, GetCallName());
-            } catch (const RpcInterruptedError&) {
-                is_finished_ = true;
-                throw;
+            if (!impl::SendInitialMetadata(raw_responder_)) {
+                is_interrupted_ = true;
+                throw RpcInterruptedError(GetCallName(), "SendInitialMetadata");
             }
         }
     }
 
-    try {
-        impl::Write(raw_responder_, response, options, GetCallName());
-    } catch (const RpcInterruptedError&) {
-        is_finished_ = true;
-        throw;
+    if (!impl::Write(raw_responder_, response, options)) {
+        is_interrupted_ = true;
+        throw RpcInterruptedError(GetCallName(), "Write");
     }
 }
 

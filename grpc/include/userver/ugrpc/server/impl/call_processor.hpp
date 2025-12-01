@@ -119,9 +119,9 @@ public:
             impl::UnpackResult(std::move(result), final_response, Status());
         });
 
-        // Streaming handler can detect RPC breakage during a network interaction => IsFinished.
+        // Streaming handler can detect RPC breakage during a network interaction => IsInterrupted().
         // RpcFinishedEvent can signal RPC interruption while in the handler => ShouldCancel.
-        if (responder_.IsFinished() || engine::current_task::ShouldCancel()) {
+        if (responder_.IsInterrupted() || engine::current_task::ShouldCancel()) {
             impl::ReportRpcInterruptedError(state_);
             // Don't run OnCallFinish.
             return;
@@ -223,7 +223,7 @@ private:
         } catch (const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex) {
             Status() = impl::ReportCustomError(ex, state_);
         } catch (const RpcInterruptedError& /*ex*/) {
-            UASSERT(responder_.IsFinished());
+            UASSERT(responder_.IsInterrupted());
             // RPC interruption will be reported below.
         } catch (const std::exception& ex) {
             Status() = impl::ReportHandlerError(ex, state_);

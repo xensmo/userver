@@ -13,12 +13,6 @@ const grpc::Status kUnknownErrorStatus{
     "The service method has exited unexpectedly, without providing a status"
 };
 
-void CheckInvocationSucceeded(bool ok, std::string_view call_name, std::string_view stage) {
-    if (!ok) {
-        throw RpcInterruptedError(call_name, stage);
-    }
-}
-
 }  // namespace ugrpc::server::impl
 
 USERVER_NAMESPACE_END
