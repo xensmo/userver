@@ -26,6 +26,8 @@ namespace utils {
 template <class T>
 class OptionalRef {
 public:
+    using value_type = T;
+
     static_assert(!std::is_reference<T>::value, "Do not use a reference for T");
 
     constexpr OptionalRef() noexcept = default;
@@ -76,6 +78,15 @@ public:
     constexpr T& value() const {
         if (!has_value()) {
             throw std::bad_optional_access();
+        }
+
+        return *data_;
+    }
+
+    template <typename U>
+    constexpr T value_or(U&& default_value) const {
+        if (!has_value()) {
+            return std::forward<U>(default_value);
         }
 
         return *data_;
