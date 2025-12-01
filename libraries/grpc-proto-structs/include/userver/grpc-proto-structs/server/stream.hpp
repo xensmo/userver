@@ -65,20 +65,29 @@ public:
 
     /// @{
     /// @brief Write the next outgoing message.
+    /// @note This version may move some fields from the request.
     ///
     /// Convert response to corresponding protobuf message and pass it to @ref ugrpc::server::Writer::Write.
     ///
     /// @see @ref ugrpc::server::Writer::Write method for details.
-    void Write(Response& response) { writer_.Write(proto_structs::StructToMessage(response)); }
-
-    void Write(Response& response, const grpc::WriteOptions& options) {
-        writer_.Write(proto_structs::StructToMessage(response), options);
-    }
-
     void Write(Response&& response) { writer_.Write(proto_structs::StructToMessage(std::move(response))); }
 
     void Write(Response&& response, const grpc::WriteOptions& options) {
         writer_.Write(proto_structs::StructToMessage(std::move(response)), options);
+    }
+    /// @}
+
+    /// @{
+    /// @brief Write the next outgoing message.
+    /// @note This version preserves the original request object by copying necessary data.
+    ///
+    /// Convert response to corresponding protobuf message and pass it to @ref ugrpc::server::Writer::Write.
+    ///
+    /// @see @ref ugrpc::server::Writer::Write method for details.
+    void WriteCopy(const Response& response) { writer_.Write(proto_structs::StructToMessage(response)); }
+
+    void WriteCopy(const Response& response, const grpc::WriteOptions& options) {
+        writer_.Write(proto_structs::StructToMessage(response), options);
     }
     /// @}
 

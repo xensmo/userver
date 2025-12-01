@@ -72,24 +72,28 @@ public:
     Writer(Writer&&) = default;
     Writer& operator=(Writer&&) = default;
 
-    /// @brief Write the next outgoing message
-    [[nodiscard]] bool Write(const StructsRequest& request) {
-        return writer_.Write(proto_structs::StructToMessage(request));
-    }
-
-    /// @brief Write the next outgoing message
+    /// @brief Write the next outgoing message.
+    /// @note This version may move some fields from the request.
     [[nodiscard]] bool Write(StructsRequest&& request) {
         return writer_.Write(proto_structs::StructToMessage(std::move(request)));
     }
 
-    /// @brief Write the next outgoing message and check result
-    void WriteAndCheck(const StructsRequest& request) {
-        writer_.WriteAndCheck(proto_structs::StructToMessage(request));
+    /// @brief Write the next outgoing message.
+    /// @note This version preserves the original request object by copying necessary data.
+    [[nodiscard]] bool WriteCopy(const StructsRequest& request) {
+        return writer_.Write(proto_structs::StructToMessage(request));
     }
 
-    /// @brief Write the next outgoing message and check result
+    /// @brief Write the next outgoing message and check result.
+    /// @note This version may move some fields from the request.
     void WriteAndCheck(StructsRequest&& request) {
         writer_.WriteAndCheck(proto_structs::StructToMessage(std::move(request)));
+    }
+
+    /// @brief Write the next outgoing message and check result.
+    /// @note This version preserves the original request object by copying necessary data.
+    void WriteCopyAndCheck(const StructsRequest& request) {
+        writer_.WriteAndCheck(proto_structs::StructToMessage(request));
     }
 
     /// @brief Complete the RPC successfully
