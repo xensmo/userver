@@ -84,6 +84,7 @@ void Middleware::PostRecvMessage(MiddlewareCallContext& context, const google::p
     logging::LogExtra extra{
         {ugrpc::impl::kTypeTag, "response"},
         {ugrpc::impl::kBodyTag, GetMessageForLogging(message, settings_)},
+        {ugrpc::impl::kMessageMarshalledLenTag, message.ByteSizeLong()},
     };
     if (context.IsServerStreaming()) {
         logger.Log(settings_.msg_log_level, "gRPC response stream message", std::move(extra));

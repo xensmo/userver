@@ -96,6 +96,7 @@ void Middleware::PreSendMessage(MiddlewareCallContext& context, google::protobuf
         {ugrpc::impl::kTypeTag, "response"},
         {"grpc_code", "OK"},  // TODO: revert
         {ugrpc::impl::kBodyTag, GetMessageForLogging(response, settings_)},
+        {ugrpc::impl::kMessageMarshalledLenTag, response.ByteSizeLong()},
     };
     if (context.IsServerStreaming()) {
         logger.Log(settings_.msg_log_level, "gRPC response stream message", std::move(extra));
