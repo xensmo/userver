@@ -128,6 +128,14 @@ protected:
 /// If you are not going to use static config, ugrpc::client::ClientInfo and your middleware is default constructible,
 /// just use ugrpc::client::SimpleMiddlewareFactoryComponent.
 ///
+/// ## Static options:
+///
+/// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/factory_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
+///
 /// ## Example:
 ///
 /// @snippet samples/grpc_middleware_service/src/middlewares/client/chaos.hpp gRPC middleware sample
@@ -141,9 +149,12 @@ using MiddlewareFactoryComponentBase =
 /// @brief The alias for a short-cut client factory.
 ///
 /// ## Static options:
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// enabled | the flag to enable/disable middleware in the pipeline | true
+///
+/// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/factory_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ## Example usage:
 ///

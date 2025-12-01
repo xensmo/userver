@@ -138,7 +138,9 @@ list(APPEND EMBED_FILES
     src/dynamic_config/updater/component.yaml
     src/engine/task_processors_load_monitor.yaml
     src/logging/component.yaml
+    src/middlewares/factory_component_base.yaml
     src/middlewares/pipeline.yaml
+    src/middlewares/runner_component_base.yaml
     src/server/component.yaml
     src/server/handlers/auth/auth_checker_settings_component.yaml
     src/server/handlers/auth/digest/auth_checker_settings_component.yaml

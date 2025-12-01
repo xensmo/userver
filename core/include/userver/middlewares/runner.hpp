@@ -50,11 +50,21 @@ void LogConfiguration(std::string_view component_name, const std::vector<std::st
 
 void LogValidateError(std::string_view middleware_name, const std::exception& e);
 
+yaml_config::Schema GetMiddlewareFactoryComponentBaseSchema();
+
+yaml_config::Schema GetRunnerComponentBaseSchema();
+
 }  // namespace impl
 
 /// @ingroup userver_base_classes
 ///
 /// @brief Base class for middleware factory component.
+///
+/// ## Static options of @ref middlewares::MiddlewareFactoryComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/factory_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 template <typename MiddlewareBaseType, typename HandlerInfo>
 class MiddlewareFactoryComponentBase : public impl::WithMiddlewareDependencyComponentBase {
 public:
@@ -86,16 +96,7 @@ public:
     virtual yaml_config::Schema GetMiddlewareConfigSchema() const { return GetStaticConfigSchema(); }
 
     static yaml_config::Schema GetStaticConfigSchema() {
-        return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: base class for grpc-server middleware
-additionalProperties: false
-properties:
-    enabled:
-        type: string
-        description: the flag to enable/disable middleware in the pipeline
-        defaultDescription: true
-)");
+        return impl::GetMiddlewareFactoryComponentBaseSchema();
     }
 
     /// @cond
@@ -123,38 +124,19 @@ private:
 /// The Ordered list of middlewares `RunnerComponentBase` takes from Pipeline component.
 /// So, 'Pipeline' is responsible for the order of middlewares. `RunnerComponentBase` is responsible for creating
 /// middlewares and overriding configs.
+///
+/// ## Static options of @ref middlewares::RunnerComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/runner_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 template <typename MiddlewareBase, typename HandlerInfo>
 class RunnerComponentBase
     : public components::ComponentBase,
       public impl::PipelineCreatorInterface<MiddlewareBase, HandlerInfo> {
 public:
     static yaml_config::Schema GetStaticConfigSchema() {
-        return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: base class for all the gRPC service components
-additionalProperties: false
-properties:
-    disable-user-pipeline-middlewares:
-        type: boolean
-        description: flag to disable groups::User middlewares from pipeline
-        defaultDescription: false
-    disable-all-pipeline-middlewares:
-        type: boolean
-        description: flag to disable all middlewares from pipeline
-        defaultDescription: false
-    middlewares:
-        type: object
-        description: overloads of configs of middlewares per service
-        additionalProperties:
-            type: object
-            description: a middleware config
-            additionalProperties: true
-            properties:
-                enabled:
-                    type: boolean
-                    description: enable middleware in the list
-        properties: {}
-)");
+        return impl::GetRunnerComponentBaseSchema();
     }
 
 protected:

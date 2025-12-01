@@ -48,7 +48,7 @@ properties:
         defaultDescription: '{}'
         additionalProperties:
             type: string
-            description: value of channel argument, must be string or integer
+            description: value of channel argument, must be a string or an integer
         properties: {}
     default-service-config:
         type: string

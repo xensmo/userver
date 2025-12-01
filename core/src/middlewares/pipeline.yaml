@@ -13,4 +13,5 @@ properties:
                 enabled:
                     type: boolean
                     description: enable middleware in the list
+                    defaultDescription: true
         properties: {}

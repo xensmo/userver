@@ -4,4 +4,4 @@ additionalProperties: false
 properties:
     access-tskv-logger:
         type: string
-        description: name of 'access-tskv.log' logger
+        description: 'name of "access-tskv.log" logger, must have "format: raw"'

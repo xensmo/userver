@@ -37,8 +37,6 @@ protected:
 
 }  // namespace impl
 
-// clang-format off
-
 /// @ingroup userver_components
 ///
 /// @brief Template class for a simple gRPC client
@@ -66,16 +64,12 @@ protected:
 /// }
 /// ```
 ///
-/// ## Static config options:
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// endpoint | URL of the gRPC service | --
-/// client-name | name of the gRPC server we talk to, for diagnostics | uses the component name
-/// dedicated-channel-counts | a map of rpc method names to channel counts. Used for high-load methods | -
-/// factory-component | ClientFactoryComponent name to use for client creation | --
-
-// clang-format on
-
+///
+/// ## Static options of @ref ugrpc::client::CommonComponent :
+/// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/client/simple_client_component.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 template <typename Client>
 class SimpleClientComponent : public impl::SimpleClientComponentAny {
 public:

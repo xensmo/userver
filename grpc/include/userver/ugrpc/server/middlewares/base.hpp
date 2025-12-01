@@ -141,6 +141,14 @@ public:
 /// @note If you are not going to use a static config, ugrpc::server::ServiceInfo and your middleware is default
 /// constructible, just use ugrpc::server::SimpleMiddlewareFactoryComponent.
 ///
+/// ## Static options:
+///
+/// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/factory_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
+///
 /// ## Example:
 ///
 /// @snippet samples/grpc_middleware_service/src/middlewares/server/meta_filter.hpp gRPC middleware sample
@@ -158,9 +166,12 @@ using MiddlewareFactoryComponentBase =
 /// @brief The alias for a short-cut server middleware factory.
 ///
 /// ## Static options:
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// enabled | the flag to enable/disable middleware in the pipeline | true
+///
+/// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/factory_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ## Example usage:
 ///

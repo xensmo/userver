@@ -20,10 +20,11 @@ namespace ugrpc::server {
 /// You must register your server middleware in this component.
 /// Use `MiddlewareDependencyBuilder` to set a dependency of your middleware from others.
 ///
-/// ## Static options:
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// middlewares | middlewares names and configs to use | `{}`
+/// ## Static options of @ref ugrpc::server::MiddlewarePipelineComponent :
+/// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/pipeline.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ## Static config example
 ///
