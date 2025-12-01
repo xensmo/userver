@@ -29,22 +29,32 @@ using PrintableValue = std::conditional_t<(sizeof(T) > 1), T, int>;
 /// @snippet utils/numeric_cast_test.cpp  Sample utils::numeric_cast usage
 template <typename To, typename Exception = std::runtime_error, typename From>
 constexpr To numeric_cast(From input) {  // NOLINT(readability-identifier-naming)
-    static_assert(std::is_integral_v<From>);
-    static_assert(std::is_integral_v<To>);
+    constexpr bool is_integral = std::is_integral_v<From> && std::is_integral_v<To>;
+    constexpr bool is_floating_point = std::is_floating_point_v<From> && std::is_floating_point_v<To>;
+    static_assert(is_integral || is_floating_point);
+
     using FromLimits = std::numeric_limits<From>;
     using ToLimits = std::numeric_limits<To>;
 
+    constexpr bool check_positive_overflow =
+        is_integral ? ToLimits::digits < FromLimits::digits : ToLimits::max() < FromLimits::max();
+    constexpr bool check_negative_overflow =
+        is_integral
+            ?
+            // signed -> signed: possible loss if narrowing
+            // signed -> unsigned: loss if negative
+            FromLimits::is_signed && (!ToLimits::is_signed || ToLimits::digits < FromLimits::digits)
+            : ToLimits::lowest() > FromLimits::lowest();
+
     std::string_view overflow_type{};
 
-    if constexpr (ToLimits::digits < FromLimits::digits) {
+    if constexpr (check_positive_overflow) {
         if (input > static_cast<From>(ToLimits::max())) {
             overflow_type = "positive";
         }
     }
 
-    // signed -> signed: loss if narrowing
-    // signed -> unsigned: loss
-    if constexpr (FromLimits::is_signed && (!ToLimits::is_signed || ToLimits::digits < FromLimits::digits)) {
+    if constexpr (check_negative_overflow) {
         if (input < static_cast<From>(ToLimits::lowest())) {
             overflow_type = "negative";
         }

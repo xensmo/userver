@@ -49,14 +49,15 @@ template <typename T>
 struct FloatingPointBinaryParser : BufferParserBase<T> {
     using BaseType = BufferParserBase<T>;
     using BaseType::BaseType;
+    using ValueType = typename BaseType::ValueType;
 
     void operator()(const FieldBuffer& buf) {
         switch (buf.length) {
             case 4:
-                this->value = FloatingPointBySizeParser<4>::ParseBuffer(buf);
+                this->value = NumericCast<ValueType>(FloatingPointBySizeParser<4>::ParseBuffer(buf));
                 break;
             case 8:
-                this->value = FloatingPointBySizeParser<8>::ParseBuffer(buf);
+                this->value = NumericCast<ValueType>(FloatingPointBySizeParser<8>::ParseBuffer(buf));
                 break;
             default:
                 throw InvalidInputBufferSize{
