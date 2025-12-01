@@ -139,6 +139,7 @@ void DistLockComponentBase::OnConfigUpdate(const dynamic_config::Diff& diff) {
         settings.forced_stop_margin = new_overrides->forced_stop_margin.value_or(default_settings_.forced_stop_margin);
         settings.worker_func_restart_delay =
             new_overrides->worker_func_restart_delay.value_or(default_settings_.worker_func_restart_delay);
+        settings.is_enabled = ShouldRunOnHost(new_snapshot);
 
         worker.UpdateSettings(settings);
     } else {
@@ -155,10 +156,7 @@ bool DistLockComponentBase::ShouldRunOnHost(const dynamic_config::Snapshot& conf
     return true;
 }
 
-bool DistLockComponentBase::IsCancelAdvised() const {
-    const auto snapshot = config_.GetSnapshot();
-    return !ShouldRunOnHost(snapshot);
-}
+bool DistLockComponentBase::IsCancelAdvised() const { return worker_->IsCancelAdvised(); }
 
 yaml_config::Schema DistLockComponentBase::GetStaticConfigSchema() {
     return yaml_config::MergeSchemasFromResource<

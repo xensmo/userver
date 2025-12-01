@@ -110,13 +110,18 @@ void Locker::Run(LockerMode mode, dist_lock::DistLockWaitingMode waiting_mode, t
         const auto attempt_start = utils::datetime::SteadyNow();
 
         try {
-            strategy_->Acquire(settings.lock_ttl, Id());
-            stats_.lock_successes++;
-            if (!ExchangeLockState(true, attempt_start)) {
-                LOG_DEBUG() << "Starting watchdog task";
-                GetTask(watchdog_task, name_, "watchdog wait stale task");
-                watchdog_task = utils::CriticalAsync(WatchdogName(name_), [this] { RunWatchdog(); });
-                LOG_DEBUG() << "Started watchdog task";
+            if (settings.is_enabled || is_locked_) {
+                strategy_->Acquire(settings.lock_ttl, Id());
+                stats_.lock_successes++;
+                if (!ExchangeLockState(true, attempt_start)) {
+                    LOG_DEBUG() << "Starting watchdog task";
+                    GetTask(watchdog_task, name_, "watchdog wait stale task");
+                    watchdog_task = utils::CriticalAsync(WatchdogName(name_), [this] { RunWatchdog(); });
+                    LOG_DEBUG() << "Started watchdog task";
+                }
+            } else if (mode == LockerMode::kOneshot) {
+                // To prevent going to next iteration since worker_succeeded is `false`
+                break;
             }
         } catch (const LockIsAcquiredByAnotherHostException&) {
             LOG(base_log_level_) << "Fail to acquire lock. It was acquired by another host";

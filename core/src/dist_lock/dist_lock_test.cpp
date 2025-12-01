@@ -175,6 +175,42 @@ UTEST_MT(LockedWorker, Watchdog, 3) {
     locked_worker.Stop();
 }
 
+UTEST_MT(LockedWorker, NotEnabled, 3) {
+    auto strategy = MakeMockStrategy();
+    DistLockWorkload work;
+    auto settings = MakeSettings();
+    settings.is_enabled = false;
+    dist_lock::DistLockedWorker locked_worker(kWorkerName, [&] { work.Work(); }, strategy, settings);
+
+    locked_worker.Start();
+    strategy->Allow(true);
+    EXPECT_FALSE(work.WaitForLocked(true, utest::kMaxTestWaitTime));
+
+    locked_worker.Stop();
+}
+
+UTEST_MT(LockedWorker, SetNotEnabled, 3) {
+    auto strategy = MakeMockStrategy();
+    DistLockWorkload work;
+    auto settings = MakeSettings();
+
+    dist_lock::DistLockedWorker locked_worker(kWorkerName, [&] { work.Work(); }, strategy, settings);
+
+    locked_worker.Start();
+    strategy->Allow(true);
+    EXPECT_TRUE(work.WaitForLocked(true, utest::kMaxTestWaitTime));
+
+    settings.is_enabled = false;
+    locked_worker.UpdateSettings(settings);
+    work.SetWorkLoopOn(false);
+
+    EXPECT_TRUE(work.WaitForLocked(false, utest::kMaxTestWaitTime));
+    work.SetWorkLoopOn(true);
+    EXPECT_FALSE(work.WaitForLocked(true, utest::kMaxTestWaitTime));
+
+    locked_worker.Stop();
+}
+
 UTEST_MT(LockedWorker, OkAfterFail, 3) {
     auto strategy = MakeMockStrategy();
     DistLockWorkload work;
