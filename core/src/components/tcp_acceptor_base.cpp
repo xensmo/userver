@@ -1,6 +1,7 @@
 #include <userver/components/tcp_acceptor_base.hpp>
 
 #include <userver/components/component.hpp>
+#include <userver/components/scope.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
@@ -51,6 +52,11 @@ TcpAcceptorBase::TcpAcceptorBase(
         auto socket = server::net::CreateSocket(acceptor_config, port);
         sockets_.emplace_back(SocketData{std::move(socket), {}});
     }
+
+    context.RegisterScope(MakeScope([this] {
+        Start();
+        return utils::FastScopeGuard([this]() noexcept { Stop(); });
+    }));
 }
 
 void TcpAcceptorBase::KeepAccepting(engine::io::Socket& listen_sock) {
@@ -70,7 +76,7 @@ void TcpAcceptorBase::KeepAccepting(engine::io::Socket& listen_sock) {
     }
 }
 
-void TcpAcceptorBase::OnAllComponentsLoaded() {
+void TcpAcceptorBase::Start() {
     // Start handling after the derived object was fully constructed
 
     for (auto& socket_data : sockets_) {
@@ -85,7 +91,7 @@ void TcpAcceptorBase::OnAllComponentsLoaded() {
     }
 }
 
-void TcpAcceptorBase::OnAllComponentsAreStopping() {
+void TcpAcceptorBase::Stop() noexcept {
     for (auto& socket_data : sockets_) {
         socket_data.acceptor.SyncCancel();
         socket_data.listen_sock.Close();

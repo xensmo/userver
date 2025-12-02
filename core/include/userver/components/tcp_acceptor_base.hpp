@@ -61,8 +61,8 @@ private:
 
     void KeepAccepting(engine::io::Socket& listen_sock);
 
-    void OnAllComponentsLoaded() final;
-    void OnAllComponentsAreStopping() final;
+    void Start();
+    void Stop() noexcept;
 
     struct SocketData {
         engine::io::Socket listen_sock;

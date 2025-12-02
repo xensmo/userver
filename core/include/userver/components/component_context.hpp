@@ -59,6 +59,11 @@ public:
     explicit ComponentsLoadCancelledException(std::string_view message);
 };
 
+namespace impl {
+class ScopeBase;
+}
+using ScopePtr = std::unique_ptr<impl::ScopeBase>;
+
 /// @brief Class to retrieve other components.
 ///
 /// Only the const member functions of this class are meant for usage in
@@ -151,6 +156,19 @@ public:
     /// the current component's constructor completes. Store it
     /// as an `std::string` if needed.
     std::string_view GetComponentName() const;
+
+    /// @brief Registers a functor to register some resource that will be
+    /// called after the component is succesfully created (including all
+    /// class descendants). The functor must return a RAII-style handle object
+    /// that unregisters the previously registered resource. The returned handle's
+    /// destructor is called just before the component destructor is called.
+    ///
+    /// @note callback is not called if the component is not created OR
+    /// any previously registered callback throws an exception.
+    /// @note if you don't have an existing RAII-ish class, but still want
+    /// to do a cleanup, you might want to use @ref utils::FastScopeGuard
+    /// to wrap the cleanup function.
+    void RegisterScope(ScopePtr) const;
 
     /// @cond
     // For internal use only.
