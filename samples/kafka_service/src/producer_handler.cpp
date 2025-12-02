@@ -65,7 +65,7 @@ formats::json::Value ProducerHandler::HandleRequestJsonThrow(
         case SendStatus::kSuccess:
             return formats::json::MakeObject("message", "Message send successfully");
         case SendStatus::kErrorRetryable:
-            request.SetResponseStatus(server::http::HttpStatus::TooManyRequests);
+            request.SetResponseStatus(server::http::HttpStatus::kTooManyRequests);
             return formats::json::MakeObject("error", "Retry later");
         case SendStatus::kErrorNonRetryable:
             request.SetResponseStatus(server::http::HttpStatus::kBadRequest);

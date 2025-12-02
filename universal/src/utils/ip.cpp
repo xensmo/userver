@@ -106,13 +106,13 @@ InetNetwork InetNetworkFromCidrNetwork(const T& network) {
     return InetNetwork(
         std::move(inet_bytes),
         network.GetPrefixLength(),
-        std::is_same_v<T, NetworkV4> ? InetNetwork::AddressFamily::IPv4 : InetNetwork::AddressFamily::IPv6
+        std::is_same_v<T, NetworkV4> ? InetNetwork::AddressFamily::kIPv4 : InetNetwork::AddressFamily::kIPv6
     );
 }
 
 InetNetwork::InetNetwork()
     : prefix_length_(32),
-      address_family_(AddressFamily::IPv4)
+      address_family_(AddressFamily::kIPv4)
 {
     bytes_.resize(4);
 }
@@ -122,8 +122,8 @@ InetNetwork::InetNetwork(std::vector<unsigned char>&& bytes, unsigned char prefi
       prefix_length_(prefix_length),
       address_family_(address_family)
 {
-    if (!(bytes_.size() == 4 && prefix_length_ <= 32 && address_family_ == AddressFamily::IPv4) &&
-        !(bytes_.size() == 16 && prefix_length_ <= 128 && address_family_ == AddressFamily::IPv6))
+    if (!(bytes_.size() == 4 && prefix_length_ <= 32 && address_family_ == AddressFamily::kIPv4) &&
+        !(bytes_.size() == 16 && prefix_length_ <= 128 && address_family_ == AddressFamily::kIPv6))
     {
         throw std::invalid_argument("Invalid IP address format");
     }

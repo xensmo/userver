@@ -279,7 +279,7 @@ bool Parse(const Value& value, parse::To<bool>) {
     if (native.IsFalse()) {
         return false;
     }
-    throw TypeMismatchException(value.GetExtendedType(), impl::booleanValue, value.GetPath());
+    throw TypeMismatchException(value.GetExtendedType(), impl::kBooleanValue, value.GetPath());
 }
 
 double Parse(const Value& value, parse::To<double>) {
@@ -294,7 +294,7 @@ double Parse(const Value& value, parse::To<double>) {
     if (native.IsUint64()) {
         return static_cast<double>(native.GetUint64());
     }
-    throw TypeMismatchException(value.GetExtendedType(), impl::realValue, value.GetPath());
+    throw TypeMismatchException(value.GetExtendedType(), impl::kRealValue, value.GetPath());
 }
 
 std::int64_t Parse(const Value& value, parse::To<std::int64_t>) {
@@ -309,7 +309,7 @@ std::int64_t Parse(const Value& value, parse::To<std::int64_t>) {
             return static_cast<int64_t>(val);
         }
     }
-    throw TypeMismatchException(value.GetExtendedType(), impl::intValue, value.GetPath());
+    throw TypeMismatchException(value.GetExtendedType(), impl::kIntValue, value.GetPath());
 }
 
 std::uint64_t Parse(const Value& value, parse::To<std::uint64_t>) {
@@ -324,7 +324,7 @@ std::uint64_t Parse(const Value& value, parse::To<std::uint64_t>) {
             return static_cast<uint64_t>(val);
         }
     }
-    throw TypeMismatchException(value.GetExtendedType(), impl::uintValue, value.GetPath());
+    throw TypeMismatchException(value.GetExtendedType(), impl::kUintValue, value.GetPath());
 }
 
 std::string Parse(const Value& value, parse::To<std::string>) {
@@ -333,7 +333,7 @@ std::string Parse(const Value& value, parse::To<std::string>) {
     if (native.IsString()) {
         return {native.GetString(), native.GetStringLength()};
     }
-    throw TypeMismatchException(value.GetExtendedType(), impl::stringValue, value.GetPath());
+    throw TypeMismatchException(value.GetExtendedType(), impl::kStringValue, value.GetPath());
 }
 
 template <>
@@ -367,7 +367,7 @@ bool Value::ConvertTo<bool>() const {
         return native.MemberCount() != 0;
     }
 
-    throw TypeMismatchException(GetExtendedType(), impl::booleanValue, GetPath());
+    throw TypeMismatchException(GetExtendedType(), impl::kBooleanValue, GetPath());
 }
 
 template <>
@@ -392,7 +392,7 @@ int64_t Value::ConvertTo<int64_t>() const {
         return static_cast<int64_t>(native.GetDouble());
     }
 
-    throw TypeMismatchException(GetExtendedType(), impl::intValue, GetPath());
+    throw TypeMismatchException(GetExtendedType(), impl::kIntValue, GetPath());
 }
 
 template <>
@@ -417,7 +417,7 @@ uint64_t Value::ConvertTo<uint64_t>() const {
         return static_cast<uint64_t>(CheckedNotTooNegative(native.GetDouble(), *this));
     }
 
-    throw TypeMismatchException(GetExtendedType(), impl::uintValue, GetPath());
+    throw TypeMismatchException(GetExtendedType(), impl::kUintValue, GetPath());
 }
 
 template <>
@@ -458,7 +458,7 @@ std::string Value::ConvertTo<std::string>() const {
         return std::to_string(native.GetDouble());
     }
 
-    throw TypeMismatchException(GetExtendedType(), impl::stringValue, GetPath());
+    throw TypeMismatchException(GetExtendedType(), impl::kStringValue, GetPath());
 }
 
 bool Value::HasMember(std::string_view key) const {
@@ -524,31 +524,31 @@ void Value::CheckNotMissing() const {
 
 void Value::CheckArrayOrNull() const {
     if (!IsNull() && !IsArray()) {
-        throw TypeMismatchException(GetExtendedType(), impl::arrayValue, GetPath());
+        throw TypeMismatchException(GetExtendedType(), impl::kArrayValue, GetPath());
     }
 }
 
 void Value::CheckObjectOrNull() const {
     if (!IsNull() && !IsObject()) {
-        throw TypeMismatchException(GetExtendedType(), impl::objectValue, GetPath());
+        throw TypeMismatchException(GetExtendedType(), impl::kObjectValue, GetPath());
     }
 }
 
 void Value::CheckArray() const {
     if (!IsArray()) {
-        throw TypeMismatchException(GetExtendedType(), impl::arrayValue, GetPath());
+        throw TypeMismatchException(GetExtendedType(), impl::kArrayValue, GetPath());
     }
 }
 
 void Value::CheckObject() const {
     if (!IsObject()) {
-        throw TypeMismatchException(GetExtendedType(), impl::objectValue, GetPath());
+        throw TypeMismatchException(GetExtendedType(), impl::kObjectValue, GetPath());
     }
 }
 
 void Value::CheckObjectOrArrayOrNull() const {
     if (!IsNull() && !IsObject() && !IsArray()) {
-        throw TypeMismatchException(GetExtendedType(), impl::objectValue, GetPath());
+        throw TypeMismatchException(GetExtendedType(), impl::kObjectValue, GetPath());
     }
 }
 

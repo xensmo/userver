@@ -262,37 +262,37 @@ void Value::CheckNotMissing() const {
 
 void Value::CheckArray() const {
     if (!IsArray()) {
-        throw TypeMismatchException(GetExtendedType(), impl::arrayValue, path_.ToStringView());
+        throw TypeMismatchException(GetExtendedType(), impl::kArrayValue, path_.ToStringView());
     }
 }
 
 void Value::CheckArrayOrNull() const {
     if (!IsArray() && !IsNull()) {
-        throw TypeMismatchException(GetExtendedType(), impl::arrayValue, path_.ToStringView());
+        throw TypeMismatchException(GetExtendedType(), impl::kArrayValue, path_.ToStringView());
     }
 }
 
 void Value::CheckObjectOrNull() const {
     if (!IsObject() && !IsNull()) {
-        throw TypeMismatchException(GetExtendedType(), impl::objectValue, path_.ToStringView());
+        throw TypeMismatchException(GetExtendedType(), impl::kObjectValue, path_.ToStringView());
     }
 }
 
 void Value::CheckObject() const {
     if (!IsObject()) {
-        throw TypeMismatchException(GetExtendedType(), impl::objectValue, path_.ToStringView());
+        throw TypeMismatchException(GetExtendedType(), impl::kObjectValue, path_.ToStringView());
     }
 }
 
 void Value::CheckString() const {
     if (!IsString()) {
-        throw TypeMismatchException(GetExtendedType(), impl::scalarValue, path_.ToStringView());
+        throw TypeMismatchException(GetExtendedType(), impl::kScalarValue, path_.ToStringView());
     }
 }
 
 void Value::CheckObjectOrArrayOrNull() const {
     if (!IsObject() && !IsArray() && !IsNull()) {
-        throw TypeMismatchException(GetExtendedType(), impl::arrayValue, path_.ToStringView());
+        throw TypeMismatchException(GetExtendedType(), impl::kArrayValue, path_.ToStringView());
     }
 }
 

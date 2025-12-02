@@ -47,7 +47,7 @@ public:
     /// status_code
     Status status_code() const;
     /// check status code
-    bool IsOk() const { return status_code() == Status::OK; }
+    bool IsOk() const { return status_code() == Status::kOk; }
     bool IsError() const { return static_cast<uint16_t>(status_code()) >= 400; }
 
     static void RaiseForStatus(int code, const LocalStats& stats);
@@ -65,7 +65,7 @@ private:
     Headers headers_;
     CookiesMap cookies_;
     std::string response_;
-    Status status_code_{Status::Invalid};
+    Status status_code_{Status::kInvalid};
     LocalStats stats_;
 };
 

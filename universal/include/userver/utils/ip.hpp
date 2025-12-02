@@ -177,7 +177,7 @@ NetworkV6 TransformToCidrFormat(NetworkV6 network);
 /// Use this class only if you need to work with INET PostgreSQL format.
 class InetNetwork final {
 public:
-    enum class AddressFamily : unsigned char { IPv4 = AF_INET, IPv6 = AF_INET6 };
+    enum class AddressFamily : unsigned char { kIPv4 = AF_INET, kIPv6 = AF_INET6 };
 
     // Default constructor: IPv4 address
     InetNetwork();

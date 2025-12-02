@@ -11,11 +11,11 @@ namespace error_injection {
 Verdict Hook::ReturnVerdict(const Settings& settings) {
     auto random = utils::RandRange(0.0, 1.0);
     if (random > settings.probability) {
-        return Verdict::Skip;
+        return Verdict::kSkip;
     }
 
     if (settings.possible_verdicts.empty()) {
-        return Verdict::Error;
+        return Verdict::kError;
     }
 
     auto verdict_num = utils::RandRange(settings.possible_verdicts.size());
@@ -23,7 +23,7 @@ Verdict Hook::ReturnVerdict(const Settings& settings) {
 }
 
 Hook::Hook(const Settings& settings, engine::Deadline deadline)
-    : verdict_(settings.enabled ? ReturnVerdict(settings) : Verdict::Skip),
+    : verdict_(settings.enabled ? ReturnVerdict(settings) : Verdict::kSkip),
       deadline_(deadline)
 {}
 
@@ -31,10 +31,10 @@ engine::Deadline Hook::CalcPostHookDeadline() {
     constexpr auto kPassed = engine::Deadline::Passed();
 
     switch (verdict_) {
-        case Verdict::MaxDelay:
+        case Verdict::kMaxDelay:
             return deadline_;
 
-        case Verdict::RandomDelay: {
+        case Verdict::kRandomDelay: {
             auto left = deadline_.TimeLeft().count();
             if (left < 0) {
                 return kPassed;
@@ -44,9 +44,9 @@ engine::Deadline Hook::CalcPostHookDeadline() {
             return engine::Deadline::FromDuration(engine::Deadline::Clock::duration(delay));
         }
 
-        case Verdict::Error:
-        case Verdict::Skip:
-        case Verdict::Timeout:
+        case Verdict::kError:
+        case Verdict::kSkip:
+        case Verdict::kTimeout:
             return kPassed;
     }
 

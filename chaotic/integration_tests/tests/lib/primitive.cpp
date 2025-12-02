@@ -54,11 +54,7 @@ TEST(Primitive, WrongType) {
     try {
         const std::string x = kJson["foo"].As<String>();
     } catch (const std::exception& e) {
-        EXPECT_EQ(
-            std::string(e.what()),
-            "Error at path 'foo': Wrong type. Expected: stringValue, actual: "
-            "intValue"
-        );
+        EXPECT_EQ(std::string(e.what()), "Error at path 'foo': Wrong type. Expected: kStringValue, actual: kIntValue");
     }
 }
 

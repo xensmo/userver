@@ -89,7 +89,7 @@ namespace impl {
 using Clock = utils::datetime::SteadyClock;
 using TimePoint = Clock::time_point;
 
-enum class Action { StartTry, Stop };
+enum class Action { kStartTry, kStop };
 
 struct PlanEntry {
 public:
@@ -163,9 +163,9 @@ struct Context {
     void Prepare(TimePoint start_time) {
         const auto request_count = GetRequestsCount();
         for (std::size_t request_id = 0; request_id < request_count; ++request_id) {
-            plan_.emplace(start_time, request_id, 0, Action::StartTry);
+            plan_.emplace(start_time, request_id, 0, Action::kStartTry);
         }
-        plan_.emplace(start_time + settings_.timeout_all, 0, 0, Action::Stop);
+        plan_.emplace(start_time + settings_.timeout_all, 0, 0, Action::kStop);
         subrequests_.reserve(settings_.max_attempts * request_count);
     }
 
@@ -264,7 +264,7 @@ struct Context {
         request_state.subrequest_indices.push_back(idx);
         input_by_subrequests_[idx] = request_index;
         attempts_made++;
-        plan_.emplace(now + settings_.hedging_delay, request_index, attempts_made, Action::StartTry);
+        plan_.emplace(now + settings_.hedging_delay, request_index, attempts_made, Action::kStartTry);
     }
 
     /// Called on getting error in request with @param request_idx
@@ -277,7 +277,7 @@ struct Context {
             return;
         }
 
-        plan_.emplace(now + retry_delay, request_idx, request_state.attempts_made, Action::StartTry);
+        plan_.emplace(now + retry_delay, request_idx, request_state.attempts_made, Action::kStartTry);
     }
 
     void OnNonRetriableReply(std::size_t request_idx) { FinishAllSubrequests(request_idx); }
@@ -389,10 +389,10 @@ auto HedgeRequestsBulk(std::vector<RequestStrategy> inputs, HedgingSettings hedg
                 }
                 const auto [timestamp, request_index, attempt_id, action] = *plan_entry;
                 switch (action) {
-                    case Action::StartTry:
+                    case Action::kStartTry:
                         context.OnActionStartTry(request_index, attempt_id, timestamp);
                         break;
-                    case Action::Stop:
+                    case Action::kStop:
                         context.OnActionStop();
                         break;
                 }

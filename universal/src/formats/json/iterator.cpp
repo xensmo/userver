@@ -109,19 +109,19 @@ bool Iterator<Traits, Direction>::operator!=(const Iterator<Traits, Direction>& 
 
 template <typename Traits, IteratorDirection Direction>
 std::string Iterator<Traits, Direction>::GetNameImpl() const {
-    if (type_ == impl::Type::objectValue) {
+    if (type_ == impl::Type::kObjectValue) {
         const auto& key = GetValue(container_).value_ptr_->MemberBegin()[pos_].name;
         return std::string(key.GetString(), key.GetString() + key.GetStringLength());
     }
-    throw TypeMismatchException(type_, impl::Type::objectValue, GetValue(container_).GetPath());
+    throw TypeMismatchException(type_, impl::Type::kObjectValue, GetValue(container_).GetPath());
 }
 
 template <typename Traits, IteratorDirection Direction>
 size_t Iterator<Traits, Direction>::GetIndex() const {
-    if (type_ == impl::Type::arrayValue) {
+    if (type_ == impl::Type::kArrayValue) {
         return pos_;
     }
-    throw TypeMismatchException(type_, impl::Type::arrayValue, GetValue(container_).GetPath());
+    throw TypeMismatchException(type_, impl::Type::kArrayValue, GetValue(container_).GetPath());
 }
 
 template <>
@@ -130,7 +130,7 @@ void Iterator<Value::IterTraits, IteratorDirection::kForward>::UpdateValue() con
         return;
     }
 
-    if (type_ == impl::Type::arrayValue) {
+    if (type_ == impl::Type::kArrayValue) {
         current_.emplace(
             Value::EmplaceEnabler{},
             container_.holder_,
@@ -155,7 +155,7 @@ void Iterator<Value::IterTraits, IteratorDirection::kReverse>::UpdateValue() con
         return;
     }
 
-    if (type_ == impl::Type::arrayValue) {
+    if (type_ == impl::Type::kArrayValue) {
         current_.emplace(
             Value::EmplaceEnabler{},
             container_.holder_,
@@ -164,7 +164,7 @@ void Iterator<Value::IterTraits, IteratorDirection::kReverse>::UpdateValue() con
             container_.depth_ + 1
         );
     } else {
-        throw TypeMismatchException(type_, impl::Type::arrayValue, GetValue(container_).GetPath());
+        throw TypeMismatchException(type_, impl::Type::kArrayValue, GetValue(container_).GetPath());
     }
 }
 
@@ -174,7 +174,7 @@ void Iterator<ValueBuilder::IterTraits, IteratorDirection::kForward>::UpdateValu
         return;
     }
 
-    if (type_ == impl::Type::arrayValue) {
+    if (type_ == impl::Type::kArrayValue) {
         current_.emplace(ValueBuilder::EmplaceEnabler{}, container_.WrapElement(pos_));
     } else {
         current_.emplace(
@@ -190,10 +190,10 @@ void Iterator<ValueBuilder::IterTraits, IteratorDirection::kReverse>::UpdateValu
         return;
     }
 
-    if (type_ == impl::Type::arrayValue) {
+    if (type_ == impl::Type::kArrayValue) {
         current_.emplace(ValueBuilder::EmplaceEnabler{}, container_.WrapElement(pos_));
     } else {
-        throw TypeMismatchException(type_, impl::Type::arrayValue, GetValue(container_).GetPath());
+        throw TypeMismatchException(type_, impl::Type::kArrayValue, GetValue(container_).GetPath());
     }
 }
 

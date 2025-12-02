@@ -974,7 +974,7 @@ void RequestState::ResetDataForNewRequest() {
     SetBaggageHeader(easy());
 
     response_ = std::make_shared<Response>();
-    response_->SetStatusCode(Status::InternalServerError);
+    response_->SetStatusCode(Status::kInternalServerError);
 
     is_cancelled_ = false;
     retry_.current = 1;

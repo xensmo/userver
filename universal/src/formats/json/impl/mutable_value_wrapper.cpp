@@ -153,7 +153,7 @@ Value& MutableValueWrapper::JsonPath::FetchMember(Value& root, const std::shared
 
         Value& operator()(const std::string& element) {
             if (!value_.IsObject()) {
-                throw TypeMismatchException(GetExtendedType(value_), Type::objectValue, ToString(path_));
+                throw TypeMismatchException(GetExtendedType(value_), Type::kObjectValue, ToString(path_));
             }
             auto it = value_.FindMember(element);
             if (it == value_.MemberEnd()) {
@@ -164,7 +164,7 @@ Value& MutableValueWrapper::JsonPath::FetchMember(Value& root, const std::shared
 
         Value& operator()(size_t index) {
             if (!value_.IsArray()) {
-                throw TypeMismatchException(GetExtendedType(value_), Type::arrayValue, ToString(path_));
+                throw TypeMismatchException(GetExtendedType(value_), Type::kArrayValue, ToString(path_));
             }
             if (index >= value_.Size()) {
                 throw OutOfBoundsException(index, value_.Size(), ToString(path_));

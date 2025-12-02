@@ -280,7 +280,7 @@ struct BufferFormatter<InetNetwork> : detail::IpBufferFormatterBase<InetNetwork>
         const typename BaseType::template IpFormatterInfo<Address> info{
             /* .address = */ this->value.GetBytes(),
             /* .address_family = */
-            (this->value.GetAddressFamily() == InetNetwork::AddressFamily::IPv4)
+            (this->value.GetAddressFamily() == InetNetwork::AddressFamily::kIPv4)
                 ? detail::kPgsqlAfInet
                 : detail::kPgsqlAfInet6,
             /* .prefix_length = */ static_cast<char>(this->value.GetPrefixLength()),
@@ -334,7 +334,8 @@ struct BufferParser<InetNetwork> : detail::IpBufferParserBase<InetNetwork> {
         this->value = InetNetwork(
             std::move(info.bytes),
             info.prefix_length,
-            (info.family == detail::kPgsqlAfInet ? InetNetwork::AddressFamily::IPv4 : InetNetwork::AddressFamily::IPv6)
+            (info.family == detail::kPgsqlAfInet ? InetNetwork::AddressFamily::kIPv4 : InetNetwork::AddressFamily::kIPv6
+            )
         );
     }
 };

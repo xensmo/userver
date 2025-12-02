@@ -120,7 +120,7 @@ UTEST(CurlFormTest, MultipartFileWithContentType) {
             .timeout(std::chrono::milliseconds(100))
             .perform();
 
-    EXPECT_EQ(resp->status_code(), clients::http::Status::OK);
+    EXPECT_EQ(resp->status_code(), clients::http::Status::kOk);
 }
 
 UTEST(CurlFormTest, FilesWithContentType) {
@@ -141,7 +141,7 @@ UTEST(CurlFormTest, FilesWithContentType) {
             .timeout(std::chrono::milliseconds(100))
             .perform();
 
-    EXPECT_EQ(resp->status_code(), clients::http::Status::OK);
+    EXPECT_EQ(resp->status_code(), clients::http::Status::kOk);
 }
 
 UTEST(CurlFormTest, FormMovable) {
@@ -170,7 +170,7 @@ UTEST(CurlFormTest, FormMovable) {
             .timeout(std::chrono::milliseconds(100))
             .perform();
 
-    EXPECT_EQ(resp->status_code(), clients::http::Status::OK);
+    EXPECT_EQ(resp->status_code(), clients::http::Status::kOk);
 }
 
 USERVER_NAMESPACE_END
