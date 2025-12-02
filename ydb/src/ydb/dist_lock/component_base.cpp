@@ -11,6 +11,10 @@
 
 #include <ydb/impl/dist_lock/semaphore_settings.hpp>
 
+#ifndef ARCADIA_ROOT
+#include "generated/src/ydb/dist_lock/component_base.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace ydb {
@@ -136,66 +140,7 @@ void DistLockComponentBase::Start() {
 void DistLockComponentBase::Stop() noexcept { worker_->Stop(); }
 
 yaml_config::Schema DistLockComponentBase::GetStaticConfigSchema() {
-    return yaml_config::MergeSchemas<components::ComponentBase>(R"(
-type: object
-description: YDB distlock component
-additionalProperties: false
-properties:
-    semaphore-name:
-        type: string
-        description: name of the semaphore within the coordination node
-    database-settings:
-        type: object
-        description: settings that might be used for a group of related distlock instances
-        additionalProperties: false
-        properties:
-            dbname:
-                type: string
-                description: the key of the database within ydb component (NOT the actual database path)
-            coordination-node:
-                type: string
-                description: name of the coordination node within the database
-    initial-setup:
-        type: boolean
-        description: if true, then create the coordination node and the semaphore unless they already exist
-        defaultDescription: true
-    task-processor:
-        type: string
-        description: the name of the TaskProcessor for running DoWork
-        defaultDescription: the default TaskProcessor, typically main-task-processor
-    node-settings:
-        type: object
-        description: settings for coordination node creation
-        additionalProperties: false
-        properties:
-            session-grace-period:
-                type: string
-                description: |
-                    the time after which the lock will be given to another host
-                    after a network failure; this timer starts
-                    on the coordination node conceptually at the same time
-                    as 'session-timeout' timer starts on the service instance
-    session-timeout:
-        type: string
-        description: for how long we will try to restore session after a network failure before dropping it
-        defaultDescription: 5s
-    restart-session-delay:
-        type: string
-        description: backoff before attempting to reconnect session after it returns "permanent failure"
-        defaultDescription: 1s
-    acquire-interval:
-        type: string
-        description: backoff before repeating a failed Acquire call
-        defaultDescription: 100ms
-    restart-delay:
-        type: string
-        description: backoff before calling DoWork again after it returns or throws
-        defaultDescription: 100ms
-    cancel-task-time-limit:
-        type: string
-        description: time, within which a cancelled DoWork is expected to finish
-        defaultDescription: 5s
-  )");
+    return yaml_config::MergeSchemasFromResource<components::ComponentBase>("src/ydb/dist_lock/component_base.yaml");
 }
 
 }  // namespace ydb
