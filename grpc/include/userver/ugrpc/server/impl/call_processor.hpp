@@ -84,7 +84,7 @@ public:
     )
         : state_(std::move(params), CallTraits::kCallKind),
           responder_(state_, raw_responder),
-          context_(utils::impl::InternalTag{}, state_),
+          middleware_call_context_(utils::impl::InternalTag{}, state_),
           initial_request_(initial_request),
           service_(service),
           service_method_(service_method)
@@ -105,14 +105,14 @@ public:
         // Don't keep the config snapshot for too long, especially for streaming RPCs.
         state_.config_snapshot.reset();
 
+        // Final response is the response sent to the client together with status in the final batch.
+        std::optional<Response> final_response;
+
         if (!Status().ok()) {
-            RunOnCallFinish();
+            RunOnCallFinish(final_response);
             impl::ReportFinish(responder_.FinishWithError(Status()), Status(), state_);
             return;
         }
-
-        // Final response is the response sent to the client together with status in the final batch.
-        std::optional<Response> final_response{};
 
         RunWithCatch([this, &final_response] {
             auto result = CallHandler();
@@ -128,15 +128,12 @@ public:
         }
 
         if (!Status().ok()) {
-            RunOnCallFinish();
+            RunOnCallFinish(final_response);
             impl::ReportFinish(responder_.FinishWithError(Status()), Status(), state_);
             return;
         }
 
-        if (final_response) {
-            RunPreSendMessage(*final_response);
-        }
-        RunOnCallFinish();
+        RunOnCallFinish(final_response);
 
         if (!Status().ok()) {
             impl::ReportFinish(responder_.FinishWithError(Status()), Status(), state_);
@@ -171,7 +168,7 @@ private:
     void RunOnCallStart() {
         UASSERT(success_pre_hooks_count_ == 0);
         for (const auto& m : state_.middlewares) {
-            RunWithCatch([this, &m] { m->OnCallStart(context_); });
+            RunWithCatch([this, &m] { m->OnCallStart(middleware_call_context_); });
             if (!Status().ok()) {
                 return;
             }
@@ -179,7 +176,7 @@ private:
             // So, we watch to count of these middlewares.
             ++success_pre_hooks_count_;
             if constexpr (std::is_base_of_v<google::protobuf::Message, InitialRequest>) {
-                RunWithCatch([this, &m] { m->PostRecvMessage(context_, initial_request_); });
+                RunWithCatch([this, &m] { m->PostRecvMessage(middleware_call_context_, initial_request_); });
                 if (!Status().ok()) {
                     return;
                 }
@@ -187,28 +184,22 @@ private:
         }
     }
 
-    void RunOnCallFinish() {
+    void RunOnCallFinish(std::optional<Response>& final_response) {
         const auto& mids = state_.middlewares;
         const auto rbegin = mids.rbegin() + (mids.size() - success_pre_hooks_count_);
         for (auto it = rbegin; it != mids.rend(); ++it) {
             const auto& middleware = *it;
-            // We must call all OnRpcFinish despite the failures. So, don't check the status.
-            RunWithCatch([this, &middleware] { middleware->OnCallFinish(context_, Status()); });
-        }
-    }
 
-    void RunPreSendMessage(Response& response) {
-        if constexpr (std::is_base_of_v<google::protobuf::Message, Response>) {
-            const auto& mids = state_.middlewares;
-            // We don't want to include a heavy boost header for reverse view.
-            // NOLINTNEXTLINE(modernize-loop-convert)
-            for (auto it = mids.rbegin(); it != mids.rend(); ++it) {
-                const auto& middleware = *it;
-                RunWithCatch([this, &response, &middleware] { middleware->PreSendMessage(context_, response); });
-                if (!Status().ok()) {
-                    return;
+            if constexpr (std::is_base_of_v<google::protobuf::Message, Response>) {
+                if (Status().ok() && final_response.has_value()) {
+                    RunWithCatch([this, &middleware, &final_response] {
+                        middleware->PreSendMessage(middleware_call_context_, *final_response);
+                    });
                 }
             }
+
+            // We must call all OnRpcFinish despite the failures. So, don't check the status.
+            RunWithCatch([this, &middleware] { middleware->OnCallFinish(middleware_call_context_, Status()); });
         }
     }
 
@@ -230,11 +221,11 @@ private:
         }
     }
 
-    grpc::Status& Status() { return context_.GetStatus(utils::impl::InternalTag{}); }
+    grpc::Status& Status() { return middleware_call_context_.GetStatus(utils::impl::InternalTag{}); }
 
     CallState state_;
     Responder responder_;
-    MiddlewareCallContext context_;
+    MiddlewareCallContext middleware_call_context_;
     // Initial request is the request which is sent to the service together with RPC initiation.
     // Unary-request RPCs have an initial request, client-streaming RPCs don't.
     InitialRequest& initial_request_;

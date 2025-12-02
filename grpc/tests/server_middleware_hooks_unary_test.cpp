@@ -229,7 +229,7 @@ UTEST_P(ServerMiddlewareHooksUnaryTest, ApplyTheLastErrorStatus) {
 
     EXPECT_CALL(Middleware(1), OnCallStart).Times(1);
     EXPECT_CALL(Middleware(1), PostRecvMessage).Times(1);
-    EXPECT_CALL(Middleware(1), PreSendMessage).Times(1);
+    EXPECT_CALL(Middleware(1), PreSendMessage).Times(0);
     // OnCallStart of M1 is successfully => OnCallFinish must be called.
     EXPECT_CALL(Middleware(1), OnCallFinish).Times(1);
 

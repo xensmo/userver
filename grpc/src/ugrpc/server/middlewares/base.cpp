@@ -11,22 +11,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::server {
 
-MiddlewareBase::MiddlewareBase() = default;
-
-MiddlewareBase::~MiddlewareBase() = default;
-
-void MiddlewareBase::OnCallStart(MiddlewareCallContext&) const {}
-
-void MiddlewareBase::OnCallFinish(MiddlewareCallContext& context, const grpc::Status& status) const {
-    if (!status.ok()) {
-        return context.SetError(grpc::Status{status});
-    }
-}
-
-void MiddlewareBase::PostRecvMessage(MiddlewareCallContext&, google::protobuf::Message&) const {}
-
-void MiddlewareBase::PreSendMessage(MiddlewareCallContext&, google::protobuf::Message&) const {}
-
 MiddlewareCallContext::MiddlewareCallContext(utils::impl::InternalTag, impl::CallState& state)
     : CallContextBase(utils::impl::InternalTag{}, state)
 {}
@@ -55,6 +39,18 @@ const dynamic_config::Snapshot& MiddlewareCallContext::GetInitialDynamicConfig()
 ugrpc::impl::RpcStatisticsScope& MiddlewareCallContext::GetStatistics(utils::impl::InternalTag) {
     return GetCallState(utils::impl::InternalTag{}).statistics_scope;
 }
+
+MiddlewareBase::MiddlewareBase() = default;
+
+MiddlewareBase::~MiddlewareBase() = default;
+
+void MiddlewareBase::OnCallStart(MiddlewareCallContext&) const {}
+
+void MiddlewareBase::PostRecvMessage(MiddlewareCallContext&, google::protobuf::Message&) const {}
+
+void MiddlewareBase::PreSendMessage(MiddlewareCallContext&, google::protobuf::Message&) const {}
+
+void MiddlewareBase::OnCallFinish(MiddlewareCallContext&, const grpc::Status&) const {}
 
 }  // namespace ugrpc::server
 
