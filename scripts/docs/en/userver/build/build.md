@@ -104,9 +104,13 @@ userver-create-service [--grpc] [--mongo] [--postgresql] myservice
 * without feature flags, the service only has some stubs for HTTP handlers.
 
 If you use @ref devcontainers "Dev Containers", or if you use CPM to download userver,
-run this script to get `userver-create-service` command:
+run this script as the `userver-create-service` command:
 
-@ref service-template/userver-create-service.sh
+* Linux, macOS, BSD: @ref service-template/userver-create-service.sh
+* Windows: @ref service-template/userver-create-service.bat
+
+In the command, replace `vMAJOR.MINOR` with the actual userver version, or use `develop` to get bleeding-edge features
+at your own risk.
 
 If instead of installing userver you are planning to build userver as a subdirectory,
 call the script from userver directory:
@@ -523,3 +527,4 @@ The resulting binary should be 2-15% faster than without PGO, depending on the c
 
 @example service-template/CMakeUserPresets.json.example
 @example service-template/userver-create-service.sh
+@example service-template/userver-create-service.bat

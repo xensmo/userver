@@ -336,6 +336,7 @@ if(USERVER_FEATURE_CORE)
         COMPONENT core
         PROGRAMS "${USERVER_ROOT_DIR}/scripts/userver-create-service"
         DESTINATION ${CMAKE_INSTALL_BINDIR}/
+        RENAME userver-create-service
     )
     _userver_directory_install(
         COMPONENT core

@@ -436,6 +436,11 @@ _userver_directory_install(
           "${USERVER_ROOT_DIR}/cmake/modules/FindUserverGBench.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/userver/modules
 )
+_userver_directory_install(
+    COMPONENT universal
+    FILES "${USERVER_ROOT_DIR}/version.txt"
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/userver
+)
 
 _userver_install_component(MODULE universal)
 

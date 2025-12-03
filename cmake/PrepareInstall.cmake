@@ -77,7 +77,7 @@ function(_userver_directory_install)
         return()
     endif()
     set(option)
-    set(oneValueArgs COMPONENT DESTINATION PATTERN)
+    set(oneValueArgs COMPONENT DESTINATION PATTERN RENAME)
     set(multiValueArgs FILES DIRECTORY PROGRAMS)
     cmake_parse_arguments(ARG "${option}" "${oneValueArgs}" "${multiValueArgs}" "${ARGN}")
     if(NOT ARG_COMPONENT)
@@ -97,6 +97,7 @@ function(_userver_directory_install)
             PROGRAMS ${ARG_PROGRAMS}
             DESTINATION ${ARG_DESTINATION}
             COMPONENT ${ARG_COMPONENT}
+            RENAME ${ARG_RENAME}
         )
     endif()
     if(ARG_FILES)
@@ -104,6 +105,7 @@ function(_userver_directory_install)
             FILES ${ARG_FILES}
             DESTINATION ${ARG_DESTINATION}
             COMPONENT ${ARG_COMPONENT}
+            RENAME ${ARG_RENAME}
         )
     endif()
     if(ARG_DIRECTORY)

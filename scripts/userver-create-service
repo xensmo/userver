@@ -28,6 +28,34 @@ def template_path() -> pathlib.Path:
     return BINDIR / '..' / 'service_template'
 
 
+def version_file_path() -> pathlib.Path:
+    if is_system_installed():
+        return BINDIR / '..' / 'share' / 'userver' / 'version.txt'
+    return BINDIR / '..' / 'version.txt'
+
+
+def get_userver_version() -> str:
+    version_path = version_file_path()
+    return version_path.read_text().strip()
+
+
+def get_devcontainer_version(userver_version: str) -> str:
+    if userver_version.endswith('-rc'):
+        return 'latest'
+    return f'v{userver_version}'
+
+
+def patch_devcontainer_version(service_path: pathlib.Path) -> None:
+    devcontainer_path = service_path / '.devcontainer' / 'devcontainer.json'
+
+    userver_version = get_userver_version()
+    devcontainer_version = get_devcontainer_version(userver_version)
+
+    content = devcontainer_path.read_text()
+    content = re.sub(r'"(ghcr\.io/[^"]+)"', rf'"\1:{devcontainer_version}"', content)
+    devcontainer_path.write_text(content)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Create new C++ userver-based service')
@@ -103,6 +131,7 @@ def main() -> None:
     args = parse_args()
     check_dst_non_existing(args.service_path)
     copy_tree(template_path(), args.service_path, args)
+    patch_devcontainer_version(args.service_path)
     run_ruff(args.service_path)
 
 

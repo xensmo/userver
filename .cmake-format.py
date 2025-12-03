@@ -38,6 +38,7 @@ with section('parse'):  # noqa: F821
                 'PROGRAMS': '*',
                 'FILES': '*',
                 'DESTINATION': '*',
+                'RENAME': '*',
             },
         },
         'userver_target_generate_openapi_client': {

@@ -4420,6 +4420,7 @@
   "scripts/docs/en/userver/tutorial/websocket_service.md":"taxi/uservices/userver/scripts/docs/en/userver/tutorial/websocket_service.md",
   "scripts/docs/en/userver/ydb.md":"taxi/uservices/userver/scripts/docs/en/userver/ydb.md",
   "scripts/docs/examples/service-template/CMakeUserPresets.json.example":"taxi/uservices/userver/scripts/docs/examples/service-template/CMakeUserPresets.json.example",
+  "scripts/docs/examples/service-template/userver-create-service.bat":"taxi/uservices/userver/scripts/docs/examples/service-template/userver-create-service.bat",
   "scripts/docs/examples/service-template/userver-create-service.sh":"taxi/uservices/userver/scripts/docs/examples/service-template/userver-create-service.sh",
   "scripts/docs/fontello/README.txt":"taxi/uservices/userver/scripts/docs/fontello/README.txt",
   "scripts/docs/fontello/config.json":"taxi/uservices/userver/scripts/docs/fontello/config.json",
