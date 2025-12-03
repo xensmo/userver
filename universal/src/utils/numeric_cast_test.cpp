@@ -1,6 +1,8 @@
+#include <cmath>
 #include <limits>
 
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <userver/utest/assert_macros.hpp>
 
 #include <userver/utils/numeric_cast.hpp>
@@ -8,6 +10,29 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace {
+
+template <typename TFrom, typename TTo>
+struct CastTypes {
+    using From = TFrom;
+    using To = TTo;
+};
+
+using FloatingPointCastTypes = ::testing::Types<
+    CastTypes<float, float>,
+    CastTypes<float, double>,
+    CastTypes<float, long double>,
+    CastTypes<double, float>,
+    CastTypes<double, double>,
+    CastTypes<double, long double>,
+    CastTypes<long double, float>,
+    CastTypes<long double, double>,
+    CastTypes<long double, long double>>;
+
+template <typename CastTypes>
+class NumericCastFloatingPoint : public ::testing::Test {
+    using From = typename CastTypes::From;
+    using To = typename CastTypes::To;
+};
 
 TEST(NumericCast, CompileTime) {
     static_assert(utils::numeric_cast<unsigned int>(1) == 1u);
@@ -31,6 +56,29 @@ TEST(NumericCast, Smoke) {
     EXPECT_EQ(utils::numeric_cast<long double>(1.0f), 1.0L);
     EXPECT_EQ(utils::numeric_cast<long double>(1.0), 1.0L);
     EXPECT_EQ(utils::numeric_cast<long double>(1.0L), 1.0L);
+}
+
+TYPED_TEST_SUITE(NumericCastFloatingPoint, FloatingPointCastTypes);
+
+TYPED_TEST(NumericCastFloatingPoint, Nan) {
+    using Limits = std::numeric_limits<typename TypeParam::From>;
+
+    if constexpr (Limits::has_quiet_NaN) {
+        EXPECT_TRUE(std::isnan(utils::numeric_cast<typename TypeParam::To>(Limits::quiet_NaN())));
+    }
+}
+
+TYPED_TEST(NumericCastFloatingPoint, Infinity) {
+    using To = typename TypeParam::To;
+    using FromLimits = std::numeric_limits<typename TypeParam::From>;
+    using ToLimits = std::numeric_limits<To>;
+
+    if constexpr (FromLimits::has_infinity) {
+        // +inf
+        EXPECT_EQ(utils::numeric_cast<To>(FromLimits::infinity()), ToLimits::infinity());
+        // -inf
+        EXPECT_EQ(utils::numeric_cast<To>(-FromLimits::infinity()), -ToLimits::infinity());
+    }
 }
 
 TEST(NumericCast, SignedToUnsignedOverflow) {

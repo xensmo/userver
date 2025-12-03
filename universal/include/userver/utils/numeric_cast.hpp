@@ -3,6 +3,7 @@
 /// @file userver/utils/numeric_cast.hpp
 /// @brief @copybrief utils::numeric_cast
 
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 
@@ -50,13 +51,17 @@ constexpr To numeric_cast(From input) {  // NOLINT(readability-identifier-naming
 
     if constexpr (check_positive_overflow) {
         if (input > static_cast<From>(ToLimits::max())) {
-            overflow_type = "positive";
+            if (!FromLimits::has_infinity || !std::isinf(input)) {
+                overflow_type = "positive";
+            }
         }
     }
 
     if constexpr (check_negative_overflow) {
         if (input < static_cast<From>(ToLimits::lowest())) {
-            overflow_type = "negative";
+            if (!FromLimits::has_infinity || !std::isinf(input)) {
+                overflow_type = "negative";
+            }
         }
     }
 
