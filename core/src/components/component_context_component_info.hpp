@@ -111,6 +111,7 @@ private:
     mutable engine::ConditionVariable cv_;
     std::unique_ptr<RawComponentBase> component_;
     std::vector<ScopePtr> resource_scopes_;
+    bool scope_registration_finished_{false};
     std::set<ComponentInfoRef> it_depends_on_;
     std::set<ComponentInfoRef> depends_on_it_;
     ComponentLifetimeStage stage_ = ComponentLifetimeStage::kNull;

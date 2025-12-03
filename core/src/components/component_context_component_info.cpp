@@ -58,6 +58,8 @@ void ComponentInfo::SetComponent(std::unique_ptr<RawComponentBase>&& component) 
 
 void ComponentInfo::AfterConstruction()
 {
+    scope_registration_finished_ = true;
+
     // A tweak to be sure in case of parial initialization only
     // already initialized scopes' before_dtr() are called
     auto tmp_resource_scopes = std::move(resource_scopes_);
@@ -216,6 +218,7 @@ std::string ComponentInfo::GetDependencies() const {
 
 void ComponentInfo::RegisterScope(ScopePtr resource_scope)
 {
+    UINVARIANT(!scope_registration_finished_, "Scope registration is available only in component constructor");
     resource_scopes_.push_back(std::move(resource_scope));
 }
 
