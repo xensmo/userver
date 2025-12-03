@@ -29,7 +29,8 @@
 
 #include <dynamic_config/variables/YDB_RETRY_BUDGET.hpp>
 
-#ifndef ARCADIA_ROOT
+// YDB headers leak `ARCADIA_ROOT` macro, so we use __has_include()
+#if __has_include("generated/src/ydb/component.yaml.hpp")
 #include "generated/src/ydb/component.yaml.hpp"  // Y_IGNORE
 #endif
 

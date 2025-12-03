@@ -11,7 +11,8 @@
 
 #include <ydb/impl/dist_lock/semaphore_settings.hpp>
 
-#ifndef ARCADIA_ROOT
+// YDB headers leak `ARCADIA_ROOT` macro, so we use __has_include()
+#if __has_include("generated/src/ydb/dist_lock/component_base.yaml.hpp")
 #include "generated/src/ydb/dist_lock/component_base.yaml.hpp"  // Y_IGNORE
 #endif
 
