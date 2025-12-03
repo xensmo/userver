@@ -231,6 +231,7 @@
   "chaotic/golden_tests/schemas/oneof/oneof.yaml":"taxi/uservices/userver/chaotic/golden_tests/schemas/oneof/oneof.yaml",
   "chaotic/golden_tests/schemas/oneofdiscriminator/oneofdiscriminator.yaml":"taxi/uservices/userver/chaotic/golden_tests/schemas/oneofdiscriminator/oneofdiscriminator.yaml",
   "chaotic/golden_tests/schemas/string/string.yaml":"taxi/uservices/userver/chaotic/golden_tests/schemas/string/string.yaml",
+  "chaotic/golden_tests/scripts/diff-clang-format.py":"taxi/uservices/userver/chaotic/golden_tests/scripts/diff-clang-format.py",
   "chaotic/include/userver/chaotic/array.hpp":"taxi/uservices/userver/chaotic/include/userver/chaotic/array.hpp",
   "chaotic/include/userver/chaotic/convert.hpp":"taxi/uservices/userver/chaotic/include/userver/chaotic/convert.hpp",
   "chaotic/include/userver/chaotic/convert/to.hpp":"taxi/uservices/userver/chaotic/include/userver/chaotic/convert/to.hpp",
