@@ -140,6 +140,7 @@ std::shared_ptr<const std::vector<std::string>> MakeShardNames() {
 
 void InvokeCommand(CommandPtr command, ReplyPtr&& reply, const logging::LogExtra& log_extra) {
     UASSERT(reply);
+    UASSERT(command);
 
     if (reply->server_id.IsAny()) {
         reply->server_id = CommandControlImpl{command->control}.force_server_id;

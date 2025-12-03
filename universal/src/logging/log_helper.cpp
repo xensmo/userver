@@ -149,17 +149,17 @@ void LogHelper::DoLog() noexcept {
 }
 
 void LogHelper::InternalLoggingError(std::string_view message) noexcept {
+    std::string exc_info;
     try {
+        exc_info = boost::current_exception_diagnostic_information();
         // Use fmt::format to output the message without interleaving with other logs.
-        std::fputs(
-            fmt::format("LogHelper: {}. {}\n", message, boost::current_exception_diagnostic_information()).c_str(),
-            stderr
-        );
+        std::fputs(fmt::format("LogHelper: {}. {}\n", message, exc_info).c_str(), stderr);
     } catch (...) {
         // ignore
+        exc_info = "unknown";  // fits into SSO
     }
     pimpl_->MarkAsBroken();
-    UASSERT_MSG(false, message);
+    UASSERT_MSG(false, fmt::format("{}: {}", message, exc_info));
 }
 
 impl::TagWriter LogHelper::GetTagWriter() { return impl::TagWriter{*this}; }
@@ -271,7 +271,7 @@ LogHelper& LogHelper::PutTag(std::string_view key, const LogExtra::Value& value)
     try {
         pimpl_->AddTag(key, value);
     } catch (...) {
-        InternalLoggingError("Failed to extend log with LogExtra&&");
+        InternalLoggingError("Failed to extend log with Value");
     }
     return *this;
 }
@@ -280,7 +280,7 @@ LogHelper& LogHelper::PutSwTag(std::string_view key, std::string_view value) noe
     try {
         pimpl_->AddTag(key, value);
     } catch (...) {
-        InternalLoggingError("Failed to extend log with LogExtra&&");
+        InternalLoggingError("Failed to extend log with std::string_view");
     }
     return *this;
 }
