@@ -206,7 +206,10 @@ UTEST_MT(LockedWorker, SetNotEnabled, 3) {
 
     EXPECT_TRUE(work.WaitForLocked(false, utest::kMaxTestWaitTime));
     work.SetWorkLoopOn(true);
-    EXPECT_FALSE(work.WaitForLocked(true, utest::kMaxTestWaitTime));
+    // Expect the disabled worker to not reacquire the lock.
+    // In case of a bug in DistLockedWorker, kAttemptTimeout will be enough to "probably" discover the bug.
+    // In case of no bug, the test will not become flaky due to a smaller timeout.
+    EXPECT_FALSE(work.WaitForLocked(true, kAttemptTimeout));
 
     locked_worker.Stop();
 }

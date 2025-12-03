@@ -28,6 +28,9 @@ namespace utest {
 
 /// The maximum time a typical test is allowed to execute. If exceeded, a
 /// deadlock is assumed. This time must not be too low to avoid flaky tests.
+///
+/// Use this timeout for awaiting something that is expected to complete.
+/// Use appropriate shorter timeouts for awaiting something that is not expected to ever complete.
 inline constexpr std::chrono::seconds kMaxTestWaitTime(20);
 
 }  // namespace utest
