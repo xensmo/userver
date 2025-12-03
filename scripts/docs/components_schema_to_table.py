@@ -16,24 +16,32 @@ def normalize_default_value(data: Any) -> str:
     elif data is False:
         return 'false'
     else:
-        return data
+        return str(data)
 
 
 def merge_descriptions(yaml_node: dict, other: dict) -> dict:
+    if not yaml_node.get('description') and not yaml_node.get('defaultDescription'):
+        return other
+
+    if not other.get('description') and not other.get('defaultDescription'):
+        return yaml_node
+
+    value_merged = yaml_node.copy()
+
     if yaml_node.get('description') and other.get('description'):
         description = yaml_node['description'].strip()
-        description = f'{description[0].upper()}{description[1:]}'
         if not description.endswith('.'):
             description += '.'
         description += ' <i>Each of the elements:</i> ' + other['description']
 
-        value_merged = yaml_node.copy()
         value_merged['description'] = description
-        return value_merged
-    elif yaml_node.get('description'):
-        return yaml_node
-    else:
-        return other
+    elif not yaml_node.get('description') and other.get('description'):
+        value_merged['description'] = other['description']
+
+    if not yaml_node.get('defaultDescription') and other.get('defaultDescription'):
+        value_merged['defaultDescription'] = other['defaultDescription']
+
+    return value_merged
 
 
 def enrich_description(yaml_node: dict) -> str:

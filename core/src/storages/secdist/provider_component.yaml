@@ -8,13 +8,17 @@ properties:
         defaultDescription: ''
     inline:
         type: object
-        description: inline data
+        description: inline data as a JSON
         additionalProperties: true
         properties: {}
     format:
         type: string
         description: secdist format
         defaultDescription: 'json'
+        enum:
+          - json
+          - yaml
+          - yaml_config
     missing-ok:
         type: boolean
         description: do not terminate components load if no file found by the config
