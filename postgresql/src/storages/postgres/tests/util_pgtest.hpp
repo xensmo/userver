@@ -4,7 +4,6 @@
 
 #include <cctype>
 #include <cstdlib>
-#include <vector>
 
 #include <userver/concurrent/background_task_storage_fwd.hpp>
 #include <userver/engine/async.hpp>
@@ -90,20 +89,25 @@ protected:
 
     static void CheckConnection(const storages::postgres::detail::ConnectionPtr& conn);
     static void FinalizeConnection(storages::postgres::detail::ConnectionPtr conn);
+};
 
-private:
-    utils::impl::UserverExperimentsScope experiments_;
+class PostgreConnectionBaseFixture : public PostgreSQLBase {
+protected:
+    PostgreConnectionBaseFixture();
+    ~PostgreConnectionBaseFixture() override;
+
+    virtual storages::postgres::detail::ConnectionPtr MakeConn(storages::postgres::ConnectionSettings settings);
 };
 
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
 class PostgreConnection
-    : public PostgreSQLBase,
+    : public PostgreConnectionBaseFixture,
       public ::testing::WithParamInterface<storages::postgres::ConnectionSettings> {
 protected:
     PostgreConnection();
     ~PostgreConnection() override;
 
-    storages::postgres::detail::ConnectionPtr& GetConn() { return conn_; }
+    storages::postgres::detail::ConnectionPtr& GetConn();
 
 private:
     storages::postgres::detail::ConnectionPtr conn_;

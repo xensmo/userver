@@ -126,17 +126,17 @@ Connection::PreparedStatementMeta Connection::PrepareStatement(
 ) {
     const auto& statement_info = pimpl_->PrepareStatement(query, params, timeout);
 
-    return {statement_info.statement_name, statement_info.description};
+    return {statement_info.meta_statement_name, statement_info.description};
 }
 
 void Connection::AddIntoPipeline(
     CommandControl cc,
-    const std::string& prepared_statement_name,
+    const std::string& meta_statement_name,
     const detail::QueryParameters& params,
     const ResultSet& description,
     tracing::ScopeTime& scope
 ) {
-    pimpl_->AddIntoPipeline(cc, prepared_statement_name, params, description, scope);
+    pimpl_->AddIntoPipeline(cc, meta_statement_name, params, description, scope);
 }
 
 std::vector<ResultSet> Connection::GatherPipeline(TimeoutDuration timeout, const std::vector<ResultSet>& descriptions) {
@@ -152,12 +152,12 @@ ResultSet Connection::Execute(CommandControl statement_cmd_ctl, const Query& que
 }
 
 Connection::StatementId Connection::PortalBind(
-    USERVER_NAMESPACE::utils::zstring_view statement,
+    const Query& query,
     const std::string& portal_name,
     const detail::QueryParameters& params,
     OptionalCommandControl statement_cmd_ctl
 ) {
-    return pimpl_->PortalBind(statement, portal_name, params, std::move(statement_cmd_ctl));
+    return pimpl_->PortalBind(query, portal_name, params, std::move(statement_cmd_ctl));
 }
 
 ResultSet Connection::PortalExecute(

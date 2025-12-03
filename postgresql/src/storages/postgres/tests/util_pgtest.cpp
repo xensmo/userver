@@ -153,14 +153,26 @@ concurrent::BackgroundTaskStorageCore& PostgreSQLBase::GetTaskStorage() {
     return bts;
 }
 
+PostgreConnectionBaseFixture::PostgreConnectionBaseFixture() = default;
+
+PostgreConnectionBaseFixture::~PostgreConnectionBaseFixture() {
+    // force connection cleanup to avoid leaving detached tasks behind
+    engine::AsyncNoSpan(GetTaskProcessor(), [] {}).Wait();
+}
+
+storages::postgres::detail::ConnectionPtr PostgreConnectionBaseFixture::MakeConn(
+    storages::postgres::ConnectionSettings settings
+) {
+    return MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), std::move(settings));
+}
+
 PostgreConnection::PostgreConnection()
     : conn_(MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), GetParam()))
 {}
 
-PostgreConnection::~PostgreConnection() {
-    // force connection cleanup to avoid leaving detached tasks behind
-    engine::AsyncNoSpan(GetTaskProcessor(), [] {}).Wait();
-}
+PostgreConnection::~PostgreConnection() = default;
+
+storages::postgres::detail::ConnectionPtr& PostgreConnection::GetConn() { return conn_; }
 
 INSTANTIATE_UTEST_SUITE_P(
     ConnectionSettings,

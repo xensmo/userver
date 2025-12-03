@@ -492,7 +492,7 @@ void ConnectionImpl::Start(SteadyClock::time_point start_time) {
 void ConnectionImpl::Finish() { stats_.trx_end_time = SteadyClock::now(); }
 
 Connection::StatementId ConnectionImpl::PortalBind(
-    USERVER_NAMESPACE::utils::zstring_view statement,
+    const Query& query,
     const std::string& portal_name,
     const QueryParameters& params,
     OptionalCommandControl statement_cmd_ctl
@@ -504,24 +504,33 @@ Connection::StatementId ConnectionImpl::PortalBind(
     }  // TODO Prepare unnamed query instead
 
     CheckBusy();
+    auto statement = query.GetStatementView();
     const TimeoutDuration network_timeout = NetworkTimeout(statement_cmd_ctl);
     auto deadline = testsuite_pg_ctl_.MakeExecuteDeadline(network_timeout);
     SetStatementTimeout(std::move(statement_cmd_ctl));
     tracing::Span span{FindQueryShortInfo(scopes::kBind, statement)};
     conn_wrapper_.FillSpanTags(span, {network_timeout, GetStatementTimeout()});
     if (settings_.statement_log_mode == ConnectionSettings::kLog) {
-        span.AddTag(tracing::kDatabaseStatement, std::string{statement});
+        switch (query.GetLogMode()) {
+            case Query::LogMode::kFull:
+                span.AddTag(tracing::kDatabaseStatement, std::string{query.GetStatementView()});
+                [[fallthrough]];
+            case Query::LogMode::kNameOnly:
+                if (const auto name = query.GetOptionalNameView(); name) {
+                    span.AddTag(tracing::kDatabaseStatementName, std::string{*name});
+                }
+        }
     }
     CheckDeadlineReached(deadline);
     auto scope = span.CreateScopeTime();
     CountPortalBind count_bind(stats_);
 
-    const auto& prepared_info = DoPrepareStatement(statement, params, deadline, span, scope);
+    const auto& prepared_info = DoPrepareStatement(query, params, deadline, span, scope);
 
     scope.Reset(scopes::kBind);
-    conn_wrapper_.SendPortalBind(prepared_info.statement_name, portal_name, params, scope);
+    conn_wrapper_.SendPortalBind(prepared_info.meta_statement_name, portal_name, params, scope);
 
-    WaitResult(statement, deadline, network_timeout, count_bind, span, scope, nullptr);
+    WaitResult(deadline, network_timeout, count_bind, span, scope, nullptr);
     return prepared_info.id;
 }
 
@@ -543,10 +552,21 @@ ResultSet ConnectionImpl::PortalExecute(
         "Portal execute uses statement id that is absent in prepared "
         "statements"
     );
-    tracing::Span span{FindQueryShortInfo(scopes::kExec, prepared_info->statement)};
+
+    const auto& query = prepared_info->query;
+
+    tracing::Span span{FindQueryShortInfo(scopes::kExec, query.GetStatementView())};
     conn_wrapper_.FillSpanTags(span, {network_timeout, GetStatementTimeout()});
     if (settings_.statement_log_mode == ConnectionSettings::kLog) {
-        span.AddTag(tracing::kDatabaseStatement, prepared_info->statement);
+        switch (query.GetLogMode()) {
+            case Query::LogMode::kFull:
+                span.AddTag(tracing::kDatabaseStatement, std::string{query.GetStatementView()});
+                [[fallthrough]];
+            case Query::LogMode::kNameOnly:
+                if (const auto name = query.GetOptionalNameView(); name) {
+                    span.AddTag(tracing::kDatabaseStatementName, std::string{*name});
+                }
+        }
     }
     if (deadline.IsReached()) {
         ++stats_.execute_timeout;
@@ -558,15 +578,7 @@ ResultSet ConnectionImpl::PortalExecute(
     CountExecute count_execute(stats_);
     conn_wrapper_.SendPortalExecute(portal_name, n_rows, scope);
 
-    return WaitResult(
-        prepared_info->statement,
-        deadline,
-        network_timeout,
-        count_execute,
-        span,
-        scope,
-        &prepared_info->description
-    );
+    return WaitResult(deadline, network_timeout, count_execute, span, scope, &prepared_info->description);
 }
 
 void ConnectionImpl::Listen(std::string_view channel, OptionalCommandControl cmd_ctl) {
@@ -809,12 +821,13 @@ void ConnectionImpl::SetStatementTimeout(OptionalCommandControl cmd_ctl) {
 }
 
 const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
-    USERVER_NAMESPACE::utils::zstring_view statement,
+    const Query& query,
     const QueryParameters& params,
     engine::Deadline deadline,
     tracing::Span& span,
     tracing::ScopeTime& scope
 ) {
+    auto statement = query.GetStatementView();
     auto query_hash = QueryHash(statement, params);
     const Connection::StatementId query_id{query_hash};
 
@@ -824,7 +837,7 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
     auto* statement_info = prepared_.Get(query_id);
     if (statement_info) {
         if (statement_info->description.pimpl_) {
-            LOG_TRACE() << "Query " << statement << " is already prepared.";
+            LOG_TRACE() << "Query is already prepared";
             return *statement_info;
         } else {
             LOG_DEBUG() << "Found prepared but not described statement";
@@ -841,12 +854,12 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
     }
 
     scope.Reset(scopes::kPrepare);
-    LOG_TRACE() << "Query " << statement << " is not yet prepared";
+    LOG_TRACE() << "Query is not yet prepared";
 
-    const std::string statement_name = "q" + std::to_string(query_hash) + "_" + uuid_;
+    const std::string meta_statement_name = "q" + std::to_string(query_hash) + "_" + uuid_;
     const bool should_prepare = !statement_info;
     if (should_prepare) {
-        conn_wrapper_.SendPrepare(statement_name, statement, params, scope);
+        conn_wrapper_.SendPrepare(meta_statement_name, statement, params, scope);
 
         try {
             conn_wrapper_.WaitResult(deadline, scope, nullptr);
@@ -856,13 +869,12 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
             // it. This situation might happen when `SendPrepare` times out and we
             // erase the statement from `prepared_` map.
             LOG_DEBUG()
-                << "Statement `" << statement
-                << "` was already prepared, there was possibly a timeout "
-                   "while preparing, see log above.";
+                << "Statement was already prepared, there was possibly a timeout while preparing, see log "
+                   "above.";
             ++stats_.duplicate_prepared_statements;
 
             // Mark query as already sent
-            prepared_.Put(query_id, {query_id, std::string{statement}, statement_name, ResultSet{nullptr}});
+            prepared_.Put(query_id, {query_id, query, meta_statement_name, ResultSet{nullptr}});
 
             if (IsInTransaction()) {
                 // Transaction failed, need to throw
@@ -876,7 +888,7 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
         LOG_DEBUG() << "Don't send prepare, already sent";
     }
 
-    conn_wrapper_.SendDescribePrepared(statement_name, scope);
+    conn_wrapper_.SendDescribePrepared(meta_statement_name, scope);
     auto res = conn_wrapper_.WaitResult(deadline, scope, nullptr);
     if (!res.pimpl_) {
         throw CommandError("WaitResult() returned nullptr");
@@ -886,7 +898,7 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
     res.GetRowDescription().CheckBinaryFormat(db_types_);
 
     if (!statement_info) {
-        prepared_.Put(query_id, {query_id, std::string{statement}, statement_name, std::move(res)});
+        prepared_.Put(query_id, {query_id, query, meta_statement_name, std::move(res)});
         statement_info = prepared_.Get(query_id);
     } else {
         statement_info->description = std::move(res);
@@ -908,8 +920,8 @@ void ConnectionImpl::DiscardOldPreparedStatements(engine::Deadline deadline) {
 }
 
 void ConnectionImpl::DiscardPreparedStatement(const PreparedStatementInfo& info, engine::Deadline deadline) {
-    LOG_DEBUG() << "Discarding prepared statement " << info.statement_name;
-    ExecuteCommandNoPrepare("DEALLOCATE " + info.statement_name, deadline);
+    LOG_DEBUG() << "Discarding prepared statement " << info.meta_statement_name;
+    ExecuteCommandNoPrepare("DEALLOCATE " + info.meta_statement_name, deadline);
 }
 
 ResultSet ConnectionImpl::ExecuteCommand(const Query& query, engine::Deadline deadline, logging::Level span_log_level) {
@@ -930,9 +942,8 @@ ResultSet ConnectionImpl::ExecuteCommand(
         return ExecuteCommandNoPrepare(query, params, deadline);
     }
 
-    const auto& statement = query.GetStatementView();
     if (settings_.ignore_unused_query_params == ConnectionSettings::kCheckUnused) {
-        CheckQueryParameters(statement, params);
+        CheckQueryParameters(query.GetStatementView(), params);
     }
 
     DiscardOldPreparedStatements(deadline);
@@ -948,7 +959,7 @@ ResultSet ConnectionImpl::ExecuteCommand(
     auto scope = span.CreateScopeTime();
     CountExecute count_execute(stats_);
 
-    const auto& prepared_info = DoPrepareStatement(statement, params, deadline, span, scope);
+    const auto& prepared_info = DoPrepareStatement(query, params, deadline, span, scope);
 
     const ResultSet* description_ptr_to_read = nullptr;
     PGresult* description_ptr_to_send = nullptr;
@@ -958,8 +969,8 @@ ResultSet ConnectionImpl::ExecuteCommand(
     }
 
     scope.Reset(scopes::kExec);
-    conn_wrapper_.SendPreparedQuery(prepared_info.statement_name, params, scope, description_ptr_to_send);
-    return WaitResult(statement, deadline, network_timeout, count_execute, span, scope, description_ptr_to_read);
+    conn_wrapper_.SendPreparedQuery(prepared_info.meta_statement_name, params, scope, description_ptr_to_send);
+    return WaitResult(deadline, network_timeout, count_execute, span, scope, description_ptr_to_read);
 }
 
 const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::PrepareStatement(
@@ -970,21 +981,27 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::PrepareStatement(
     const auto deadline = testsuite_pg_ctl_.MakeExecuteDeadline(timeout);
     CheckDeadlineReached(deadline);
 
-    const auto& statement = query.GetStatementView();
-
     tracing::Span span{FindQueryShortInfo(scopes::kPrepare, query.GetStatementView())};
     conn_wrapper_.FillSpanTags(span, {timeout, GetStatementTimeout()});
     if (settings_.statement_log_mode == ConnectionSettings::kLog) {
-        span.AddTag(tracing::kDatabaseStatement, std::string{statement});
+        switch (query.GetLogMode()) {
+            case Query::LogMode::kFull:
+                span.AddTag(tracing::kDatabaseStatement, std::string{query.GetStatementView()});
+                [[fallthrough]];
+            case Query::LogMode::kNameOnly:
+                if (const auto name = query.GetOptionalNameView(); name) {
+                    span.AddTag(tracing::kDatabaseStatementName, std::string{*name});
+                }
+        }
     }
 
     auto scope = span.CreateScopeTime();
-    return DoPrepareStatement(statement, params, deadline, span, scope);
+    return DoPrepareStatement(query, params, deadline, span, scope);
 }
 
 void ConnectionImpl::AddIntoPipeline(
     CommandControl cc,
-    const std::string& prepared_statement_name,
+    const std::string& meta_statement_name,
     const detail::QueryParameters& params,
     const ResultSet& description,
     tracing::ScopeTime& scope
@@ -999,7 +1016,7 @@ void ConnectionImpl::AddIntoPipeline(
     SetStatementTimeout(cc);
 
     PGresult* description_to_send = IsOmitDescribeInExecuteEnabled() ? description.pimpl_->handle.get() : nullptr;
-    conn_wrapper_.SendPreparedQuery(prepared_statement_name, params, scope, description_to_send);
+    conn_wrapper_.SendPreparedQuery(meta_statement_name, params, scope, description_to_send);
 
     conn_wrapper_.PutPipelineSync();
 }
@@ -1037,15 +1054,14 @@ ResultSet ConnectionImpl::ExecuteCommandNoPrepare(
     const QueryParameters& params,
     engine::Deadline deadline
 ) {
-    const auto& statement = query.GetStatementView();
     auto network_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(deadline.TimeLeft());
     CheckBusy();
     CheckDeadlineReached(deadline);
     auto span = MakeQuerySpan(query, {network_timeout, GetStatementTimeout()});
     auto scope = span.CreateScopeTime();
     CountExecute count_execute(stats_);
-    conn_wrapper_.SendQuery(statement, params, scope);
-    return WaitResult(statement, deadline, network_timeout, count_execute, span, scope, nullptr);
+    conn_wrapper_.SendQuery(query.GetStatementView(), params, scope);
+    return WaitResult(deadline, network_timeout, count_execute, span, scope, nullptr);
 }
 
 void ConnectionImpl::SendCommandNoPrepare(const Query& query, engine::Deadline deadline) {
@@ -1149,7 +1165,6 @@ void ConnectionImpl::FillBufferCategories(ResultSet& res) {
 
 template <typename Counter>
 ResultSet ConnectionImpl::WaitResult(
-    USERVER_NAMESPACE::utils::zstring_view statement,
     engine::Deadline deadline,
     TimeoutDuration network_timeout,
     Counter& counter,
@@ -1181,8 +1196,7 @@ ResultSet ConnectionImpl::WaitResult(
     } catch (const ConnectionTimeoutError& e) {
         ++stats_.execute_timeout;
         LOG_LIMITED_WARNING()
-            << "Statement `" << statement << "` network timeout error: " << e << ". "
-            << "Network timeout was " << network_timeout.count() << "ms";
+            << "Network timeout error: " << e << ". Network timeout was " << network_timeout.count() << "ms";
         span.AddTag(tracing::kErrorFlag, true);
         throw;
     } catch (const QueryCancelled& e) {
@@ -1192,16 +1206,14 @@ ResultSet ConnectionImpl::WaitResult(
             server::request::MarkTaskInheritedDeadlineExpired();
         }
         LOG_LIMITED_WARNING()
-            << "Statement `" << statement << "` was cancelled" << (cancelled_by_dp ? " by deadline propagation" : "")
-            << ": " << e << ". Statement timeout was " << current_statement_timeout_.count() << "ms";
+            << "Statement was cancelled" << (cancelled_by_dp ? " by deadline propagation" : "") << ": " << e
+            << ". Statement timeout was " << current_statement_timeout_.count() << "ms";
         span.AddTag(tracing::kErrorFlag, true);
         throw;
     } catch (const FeatureNotSupported& e) {
         // yes, this is the only way to discern this error
         if (e.GetServerMessage().GetPrimary() == kBadCachedPlanErrorMessage) {
-            LOG_LIMITED_WARNING()
-                << "Scheduling prepared statements invalidation due to "
-                   "cached plan change";
+            LOG_LIMITED_WARNING() << "Scheduling prepared statements invalidation due to cached plan change";
             is_discard_prepared_pending_ = true;
         }
         span.AddTag(tracing::kErrorFlag, true);

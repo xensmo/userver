@@ -31,7 +31,7 @@ struct Portal::Impl {
             if (!cmd_ctl) {
                 cmd_ctl = conn->GetQueryCmdCtl(query.GetOptionalNameView());
             }
-            Bind(query.GetStatementView(), params);
+            Bind(query, params);
         }
     }
 
@@ -51,8 +51,8 @@ struct Portal::Impl {
         swap(done, rhs.done);
     }
 
-    void Bind(USERVER_NAMESPACE::utils::zstring_view statement, const detail::QueryParameters& params) {
-        statement_id = conn->PortalBind(statement, name.GetUnderlying(), params, cmd_ctl);
+    void Bind(const Query& query, const detail::QueryParameters& params) {
+        statement_id = conn->PortalBind(query, name.GetUnderlying(), params, cmd_ctl);
     }
 
     ResultSet Fetch(std::uint32_t n_rows) {
