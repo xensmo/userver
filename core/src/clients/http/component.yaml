@@ -4,11 +4,12 @@ additionalProperties: false
 properties:
     core-component:
         type: string
-        description: name of HttpClientCore component to use
+        description: name of components::HttpClientCore component to use
         defaultDescription: http-client-core
     plugins:
         type: object
-        description: HTTP client plugins
+        description: map of plugins to apply, plugin-name -> ordering index. A plugin
+            component is called "http-client-plugin-" plus the plugin name.
         properties: {}
         additionalProperties:
             type: integer

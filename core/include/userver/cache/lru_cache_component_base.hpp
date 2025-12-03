@@ -38,8 +38,6 @@ yaml_config::Schema GetLruCacheComponentBaseSchema();
 
 }  // namespace impl
 
-// clang-format off
-
 /// @ingroup userver_components userver_base_classes
 ///
 /// @brief Base class for LRU-cache components
@@ -53,14 +51,11 @@ yaml_config::Schema GetLruCacheComponentBaseSchema();
 /// ## LruCacheComponent Dynamic config
 /// * @ref USERVER_LRU_CACHES
 ///
-/// ## Static options:
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// size | max amount of items to store in cache | --
-/// ways | number of ways for associative cache | --
-/// lifetime | TTL for cache entries (0 is unlimited) | 0
-/// background-update | enables asynchronous updates for expiring values | false
-/// config-settings | enables dynamic reconfiguration with CacheConfigSet | true
+/// ## Static options of @ref cache::LruCacheComponent :
+/// @include{doc} scripts/docs/en/components_schema/core/src/cache/lru_cache_component_base.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ## Example usage:
 ///
@@ -71,8 +66,6 @@ yaml_config::Schema GetLruCacheComponentBaseSchema();
 ///
 /// ## Example config:
 /// @snippet cache/lru_cache_component_base_test.cpp  Sample lru cache component config
-
-// clang-format on
 template <typename Key, typename Value, typename Hash = std::hash<Key>, typename Equal = std::equal_to<Key>>
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
 class LruCacheComponent : public components::ComponentBase, private dump::DumpableEntity {

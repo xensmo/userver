@@ -31,8 +31,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace components {
 
-// clang-format off
-
 /// @ingroup userver_components userver_base_classes
 ///
 /// @brief Base class for caching components
@@ -53,30 +51,11 @@ namespace components {
 /// * @ref USERVER_CACHES
 /// * @ref USERVER_DUMPS
 ///
-/// ## Static options:
+/// ## Static options of @ref components::CachingComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/cache/caching_component_base.md
 ///
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// update-types | specifies whether incremental and/or full updates will be used | see below
-/// update-interval | (*required*) interval between Update invocations | --
-/// update-jitter | max. amount of time by which update-interval may be adjusted for requests dispersal | update_interval / 10
-/// full-update-interval | interval between full updates | --
-/// full-update-jitter | max. amount of time by which full-update-interval may be adjusted for requests dispersal | full-update-interval / 10
-/// updates-enabled | if false, cache updates are disabled (except for the first one if !first-update-fail-ok) | true
-/// first-update-fail-ok | whether first update failure is non-fatal; see also @ref MayReturnNull | false
-/// task-processor | the name of the TaskProcessor for running DoWork | main-task-processor
-/// config-settings | enables dynamic reconfiguration with CacheConfigSet | true
-/// exception-interval | Used instead of `update-interval` in case of exception | update_interval
-/// additional-cleanup-interval | how often to run background RCU garbage collector | 10 seconds
-/// is-strong-period | whether to include Update execution time in update-interval | false
-/// testsuite-force-periodic-update | override testsuite-periodic-update-enabled in TestsuiteSupport component config | --
-/// failed-updates-before-expiration | the number of consecutive failed updates for data expiration | --
-/// has-pre-assign-check | enables the check before changing the value in the cache, by default it is the check that the new value is not empty | false
-/// alert-on-failing-to-update-times | fire an alert if the cache update failed specified amount of times in a row. If zero - alerts are disabled. Value from dynamic config takes priority over static | 0
-/// safe-data-lifetime | enables awaiting data destructors in the component's destructor. Can be set to `false` if the stored data does not refer to the component and its dependencies. | true
-/// dump.* | Manages cache behavior after dump load | -
-/// dump.first-update-mode | Behavior of update after successful load from dump. See info on modes below | skip
-/// dump.first-update-type | Update type after successful load from dump (`full`, `incremental` or `incremental-then-async-full`) | full
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ### Update types
 ///  * `full-and-incremental`: both `update-interval` and `full-update-interval`
@@ -103,7 +82,8 @@ namespace components {
 /// * size of database: 1000 objects
 /// * removal rate: 30 objects per minute (0.5 objects per second)
 ///
-/// Let's say we allow 20% extra garbage objects in cache in addition to the actual objects from the database. In this case we need:
+/// Let's say we allow 20% extra garbage objects in cache in addition to the actual objects from the database. In this
+/// case we need:
 ///
 /// full-update-interval = (size-of-database * 20% / removal-rate) = 400s
 ///
@@ -132,11 +112,11 @@ namespace components {
 ///
 /// Further customizes the behavior of @ref dump::Dumper "cache dumps".
 ///
-/// Mode          | Description
-/// ------------- | -----------
-/// `skip`        | after successful load from dump, do nothing
-/// `required`    | make a synchronous update of type `first-update-type`, stop the service on failure
-/// `best-effort` | make a synchronous update of type `first-update-type`, keep working and use data from dump on failure
+/// Mode        | Description
+/// ----------- | -----------
+/// skip        | after successful load from dump, do nothing
+/// required    | make a synchronous update of type `first-update-type`, stop the service on failure
+/// best-effort | make a synchronous update of type `first-update-type`, keep working and use data from dump on failure
 ///
 /// ### testsuite-force-periodic-update
 ///  use it to enable periodic cache update for a component in testsuite environment
@@ -151,9 +131,6 @@ namespace components {
 ///
 /// @see @ref scripts/docs/en/userver/caches.md. pytest_userver.client.Client.invalidate_caches()
 /// for a function to force cache update from testsuite.
-
-// clang-format on
-
 template <typename T>
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
 class CachingComponentBase : public ComponentBase, public cache::DataProvider<T>, protected cache::CacheUpdateTrait {

@@ -15,8 +15,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace components {
 
-// clang-format off
-
 /// @ingroup userver_components
 ///
 /// @brief Component that manages @ref clients::http::ClientWithPlugins.
@@ -27,17 +25,15 @@ namespace components {
 /// Returned references to @ref clients::http::Client live for a lifetime of the
 /// component and are safe for concurrent use.
 ///
-/// ## Static options:
-/// Name | Description | Default value
-/// ---- | ----------- | -------------
-/// core-component | name of components::HttpClientCore component to use | 'http-client-core'
-/// plugins | map of plugins to apply, plugin-name -> ordering index. A plugin component is called "http-client-plugin-" plus the plugin name. | {}
+/// ## Static options of @ref components::HttpClient :
+/// @include{doc} scripts/docs/en/components_schema/core/src/clients/http/component.md
+///
+/// Options inherited from @ref components::ComponentBase :
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 ///
 /// ## Static configuration example:
 ///
 /// @snippet components/common_component_list_test.cpp  Sample http client component config
-
-// clang-format on
 class HttpClient final : public ComponentBase {
 public:
     /// @ingroup userver_component_names

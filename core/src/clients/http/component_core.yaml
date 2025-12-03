@@ -28,7 +28,7 @@ properties:
         type: string
         description: User-Agent HTTP header to show on all requests, result of utils::GetUserverIdentifier()
             if empty
-        defaultDescription: empty
+        defaultDescription: ''
     testsuite-enabled:
         type: boolean
         description: enable testsuite testing support
@@ -46,7 +46,7 @@ properties:
             description: URL prefix
     dns_resolver:
         type: string
-        description: server hostname resolver type (getaddrinfo or async)
+        description: server hostname resolver type
         defaultDescription: 'async'
         enum:
           - getaddrinfo
@@ -65,3 +65,4 @@ properties:
         enum:
           - cancel
           - ignore
+        defaultDescription: 'cancel'

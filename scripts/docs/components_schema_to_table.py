@@ -3,13 +3,14 @@
 import argparse
 import os
 import pathlib
+from typing import Any
 
 import yaml
 
 USERVER_ROOT = pathlib.Path(__file__).parent.parent.parent
 
 
-def normalize_default_value(data) -> str:
+def normalize_default_value(data: Any) -> str:
     if data is True:
         return 'true'
     elif data is False:
@@ -18,24 +19,35 @@ def normalize_default_value(data) -> str:
         return data
 
 
-def merge_descriptions(yaml, other):
-    if yaml.get('description') and other.get('description'):
-        description = yaml['description'].strip()
+def merge_descriptions(yaml_node: dict, other: dict) -> dict:
+    if yaml_node.get('description') and other.get('description'):
+        description = yaml_node['description'].strip()
+        description = f'{description[0].upper()}{description[1:]}'
         if not description.endswith('.'):
             description += '.'
         description += ' <i>Each of the elements:</i> ' + other['description']
 
-        value_merged = yaml.copy()
+        value_merged = yaml_node.copy()
         value_merged['description'] = description
         return value_merged
-    elif yaml.get('description'):
-        return yaml
+    elif yaml_node.get('description'):
+        return yaml_node
     else:
         return other
 
 
-def visit_object(yaml, prefix: str = ''):
-    properties = yaml.get('properties', {})
+def enrich_description(yaml_node: dict) -> str:
+    description = yaml_node['description'].replace('\n', ' ').strip()
+    description = f'{description[0].upper()}{description[1:]}'
+    if not description.endswith('.'):
+        description += '.'
+    if enum := yaml_node.get('enum'):
+        description += ' <i>Possible values:</i> ' + ', '.join(str(x) for x in enum) + '.'
+    return description
+
+
+def visit_object(yaml_node: dict, prefix: str = ''):
+    properties = yaml_node.get('properties', {})
 
     for key, value in properties.items():
         if value.get('type') == 'array':
@@ -49,37 +61,37 @@ def visit_object(yaml, prefix: str = ''):
         else:
             yield (prefix + key, value)
 
-    additionals = yaml.get('additionalProperties')
+    additionals = yaml_node.get('additionalProperties')
     if additionals is True:
-        yield (prefix + '*', yaml)
+        yield (prefix + '*', yaml_node)
     elif not additionals:
         return
     elif additionals.get('type') == 'object':
-        yield from visit_object(yaml['additionalProperties'], prefix + '*.')
+        yield from visit_object(yaml_node['additionalProperties'], prefix + '*.')
     elif additionals.get('type') == 'array':
-        value_merged = merge_descriptions(yaml, additionals['items'])
+        value_merged = merge_descriptions(yaml_node, additionals['items'])
         yield (prefix + '*.[]', value_merged)
     else:
-        value_merged = merge_descriptions(yaml, additionals)
+        value_merged = merge_descriptions(yaml_node, additionals)
         yield (prefix + '*', value_merged)
 
 
-def format_schema(yaml) -> str:
+def format_schema(yaml_node: Any) -> str:
     result = ''
-    key_values = list(visit_object(yaml))
+    key_values = list(visit_object(yaml_node))
     if not key_values:
         result += 'No options'
         return result
 
     max_key_size = max(len(key) for key, _ in key_values)
-    max_value_size = max(len(value['description']) for _, value in key_values)
+    max_value_size = max(len(enrich_description(value)) for _, value in key_values)
 
     result += f'{"Name":{max_key_size}} | {"Description":{max_value_size}} | Default value\n'
     result += f'{"":-<{max_key_size}} | {"":-<{max_value_size}} | {"":-<16}\n'
 
     for key, value in key_values:
         key = key.replace('\n', ' ')
-        description = value['description'].replace('\n', ' ')
+        description = enrich_description(value)
         default = normalize_default_value(value.get('defaultDescription', '--'))
         result += f'{key:{max_key_size}} | {description:{max_value_size}} | {default}\n'
 
@@ -93,7 +105,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def handle_file(ifname: pathlib.Path, output_dir: pathlib.Path):
+def handle_file(ifname: pathlib.Path, output_dir: pathlib.Path) -> None:
     with open(ifname) as ifile:
         content = yaml.load(ifile.read(), yaml.Loader)
 
