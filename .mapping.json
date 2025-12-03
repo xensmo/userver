@@ -4596,6 +4596,7 @@
   "scripts/uctl/uctl.bash_completion.sh":"taxi/uservices/userver/scripts/uctl/uctl.bash_completion.sh",
   "scripts/uctl/uctl.py":"taxi/uservices/userver/scripts/uctl/uctl.py",
   "scripts/userver-create-service":"taxi/uservices/userver/scripts/userver-create-service",
+  "scripts/userver-create-service.py":"taxi/uservices/userver/scripts/userver-create-service.py",
   "service_template/.clang-format":"taxi/uservices/userver/service_template/.clang-format",
   "service_template/.devcontainer/README.md":"taxi/uservices/userver/service_template/.devcontainer/README.md",
   "service_template/.devcontainer/devcontainer.json":"taxi/uservices/userver/service_template/.devcontainer/devcontainer.json",

@@ -334,7 +334,7 @@ endif()
 if(USERVER_FEATURE_CORE)
     _userver_directory_install(
         COMPONENT core
-        PROGRAMS "${USERVER_ROOT_DIR}/scripts/userver-create-service"
+        PROGRAMS "${USERVER_ROOT_DIR}/scripts/userver-create-service.py"
         DESTINATION ${CMAKE_INSTALL_BINDIR}/
         RENAME userver-create-service
     )

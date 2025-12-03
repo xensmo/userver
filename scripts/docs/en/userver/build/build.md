@@ -103,13 +103,13 @@ userver-create-service [--grpc] [--mongo] [--postgresql] myservice
 * service name will be the last segment of the path;
 * without feature flags, the service only has some stubs for HTTP handlers.
 
-If you use @ref devcontainers "Dev Containers", or if you use CPM to download userver,
-run this script as the `userver-create-service` command:
+If you use @ref devcontainers "Dev Containers", or if you @ref userver_cpm "use CPM to download userver",
+run this script to get `userver-create-service` command:
 
 * Linux, macOS, BSD: @ref service-template/userver-create-service.sh
 * Windows: @ref service-template/userver-create-service.bat
 
-In the command, replace `vMAJOR.MINOR` with the actual userver version, or use `develop` to get bleeding-edge features
+In the script, replace `vMAJOR.MINOR` with the actual userver version, or use `develop` to get bleeding-edge features
 at your own risk.
 
 If instead of installing userver you are planning to build userver as a subdirectory,
