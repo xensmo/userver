@@ -15,7 +15,7 @@ namespace components {
 ///
 /// @brief Component for storing files in memory
 ///
-/// ## Static options of @ref components::FsCache :
+/// ## Static options of components::FsCache :
 /// @include{doc} scripts/docs/en/components_schema/core/src/components/fs_cache.md
 ///
 /// Options inherited from @ref components::ComponentBase :

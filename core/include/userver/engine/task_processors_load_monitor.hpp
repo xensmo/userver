@@ -16,7 +16,7 @@ namespace engine {
 /// @brief Component to monitor CPU usage for every TaskProcessor present in
 /// the service, and dump per-thread stats into metrics.
 ///
-/// ## Static options of @ref engine::TaskProcessorsLoadMonitor :
+/// ## Static options of engine::TaskProcessorsLoadMonitor :
 /// @include{doc} scripts/docs/en/components_schema/core/src/engine/task_processors_load_monitor.md
 ///
 /// Options inherited from @ref components::ComponentBase :

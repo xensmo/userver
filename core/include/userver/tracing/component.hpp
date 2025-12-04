@@ -18,7 +18,7 @@ namespace components {
 ///
 /// The component must be configured in service config.
 ///
-/// ## Static options of @ref components::Tracer :
+/// ## Static options of components::Tracer :
 /// @include{doc} scripts/docs/en/components_schema/core/src/tracing/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

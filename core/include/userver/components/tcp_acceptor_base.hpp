@@ -22,7 +22,7 @@ namespace components {
 ///
 /// Each accepted socket is processed in a new coroutine by ProcessSocket of the derived class.
 ///
-/// ## Static options of @ref components::TcpAcceptorBase :
+/// ## Static options of components::TcpAcceptorBase :
 /// @include{doc} scripts/docs/en/components_schema/core/src/components/tcp_acceptor_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :

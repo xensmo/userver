@@ -40,7 +40,7 @@ namespace storages::mongo {
 ///            lock-ttl: 10s
 /// ```
 ///
-/// ## Static options for @ref storages::mongo::DistLockComponentBase :
+/// ## Static options of storages::mongo::DistLockComponentBase :
 /// @include{doc} scripts/docs/en/components_schema/mongo/src/storages/mongo/dist_lock_component_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :

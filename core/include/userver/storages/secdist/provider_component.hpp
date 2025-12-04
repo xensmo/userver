@@ -42,7 +42,7 @@ namespace components {
 ///
 /// The component must be configured in service config.
 ///
-/// ## Static options of @ref components::DefaultSecdistProvider :
+/// ## Static options of components::DefaultSecdistProvider :
 /// @include{doc} scripts/docs/en/components_schema/core/src/storages/secdist/provider_component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

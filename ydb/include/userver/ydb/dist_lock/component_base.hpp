@@ -32,7 +32,7 @@ namespace ydb {
 ///
 /// @snippet ydb/functional_tests/basic/static_config.yaml  sample-dist-lock
 ///
-/// ## Static options of @ref ydb::DistLockComponentBase :
+/// ## Static options of ydb::DistLockComponentBase :
 /// @include{doc} scripts/docs/en/components_schema/ydb/src/ydb/dist_lock/component_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :

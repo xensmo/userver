@@ -27,7 +27,7 @@ properties:
             address: &ports-address
                 type: string
                 description: IPv6 or IPv4 network interface to bind to
-                defaultDescription: "::"
+                defaultDescription: '"::" (all the IPv6 and IPv4 local interfaces)'
             port: &ports-port
                 type: integer
                 description: port to listen on
@@ -47,6 +47,7 @@ properties:
             task_processor:
                 type: string
                 description: task processor to process incoming requests
+                defaultDescription: the 'default_task_processor' value from components::ManagerControllerComponent
             backlog:
                 type: integer
                 description: max count of new connections pending acceptance
@@ -92,26 +93,33 @@ properties:
                     max_url_size:
                         type: integer
                         description: max path/URL size in bytes
+                        defaultDescription: 8192
                     max_request_size:
                         type: integer
                         description: max size of the whole data in bytes
+                        defaultDescription: 1024 * 1024
                     max_headers_size:
                         type: integer
                         description: max headers size in bytes
+                        defaultDescription: 65535
                     request_body_size_log_limit:
                         type: integer
                         description: trim the request to this size before logging
+                        defaultDescription: 512
                     request_headers_size_log_limit:
                         type: integer
                         description: trim request headers to this size before logging
+                        defaultDescription: 512
                     response_data_size_log_limit:
                         type: integer
                         description: trim responses to this size before logging
+                        defaultDescription: 512
                     parse_args_from_body:
                         type: boolean
                         description: optional field to parse request according to
                             x-www-form-urlencoded rules and make parameters accessible
                             as query parameters
+                        defaultDescription: false
                     set_tracing_headers:
                         type: boolean
                         description: whether to set http tracing headers (X-YaTraceId,
@@ -163,10 +171,11 @@ properties:
                         defaultDescription: 20ms
                     http-version:
                         type: string
-                        description: HTTP protocol version - 1.1 or 2
+                        description: HTTP protocol version
                         enum:
                           - 1.1
                           - 2
+                        defaultDescription: 1.1
                     http2-session:
                         type: object
                         description: settings of the HTTP/2.0 session

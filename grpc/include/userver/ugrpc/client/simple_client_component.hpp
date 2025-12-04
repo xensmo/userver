@@ -65,7 +65,7 @@ protected:
 /// ```
 ///
 ///
-/// ## Static options of @ref ugrpc::client::CommonComponent :
+/// ## Static options of ugrpc::client::CommonComponent :
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/client/simple_client_component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

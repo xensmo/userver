@@ -15,7 +15,7 @@ namespace components {
 ///
 /// @brief Component for getting the engine::subprocess::ProcessStarter.
 ///
-/// ## Static options of @ref components::ProcessStarter :
+/// ## Static options of components::ProcessStarter :
 /// @include{doc} scripts/docs/en/components_schema/core/src/components/process_starter.md
 ///
 /// Options inherited from @ref components::ComponentBase :

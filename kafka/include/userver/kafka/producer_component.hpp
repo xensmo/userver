@@ -26,7 +26,7 @@ namespace kafka {
 ///
 /// @snippet samples/kafka_service/testsuite/conftest.py  Kafka service sample - secdist
 ///
-/// ## Static options for @ref kafka::ProducerComponent:
+/// ## Static options of kafka::ProducerComponent:
 /// @include{doc} scripts/docs/en/components_schema/kafka/src/kafka/producer_component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

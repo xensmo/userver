@@ -41,7 +41,7 @@ namespace components {
 ///
 /// @snippet samples/rabbitmq_service/tests/conftest.py  RabbitMQ service sample - secdist
 ///
-/// ## Static options of @ref components::RabbitMQ :
+/// ## Static options of components::RabbitMQ :
 /// @include{doc} scripts/docs/en/components_schema/rabbitmq/src/urabbitmq/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

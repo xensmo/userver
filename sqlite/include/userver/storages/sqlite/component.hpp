@@ -40,7 +40,7 @@ namespace components {
 /// Please see [SQLite documentation](https://www.sqlite.org/pragma.html)
 /// on connection strings.
 ///
-/// ## Static options of @ref components::SQLite :
+/// ## Static options of components::SQLite :
 /// @include{doc} scripts/docs/en/components_schema/sqlite/src/storages/sqlite/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

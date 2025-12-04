@@ -29,7 +29,7 @@ namespace components {
 /// * @ref USERVER_LOG_DYNAMIC_DEBUG
 /// * @ref USERVER_NO_LOG_SPANS
 ///
-/// ## Static options of @ref components::LoggingConfigurator :
+/// ## Static options of components::LoggingConfigurator :
 /// @include{doc} scripts/docs/en/components_schema/core/src/components/logging_configurator.md
 ///
 /// Options inherited from @ref components::ComponentBase :

@@ -25,7 +25,7 @@ namespace components {
 ///
 /// @snippet samples/redis_service/static_config.yaml Sample secdist static config
 ///
-/// ## Static options of @ref components::Secdist :
+/// ## Static options of components::Secdist :
 /// @include{doc} scripts/docs/en/components_schema/core/src/storages/secdist/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

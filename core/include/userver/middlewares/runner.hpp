@@ -60,7 +60,7 @@ yaml_config::Schema GetRunnerComponentBaseSchema();
 ///
 /// @brief Base class for middleware factory component.
 ///
-/// ## Static options of @ref middlewares::MiddlewareFactoryComponentBase :
+/// ## Static options of middlewares::MiddlewareFactoryComponentBase :
 /// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/factory_component_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :
@@ -95,9 +95,7 @@ public:
     /// Always write `return GetStaticConfigSchema();` in this method.
     virtual yaml_config::Schema GetMiddlewareConfigSchema() const { return GetStaticConfigSchema(); }
 
-    static yaml_config::Schema GetStaticConfigSchema() {
-        return impl::GetMiddlewareFactoryComponentBaseSchema();
-    }
+    static yaml_config::Schema GetStaticConfigSchema() { return impl::GetMiddlewareFactoryComponentBaseSchema(); }
 
     /// @cond
     /// Only for internal use.
@@ -125,7 +123,7 @@ private:
 /// So, 'Pipeline' is responsible for the order of middlewares. `RunnerComponentBase` is responsible for creating
 /// middlewares and overriding configs.
 ///
-/// ## Static options of @ref middlewares::RunnerComponentBase :
+/// ## Static options of middlewares::RunnerComponentBase :
 /// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/runner_component_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :
@@ -135,9 +133,7 @@ class RunnerComponentBase
     : public components::ComponentBase,
       public impl::PipelineCreatorInterface<MiddlewareBase, HandlerInfo> {
 public:
-    static yaml_config::Schema GetStaticConfigSchema() {
-        return impl::GetRunnerComponentBaseSchema();
-    }
+    static yaml_config::Schema GetStaticConfigSchema() { return impl::GetRunnerComponentBaseSchema(); }
 
 protected:
     using MiddlewareFactory = MiddlewareFactoryComponentBase<MiddlewareBase, HandlerInfo>;

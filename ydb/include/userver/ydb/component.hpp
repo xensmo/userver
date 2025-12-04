@@ -32,7 +32,7 @@ class Driver;
 /// Provides access to @ref ydb::TableClient, @ref ydb::TopicClient, @ref ydb::FederatedTopicClient,
 /// @ref ydb::CoordinationClient.
 ///
-/// ## Static options of @ref ydb::YdbComponent :
+/// ## Static options of ydb::YdbComponent :
 /// @include{doc} scripts/docs/en/components_schema/ydb/src/ydb/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

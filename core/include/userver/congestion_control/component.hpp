@@ -24,7 +24,7 @@ class Controller;
 /// * @ref USERVER_RPS_CCONTROL
 /// * @ref USERVER_RPS_CCONTROL_ENABLED
 ///
-/// ## Static options of @ref congestion_control::Component :
+/// ## Static options of congestion_control::Component :
 /// @include{doc} scripts/docs/en/components_schema/core/src/congestion_control/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

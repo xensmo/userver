@@ -43,7 +43,7 @@ namespace storages::mysql {
 /// primary detection and always considers the first host in `hosts` list
 /// an only primary node in the cluster.
 ///
-/// ## Static options of @ref storages::mysql::Component :
+/// ## Static options of storages::mysql::Component :
 /// @include{doc} scripts/docs/en/components_schema/mysql/src/storages/mysql/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

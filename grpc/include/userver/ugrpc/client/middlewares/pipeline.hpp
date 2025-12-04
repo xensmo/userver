@@ -21,7 +21,7 @@ namespace ugrpc::client {
 /// You must register your client middleware in this component.
 /// Use middlewares::MiddlewareDependencyBuilder to set a dependency of your middleware from others.
 ///
-/// ## Static options of @ref ugrpc::client::MiddlewarePipelineComponent :
+/// ## Static options of ugrpc::client::MiddlewarePipelineComponent :
 /// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/pipeline.md
 ///
 /// Options inherited from @ref components::ComponentBase :

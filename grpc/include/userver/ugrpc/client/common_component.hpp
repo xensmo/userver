@@ -21,7 +21,7 @@ namespace ugrpc::client {
 ///
 /// @brief Contains common machinery that's required for all ugrpc clients
 ///
-/// ## Static options of @ref ugrpc::client::CommonComponent :
+/// ## Static options of ugrpc::client::CommonComponent :
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/client/common_component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

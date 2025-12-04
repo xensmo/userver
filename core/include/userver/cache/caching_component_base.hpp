@@ -51,7 +51,7 @@ namespace components {
 /// * @ref USERVER_CACHES
 /// * @ref USERVER_DUMPS
 ///
-/// ## Static options of @ref components::CachingComponentBase :
+/// ## Static options of components::CachingComponentBase :
 /// @include{doc} scripts/docs/en/components_schema/core/src/cache/caching_component_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :

@@ -45,7 +45,7 @@ std::chrono::milliseconds GetMongoCacheUpdateCorrection(const ComponentConfig&);
 /// For avoiding "memory leaks", see the respective section
 /// in @ref components::CachingComponentBase.
 ///
-/// ## Static options or @ref components::MongoCache :
+/// ## Static options of components::MongoCache :
 ///
 /// @include{doc} scripts/docs/en/components_schema/mongo/src/cache/base_mongo_cache.md
 ///

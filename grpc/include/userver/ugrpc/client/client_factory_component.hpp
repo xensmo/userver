@@ -43,7 +43,7 @@ using MiddlewareRunnerComponentBase = USERVER_NAMESPACE::middlewares::RunnerComp
 /// service config should be distributed via the name resolution process.
 /// We allow setting default service_config: pass desired JSON literal to `default-service-config` parameter
 ///
-/// ## Static options of @ref ugrpc::client::ClientFactoryComponent :
+/// ## Static options of ugrpc::client::ClientFactoryComponent :
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/client/client_factory_component.md
 ///
 /// Options inherited from @ref middlewares::RunnerComponentBase :

@@ -17,7 +17,7 @@ namespace ugrpc::client::middlewares::origin {
 /// @brief gRPC client middleware that sets `x-origin` metadata. gRPC server will then copy that to `useragent` tag
 /// in server request log.
 ///
-/// ## Static options of @ref ugrpc::client::middlewares::log::Component:
+/// ## Static options of ugrpc::client::middlewares::log::Component:
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/client/middlewares/origin/component.md
 ///
 /// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :

@@ -45,7 +45,7 @@ namespace components {
 /// ```
 /// You must specify one of `dbalias` or `dbconnection`.
 ///
-/// ## Static options for @ref components::Mongo :
+/// ## Static options of components::Mongo :
 /// @include{doc} scripts/docs/en/components_schema/mongo/src/storages/mongo/component.md
 ///
 /// Options inherited from @ref components::MultiMongo

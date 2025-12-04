@@ -39,7 +39,7 @@ namespace components {
 ///
 /// @snippet samples/clickhouse_service/tests/conftest.py  Clickhouse service sample - secdist
 ///
-/// ## Static options of @ref components::ClickHouse :
+/// ## Static options of components::ClickHouse :
 /// @include{doc} scripts/docs/en/components_schema/clickhouse/src/storages/clickhouse/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

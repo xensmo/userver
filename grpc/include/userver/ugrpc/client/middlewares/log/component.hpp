@@ -22,7 +22,7 @@ namespace ugrpc::client::middlewares::log {
 /// @warning Logs are currently written with log level `debug` by default, which typically means that they are not
 /// written in production. See details below.
 ///
-/// ## Static options of @ref ugrpc::client::middlewares::log::Component:
+/// ## Static options of ugrpc::client::middlewares::log::Component:
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/client/middlewares/log/component.md
 ///
 /// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :

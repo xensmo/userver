@@ -34,7 +34,7 @@ using MiddlewareRunnerComponentBase = USERVER_NAMESPACE::middlewares::RunnerComp
 ///
 /// @brief Base class for all the gRPC service components.
 ///
-/// ## Static options of @ref ugrpc::server::ServiceComponentBase :
+/// ## Static options of ugrpc::server::ServiceComponentBase :
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/server/service_component_base.md
 ///
 /// Options inherited from @ref middlewares::RunnerComponentBase :

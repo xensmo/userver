@@ -51,7 +51,7 @@ yaml_config::Schema GetLruCacheComponentBaseSchema();
 /// ## LruCacheComponent Dynamic config
 /// * @ref USERVER_LRU_CACHES
 ///
-/// ## Static options of @ref cache::LruCacheComponent :
+/// ## Static options of cache::LruCacheComponent :
 /// @include{doc} scripts/docs/en/components_schema/core/src/cache/lru_cache_component_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :

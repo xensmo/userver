@@ -115,7 +115,7 @@ namespace components {
 /// Please see [PostgreSQL documentation](https://www.postgresql.org/docs/12/libpq-connect.html#LIBPQ-CONNSTRING)
 /// on connection strings.
 ///
-/// ## Static options of @ref components::Postgres :
+/// ## Static options of components::Postgres :
 /// @include{doc} scripts/docs/en/components_schema/postgresql/src/storages/postgres/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

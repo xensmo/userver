@@ -54,7 +54,7 @@ properties:
                 fs-task-processor:
                     type: string
                     description: task processor for disk I/O operations for this logger
-                    defaultDescription: fs-task-processor of the logger component
+                    defaultDescription: top-level `fs-task-processor` option
                 testsuite-capture:
                     type: object
                     description: if exists, setups additional TCP log sink for testing

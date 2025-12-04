@@ -41,7 +41,7 @@ namespace storages::postgres {
 /// ```
 /// See config `POSTGRES_DISTLOCK_SETTINGS`, some of parameters can be dynamically overridden.
 ///
-/// ## Static options of @ref storages::postgres::DistLockComponentBase :
+/// ## Static options of storages::postgres::DistLockComponentBase :
 /// @include{doc} scripts/docs/en/components_schema/postgresql/src/storages/postgres/dist_lock_component_base.md
 ///
 /// Options inherited from @ref components::ComponentBase :

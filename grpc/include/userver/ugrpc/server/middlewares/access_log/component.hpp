@@ -25,7 +25,7 @@ inline const utils::AnyStorageDataTag<ugrpc::server::StorageContext, logging::Lo
 ///
 /// This middleware is disabled and unregistered by default.
 ///
-/// ## Static options of @ref ugrpc::server::middlewares::access_log::Component :
+/// ## Static options of ugrpc::server::middlewares::access_log::Component :
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/server/middlewares/access_log/component.md
 ///
 /// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :

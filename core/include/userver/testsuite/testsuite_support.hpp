@@ -28,7 +28,7 @@ namespace components {
 ///
 /// Provides additional functionality for testing, e.g. forced cache updates.
 ///
-/// ## Static options of @ref components::TestsuiteSupport :
+/// ## Static options of components::TestsuiteSupport :
 /// @include{doc} scripts/docs/en/components_schema/core/src/testsuite/testsuite_support.md
 ///
 /// Options inherited from @ref components::ComponentBase :

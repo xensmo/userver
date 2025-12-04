@@ -17,11 +17,11 @@ namespace storages::rocks {
 ///
 /// @brief RocksDB client component.
 ///
-/// ## Static options of @ref storages::rocks::Component :
+/// ## Static options of storages::rocks::Component :
 /// @include{doc} scripts/docs/en/components_schema/rocks/src/storages/rocks/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :
-/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md                         | -
+/// @include{doc} scripts/docs/en/components_schema/core/src/components/impl/component_base.md
 class Component : public components::ComponentBase {
 public:
     Component(const components::ComponentConfig&, const components::ComponentContext&);

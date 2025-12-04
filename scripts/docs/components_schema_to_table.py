@@ -16,7 +16,10 @@ def normalize_default_value(data: Any) -> str:
     elif data is False:
         return 'false'
     else:
-        return str(data)
+        value = str(data).replace('<', '&lt;').replace('>', '&gt;')
+        if not value:
+            return '--'
+        return value
 
 
 def merge_descriptions(yaml_node: dict, other: dict) -> dict:
@@ -45,7 +48,7 @@ def merge_descriptions(yaml_node: dict, other: dict) -> dict:
 
 
 def enrich_description(yaml_node: dict) -> str:
-    description = yaml_node['description'].replace('\n', ' ').strip()
+    description = yaml_node['description'].replace('\n', ' ').replace('\r', '').strip()
     description = f'{description[0].upper()}{description[1:]}'
     if not description.endswith('.'):
         description += '.'
@@ -56,6 +59,10 @@ def enrich_description(yaml_node: dict) -> str:
 
 def visit_object(yaml_node: dict, prefix: str = ''):
     properties = yaml_node.get('properties', {})
+
+    additionals = yaml_node.get('additionalProperties')
+    if not additionals and yaml_node.get('description') and prefix:
+        yield ('__' + prefix.removesuffix('.') + '__', yaml_node)
 
     for key, value in properties.items():
         if value.get('type') == 'array':
@@ -98,7 +105,7 @@ def format_schema(yaml_node: Any) -> str:
     result += f'{"":-<{max_key_size}} | {"":-<{max_value_size}} | {"":-<16}\n'
 
     for key, value in key_values:
-        key = key.replace('\n', ' ')
+        key = key.replace('\n', ' ').replace('\r', '')
         description = enrich_description(value)
         default = normalize_default_value(value.get('defaultDescription', '--'))
         result += f'{key:{max_key_size}} | {description:{max_value_size}} | {default}\n'

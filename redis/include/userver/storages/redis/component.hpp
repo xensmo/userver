@@ -53,7 +53,7 @@ namespace components {
 /// * @ref REDIS_SUBSCRIPTIONS_REBALANCE_MIN_INTERVAL_SECONDS
 /// * @ref REDIS_WAIT_CONNECTED
 ///
-/// ## Static options of @ref components::Redis :
+/// ## Static options of components::Redis :
 /// @include{doc} scripts/docs/en/components_schema/redis/src/storages/redis/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

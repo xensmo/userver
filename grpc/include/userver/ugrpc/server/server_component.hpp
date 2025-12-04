@@ -19,7 +19,7 @@ struct ServiceDefaults;
 ///
 /// @brief Component that configures and manages the gRPC server.
 ///
-/// ## Static options of @ref ugrpc::server::ServerComponent :
+/// ## Static options of ugrpc::server::ServerComponent :
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/server/server_component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

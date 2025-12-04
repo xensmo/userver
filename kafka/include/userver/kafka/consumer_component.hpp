@@ -33,7 +33,7 @@ class Consumer;
 ///
 /// @snippet samples/kafka_service/testsuite/conftest.py  Kafka service sample - secdist
 ///
-/// ## Static options for @ref kafka::ConsumerComponent :
+/// ## Static options of kafka::ConsumerComponent :
 /// @include{doc} scripts/docs/en/components_schema/kafka/src/kafka/consumer_component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

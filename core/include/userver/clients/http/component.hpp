@@ -25,7 +25,7 @@ namespace components {
 /// Returned references to @ref clients::http::Client live for a lifetime of the
 /// component and are safe for concurrent use.
 ///
-/// ## Static options of @ref components::HttpClient :
+/// ## Static options of components::HttpClient :
 /// @include{doc} scripts/docs/en/components_schema/core/src/clients/http/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

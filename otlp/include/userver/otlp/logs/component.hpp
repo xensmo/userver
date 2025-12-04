@@ -21,7 +21,7 @@ class Logger;
 ///
 /// @brief Component to configure logging via OTLP collector.
 ///
-/// ## Static options of @ref otlp::LoggerComponent :
+/// ## Static options of otlp::LoggerComponent :
 /// @include{doc} scripts/docs/en/components_schema/otlp/src/otlp/logs/component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

@@ -39,7 +39,7 @@ public:
 ///
 /// The component can be configured in service config.
 ///
-/// ## Static options of @ref tracing::DefaultTracingManagerLocator :
+/// ## Static options of tracing::DefaultTracingManagerLocator :
 /// @include{doc} scripts/docs/en/components_schema/core/src/tracing/manager_component.md
 ///
 /// Options inherited from @ref components::ComponentBase :

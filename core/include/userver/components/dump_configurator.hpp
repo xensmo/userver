@@ -18,7 +18,7 @@ namespace components {
 ///
 /// The component must be configured in service config.
 ///
-/// ## Static options of @ref components::DumpConfigurator :
+/// ## Static options of components::DumpConfigurator :
 /// @include{doc} scripts/docs/en/components_schema/core/src/components/dump_configurator.md
 ///
 /// Options inherited from @ref components::ComponentBase :

@@ -21,7 +21,7 @@ namespace components {
 ///
 /// Periodically queries resource usage info and reports is as a set of metrics.
 ///
-/// ## Static options of @ref components::SystemStatisticsCollector :
+/// ## Static options of components::SystemStatisticsCollector :
 /// @include{doc} scripts/docs/en/components_schema/core/src/utils/statistics/system_statistics_collector.md
 ///
 /// Options inherited from @ref components::ComponentBase :

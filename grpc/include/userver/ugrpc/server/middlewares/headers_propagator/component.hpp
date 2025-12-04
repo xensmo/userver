@@ -16,7 +16,7 @@ namespace ugrpc::server::middlewares::headers_propagator {
 ///
 /// @brief Component for gRPC server headers_propagator
 ///
-/// ## Static options of @ref ugrpc::server::middlewares::headers_propagator::Component :
+/// ## Static options of ugrpc::server::middlewares::headers_propagator::Component :
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/server/middlewares/headers_propagator/component.md
 ///
 /// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :

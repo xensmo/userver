@@ -16,7 +16,7 @@ namespace ugrpc::client::middlewares::headers_propagator {
 ///
 /// @brief gRPC client middleware for sending headers stored by the respective HTTP and gRPC server middlewares.
 ///
-/// ## Static options of @ref ugrpc::client::middlewares::headers_propagator::Component:
+/// ## Static options of ugrpc::client::middlewares::headers_propagator::Component:
 /// @include{doc} scripts/docs/en/components_schema/grpc/src/ugrpc/client/middlewares/headers_propagator/component.md
 ///
 /// Options inherited from @ref middlewares::MiddlewareFactoryComponentBase :

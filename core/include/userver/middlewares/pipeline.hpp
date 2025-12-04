@@ -70,7 +70,7 @@ std::string EndOfGroup() {
 
 /// @brief A base component to create middlewares pipeline.
 ///
-/// ## Static options of @ref middlewares::impl::AnyMiddlewarePipelineComponent :
+/// ## Static options of middlewares::impl::AnyMiddlewarePipelineComponent :
 /// @include{doc} scripts/docs/en/components_schema/core/src/middlewares/pipeline.md
 ///
 /// Options inherited from @ref components::ComponentBase :
