@@ -590,7 +590,14 @@ void ConnectionPool::Clear() {
     while (conn_consumer_.PopNoblock(connection)) {
         delete connection;
     }
+
+    // A close task may still call Push(),
+    // so cleanup queue after the task storage
     close_task_storage_.CancelAndWait();
+
+    queue_.reset();
+    std::move(conn_consumer_).Reset();
+    std::move(conn_producer_).Reset();
 }
 
 void ConnectionPool::CleanupConnection(Connection* connection) {
