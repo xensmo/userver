@@ -7,6 +7,7 @@
 #include <userver/engine/sleep.hpp>
 #include <userver/server/request/task_inherited_data.hpp>
 #include <userver/tracing/tags.hpp>
+#include <userver/utils/fast_scope_guard.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
 
 #include <userver/ugrpc/client/call_context.hpp>

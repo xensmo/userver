@@ -3,6 +3,8 @@
 #include <optional>
 #include <string_view>
 
+#include <boost/container/flat_map.hpp>
+
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
 

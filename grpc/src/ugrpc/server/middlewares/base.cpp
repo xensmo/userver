@@ -11,8 +11,9 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::server {
 
-MiddlewareCallContext::MiddlewareCallContext(utils::impl::InternalTag, impl::CallState& state)
-    : CallContextBase(utils::impl::InternalTag{}, state)
+MiddlewareCallContext::MiddlewareCallContext(utils::impl::InternalTag, impl::CallState& state, grpc::Status& status)
+    : CallContextBase(utils::impl::InternalTag{}, state),
+      status_(status)
 {}
 
 void MiddlewareCallContext::SetError(grpc::Status&& status) noexcept {

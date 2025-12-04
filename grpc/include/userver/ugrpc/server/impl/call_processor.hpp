@@ -35,14 +35,14 @@ void SetupSpan(
     std::string_view method_name
 );
 
-grpc::Status ReportHandlerError(const std::exception& ex, CallState& state) noexcept;
-
-void ReportRpcInterruptedError(CallState& state) noexcept;
-
 grpc::Status ReportCustomError(const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex, CallState& state)
     noexcept;
 
-void ReportFinish(bool finish_op_succeeded, const grpc::Status& status, CallState& state) noexcept;
+grpc::Status ReportHandlerError(const std::exception& ex, CallState& state) noexcept;
+
+void ReportFinished(const grpc::Status& status, CallState& state) noexcept;
+
+void ReportInterrupted(CallState& state) noexcept;
 
 template <typename Response>
 void UnpackResult(Result<Response>&& result, std::optional<Response>& response, grpc::Status& status) {
@@ -61,6 +61,28 @@ void UnpackResult(StreamingResult<Response>&& result, std::optional<Response>& r
         }
     } else {
         status = result.ExtractStatus();
+    }
+}
+
+template <typename CallTraits>
+bool Finish(
+    impl::Responder<CallTraits>& responder,
+    const std::optional<typename CallTraits::Response>& response,
+    grpc::Status& status
+) {
+    if (status.ok()) {
+        if constexpr (IsServerStreaming(CallTraits::kCallKind)) {
+            if (response.has_value()) {
+                return responder.Finish(*response);
+            } else {
+                return responder.Finish();
+            }
+        } else {
+            UINVARIANT(response.has_value(), "response should not be empty");
+            return responder.Finish(*response);
+        }
+    } else {
+        return responder.FinishWithError(status);
     }
 }
 
@@ -84,7 +106,7 @@ public:
     )
         : state_(std::move(params), CallTraits::kCallKind),
           responder_(state_, raw_responder),
-          middleware_call_context_(utils::impl::InternalTag{}, state_),
+          middleware_call_context_(utils::impl::InternalTag{}, state_, status_),
           initial_request_(initial_request),
           service_(service),
           service_method_(service_method)
@@ -102,52 +124,29 @@ public:
     void DoCall() {
         RunOnCallStart();
 
+        bool finished = false;
+
         // Don't keep the config snapshot for too long, especially for streaming RPCs.
         state_.config_snapshot.reset();
 
-        // Final response is the response sent to the client together with status in the final batch.
-        std::optional<Response> final_response;
-
-        if (!Status().ok()) {
-            RunOnCallFinish(final_response);
-            impl::ReportFinish(responder_.FinishWithError(Status()), Status(), state_);
-            return;
+        std::optional<Response> response;
+        if (!engine::current_task::ShouldCancel() && status_.ok()) {
+            RunWithCatch([this, &response] {
+                auto result = CallHandler();
+                impl::UnpackResult(std::move(result), response, status_);
+            });
         }
 
-        RunWithCatch([this, &final_response] {
-            auto result = CallHandler();
-            impl::UnpackResult(std::move(result), final_response, Status());
-        });
-
-        // Streaming handler can detect RPC breakage during a network interaction => IsInterrupted().
-        // RpcFinishedEvent can signal RPC interruption while in the handler => ShouldCancel.
-        if (responder_.IsInterrupted() || engine::current_task::ShouldCancel()) {
-            impl::ReportRpcInterruptedError(state_);
-            // Don't run OnCallFinish.
-            return;
+        if (!engine::current_task::ShouldCancel() && !responder_.IsInterrupted()) {
+            RunOnCallFinish(response);
+            finished = impl::Finish(responder_, response, status_);
         }
 
-        if (!Status().ok()) {
-            RunOnCallFinish(final_response);
-            impl::ReportFinish(responder_.FinishWithError(Status()), Status(), state_);
-            return;
+        if (finished) {
+            impl::ReportFinished(status_, state_);
+        } else {
+            impl::ReportInterrupted(state_);
         }
-
-        RunOnCallFinish(final_response);
-
-        if (!Status().ok()) {
-            impl::ReportFinish(responder_.FinishWithError(Status()), Status(), state_);
-            return;
-        }
-
-        if constexpr (IsServerStreaming(CallTraits::kCallKind)) {
-            if (!final_response) {
-                impl::ReportFinish(responder_.Finish(), Status(), state_);
-                return;
-            }
-        }
-        UASSERT(final_response);
-        impl::ReportFinish(responder_.Finish(*final_response), Status(), state_);
     }
 
 private:
@@ -169,7 +168,7 @@ private:
         UASSERT(success_pre_hooks_count_ == 0);
         for (const auto& m : state_.middlewares) {
             RunWithCatch([this, &m] { m->OnCallStart(middleware_call_context_); });
-            if (!Status().ok()) {
+            if (!status_.ok()) {
                 return;
             }
             // On fail, we must call OnRpcFinish only for middlewares for which OnRpcStart has been called successfully.
@@ -177,29 +176,29 @@ private:
             ++success_pre_hooks_count_;
             if constexpr (std::is_base_of_v<google::protobuf::Message, InitialRequest>) {
                 RunWithCatch([this, &m] { m->PostRecvMessage(middleware_call_context_, initial_request_); });
-                if (!Status().ok()) {
+                if (!status_.ok()) {
                     return;
                 }
             }
         }
     }
 
-    void RunOnCallFinish(std::optional<Response>& final_response) {
+    void RunOnCallFinish(std::optional<Response>& response) {
         const auto& mids = state_.middlewares;
         const auto rbegin = mids.rbegin() + (mids.size() - success_pre_hooks_count_);
         for (auto it = rbegin; it != mids.rend(); ++it) {
             const auto& middleware = *it;
 
             if constexpr (std::is_base_of_v<google::protobuf::Message, Response>) {
-                if (Status().ok() && final_response.has_value()) {
-                    RunWithCatch([this, &middleware, &final_response] {
-                        middleware->PreSendMessage(middleware_call_context_, *final_response);
+                if (status_.ok() && response.has_value()) {
+                    RunWithCatch([this, &middleware, &response] {
+                        middleware->PreSendMessage(middleware_call_context_, *response);
                     });
                 }
             }
 
             // We must call all OnRpcFinish despite the failures. So, don't check the status.
-            RunWithCatch([this, &middleware] { middleware->OnCallFinish(middleware_call_context_, Status()); });
+            RunWithCatch([this, &middleware] { middleware->OnCallFinish(middleware_call_context_, status_); });
         }
     }
 
@@ -208,23 +207,22 @@ private:
         try {
             func();
         } catch (MiddlewareRpcInterruptionError& ex) {
-            Status() = ex.ExtractStatus();
+            status_ = ex.ExtractStatus();
         } catch (ErrorWithStatus& ex) {
-            Status() = ex.ExtractStatus();
+            status_ = ex.ExtractStatus();
         } catch (const USERVER_NAMESPACE::server::handlers::CustomHandlerException& ex) {
-            Status() = impl::ReportCustomError(ex, state_);
+            status_ = impl::ReportCustomError(ex, state_);
         } catch (const RpcInterruptedError& /*ex*/) {
             UASSERT(responder_.IsInterrupted());
             // RPC interruption will be reported below.
         } catch (const std::exception& ex) {
-            Status() = impl::ReportHandlerError(ex, state_);
+            status_ = impl::ReportHandlerError(ex, state_);
         }
     }
 
-    grpc::Status& Status() { return middleware_call_context_.GetStatus(utils::impl::InternalTag{}); }
-
     CallState state_;
     Responder responder_;
+    grpc::Status status_;
     MiddlewareCallContext middleware_call_context_;
     // Initial request is the request which is sent to the service together with RPC initiation.
     // Unary-request RPCs have an initial request, client-streaming RPCs don't.

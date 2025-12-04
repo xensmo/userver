@@ -43,7 +43,7 @@ class MiddlewareCallContext final : public CallContextBase {
 public:
     /// @cond
     // For internal use only
-    MiddlewareCallContext(utils::impl::InternalTag, impl::CallState& state);
+    MiddlewareCallContext(utils::impl::InternalTag, impl::CallState& state, grpc::Status& status);
     /// @endcond
 
     /// @brief Aborts the RPC, returning the specified status to the upstream client, see details below.
@@ -80,13 +80,10 @@ public:
     /// @cond
     // For internal use only.
     ugrpc::impl::RpcStatisticsScope& GetStatistics(utils::impl::InternalTag);
-
-    // For internal use only.
-    grpc::Status& GetStatus(utils::impl::InternalTag) { return status_; }
     /// @endcond
 
 private:
-    grpc::Status status_;
+    grpc::Status& status_;
 };
 
 /// @ingroup userver_base_classes userver_grpc_server_middlewares
