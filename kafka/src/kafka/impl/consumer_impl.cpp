@@ -681,21 +681,10 @@ void ConsumerImpl::AccountPolledMessageStat(const Message& polled_message) {
     const auto message_timestamp = polled_message.GetTimestamp();
     if (message_timestamp) {
         const auto take_time = std::chrono::system_clock::now().time_since_epoch();
-        const auto ms_duration =
+        auto ms_duration =
             std::chrono::duration_cast<std::chrono::milliseconds>(take_time - message_timestamp.value()).count();
-        // 1 day to ms
-        if (ms_duration > 60 * 60 * 24 * 1000 || ms_duration < 0) {
-            LOG_WARNING(
-                "Erroneous wait time for a message in a topic `{}` partition `{}` offset `{}` key `{}` "
-                "ms_duration `{}`ms take_time `{}`ns message_time `{}`ms",
-                polled_message.GetTopic(),
-                polled_message.GetPartition(),
-                polled_message.GetOffset(),
-                polled_message.GetKey(),
-                ms_duration,
-                take_time.count(),
-                message_timestamp.value().count()
-            );
+        if (ms_duration < 0) {
+            ms_duration = 0;
         }
         topic_stats->avg_ms_spent_time.GetCurrentCounter().Account(ms_duration);
     } else {
