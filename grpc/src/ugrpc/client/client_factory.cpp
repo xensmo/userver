@@ -3,6 +3,8 @@
 #include <userver/logging/log.hpp>
 #include <userver/testsuite/grpc_control.hpp>
 
+#include <userver/ugrpc/impl/completion_queue_pool_base.hpp>
+
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client {
@@ -33,8 +35,8 @@ impl::ClientInternals ClientFactory::MakeClientInternals(
     UINVARIANT(!client_settings.endpoint.empty(), "Client endpoint is empty");
 
     LOG_INFO()
-        << "MakeClient " << client_settings.client_name
-        << ": retry-config.attempts=" << client_factory_settings_.retry_config.attempts
+        << "MakeClient " << client_settings.client_name << ": completion-queue-count=" << completion_queues_.GetSize()
+        << ", retry-config.attempts=" << client_factory_settings_.retry_config.attempts
         << ", channel-count=" << client_factory_settings_.channel_count
         << ", dedicated-channel-counts: " << client_settings.dedicated_methods_config;
 
