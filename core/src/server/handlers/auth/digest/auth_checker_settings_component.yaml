@@ -5,16 +5,18 @@ properties:
     algorithm:
         type: string
         description: algorithm for hashing nonce
+        defaultDescription: sha256
     domains:
         type: array
         description: domains for use
-        defaultDescription: /
+        defaultDescription: "['/']"
         items:
             type: string
             description: domain name
     qops:
         type: array
         description: qop-options
+        defaultDescription: "['auth']"
         items:
             type: string
             description: qop name
