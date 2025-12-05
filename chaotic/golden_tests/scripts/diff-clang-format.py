@@ -5,10 +5,12 @@ import subprocess
 import sys
 import tempfile
 
+SIMPLE_STYLE = '{BasedOnStyle: Google, ColumnLimit: 120}'
+
 
 def is_binary_available(binary_name: str) -> bool:
     try:
-        subprocess.checked_call(['which', binary_name], stdout=subprocess.DEVNULL)
+        subprocess.check_call(['which', binary_name], stdout=subprocess.DEVNULL)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -28,7 +30,7 @@ def parse_args():
 def walk_xpp(path: str) -> list[str]:
     result = []
 
-    extensions = {'.hpp', '.cpp', '.ipp'}
+    extensions = ('.hpp', '.cpp', '.ipp')
     for root, _, files in os.walk(path):
         for file in files:
             if file.lower().endswith(extensions):
@@ -54,7 +56,7 @@ def main():
         shutil.copytree(args.golden_dir, golden_copy)
         shutil.copytree(args.generated_dir, generated_copy)
 
-        subprocess.check_call(['clang-format', '-i'] + walk_xpp(tmpdir))
+        subprocess.check_call(['clang-format', '--style', SIMPLE_STYLE, '-i'] + walk_xpp(tmpdir))
 
         result = subprocess.run(['diff', '-uNrpB', golden_copy, generated_copy], capture_output=True, text=True)
 

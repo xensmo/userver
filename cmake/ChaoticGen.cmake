@@ -53,11 +53,14 @@ _userver_prepare_chaotic()
 
 # Generates ${TARGET} cmake target for C++ types, parsers, serializers from JSONSchema file(s).
 #
-# Options: - OUTPUT_DIR - where to put generated .cpp/.hpp/.ipp files, usually ${CMAKE_CURRENT_BINARY_DIR}/smth -
-# RELATIVE_TO - --relative-to option to chaotic-gen - FORMAT - can be ON/OFF, enable to format generated files, defaults
-# to USERVER_CHAOTIC_FORMAT - SCHEMAS - JSONSchema source files - ARGS - extra args to chaotic-gen -
-# INSTALL_INCLUDES_COMPONENT - component to install generated includes
-# LINK_TARGETS - targets to link (used by x-usrv-cpp-type)
+# Options:
+# - OUTPUT_DIR - where to put generated .cpp/.hpp/.ipp files, usually ${CMAKE_CURRENT_BINARY_DIR}/smth
+# - RELATIVE_TO - --relative-to option to chaotic-gen
+# - FORMAT - can be ON/OFF, enable to format generated files, defaults to USERVER_CHAOTIC_FORMAT
+# - SCHEMAS - JSONSchema source files
+# - ARGS - extra args to chaotic-gen
+# - INSTALL_INCLUDES_COMPONENT - component to install generated includes
+# - LINK_TARGETS - targets to link (used by x-usrv-cpp-type)
 function(userver_target_generate_chaotic TARGET)
     set(OPTIONS GENERATE_SERIALIZERS PARSE_EXTRA_FORMATS)
     set(ONE_VALUE_ARGS OUTPUT_DIR RELATIVE_TO FORMAT INSTALL_INCLUDES_COMPONENT OUTPUT_PREFIX ERASE_PATH_PREFIX)
@@ -149,7 +152,7 @@ function(userver_target_generate_chaotic TARGET)
         OUTPUT ${SCHEMAS}
         COMMAND ${CMAKE_COMMAND} -E env "USERVER_PYTHON=${USERVER_CHAOTIC_PYTHON_BINARY}" "${CHAOTIC_BIN}"
                 ${CHAOTIC_EXTRA_ARGS} ${CHAOTIC_ARGS} ${PARSE_SCHEMAS}
-                --clang-format "" # "${CLANG_FORMAT}"
+                --clang-format "${CLANG_FORMAT}"
         DEPENDS ${PARSE_SCHEMAS}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         VERBATIM ${CODEGEN}

@@ -22,7 +22,7 @@ userver_target_generate_chaotic(
 add_test(
     NAME chaotic-golden
     COMMAND "${USERVER_CHAOTIC_PYTEST_PYTHON_BINARY}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/diff-clang-format.py
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/diff-clang-format.py"
     --golden-dir "${CMAKE_CURRENT_SOURCE_DIR}/output"
     --generated-dir "${CMAKE_CURRENT_BINARY_DIR}/src"
 )
