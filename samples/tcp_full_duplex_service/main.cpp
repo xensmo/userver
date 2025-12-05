@@ -13,7 +13,7 @@
 #include <userver/utils/statistics/metric_tag.hpp>
 #include <userver/utils/statistics/metrics_storage.hpp>
 
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 
@@ -138,8 +138,7 @@ int main(int argc, const char* const argv[]) {
             .Append<server::handlers::TestsControl>()
             .Append<components::TestsuiteSupport>()
             .Append<clients::dns::Component>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>();
+            .AppendComponentList(clients::http::ComponentList());
 
     return utils::DaemonMain(argc, argv, component_list);
 }

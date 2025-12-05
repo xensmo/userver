@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <userver/clients/dns/component.hpp>
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/concurrent/variable.hpp>
@@ -161,8 +161,7 @@ int main(int argc, char* argv[]) {
             .Append<components::DefaultSecdistProvider>()
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>();
+            .AppendComponentList(clients::http::ComponentList());
 
     return utils::DaemonMain(argc, argv, components_list);
 }

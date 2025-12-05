@@ -5,6 +5,7 @@
 
 #include <userver/clients/dns/component.hpp>
 #include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 
 #include <userver/utest/using_namespace_userver.hpp>
 
@@ -105,9 +106,8 @@ int main(int argc, char* argv[]) {
         components::MinimalServerComponentList()        //
             .Append<samples::fbs_handle::FbsSumEcho>()  //
 
-            .Append<clients::dns::Component>()            //
-            .Append<components::HttpClientCore>()         //
-            .Append<components::HttpClient>()             //
-            .Append<samples::fbs_request::FbsRequest>();  //
+            .Append<clients::dns::Component>()                    //
+            .AppendComponentList(clients::http::ComponentList())  //
+            .Append<samples::fbs_request::FbsRequest>();          //
     return utils::DaemonMain(argc, argv, component_list);
 }

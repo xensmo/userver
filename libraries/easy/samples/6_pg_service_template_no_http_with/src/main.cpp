@@ -4,6 +4,7 @@
 #include <userver/yaml_config/merge_schemas.hpp>
 
 #include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component_context.hpp>
 
 #include <userver/clients/dns/component.hpp>
@@ -96,8 +97,7 @@ int main(int argc, char* argv[]) {
     auto component_list =
         components::MinimalServerComponentList()
             .Append<components::TestsuiteSupport>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<clients::dns::Component>()
             .Append<ActionClient>()
             .Append<DepsComponent>()

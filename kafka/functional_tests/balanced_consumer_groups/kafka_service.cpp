@@ -9,7 +9,7 @@
 #include <userver/components/minimal_server_component_list.hpp>
 
 #include <userver/clients/dns/component.hpp>
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/concurrent/variable.hpp>
 #include <userver/engine/wait_all_checked.hpp>
 #include <userver/formats/json/serialize.hpp>
@@ -243,8 +243,7 @@ int main(int argc, char* argv[]) {
             .Append<components::TestsuiteSupport>()
             .Append<components::Secdist>()
             .Append<components::DefaultSecdistProvider>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<clients::dns::Component>()
             .Append<server::handlers::TestsControl>()
             .Append<functional_tests::HandlerKafkaConsumerGroups>();

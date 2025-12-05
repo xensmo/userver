@@ -1,5 +1,5 @@
 #include <userver/clients/dns/component.hpp>
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
@@ -20,7 +20,6 @@ int main(int argc, char* argv[]) {
             .Append<server::handlers::TestsControl>()
             .Append<clients::dns::Component>()
             .Append<PluginComponent>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>();
+            .AppendComponentList(clients::http::ComponentList());
     return utils::DaemonMain(argc, argv, component_list);
 }

@@ -2,7 +2,7 @@
 #include <userver/testsuite/testsuite_support.hpp>
 #include <userver/utest/using_namespace_userver.hpp>
 
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/formats/parse/common_containers.hpp>
@@ -117,8 +117,7 @@ int main(int argc, char* argv[]) {
             .Append<components::DefaultSecdistProvider>()
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<clients::dns::Component>();
 
     return utils::DaemonMain(argc, argv, component_list);

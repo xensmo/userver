@@ -7,7 +7,7 @@
 #include <fmt/format.h>
 
 #include <userver/clients/dns/component.hpp>
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/concurrent/variable.hpp>
@@ -222,8 +222,7 @@ int main(int argc, char* argv[]) {
             .Append<chaos::ReadStoreReturn>("handler-sentinel-with-master")
             .Append<chaos::ReadStoreReturn>("handler-standalone")
             .Append<chaos::ManySubscriptions>("handler-many-subscriptions")
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::Secdist>()
             .Append<components::DefaultSecdistProvider>()
             .Append<components::Redis>("key-value-database")

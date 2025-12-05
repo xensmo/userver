@@ -4,7 +4,7 @@
 #include <userver/utest/using_namespace_userver.hpp>
 
 /// [SQLite service sample - component]
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
@@ -146,8 +146,7 @@ int main(int argc, char* argv[]) {
         components::MinimalServerComponentList()
             .Append<samples_sqlite_service::sqlite::KeyValue>()
             .Append<components::SQLite>("key-value-database")
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<server::handlers::TestsControl>()
             .Append<components::TestsuiteSupport>()
             .Append<clients::dns::Component>();

@@ -3,7 +3,7 @@
 
 #include <userver/utest/using_namespace_userver.hpp>
 
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/dynamic_config/client/component.hpp>
@@ -74,8 +74,7 @@ int main(int argc, char* argv[]) {
             .Append<components::Secdist>()
             .Append<components::DefaultSecdistProvider>()
             .Append<chaos::PostgresHandler>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::Postgres>("key-value-database")
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()

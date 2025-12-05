@@ -3,11 +3,10 @@
 
 #include <userver/utest/using_namespace_userver.hpp>
 
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
-#include <userver/dynamic_config/client/component.hpp>
-#include <userver/dynamic_config/updater/component.hpp>
+#include <userver/dynamic_config/updater/component_list.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/server/handlers/tests_control.hpp>
@@ -132,11 +131,9 @@ PostgresHandler::HandleRequestThrow(const server::http::HttpRequest& request, se
 int main(int argc, char* argv[]) {
     const auto component_list =
         components::MinimalServerComponentList()
-            .Append<components::DynamicConfigClient>()
-            .Append<components::DynamicConfigClientUpdater>()
+            .AppendComponentList(USERVER_NAMESPACE::dynamic_config::updater::ComponentList())
             .Append<chaos::PostgresHandler>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::Postgres>("key-value-database")
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()

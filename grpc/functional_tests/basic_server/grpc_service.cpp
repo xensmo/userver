@@ -6,6 +6,7 @@
 
 #include <userver/clients/dns/component.hpp>
 #include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/clients/http/plugins/headers_propagator/component.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
@@ -93,7 +94,6 @@ int main(int argc, char* argv[]) {
             .Append<clients::dns::Component>()
             .Append<server::middlewares::HeadersPropagatorFactory>()
             .Append<clients::http::plugins::headers_propagator::Component>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>();
+            .AppendComponentList(clients::http::ComponentList());
     return utils::DaemonMain(argc, argv, component_list);
 }

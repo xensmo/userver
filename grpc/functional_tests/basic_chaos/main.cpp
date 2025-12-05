@@ -1,7 +1,7 @@
 #include <userver/utest/using_namespace_userver.hpp>
 
 #include <userver/clients/dns/component.hpp>
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/congestion_control/component.hpp>
 #include <userver/server/handlers/tests_control.hpp>
@@ -24,8 +24,7 @@ int main(int argc, char* argv[]) {
             .AppendComponentList(ugrpc::client::DefaultComponentList())
             .Append<ugrpc::client::ClientFactoryComponent>()
             .Append<server::handlers::TestsControl>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<clients::dns::Component>()
             .Append<congestion_control::Component>()
             .Append<samples::GreeterServiceComponent>()

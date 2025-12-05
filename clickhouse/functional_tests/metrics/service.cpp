@@ -17,8 +17,8 @@
 #include <userver/storages/secdist/component.hpp>
 #include <userver/storages/secdist/provider_component.hpp>
 
+#include <userver/clients/http/component_list.hpp>
 #include <userver/utils/daemon_run.hpp>
-#include "userver/clients/http/component.hpp"
 #include "userver/server/handlers/server_monitor.hpp"
 #include "userver/server/handlers/tests_control.hpp"
 #include "userver/storages/clickhouse/io/columns/datetime_column.hpp"
@@ -106,8 +106,7 @@ int main(int argc, char* argv[]) {
             .Append<server::handlers::ServerMonitor>()
             .Append<clickhouse::metrics::HandlerMetricsClickhouse>()
             .Append<components::ClickHouse>("clickhouse-database")
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()
             .Append<clients::dns::Component>()

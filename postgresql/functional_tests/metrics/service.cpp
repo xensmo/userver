@@ -3,7 +3,7 @@
 
 #include <userver/utest/using_namespace_userver.hpp>
 
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/server/handlers/server_monitor.hpp>
@@ -139,8 +139,7 @@ int main(int argc, char* argv[]) {
             .Append<pg::metrics::PostgresHandler>()
             .Append<pg::metrics::KeyValueCache>()
             .Append<pg::metrics::DistlockMetrics>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::Postgres>("key-value-database")
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()

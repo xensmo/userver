@@ -8,11 +8,10 @@
 #include <fmt/format.h>
 
 #include <userver/clients/dns/component.hpp>
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
-#include <userver/dynamic_config/client/component.hpp>
-#include <userver/dynamic_config/updater/component.hpp>
+#include <userver/dynamic_config/updater/component_list.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/storages/redis/client.hpp>
@@ -128,16 +127,14 @@ std::string KeyValue::DeleteValue(std::string_view key) const {
 int main(int argc, char* argv[]) {
     const auto component_list =
         components::MinimalServerComponentList()
+            .AppendComponentList(USERVER_NAMESPACE::dynamic_config::updater::ComponentList())
             .Append<chaos::KeyValue>("handler-cluster")
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::Secdist>()
             .Append<components::DefaultSecdistProvider>()
             .Append<components::Redis>("key-value-database")
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()
-            .Append<components::DynamicConfigClient>()
-            .Append<components::DynamicConfigClientUpdater>()
             .Append<clients::dns::Component>();
     return utils::DaemonMain(argc, argv, component_list);
 }

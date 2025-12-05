@@ -4,7 +4,7 @@
 #include <userver/utest/using_namespace_userver.hpp>
 
 /// [Postgres service sample - component]
-#include <userver/clients/http/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/components/component.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
@@ -123,8 +123,7 @@ int main(int argc, char* argv[]) {
         components::MinimalServerComponentList()
             .Append<samples_postgres_service::pg::KeyValue>()
             .Append<components::Postgres>("key-value-database")
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::TestsControl>()
             .Append<clients::dns::Component>();

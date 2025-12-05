@@ -1,10 +1,10 @@
 #include <userver/clients/dns/component.hpp>
+#include <userver/clients/http/component_list.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 
 #include <userver/components/logging_configurator.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
-#include <userver/dynamic_config/client/component.hpp>
-#include <userver/dynamic_config/updater/component.hpp>
+#include <userver/dynamic_config/updater/component_list.hpp>
 #include <userver/server/handlers/dynamic_debug_log.hpp>
 #include <userver/server/handlers/on_log_rotate.hpp>
 #include <userver/server/handlers/ping.hpp>
@@ -22,6 +22,7 @@
 int main(int argc, char* argv[]) {
     const auto component_list =
         components::MinimalServerComponentList()
+            .AppendComponentList(USERVER_NAMESPACE::dynamic_config::updater::ComponentList())
             .Append<chaos::HttpClientHandler>()
             .Append<chaos::StreamHandler>()
             .Append<chaos::HttpServerHandler>()
@@ -29,8 +30,7 @@ int main(int argc, char* argv[]) {
             .Append<chaos::ResolverHandler>()
             .Append<chaos::HttpServerWithExceptionHandler>()
             .Append<components::LoggingConfigurator>()
-            .Append<components::HttpClientCore>()
-            .Append<components::HttpClient>()
+            .AppendComponentList(clients::http::ComponentList())
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::DynamicDebugLog>()
             .Append<server::handlers::TestsControl>()
@@ -38,8 +38,6 @@ int main(int argc, char* argv[]) {
             .Append<server::handlers::Ping>()
             .Append<server::handlers::Restart>()
             .Append<clients::dns::Component>()
-            .Append<components::DynamicConfigClient>()
-            .Append<components::DynamicConfigClientUpdater>()
             .Append<server::handlers::OnLogRotate>();
 
     return utils::DaemonMain(argc, argv, component_list);
