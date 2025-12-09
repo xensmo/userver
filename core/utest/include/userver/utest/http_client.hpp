@@ -7,7 +7,7 @@ USERVER_NAMESPACE_BEGIN
 namespace clients::http {
 class ClientCore;
 class Client;
-class Plugin;
+class MiddlewareBase;
 }  // namespace clients::http
 
 namespace engine {
@@ -32,7 +32,7 @@ std::shared_ptr<clients::http::Client> CreateHttpClient();
 
 std::shared_ptr<clients::http::Client> CreateHttpClient(engine::TaskProcessor& fs_task_processor);
 
-std::shared_ptr<clients::http::Client> CreateHttpClientWithPlugin(clients::http::Plugin&);
+std::shared_ptr<clients::http::Client> CreateHttpClientWithMiddleware(clients::http::MiddlewareBase&);
 
 std::shared_ptr<clients::http::Client> CreateHttpClient(const tracing::TracingManagerBase& tracing_manager);
 

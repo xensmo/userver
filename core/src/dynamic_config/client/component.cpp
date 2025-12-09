@@ -73,8 +73,11 @@ DynamicConfigClient::DynamicConfigClient(const ComponentConfig& config, const Co
         throw std::logic_error("Cannot get overrides for both stage and service yet");
     }
 
-    config_client_ = std::make_unique<
-        dynamic_config::Client>(context.FindComponent<HttpClient>().GetHttpClient(), client_config);
+    config_client_ = std::make_unique<dynamic_config::Client>(
+        context.FindComponent<HttpClient>(config["http-client"].As<std::string>("dynamic-config-http-client"))
+            .GetHttpClient(),
+        client_config
+    );
 }
 
 dynamic_config::Client& DynamicConfigClient::GetClient() const { return *config_client_; }

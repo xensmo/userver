@@ -122,7 +122,8 @@ list(APPEND EMBED_FILES
     src/cache/lru_cache_component_base.yaml
     src/clients/http/component.yaml
     src/clients/http/component_core.yaml
-    src/clients/http/plugins/retry_budget/component.yaml
+    src/clients/http/middlewares/pipeline_component.yaml
+    src/clients/http/middlewares/retry_budget/component.yaml
     src/components/impl/component_base.yaml
     src/components/dump_configurator.yaml
     src/components/fs_cache.yaml
