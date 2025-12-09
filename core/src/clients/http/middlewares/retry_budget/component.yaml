@@ -5,8 +5,8 @@ properties:
     max-tokens:
         type: number
         description: max amount of tokens in the token bucket
-        defaultDescription: 10
+        default: 10
     token-ratio:
         type: number
         description: retry count to successful responses ratio
-        defaultDescription: 0.1
+        default: 0.1

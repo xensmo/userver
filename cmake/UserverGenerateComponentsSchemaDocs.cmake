@@ -1,5 +1,5 @@
 function(_userver_add_target_gen_component_schemas_docs)
-    file(GLOB_RECURSE YAML_FILENAMES */src/*.yaml)
+    file(GLOB_RECURSE YAML_FILENAMES */src/*.yaml */static_configs/*.yaml)
 
     add_custom_target(
         userver-gen-components-schema-docs

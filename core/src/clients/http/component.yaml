@@ -5,7 +5,7 @@ properties:
     core-component:
         type: string
         description: name of components::HttpClientCore component to use
-        defaultDescription: http-client-core
+        default: http-client-core
     middlewares:
         type: object
         description: map of middlewares to apply. Middleware settings from components::HttpClient
