@@ -502,8 +502,9 @@ void ComponentContextImpl::CheckForDependencyCycle(
 
     if (FindDependencyPathDfs(new_dependency_from, new_dependency_to, handled, &dependency_chain, data)) {
         dependency_chain.push_back(new_dependency_to);
-        LOG_ERROR() << "Found circular dependency between components: " << JoinNamesFromInfo(dependency_chain, " -> ");
-        throw std::runtime_error("circular components dependency");
+        auto msg = JoinNamesFromInfo(dependency_chain, " -> ");
+        LOG_ERROR() << "Found circular dependency between components: " << msg;
+        throw std::runtime_error("circular components dependency: " + msg);
     }
 }
 
