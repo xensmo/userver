@@ -153,6 +153,7 @@ list(APPEND EMBED_FILES
     src/server/handlers/ping.yaml
     src/server/handlers/server_monitor.yaml
     src/server/handlers/tests_control.yaml
+    src/server/middlewares/cors.yaml
     src/server/middlewares/configuration.yaml
     src/server/middlewares/headers_propagator.yaml
     src/server/websocket/websocket_handler.yaml
