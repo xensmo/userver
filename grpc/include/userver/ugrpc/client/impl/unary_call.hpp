@@ -163,10 +163,15 @@ private:
         return AttemptCompletionStatus::kOk;
     }
 
-    void RunStartCallHooks() { impl::RunMiddlewarePipeline(state_, StartCallHooks(ToBaseMessage(&request_))); }
+    void RunStartCallHooks() {
+        impl::RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks(ToBaseMessage(&request_)));
+    }
 
     void RunFinishHooks(const grpc::Status& status) {
-        impl::RunMiddlewarePipeline(state_, FinishHooks(status, ToBaseMessage(&response_)));
+        impl::RunMiddlewarePipeline(
+            state_,
+            MiddlewareHooks::FinishHooks(status, status.ok() ? ToBaseMessage(&response_) : nullptr)
+        );
     }
 
     void OnDone(const grpc::Status& status) {

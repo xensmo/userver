@@ -257,7 +257,7 @@ InputStream<Response>::InputStream(
     : state_{std::move(params), CallKind::kInputStream},
       context_{utils::impl::InternalTag{}, state_}
 {
-    RunMiddlewarePipeline(state_, StartCallHooks(ToBaseMessage(&request)));
+    RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks(ToBaseMessage(&request)));
 
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     stream_ = impl::PrepareCall(
@@ -286,7 +286,7 @@ bool InputStream<Response>::Read(Response& response) {
     }
 
     if (impl::Read(*stream_, response, state_)) {
-        RunMiddlewarePipeline(state_, RecvMessageHooks(response));
+        RunMiddlewarePipeline(state_, MiddlewareHooks::RecvMessageHooks(response));
         return true;
     } else {
         // Finish can only be called once all the data is read, otherwise the
@@ -305,7 +305,7 @@ OutputStream<Request, Response>::OutputStream(
     : state_{std::move(params), CallKind::kOutputStream},
       context_{utils::impl::InternalTag{}, state_}
 {
-    RunMiddlewarePipeline(state_, StartCallHooks());
+    RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks());
 
     // 'response_' will be filled upon successful 'Finish' async call
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
@@ -332,7 +332,7 @@ bool OutputStream<Request, Response>::Write(const Request& request) {
         return false;
     }
 
-    RunMiddlewarePipeline(state_, SendMessageHooks(request));
+    RunMiddlewarePipeline(state_, MiddlewareHooks::SendMessageHooks(request));
 
     // Don't buffer writes, otherwise in an event subscription scenario, events
     // may never actually be delivered
@@ -348,7 +348,7 @@ void OutputStream<Request, Response>::WriteAndCheck(const Request& request) {
         throw RpcError(state_.GetCallName(), "'WriteAndCheck' called on a finished or closed stream");
     }
 
-    RunMiddlewarePipeline(state_, SendMessageHooks(request));
+    RunMiddlewarePipeline(state_, MiddlewareHooks::SendMessageHooks(request));
 
     // Don't buffer writes, otherwise in an event subscription scenario, events
     // may never actually be delivered
@@ -381,7 +381,7 @@ BidirectionalStream<Request, Response>::BidirectionalStream(
     : state_{std::move(params), CallKind::kBidirectionalStream},
       context_{utils::impl::InternalTag{}, state_}
 {
-    RunMiddlewarePipeline(state_, StartCallHooks());
+    RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks());
 
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     stream_ = impl::PrepareCall(prepare_async_method, state_.GetStub(), &state_.GetClientContext(), &state_.GetQueue());
@@ -427,7 +427,7 @@ bool BidirectionalStream<Request, Response>::Write(const Request& request) {
 
     {
         const auto lock = state_.TakeMutexIfBidirectional();
-        RunMiddlewarePipeline(state_, SendMessageHooks(request));
+        RunMiddlewarePipeline(state_, MiddlewareHooks::SendMessageHooks(request));
     }
 
     // Don't buffer writes, optimize for ping-pong-style interaction
@@ -445,7 +445,7 @@ void BidirectionalStream<Request, Response>::WriteAndCheck(const Request& reques
 
     {
         const auto lock = state_.TakeMutexIfBidirectional();
-        RunMiddlewarePipeline(state_, SendMessageHooks(request));
+        RunMiddlewarePipeline(state_, MiddlewareHooks::SendMessageHooks(request));
     }
 
     // Don't buffer writes, optimize for ping-pong-style interaction
