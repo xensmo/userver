@@ -40,7 +40,7 @@ bool IsClownductorPrestable() {
     }
     auto content = fs::ReadFileContents(tp, filepath);
     utils::text::Trim(content);
-    return utils::text::EndsWith(content, "_pre_stable");
+    return utils::text::EndsWith(content, "_pre_stable") || utils::text::EndsWith(content, "_prestable");
 }
 #else
 bool IsClownductorPrestable() { return false; }
