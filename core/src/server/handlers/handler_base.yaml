@@ -22,7 +22,10 @@ properties:
         description: comma-separated list of allowed methods
     max_request_size:
         type: integer
-        description: max size of the whole request
+        description: |
+            Maximum size of the whole request. Limits both the size of the request
+            and the size of a decompressed request body (if compression is being used).
+            Requests exceeding the limit are rejected with 'Request Entity Too Large' (413) HTTP code.
         default: 1024 * 1024
     max_headers_size:
         type: integer
