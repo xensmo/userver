@@ -1937,6 +1937,8 @@
   "core/src/server/net/create_socket.hpp":"taxi/uservices/userver/core/src/server/net/create_socket.hpp",
   "core/src/server/net/endpoint_info.cpp":"taxi/uservices/userver/core/src/server/net/endpoint_info.cpp",
   "core/src/server/net/endpoint_info.hpp":"taxi/uservices/userver/core/src/server/net/endpoint_info.hpp",
+  "core/src/server/net/http2_connection.cpp":"taxi/uservices/userver/core/src/server/net/http2_connection.cpp",
+  "core/src/server/net/http2_connection.hpp":"taxi/uservices/userver/core/src/server/net/http2_connection.hpp",
   "core/src/server/net/listener.cpp":"taxi/uservices/userver/core/src/server/net/listener.cpp",
   "core/src/server/net/listener.hpp":"taxi/uservices/userver/core/src/server/net/listener.hpp",
   "core/src/server/net/listener_config.cpp":"taxi/uservices/userver/core/src/server/net/listener_config.cpp",
