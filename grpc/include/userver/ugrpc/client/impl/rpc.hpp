@@ -254,7 +254,7 @@ InputStream<Response>::InputStream(
     PrepareServerStreamingCall<Stub, Request, Response> prepare_async_method,
     const Request& request
 )
-    : state_{std::move(params), CallKind::kInputStream},
+    : state_{std::move(params)},
       context_{utils::impl::InternalTag{}, state_}
 {
     RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks(ToBaseMessage(&request)));
@@ -302,7 +302,7 @@ OutputStream<Request, Response>::OutputStream(
     CallParams&& params,
     PrepareClientStreamingCall<Stub, Request, Response> prepare_async_method
 )
-    : state_{std::move(params), CallKind::kOutputStream},
+    : state_{std::move(params)},
       context_{utils::impl::InternalTag{}, state_}
 {
     RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks());
@@ -378,7 +378,7 @@ BidirectionalStream<Request, Response>::BidirectionalStream(
     CallParams&& params,
     PrepareBidiStreamingCall<Stub, Request, Response> prepare_async_method
 )
-    : state_{std::move(params), CallKind::kBidirectionalStream},
+    : state_{std::move(params)},
       context_{utils::impl::InternalTag{}, state_}
 {
     RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks());

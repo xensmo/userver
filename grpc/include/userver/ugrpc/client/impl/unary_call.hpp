@@ -36,7 +36,7 @@ public:
 
     UnaryCall(CallParams&& params, PrepareUnaryCall&& prepare_unary_call, const Request& request)
         : call_options_{std::move(params.call_options)},
-          state_{std::move(params), CallKind::kUnaryCall},
+          state_{std::move(params)},
           context_{utils::impl::InternalTag{}, state_},
           prepare_unary_call_{std::move(prepare_unary_call)},
           request_{request}
