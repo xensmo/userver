@@ -9,9 +9,10 @@ function(_userver_set_protobuf_version_category)
        OR Protobuf_VERSION VERSION_GREATER_EQUAL 30.0.0
     )
         set_property(GLOBAL PROPERTY userver_protobuf_version_category 6)
-    elseif(Protobuf_VERSION VERSION_GREATER_EQUAL 5.26.0
-       AND Protobuf_VERSION VERSION_LESS 6.0.0
-       OR Protobuf_VERSION VERSION_GREATER_EQUAL 26.0.0
+    elseif(
+        Protobuf_VERSION VERSION_GREATER_EQUAL 5.26.0
+        AND Protobuf_VERSION VERSION_LESS 6.0.0
+        OR Protobuf_VERSION VERSION_GREATER_EQUAL 26.0.0
     )
         set_property(GLOBAL PROPERTY userver_protobuf_version_category 5)
     elseif(
@@ -66,19 +67,12 @@ include(DownloadUsingCPM)
 include(SetupAbseil)
 
 cpmaddpackage(
-    NAME
-    Protobuf
-    VERSION
-    4.24.4
-    GITHUB_REPOSITORY
-    protocolbuffers/protobuf
+    NAME Protobuf
+    VERSION 4.24.4
+    GITHUB_REPOSITORY protocolbuffers/protobuf
     SYSTEM
-    OPTIONS
-    "protobuf_BUILD_SHARED_LIBS OFF"
-    "protobuf_BUILD_TESTS OFF"
-    "protobuf_INSTALL OFF"
-    "protobuf_MSVC_STATIC_RUNTIME OFF"
-    "protobuf_ABSL_PROVIDER package"
+    OPTIONS "protobuf_BUILD_SHARED_LIBS OFF" "protobuf_BUILD_TESTS OFF" "protobuf_INSTALL OFF"
+            "protobuf_MSVC_STATIC_RUNTIME OFF" "protobuf_ABSL_PROVIDER package"
 )
 
 set(Protobuf_VERSION "${CPM_PACKAGE_Protobuf_VERSION}")

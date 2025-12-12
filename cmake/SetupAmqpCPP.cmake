@@ -13,6 +13,10 @@ if(NOT USERVER_FORCE_DOWNLOAD_PACKAGES)
 endif()
 
 include(DownloadUsingCPM)
-cpmaddpackage(NAME amqp-cpp VERSION 4.3.18 GITHUB_REPOSITORY CopernicaMarketingSoftware/AMQP-CPP)
+cpmaddpackage(
+    NAME amqp-cpp
+    VERSION 4.3.18
+    GITHUB_REPOSITORY CopernicaMarketingSoftware/AMQP-CPP
+)
 
 target_compile_options(amqpcpp PRIVATE "-Wno-unused-parameter")

@@ -22,21 +22,13 @@ endif()
 include(DownloadUsingCPM)
 
 cpmaddpackage(
-    NAME
-    abseil-cpp
-    VERSION
-    20230802.1
-    GIT_TAG
-    20230802.1
-    GITHUB_REPOSITORY
-    abseil/abseil-cpp
+    NAME abseil-cpp
+    VERSION 20230802.1
+    GIT_TAG 20230802.1
+    GITHUB_REPOSITORY abseil/abseil-cpp
     SYSTEM
-    PATCHES
-    abseil_pr_1707.patch
-    abseil_pr_1739.patch
-    OPTIONS
-    "ABSL_PROPAGATE_CXX_STD ON"
-    "ABSL_ENABLE_INSTALL ON"
+    PATCHES abseil_pr_1707.patch abseil_pr_1739.patch
+    OPTIONS "ABSL_PROPAGATE_CXX_STD ON" "ABSL_ENABLE_INSTALL ON"
 )
 
 mark_targets_as_system("${abseil-cpp_SOURCE_DIR}")

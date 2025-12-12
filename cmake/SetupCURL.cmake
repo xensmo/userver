@@ -49,21 +49,12 @@ endif()
 
 include(DownloadUsingCPM)
 cpmaddpackage(
-    NAME
-    curl
-    VERSION
-    7.81
-    GITHUB_REPOSITORY
-    curl/curl
-    GIT_TAG
-    curl-7_81_0
-    OPTIONS
-    "BUILD_CURL_EXE OFF"
-    "BUILD_SHARED_LIBS OFF"
-    "CURL_DISABLE_TESTS ON"
-    "CURL_DISABLE_LDAP ON"
-    "HAVE_DLOPEN TRUE"
-    ${CURL_LTO_OPTION}
+    NAME curl
+    VERSION 7.81
+    GITHUB_REPOSITORY curl/curl
+    GIT_TAG curl-7_81_0
+    OPTIONS "BUILD_CURL_EXE OFF" "BUILD_SHARED_LIBS OFF" "CURL_DISABLE_TESTS ON" "CURL_DISABLE_LDAP ON"
+            "HAVE_DLOPEN TRUE" ${CURL_LTO_OPTION}
 )
 
 mark_targets_as_system("${CURL_SOURCE_DIR}")

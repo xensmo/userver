@@ -1,22 +1,13 @@
 _userver_module_begin(
-    NAME
-    libnghttp2
-    DEBIAN_NAMES
-    libnghttp2-dev
-    FORMULA_NAMES
-    nghttp2
-    PACMAN_NAMES
-    libnghttp2
-
+    NAME libnghttp2
+    DEBIAN_NAMES libnghttp2-dev
+    FORMULA_NAMES nghttp2
+    PACMAN_NAMES libnghttp2
     CPM_NAME libnghttp2
     CPM_GITHUB_REPOSITORY nghttp2/nghttp2
     CPM_VERSION 1.66.0
     CPM_GIT_TAG v1.66.0
-    CPM_OPTIONS
-        "BUILD_STATIC_LIBS ON"
-        "BUILD_SHARED_LIBS OFF"
-        "ENABLE_APP OFF"
-        "ENABLE_EXAMPLES OFF"
+    CPM_OPTIONS "BUILD_STATIC_LIBS ON" "BUILD_SHARED_LIBS OFF" "ENABLE_APP OFF" "ENABLE_EXAMPLES OFF"
 )
 
 _userver_module_find_include(NAMES nghttp2/nghttp2.h)

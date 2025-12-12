@@ -41,7 +41,6 @@ find_package_required(ZLIB "zlib1g-dev")
 
 find_package(Iconv REQUIRED)
 
-
 find_package(libev REQUIRED)
 find_package(libnghttp2 REQUIRED)
 
@@ -95,28 +94,23 @@ endif()
 
 target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC
-	userver-universal
-	Boost::locale
-	CURL::libcurl
-    PRIVATE
-	Boost::filesystem
-	Boost::program_options
-	Boost::iostreams
-	Iconv::Iconv
-	OpenSSL::SSL
-	OpenSSL::Crypto
-	ZLIB::ZLIB
+    PUBLIC userver-universal Boost::locale CURL::libcurl
+    PRIVATE Boost::filesystem
+            Boost::program_options
+            Boost::iostreams
+            Iconv::Iconv
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            ZLIB::ZLIB
 )
 if(TARGET Boost::endian)
     # Boost from CPM
-    target_link_libraries(
-	${PROJECT_NAME}
-	PUBLIC userver-universal Boost::endian Boost::lockfree
-    )
+    target_link_libraries(${PROJECT_NAME} PUBLIC userver-universal Boost::endian Boost::lockfree)
 endif()
 
-list(APPEND EMBED_FILES
+list(
+    APPEND
+    EMBED_FILES
     src/baggage/baggage_manager.yaml
     src/cache/caching_component_base.yaml
     src/cache/lru_cache_component_base.yaml
@@ -199,7 +193,10 @@ if("${Boost_VERSION_STRING}" VERSION_LESS "1.88.0")
            "${USERVER_UBOOST_CORO_DEFAULT}"
     )
 else()
-    message(STATUS "Found a modern Boost version (${Boost_VERSION_STRING}), not using vendored Boost::context and Boost::coroutine2")
+    message(
+        STATUS
+            "Found a modern Boost version (${Boost_VERSION_STRING}), not using vendored Boost::context and Boost::coroutine2"
+    )
     set(USERVER_FEATURE_UBOOST_CORO OFF)
 endif()
 

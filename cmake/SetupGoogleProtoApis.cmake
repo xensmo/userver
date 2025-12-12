@@ -17,14 +17,10 @@ endif()
 if(NOT EXISTS ${api-common-protos_SOURCE_DIR})
     include(DownloadUsingCPM)
     cpmaddpackage(
-        NAME
-        api-common-protos
-        GITHUB_REPOSITORY
-        googleapis/api-common-protos
-        GIT_TAG
-        main
-        DOWNLOAD_ONLY
-        YES
+        NAME api-common-protos
+        GITHUB_REPOSITORY googleapis/api-common-protos
+        GIT_TAG main
+        DOWNLOAD_ONLY YES
     )
 endif()
 

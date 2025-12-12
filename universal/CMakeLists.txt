@@ -233,18 +233,11 @@ endif()
 target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC Threads::Threads userver-internal-sanitize-options userver-internal-compile-options
-    PRIVATE
-        Boost::filesystem
-        Boost::program_options
-        OpenSSL::SSL
-        OpenSSL::Crypto
+    PRIVATE Boost::filesystem Boost::program_options OpenSSL::SSL OpenSSL::Crypto
 )
 if(TARGET Boost::algorithm)
     # Boost from CPM
-    target_link_libraries(
-        ${PROJECT_NAME}
-        PUBLIC Boost::algorithm Boost::uuid Boost::random Boost::container
-    )
+    target_link_libraries(${PROJECT_NAME} PUBLIC Boost::algorithm Boost::uuid Boost::random Boost::container)
 endif()
 
 if(USERVER_CONAN)
@@ -348,7 +341,9 @@ if(USERVER_FEATURE_UTEST)
     endif()
 
     if(NOT HAVE_MAYBE_REENTER_WITHOUT_ASLR)
-        target_compile_definitions(${PROJECT_NAME}-internal-ubench INTERFACE USERVER_IMPL_NO_MAYBE_REENTER_WITHOUT_ASLR_EXISTS)
+        target_compile_definitions(
+            ${PROJECT_NAME}-internal-ubench INTERFACE USERVER_IMPL_NO_MAYBE_REENTER_WITHOUT_ASLR_EXISTS
+        )
         message(STATUS "Benchmark ASLR turned off")
     else()
         message(STATUS "Benchmark ASLR turned on")
