@@ -1,11 +1,9 @@
 import asyncio
 
 import aiohttp
-import pytest
 import pytest_userver.utils.sync as sync
 
 
-@pytest.mark.skip(reason='the feature is not yet enabled')
 async def test_monitor_port_is_open_before_all_components_are_ready(
     ensure_daemon_started,
     service_daemon_scope,

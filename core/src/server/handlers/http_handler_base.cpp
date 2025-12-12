@@ -11,6 +11,7 @@
 #include <userver/server/http/http_request.hpp>
 
 #include <userver/components/component.hpp>
+#include <userver/components/scope.hpp>
 #include <userver/components/statistics_storage.hpp>
 #include <userver/dynamic_config/storage/component.hpp>
 #include <userver/engine/deadline.hpp>
@@ -144,17 +145,26 @@ HttpHandlerBase::HttpHandlerBase(
         LOG_WARNING() << "empty allowed methods list in " << config.Name();
     }
 
-    auto& server_component = context.FindComponent<components::Server>();
+    auto& server = context.FindComponent<components::Server>().GetServer();
 
     engine::TaskProcessor& task_processor =
         GetConfig().task_processor
             ? context.GetTaskProcessor(*GetConfig().task_processor)
             : engine::current_task::GetTaskProcessor();
-    try {
-        server_component.AddHandler(*this, task_processor);
-    } catch (const std::exception& ex) {
-        throw std::runtime_error(std::string("can't add handler to server: ") + ex.what());
-    }
+
+    // Postpone handler registration as a request handling requires
+    // HandleRequest() implementation, which is available only after
+    // the descendant constructor.
+    context.RegisterScope(components::MakeScope([this, &server, &task_processor] {
+        try {
+            server.AddHandler(*this, task_processor);
+
+            // Note: no need to call RemoveHandler on scope exit,
+            // PortInfo::Stop() automatically removes all handlers
+        } catch (const std::exception& ex) {
+            throw std::runtime_error(std::string("can't add handler to server: ") + ex.what());
+        }
+    }));
 
     BuildMiddlewarePipeline(config, context);
 
@@ -188,9 +198,7 @@ HttpHandlerBase::HttpHandlerBase(
     }
 
     set_response_server_hostname_ =
-        GetConfig()
-            .set_response_server_hostname.value_or(server_component.GetServer().GetConfig().set_response_server_hostname
-            );
+        GetConfig().set_response_server_hostname.value_or(server.GetConfig().set_response_server_hostname);
 }
 
 HttpHandlerBase::~HttpHandlerBase() { statistics_holder_.Unregister(); }

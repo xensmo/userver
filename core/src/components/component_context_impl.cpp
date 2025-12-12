@@ -168,6 +168,11 @@ void ComponentContextImpl::OnAllComponentsAreStopping() {
 }
 
 void ComponentContextImpl::ClearComponents() {
+    if (components_.empty()) {
+        // Already cleared
+        return;
+    }
+
     StopPrintAddingComponentsTask();
     const tracing::Span span(kClearComponentsRootName);
     OnAllComponentsAreStopping();
@@ -182,6 +187,7 @@ void ComponentContextImpl::ClearComponents() {
          false}
     );
 
+    components_.clear();
     LOG_INFO() << "Stopped all components";
 }
 
@@ -197,6 +203,7 @@ void ComponentContextImpl::CancelComponentsLoad() {
         return;
     }
     for (auto& component_info : components_) {
+        LOG_DEBUG() << "Call OnLoadingCancelled() for component '" << component_info->GetName() << "'";
         component_info->OnLoadingCancelled();
     }
 }
