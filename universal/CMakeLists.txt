@@ -16,11 +16,12 @@ file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp ${CMAKE_CURR
 )
 
 file(GLOB_RECURSE UNIT_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_test.cpp)
+file(GLOB_RECURSE COMPILEFAIL_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_compilefailtest.cpp)
 file(GLOB_RECURSE BENCH_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_benchmark.cpp)
 file(GLOB_RECURSE INTERNAL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/internal/*.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/internal/*.hpp
 )
-list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${BENCH_SOURCES} ${INTERNAL_SOURCES})
+list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${COMPILEFAIL_TEST_SOURCES} ${BENCH_SOURCES} ${INTERNAL_SOURCES})
 
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -388,6 +389,18 @@ if(USERVER_BUILD_TESTS)
     endif()
 
     add_google_benchmark_tests(${PROJECT_NAME}-benchmark)
+
+    add_library(${PROJECT_NAME}-compile-fail EXCLUDE_FROM_ALL ${COMPILEFAIL_TEST_SOURCES})
+    target_link_libraries(
+        ${PROJECT_NAME}-compile-fail
+        PUBLIC ${PROJECT_NAME}
+    )
+    add_test(
+	NAME ${PROJECT_NAME}-compile-err-msg-test
+	COMMAND
+	    python3 ${USERVER_ROOT_DIR}/scripts/compile_fail_test.py ${CMAKE_CURRENT_SOURCE_DIR}
+	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
 endif()
 
 _userver_directory_install(
