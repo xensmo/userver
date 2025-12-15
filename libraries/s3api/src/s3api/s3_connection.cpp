@@ -58,7 +58,7 @@ std::shared_ptr<clients::http::Response> S3Connection::RequestApi(Request& r, st
     std::shared_ptr<clients::http::Response> response;
     try {
         response = GetMethod(http_req, full_url, r.body, r.method).perform();
-        response->raise_for_status();
+        response->raise_for_status(clients::http::Response::RaiseIncludeBody::kYes);
     } catch (const clients::http::TimeoutException& e) {
         LOG_WARNING() << "S3Api : Http Request Timeout: " << full_url;
         throw;
