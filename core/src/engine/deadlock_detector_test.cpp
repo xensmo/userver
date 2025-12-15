@@ -106,4 +106,36 @@ UTEST(DeadlockDetector, RightCycle) {
     EXPECT_THROW_CYCLE(state.HookBeforeAddDependency(a2, a1), &a1, &a2);
 }
 
+UTEST(DeadlockDetector, NoCycleOnDiamond) {
+    /* Tests processing of a diamond shape:
+    //        start
+    //          |
+    //          0
+    //         / \
+    //        /   \
+    //       1     4
+    //        \   /
+    //         \ /
+    //          2
+    //          |
+    //          3
+    */
+    MockState state;
+    MockActor start;
+    MockActor v0;
+    MockActor v1;
+    MockActor v2;
+    MockActor v3;
+    MockActor v4;
+
+    state.HookBeforeAddDependency(v0, v1);
+    state.HookBeforeAddDependency(v0, v4);
+    state.HookBeforeAddDependency(v1, v2);
+    state.HookBeforeAddDependency(v4, v2);
+    state.HookBeforeAddDependency(v2, v3);
+    state.HookBeforeAddDependency(start, v0);
+
+    SUCCEED();
+}
+
 USERVER_NAMESPACE_END

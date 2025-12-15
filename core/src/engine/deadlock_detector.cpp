@@ -57,24 +57,24 @@ private:
         std::vector<Vertex> cycle;
     };
 
-    void HandleVertex(Vertex v, Vertex parent) {
-        auto it_p = parents_.find(v);
-        if (it_p != parents_.end()) {
+    void HandleVertex(Vertex v, Vertex previous) {
+        auto it_p = vertex_to_previous_vertex_.find(v);
+        if (it_p != vertex_to_previous_vertex_.end()) {
             auto finish = it_p->first;
 
             std::vector<Vertex> cycle;
             cycle.push_back(finish);
-            while (parent != finish) {
-                cycle.push_back(parent);
-                parent = parents_[parent];
+            while (previous != finish) {
+                cycle.push_back(previous);
+                previous = vertex_to_previous_vertex_[previous];
             }
             throw CycleException(std::move(cycle));
         }
 
         auto it = edges_.find(v);
-        if (it != edges_.end()) {
+        if (it != edges_.end() && processed_.find(v) == processed_.end()) {
             dfs_processing_stack_.emplace_back(DfsStackItem{v, it->second.begin(), it->second.end()});
-            parents_[v] = parent;
+            vertex_to_previous_vertex_[v] = previous;
         }
     }
 
@@ -82,6 +82,8 @@ private:
         while (!dfs_processing_stack_.empty()) {
             auto& frame = dfs_processing_stack_.back();
             if (frame.iter == frame.end) {
+                vertex_to_previous_vertex_.erase(frame.v);
+                processed_.emplace(frame.v);
                 dfs_processing_stack_.pop_back();
                 continue;
             }
@@ -95,8 +97,10 @@ private:
 
     std::vector<DfsStackItem> dfs_processing_stack_;
 
-    // child -> parent
-    std::unordered_map<Vertex, Vertex> parents_;
+    // Allows both visited vertex tracking and backward path reconstruction
+    std::unordered_map<Vertex, Vertex> vertex_to_previous_vertex_;
+
+    std::unordered_set<Vertex> processed_;
 };
 
 }  // namespace
