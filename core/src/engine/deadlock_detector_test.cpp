@@ -9,6 +9,8 @@
 USERVER_NAMESPACE_BEGIN
 
 TEST(DeadlockDetectorDeathTest, Smoke) {
+    testing::FLAGS_gtest_death_test_style = "threadsafe";
+
     engine::TaskProcessorPoolsConfig config;
     config.deadlock_detector = engine::DeadlockDetector::kOn;
 
