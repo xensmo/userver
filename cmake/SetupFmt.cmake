@@ -21,5 +21,6 @@ include(DownloadUsingCPM)
 cpmaddpackage(
     NAME fmt
     GIT_TAG 11.1.4
+    GIT_SHALLOW TRUE
     GITHUB_REPOSITORY fmtlib/fmt
 )

@@ -44,6 +44,7 @@ cpmaddpackage(
     VERSION 1.14.0
     GIT_TAG v1.14.0
     GITHUB_REPOSITORY google/googletest
+    GIT_SHALLOW TRUE
     OPTIONS "INSTALL_GTEST OFF"
 )
 

@@ -19,6 +19,7 @@ cpmaddpackage(
     NAME cctz
     VERSION 2.3
     GITHUB_REPOSITORY google/cctz
+    GIT_SHALLOW TRUE
     OPTIONS "BUILD_TOOLS OFF" "BUILD_EXAMPLES OFF" "BUILD_TESTING OFF"
 )
 _userver_install_targets(COMPONENT universal TARGETS cctz)

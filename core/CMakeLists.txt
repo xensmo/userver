@@ -188,17 +188,11 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64"
     endif()
 endif()
 
-if("${Boost_VERSION_STRING}" VERSION_LESS "1.88.0")
-    option(USERVER_FEATURE_UBOOST_CORO "Use vendored boost context instead of a system one"
-           "${USERVER_UBOOST_CORO_DEFAULT}"
-    )
-else()
-    message(
-        STATUS
-            "Found a modern Boost version (${Boost_VERSION_STRING}), not using vendored Boost::context and Boost::coroutine2"
-    )
-    set(USERVER_FEATURE_UBOOST_CORO OFF)
+if("${Boost_VERSION_STRING}" VERSION_GREATER_EQUAL "1.88.0")
+    set(USERVER_UBOOST_CORO_DEFAULT OFF)
 endif()
+
+option(USERVER_FEATURE_UBOOST_CORO "Use vendored boost context instead of a system one" ${USERVER_UBOOST_CORO_DEFAULT})
 
 if(USERVER_FEATURE_UBOOST_CORO)
     add_subdirectory(${USERVER_THIRD_PARTY_DIRS}/uboost_coro uboost_coro_build)

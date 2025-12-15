@@ -22,6 +22,7 @@ cpmaddpackage(
     VERSION 2023-03-01 # newest version without abseil requirements
     GIT_TAG 2023-03-01
     GITHUB_REPOSITORY google/re2
+    GIT_SHALLOW TRUE
     SYSTEM
     OPTIONS "RE2_BUILD_TESTING OFF" "RE2_USE_ICU ON"
 )

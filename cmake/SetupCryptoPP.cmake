@@ -24,7 +24,9 @@ cpmaddpackage(
     NAME cryptopp-cmake
     VERSION 8.9.0
     GITHUB_REPOSITORY abdes/cryptopp-cmake
-    GIT_TAG CRYPTOPP_8_9_0
+    # 8.9.0 is not enough, because cmake 3.30+ complains about FetchContent_Populate usage.
+    # We should use 8.10.0 tag instead as soon as it is released.
+    GIT_TAG d2b072ab65c036f3dca67f4204ad57d66728bf99
     OPTIONS "CRYPTOPP_BUILD_SHARED OFF" "CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_USE_INTERMEDIATE_OBJECTS_TARGET OFF"
             "CRYPTOPP_USE_OPENMP OFF" "CRYPTOPP_DATA_DIR"
 )

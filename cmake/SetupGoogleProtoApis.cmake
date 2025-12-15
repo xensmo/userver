@@ -20,6 +20,7 @@ if(NOT EXISTS ${api-common-protos_SOURCE_DIR})
         NAME api-common-protos
         GITHUB_REPOSITORY googleapis/api-common-protos
         GIT_TAG main
+        GIT_SHALLOW TRUE
         DOWNLOAD_ONLY YES
     )
 endif()

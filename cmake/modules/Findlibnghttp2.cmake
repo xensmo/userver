@@ -25,3 +25,20 @@ if(NOT TARGET libnghttp2::nghttp2)
         message(FATAL_ERROR "libnghttp2{,_static} cmake target not found, don't know how to link")
     endif()
 endif()
+
+if(CPM_PACKAGE_libnghttp2_SOURCE_DIR)
+    # CPM-downloaded CURL does not find CPM-downloaded libnghttp2 automatically.
+    set(nghttp2_combined_include_dir ${CPM_PACKAGE_libnghttp2_BINARY_DIR}/combined_includes)
+    add_custom_target(
+        userver-libnghttp2-curl-bridge
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${nghttp2_combined_include_dir}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CPM_PACKAGE_libnghttp2_SOURCE_DIR}/lib/includes" "${nghttp2_combined_include_dir}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CPM_PACKAGE_libnghttp2_BINARY_DIR}/lib/includes" "${nghttp2_combined_include_dir}"
+        COMMENT "Copying libnghttp2 includes to a directory consumable by CURL"
+        VERBATIM
+    )
+    get_target_property(nghttp2_original_target libnghttp2::nghttp2 ALIASED_TARGET)
+    add_dependencies(${nghttp2_original_target} userver-libnghttp2-curl-bridge)
+    set(NGHTTP2_INCLUDE_DIR "${nghttp2_combined_include_dir}" CACHE INTERNAL "" FORCE)
+    set(NGHTTP2_LIBRARY "$<TARGET_FILE:libnghttp2::nghttp2>" CACHE INTERNAL "" FORCE)
+endif()

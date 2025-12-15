@@ -12,6 +12,7 @@ if(NOT USERVER_PROTOVALIDATE_CC_PATH AND USERVER_DOWNLOAD_PACKAGE_PROTOVALIDATE_
         NAME protovalidate_cc
         GIT_TAG v0.6.0
         GITHUB_REPOSITORY bufbuild/protovalidate-cc
+        GIT_SHALLOW TRUE
     )
 else()
     find_package(protovalidate_cc CONFIG REQUIRED)

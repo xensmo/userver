@@ -9,6 +9,7 @@ if(NOT USERVER_OPENTELEMETRY_PROTO)
     cpmaddpackage(
         NAME opentelemetry_proto
         GITHUB_REPOSITORY open-telemetry/opentelemetry-proto
+        GIT_SHALLOW TRUE
         VERSION 1.3.2
         DOWNLOAD_ONLY
     )

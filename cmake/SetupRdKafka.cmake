@@ -42,6 +42,7 @@ message(STATUS "Downloading librdkafka v${USERVER_KAFKA_VERSION}")
 cpmaddpackage(
     NAME RdKafka
     GITHUB_REPOSITORY confluentinc/librdkafka
+    GIT_SHALLOW TRUE
     VERSION ${USERVER_KAFKA_VERSION}
     OPTIONS "RDKAFKA_BUILD_STATIC ON"
             "RDKAFKA_BUILD_EXAMPLES OFF"

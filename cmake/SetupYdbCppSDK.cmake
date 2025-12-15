@@ -7,6 +7,7 @@ cpmaddpackage(
     NAME base64
     VERSION 0.5.2
     GITHUB_REPOSITORY aklomp/base64
+    GIT_SHALLOW TRUE
     OPTIONS "CMAKE_SKIP_INSTALL_RULES ON"
 )
 write_package_stub(base64)
@@ -16,11 +17,11 @@ cpmaddpackage(
     NAME jwt-cpp
     VERSION 0.7.0
     GITHUB_REPOSITORY Thalhammer/jwt-cpp
+    GIT_SHALLOW TRUE
     OPTIONS "JWT_BUILD_EXAMPLES OFF" "CMAKE_SKIP_INSTALL_RULES ON"
 )
 write_package_stub(jwt-cpp)
 
-write_package_stub(RapidJSON)
 set(RAPIDJSON_INCLUDE_DIRS "${USERVER_THIRD_PARTY_DIRS}/rapidjson/include")
 
 if(TARGET userver-api-common-protos)
@@ -34,6 +35,7 @@ cpmaddpackage(
     NAME ydb-cpp-sdk
     GIT_TAG v3.5.1
     GITHUB_REPOSITORY ydb-platform/ydb-cpp-sdk
+    GIT_SHALLOW TRUE
     OPTIONS "Brotli_VERSION ${Brotli_VERSION}" "RAPIDJSON_INCLUDE_DIRS ${RAPIDJSON_INCLUDE_DIRS}"
             "YDB_SDK_GOOGLE_COMMON_PROTOS_TARGET ${YDB_SDK_GOOGLE_COMMON_PROTOS_TARGET}" "YDB_SDK_EXAMPLES OFF"
 )

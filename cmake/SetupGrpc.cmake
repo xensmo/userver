@@ -69,6 +69,7 @@ cpmaddpackage(
     NAME gRPC
     VERSION 1.59.1
     GITHUB_REPOSITORY grpc/grpc
+    GIT_SHALLOW TRUE
     SYSTEM
     PATCHES grpc_pr_36805.patch
     OPTIONS "BUILD_SHARED_LIBS OFF"

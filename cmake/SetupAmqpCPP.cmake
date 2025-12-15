@@ -17,6 +17,7 @@ cpmaddpackage(
     NAME amqp-cpp
     VERSION 4.3.18
     GITHUB_REPOSITORY CopernicaMarketingSoftware/AMQP-CPP
+    GIT_SHALLOW TRUE
 )
 
 target_compile_options(amqpcpp PRIVATE "-Wno-unused-parameter")

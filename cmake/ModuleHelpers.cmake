@@ -371,6 +371,7 @@ macro(_userver_cpm_addpackage name)
         NAME ${name}
         VERSION ${ARG_CPM_VERSION}
         GITHUB_REPOSITORY ${ARG_CPM_GITHUB_REPOSITORY}
+        GIT_SHALLOW TRUE
         URL ${ARG_CPM_URL}
         OPTIONS ${ARG_CPM_OPTIONS}
         SOURCE_SUBDIR ${ARG_CPM_SOURCE_SUBDIR}

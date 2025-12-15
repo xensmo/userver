@@ -28,6 +28,7 @@ cpmaddpackage(
     NAME RocksDB
     GITHUB_REPOSITORY facebook/rocksdb
     GIT_TAG v10.4.2
+    GIT_SHALLOW TRUE
     OPTIONS "ROCKSDB_BUILD_SHARED OFF"
             "WITH_SNAPPY ON"
             "WITH_BZ2 ON"
