@@ -54,6 +54,8 @@ private:
               cycle(std::move(cycle))
         {}
 
+        // Actors dependency cycle. Each actor (except the last) blocks the next one.
+        // The last one blocks the first.
         std::vector<Vertex> cycle;
     };
 
@@ -121,27 +123,26 @@ StateBase::StateBase(DeadlockDetector dd) {
 
 StateBase::~StateBase() = default;
 
-void StateBase::HookBeforeAddDependency(const Actor& subject, const Actor& object) {
+void StateBase::AddDependency(const Actor& from, const Actor& to) {
     if (!impl_->enabled) {
         return;
     }
 
     const auto* current = current_task::GetCurrentTaskContextUnchecked();
-    if (current && current == &subject && impl_->collect_stacktrace) {
+    if (current && current == &from && impl_->collect_stacktrace) {
         auto bt = impl_->backtraces.Lock();
         bt->emplace(current, boost::stacktrace::stacktrace());
     }
 
     auto edges = impl_->active_dependencies.Lock();
-    auto& subject_dependencies = (*edges)[&subject];
+    auto& dependencies = (*edges)[&from];
     UASSERT_MSG(
-        std::find(subject_dependencies.begin(), subject_dependencies.end(), &object) == subject_dependencies.end(),
-        fmt::format("Adding already existing dependency {} -> {}", ToAssertString(subject), ToAssertString(object))
+        std::find(dependencies.begin(), dependencies.end(), &to) == dependencies.end(),
+        fmt::format("Adding already existing dependency {} -> {}", ToAssertString(from), ToAssertString(to))
     );
-    subject_dependencies.emplace_back(&object);
-
+    dependencies.emplace_back(&to);
     CycleDetector cd(*edges);
-    auto cycle = cd.FindCycle(&object);
+    auto cycle = cd.FindCycle(&to);
     if (cycle) {
         auto bt = impl_->backtraces.Lock();
         for (const auto& actor : *cycle) {
@@ -156,35 +157,50 @@ void StateBase::HookBeforeAddDependency(const Actor& subject, const Actor& objec
     }
 }
 
-void StateBase::HookBeforeRemoveDependency(const Actor& subject, const Actor& object) noexcept {
+void StateBase::RemoveDependency(const Actor& from, const Actor& to) noexcept {
     if (!impl_->enabled) {
         return;
     }
 
     auto edges = impl_->active_dependencies.Lock();
-    auto& v = (*edges)[&subject];
+    auto& v = (*edges)[&from];
 
-    auto it = std::find(v.begin(), v.end(), &object);
+    auto it = std::find(v.begin(), v.end(), &to);
     if (it == v.end()) {
-        utils::AbortWithStacktrace(fmt::format(
-            "Trying to stop waiting while not waiting! {} => {}",
-            ToAssertString(subject),
-            ToAssertString(object)
-        ));
+        utils::AbortWithStacktrace(
+            fmt::format("Trying to stop waiting while not waiting! {} => {}", ToAssertString(from), ToAssertString(to))
+        );
     }
     v.erase(it);
     if (v.empty()) {
-        edges->erase(&subject);
+        edges->erase(&from);
     }
 }
 
-void StateBase::HookActorDestroy(const Actor& object) {
+void StateBase::OnResourceAcquire(const Actor& owner, const Actor& resource) {
+    // Resource release is dependent on the owner
+    AddDependency(resource, owner);
+}
+
+void StateBase::OnResourceRelease(const Actor& owner, const Actor& resource) noexcept {
+    RemoveDependency(resource, owner);
+}
+
+void StateBase::OnWaitForResourceStart(const Actor& waiting, const Actor& resource) {
+    AddDependency(waiting, resource);
+}
+
+void StateBase::OnWaitForResourceFinish(const Actor& waiting, const Actor& resource) noexcept {
+    RemoveDependency(waiting, resource);
+}
+
+void StateBase::OnActorDestroy(const Actor& actor) {
     auto edges = impl_->active_dependencies.Lock();
-    auto it = edges->find(&object);
+    auto it = edges->find(&actor);
     if (it != edges->end() && !it->second.empty()) {
         utils::AbortWithStacktrace(fmt::format(
             "Trying to destroy {} while still waiting for {}!",
-            ToAssertString(object),
+            ToAssertString(actor),
             ToAssertString(*it->second.front())
         ));
     }
@@ -204,16 +220,16 @@ State& GetState() {
     return pool.GetDeadlockDetectorState();
 }
 
-WaitScope::WaitScope(const Actor& a)
-    : actor_(a)
+WaitScope::WaitScope(const Actor& resource)
+    : resource_(resource)
 {
     auto& dd_state = GetState();
-    dd_state.HookBeforeAddDependency(current_task::GetCurrentTaskContext(), actor_);
+    dd_state.OnWaitForResourceStart(current_task::GetCurrentTaskContext(), resource_);
 }
 
 WaitScope::~WaitScope() {
     auto& dd_state = GetState();
-    dd_state.HookBeforeRemoveDependency(current_task::GetCurrentTaskContext(), actor_);
+    dd_state.OnWaitForResourceFinish(current_task::GetCurrentTaskContext(), resource_);
 }
 
 }  // namespace engine::deadlock_detector
