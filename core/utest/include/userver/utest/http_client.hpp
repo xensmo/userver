@@ -2,11 +2,14 @@
 
 #include <memory>
 
+#include <userver/engine/task/current_task.hpp>
+
 USERVER_NAMESPACE_BEGIN
 
 namespace clients::http {
 class ClientCore;
 class Client;
+class ClientWithMiddlewares;
 class MiddlewareBase;
 }  // namespace clients::http
 
@@ -25,6 +28,10 @@ namespace impl {
 std::shared_ptr<clients::http::ClientCore> CreateHttpClientCore();
 
 std::shared_ptr<clients::http::ClientCore> CreateHttpClientCore(engine::TaskProcessor& fs_task_processor);
+
+std::shared_ptr<clients::http::ClientWithMiddlewares> CreateHttpClientWithMiddlewares(
+    engine::TaskProcessor& fs_task_processor = engine::current_task::GetBlockingTaskProcessor()
+);
 
 }  // namespace impl
 

@@ -58,6 +58,16 @@ std::shared_ptr<clients::http::ClientCore> CreateHttpClientCore(engine::TaskProc
     return CreateCore(fs_task_processor, GetDefaultTracingManager());
 }
 
+std::shared_ptr<clients::http::ClientWithMiddlewares> CreateHttpClientWithMiddlewares(
+    engine::TaskProcessor& fs_task_processor
+) {
+    return std::make_shared<clients::http::ClientWithMiddlewares>(
+        utils::impl::InternalTag{},
+        CreateCore(fs_task_processor, GetDefaultTracingManager()),
+        std::vector<utils::NotNull<clients::http::MiddlewareBase*>>{}
+    );
+}
+
 }  // namespace impl
 
 std::shared_ptr<clients::http::Client> CreateHttpClient() {

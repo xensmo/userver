@@ -44,6 +44,11 @@ public:
     /// @note This method is thread-safe despite being non-const.
     Request CreateRequest() override;
 
+    /// @cond
+    // For internal use only.
+    std::size_t GetActiveRequestCountDebug() const;
+    /// @endcond
+
 private:
     std::shared_ptr<ClientCore> client_core_;
     std::vector<utils::NotNull<clients::http::MiddlewareBase*>> middlewares_;

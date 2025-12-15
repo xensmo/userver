@@ -109,6 +109,9 @@ public:
 
     // For internal use only.
     void SetDnsResolver(clients::dns::Resolver* resolver);
+
+    // For internal use only.
+    std::size_t GetActiveRequestCountDebug() const;
     /// @endcond
 
 private:

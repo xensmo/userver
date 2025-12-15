@@ -25,6 +25,10 @@ Request ClientWithMiddlewares::CreateRequest() {
     return request;
 }
 
+std::size_t ClientWithMiddlewares::GetActiveRequestCountDebug() const {
+    return client_core_->GetActiveRequestCountDebug();
+}
+
 }  // namespace clients::http
 
 USERVER_NAMESPACE_END
