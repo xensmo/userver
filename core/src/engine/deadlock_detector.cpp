@@ -1,9 +1,12 @@
 #include <engine/deadlock_detector.hpp>
 
-#include <list>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <boost/config.hpp>
 #include <boost/stacktrace.hpp>
 
 #include <engine/task/task_context.hpp>
@@ -23,7 +26,7 @@ class CycleDetector final {
 public:
     using Vertex = const Actor*;
 
-    explicit CycleDetector(const std::unordered_map<const Actor*, std::list<const Actor*>>& edges)
+    explicit CycleDetector(const std::unordered_map<const Actor*, std::vector<const Actor*>>& edges)
         : edges_(edges)
     {}
 
@@ -44,8 +47,8 @@ private:
         Vertex v{};
 
         // the next not-yet processed dependency of "v"
-        std::list<Vertex>::const_iterator iter;
-        std::list<Vertex>::const_iterator end;
+        std::vector<Vertex>::const_iterator iter;
+        std::vector<Vertex>::const_iterator end;
     };
 
     struct CycleException final : public std::runtime_error {
@@ -95,7 +98,7 @@ private:
         }
     }
 
-    const std::unordered_map<const Actor*, std::list<const Actor*>>& edges_;
+    const std::unordered_map<const Actor*, std::vector<const Actor*>>& edges_;
 
     std::vector<DfsStackItem> dfs_processing_stack_;
 
@@ -113,7 +116,7 @@ struct StateBase::Impl {
     concurrent::Variable<std::unordered_map<const Actor*, boost::stacktrace::stacktrace>, std::mutex> backtraces;
 
     // "first" depends on "second"
-    concurrent::Variable<std::unordered_map<const Actor*, std::list<const Actor*>>, std::mutex> active_dependencies;
+    concurrent::Variable<std::unordered_map<const Actor*, std::vector<const Actor*>>, std::mutex> active_dependencies;
 };
 
 StateBase::StateBase(DeadlockDetector dd) {
@@ -129,9 +132,10 @@ void StateBase::AddDependency(const Actor& from, const Actor& to) {
     }
 
     const auto* current = current_task::GetCurrentTaskContextUnchecked();
-    if (current && current == &from && impl_->collect_stacktrace) {
+    if (current != nullptr && current == &from && impl_->collect_stacktrace) {
+        boost::stacktrace::stacktrace trace{};
         auto bt = impl_->backtraces.Lock();
-        bt->emplace(current, boost::stacktrace::stacktrace());
+        bt->emplace(current, std::move(trace));
     }
 
     auto edges = impl_->active_dependencies.Lock();
@@ -143,18 +147,21 @@ void StateBase::AddDependency(const Actor& from, const Actor& to) {
     dependencies.emplace_back(&to);
     CycleDetector cd(*edges);
     auto cycle = cd.FindCycle(&to);
-    if (cycle) {
+    if (BOOST_LIKELY(!cycle.has_value())) {
+        return;
+    }
+    if (impl_->collect_stacktrace) {
         auto bt = impl_->backtraces.Lock();
         for (const auto& actor : *cycle) {
             auto it = bt->find(actor);
-            if (it != bt->end()) {
-                LOG_CRITICAL()
-                    << "Deadlocked task " << ToAssertString(*actor) << boost::stacktrace::to_string(it->second);
+            if (it == bt->end()) {
+                continue;
             }
+            LOG_CRITICAL() << "Deadlocked task " << ToAssertString(*actor) << boost::stacktrace::to_string(it->second);
         }
-
-        OnCycleFound(*cycle);
     }
+
+    OnCycleFound(*cycle);
 }
 
 void StateBase::RemoveDependency(const Actor& from, const Actor& to) noexcept {
@@ -171,10 +178,12 @@ void StateBase::RemoveDependency(const Actor& from, const Actor& to) noexcept {
             fmt::format("Trying to stop waiting while not waiting! {} => {}", ToAssertString(from), ToAssertString(to))
         );
     }
-    v.erase(it);
-    if (v.empty()) {
+    if (v.size() == 1) {
         edges->erase(&from);
+        return;
     }
+    std::swap(*it, v.back());
+    v.pop_back();
 }
 
 void StateBase::OnResourceAcquire(const Actor& owner, const Actor& resource) {
