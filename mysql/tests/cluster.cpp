@@ -212,10 +212,9 @@ UTEST(Cluster, MappedBatchInsert) {
 namespace {
 /// [uMySQL usage sample - Cluster ExecuteCommand]
 void PrepareExampleTable(const Cluster& cluster) {
-    constexpr std::chrono::milliseconds kTimeout{1750};
     cluster.ExecuteCommand(ClusterHostType::kPrimary, "DROP TABLE IF EXISTS SampleTable");
     cluster.ExecuteCommand(
-        CommandControl{kTimeout},
+        CommandControl{utest::kMaxTestWaitTime},
         ClusterHostType::kPrimary,
         "CREATE TABLE SampleTable("
         "Id INT PRIMARY KEY AUTO_INCREMENT,"
@@ -254,7 +253,7 @@ UTEST(Cluster, Execute) {
 
     PrepareExampleTable(*cluster);
 
-    PerformExecute(*cluster, std::chrono::milliseconds{1750}, "title", 1);
+    PerformExecute(*cluster, utest::kMaxTestWaitTime, "title", 1);
 }
 
 }  // namespace execute_sample
@@ -290,11 +289,7 @@ UTEST(Cluster, ExecuteDecompose) {
 
     PrepareExampleTable(*cluster);
 
-    PerformExecuteDecompose(
-        *cluster,
-        std::chrono::milliseconds{1750},
-        SampleRow{"title", 2, std::chrono::system_clock::now()}
-    );
+    PerformExecuteDecompose(*cluster, utest::kMaxTestWaitTime, SampleRow{"title", 2, std::chrono::system_clock::now()});
 }
 
 }  // namespace execute_decompose_sample
@@ -339,7 +334,7 @@ UTEST(Cluster, ExecuteBulk) {
         rows.push_back(SampleRow{std::to_string(i), 1, std::chrono::system_clock::now()});
     }
 
-    PerformExecuteBulk(*cluster, std::chrono::milliseconds{1750}, rows);
+    PerformExecuteBulk(*cluster, utest::kMaxTestWaitTime, rows);
 }
 
 }  // namespace execute_bulk_sample
@@ -402,7 +397,7 @@ UTEST(Cluster, ExecuteBulkMapped) {
         data.push_back({"name", std::to_string(i), 2});
     }
 
-    PerformExecuteBulkMapped(*cluster, std::chrono::milliseconds{1750}, data);
+    PerformExecuteBulkMapped(*cluster, utest::kMaxTestWaitTime, data);
 }
 
 }  // namespace execute_bulk_mapped_sample
@@ -447,10 +442,10 @@ UTEST(Cluster, GetCursor) {
         for (std::size_t i = 1; i <= kRowsCount; ++i) {
             rows.push_back({std::to_string(i), static_cast<int>(i), std::chrono::system_clock::now()});
         }
-        execute_bulk_sample::PerformExecuteBulk(*cluster, std::chrono::milliseconds{1750}, rows);
+        execute_bulk_sample::PerformExecuteBulk(*cluster, utest::kMaxTestWaitTime, rows);
     }
 
-    PerformGetCursor(*cluster, std::chrono::milliseconds{1750});
+    PerformGetCursor(*cluster, utest::kMaxTestWaitTime);
 }
 
 }  // namespace get_cursor_sample
