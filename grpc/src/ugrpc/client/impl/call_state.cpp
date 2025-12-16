@@ -222,9 +222,10 @@ void SetupClientContext(CallState& state, const CallOptions& call_options) {
 
 void HandleCallStatistics(CallState& state, const grpc::Status& status) noexcept {
     auto& stats = state.GetStatsScope();
-    stats.OnExplicitFinish(status.error_code());
     if (grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() && state.IsDeadlinePropagated()) {
         stats.OnCancelledByDeadlinePropagation();
+    } else {
+        stats.OnExplicitFinish(status.error_code());
     }
     stats.Flush();
 }

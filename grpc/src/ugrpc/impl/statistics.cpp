@@ -67,18 +67,15 @@ void DumpMetric(utils::statistics::Writer& writer, const MethodStatisticsSnapsho
     }
 
     const auto network_errors_value = stats.network_errors;
-    // 'abandoned_errors' need not be accounted in eps or rps, because such
-    // requests also separately report the error that occurred during the
-    // automatic request termination.
     const auto abandoned_errors_value = stats.internal_errors;
     const auto deadline_cancelled_value = stats.deadline_cancelled;
     const auto cancelled_value = stats.cancelled;
     const auto started_renamed = stats.started_renamed;
 
     // 'total_requests' and 'error_requests' originally only count RPCs that
-    // finished with a status code. 'network_errors', 'deadline_cancelled' and
-    // 'cancelled' are RPCs that finished abruptly and didn't produce a status
-    // code. But these RPCs still need to be included in the totals.
+    // finished with a status code. 'network_errors', 'abandoned_errors', 'deadline_cancelled' and
+    // 'cancelled' are RPCs that finished abruptly and didn't produce a status code.
+    // But these RPCs still need to be included in the totals.
 
     // Network errors are not considered to be server errors, because either the
     // client is responsible for the server dropping the request (`TryCancel`,
@@ -86,6 +83,9 @@ void DumpMetric(utils::statistics::Writer& writer, const MethodStatisticsSnapsho
     // helpful for troubleshooting to say that there are issues not with the
     // uservice process itself, but with the infrastructure.
     total_requests += network_errors_value;
+
+    // 'abandoned_errors' occur on automatic request termination.
+    total_requests += abandoned_errors_value;
 
     // Deadline propagation is considered a client-side error: the client likely
     // caused the error by giving the server an insufficient deadline.
