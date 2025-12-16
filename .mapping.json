@@ -4412,6 +4412,7 @@
   "scripts/docs/en/userver/libraries/s3api.md":"taxi/uservices/userver/scripts/docs/en/userver/libraries/s3api.md",
   "scripts/docs/en/userver/log_level_running_service.md":"taxi/uservices/userver/scripts/docs/en/userver/log_level_running_service.md",
   "scripts/docs/en/userver/logging.md":"taxi/uservices/userver/scripts/docs/en/userver/logging.md",
+  "scripts/docs/en/userver/long_transactions.md":"taxi/uservices/userver/scripts/docs/en/userver/long_transactions.md",
   "scripts/docs/en/userver/lru_cache.md":"taxi/uservices/userver/scripts/docs/en/userver/lru_cache.md",
   "scripts/docs/en/userver/memory_profile_running_service.md":"taxi/uservices/userver/scripts/docs/en/userver/memory_profile_running_service.md",
   "scripts/docs/en/userver/mongodb.md":"taxi/uservices/userver/scripts/docs/en/userver/mongodb.md",
