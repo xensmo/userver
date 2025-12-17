@@ -61,9 +61,10 @@ void ClientQosErrorsReporter::ValidateAndReportClientQosErrors(
             );
         } else {
             LOG_WARNING(
-                "Invalid RPC method path format in GRPC_CLIENT_QOS config: '{}'. Reason: {}. Expected format: "
+                "Invalid RPC method path format in '{}' config: '{}'. Reason: {}. Expected format: "
                 "'path.to.ServiceName/MethodName' (without leading slash). This QOS configuration will be "
                 "ignored.",
+                config_name,
                 method_path,
                 ToString(error)
             );
