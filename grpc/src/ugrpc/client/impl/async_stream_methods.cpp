@@ -70,17 +70,18 @@ void CheckFinishStatus(CallState& state) {
     }
 }
 
-void ProcessFinish(CallState& state, const google::protobuf::Message* final_response) {
-    const auto& status = state.GetStatus();
+void ProcessFinish(CallState& state, const grpc::Status& status, const google::protobuf::Message* response) {
+    RunMiddlewarePipeline(state, MiddlewareHooks::FinishHooks(status, status.ok() ? response : nullptr));
 
     HandleCallStatistics(state, status);
-
-    RunMiddlewarePipeline(state, MiddlewareHooks::FinishHooks(status, status.ok() ? final_response : nullptr));
 
     SetStatusAndResetSpan(state, status);
 }
 
-void ProcessFinishAbandoned(CallState& state) noexcept { SetStatusAndResetSpan(state, state.GetStatus()); }
+void ProcessFinishAbandoned(CallState& state, const grpc::Status& status) noexcept {
+    // Nothing to do with statistics, `RpcStatisticsScope` automatically accounts "abandoned-error"
+    SetStatusAndResetSpan(state, status);
+}
 
 void ProcessCancelled(CallState& state, std::string_view stage) noexcept {
     state.GetStatsScope().OnCancelled();

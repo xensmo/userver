@@ -29,9 +29,9 @@ void CheckOk(
 
 void CheckFinishStatus(CallState& state);
 
-void ProcessFinish(CallState& state, const google::protobuf::Message* final_response);
+void ProcessFinish(CallState& state, const grpc::Status& status, const google::protobuf::Message* final_response);
 
-void ProcessFinishAbandoned(CallState& state) noexcept;
+void ProcessFinishAbandoned(CallState& state, const grpc::Status& status) noexcept;
 
 void ProcessCancelled(CallState& state, std::string_view stage) noexcept;
 
@@ -65,7 +65,7 @@ void Finish(
         case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kOk:
             state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
             try {
-                ProcessFinish(state, final_response);
+                ProcessFinish(state, state.GetStatus(), final_response);
             } catch (const std::exception& ex) {
                 if (throw_on_error) {
                     throw;
@@ -117,7 +117,7 @@ void FinishAbandoned(GrpcStream& stream, StreamingCallState& state) noexcept try
     state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
 
     if (ok) {
-        ProcessFinishAbandoned(state);
+        ProcessFinishAbandoned(state, state.GetStatus());
     } else {
         ProcessNetworkError(state, "Finish");
     }
