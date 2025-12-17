@@ -76,6 +76,10 @@ void DumpMetric(utils::statistics::Writer& writer, const UpdateStatistics& stats
 }
 
 void DumpMetric(utils::statistics::Writer& writer, const Statistics& stats) {
+    if (!stats.is_first_sync_update_complete) {
+        return;
+    }
+
     const auto& full = stats.full_update;
     const auto& incremental = stats.incremental_update;
     UpdateStatistics any;

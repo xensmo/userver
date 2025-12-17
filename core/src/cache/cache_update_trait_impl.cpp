@@ -214,6 +214,8 @@ void CacheUpdateTrait::Impl::StartPeriodicUpdates(utils::Flags<CacheUpdateTrait:
             }
         }
 
+        statistics_.is_first_sync_update_complete = true;
+
         if (dump_time && config->first_update_type == FirstUpdateType::kIncrementalThenAsyncFull) {
             dump_first_update_type_ = UpdateType::kFull;
             periodic_task_flags_ |= utils::PeriodicTask::Flags::kNow;
