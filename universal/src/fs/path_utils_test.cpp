@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <userver/fs/read.hpp>
+#include <userver/fs/path_utils.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
