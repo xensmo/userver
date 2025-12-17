@@ -5,6 +5,7 @@
 [![Debian](https://github.com/userver-framework/userver/actions/workflows/debian.yml/badge.svg)](https://github.com/userver-framework/userver/actions/workflows/debian.yml)
 [![MacOS](https://github.com/userver-framework/userver/actions/workflows/macos.yml/badge.svg)](https://github.com/userver-framework/userver/actions/workflows/macos.yml)
 [![Alpine](https://github.com/userver-framework/userver/actions/workflows/alpine.yml/badge.svg)](https://github.com/userver-framework/userver/actions/workflows/alpine.yml)
+[![Arch](https://github.com/userver-framework/userver/actions/workflows/archlinux.yml/badge.svg)](https://github.com/userver-framework/userver/actions/workflows/archlinux.yml)
 [![Docker CI](https://github.com/userver-framework/userver/actions/workflows/docker.yaml/badge.svg)](https://github.com/userver-framework/userver/actions/workflows/docker.yaml)
 [![Conan](https://github.com/userver-framework/userver/actions/workflows/ci-conan.yml/badge.svg)](https://github.com/userver-framework/userver/actions/workflows/ci-conan.yml)
 [![CodeQL](https://github.com/userver-framework/userver/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/userver-framework/userver/actions/workflows/codeql-analysis.yml)
