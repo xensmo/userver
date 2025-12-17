@@ -31,18 +31,27 @@ std::string ToString(T value) {
 }
 
 template <typename T>
+std::string GetDiagnosticString(std::string_view input) {
+    return fmt::format("type = {}, input = {}", compiler::GetTypeName<T>(), input);
+}
+
+template <typename T>
 auto TestInvalid(const std::string& input) {
-    ASSERT_THROW(utils::FromString<T>(input), utils::FromStringException)
-        << "type = " << compiler::GetTypeName<T>() << ", input = \"" << input << "\"";
+    ASSERT_FALSE(utils::FromStringNoThrow<T>(input)) << GetDiagnosticString<T>(input);
+    ASSERT_THROW(utils::FromString<T>(input), utils::FromStringException) << GetDiagnosticString<T>(input);
 }
 
 template <typename StringType, typename T>
 auto CheckConverts(StringType input, T expected_result) {
     T actual_result{};
-    ASSERT_NO_THROW(actual_result = utils::FromString<T>(input))
-        << "type = " << compiler::GetTypeName<T>() << ", input = \"" << input << "\"";
-    ASSERT_EQ(actual_result, expected_result)
-        << "type = " << compiler::GetTypeName<T>() << ", input = \"" << input << "\"";
+
+    ASSERT_NO_THROW(actual_result = utils::FromStringNoThrow<T>(input).value()) << GetDiagnosticString<T>(input);
+    ASSERT_EQ(actual_result, expected_result) << GetDiagnosticString<T>(input);
+
+    actual_result = T{};
+
+    ASSERT_NO_THROW(actual_result = utils::FromString<T>(input)) << GetDiagnosticString<T>(input);
+    ASSERT_EQ(actual_result, expected_result) << GetDiagnosticString<T>(input);
 }
 
 template <typename T>
