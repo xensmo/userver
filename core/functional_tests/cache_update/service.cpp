@@ -23,13 +23,7 @@ class AlertCache final : public components::CachingComponentBase<Data> {
 public:
     static constexpr std::string_view kName = "alert-cache";
 
-    AlertCache(const components::ComponentConfig& config, const components::ComponentContext& context)
-        : CachingComponentBase(config, context)
-    {
-        CacheUpdateTrait::StartPeriodicUpdates();
-    }
-
-    ~AlertCache() override { CacheUpdateTrait::StopPeriodicUpdates(); }
+    using components::CachingComponentBase<Data>::CachingComponentBase;
 
     void Update(
         cache::UpdateType type,
@@ -53,11 +47,7 @@ public:
 
     CacheSample(const components::ComponentConfig& config, const components::ComponentContext& context)
         : CachingComponentBase(config, context)
-    {
-        CacheUpdateTrait::StartPeriodicUpdates();
-    }
-
-    ~CacheSample() override { CacheUpdateTrait::StopPeriodicUpdates(); }
+    {}
 
     void Update(
         cache::UpdateType /*type*/,

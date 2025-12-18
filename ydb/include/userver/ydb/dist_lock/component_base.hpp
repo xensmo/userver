@@ -7,7 +7,6 @@
 #include <string>
 
 #include <userver/components/component_base.hpp>
-#include <userver/utils/statistics/entry.hpp>
 #include <userver/ydb/dist_lock/worker.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -42,7 +41,6 @@ namespace ydb {
 class DistLockComponentBase : public components::ComponentBase {
 public:
     DistLockComponentBase(const components::ComponentConfig&, const components::ComponentContext&);
-    ~DistLockComponentBase() override;
 
     /// @brief Checks if the the current service instance owns the lock.
     ///
@@ -98,9 +96,6 @@ private:
     // Worker contains a task that may refer to other fields, so it must be right
     // before subscriptions. Add new fields above this comment.
     std::optional<DistLockedWorker> worker_;
-
-    // Subscriptions must be the last fields.
-    utils::statistics::Entry statistics_holder_;
 };
 
 }  // namespace ydb

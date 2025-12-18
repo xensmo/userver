@@ -1,6 +1,7 @@
 #include <userver/storages/postgres/dist_lock_component_base.hpp>
 
 #include <userver/components/component.hpp>
+#include <userver/components/scope.hpp>
 #include <userver/components/statistics_storage.hpp>
 #include <userver/dist_lock/dist_lock_settings.hpp>
 #include <userver/dynamic_config/storage/component.hpp>
@@ -76,8 +77,8 @@ DistLockComponentBase::DistLockComponentBase(
     subscription_token_ = config_.UpdateAndListen(this, name_, &DistLockComponentBase::OnConfigUpdate);
     autostart_ = component_config["autostart"].As<bool>(false);
 
-    auto& statistics_storage = component_context.FindComponent<components::StatisticsStorage>();
-    statistics_holder_ = statistics_storage.GetStorage().RegisterWriter(
+    utils::statistics::RegisterWriterScope(
+        component_context,
         "distlock",
         [this](USERVER_NAMESPACE::utils::statistics::Writer& writer) { writer = *worker_; },
         {{"distlock_name", component_config.Name()}}
@@ -93,10 +94,7 @@ DistLockComponentBase::DistLockComponentBase(
     }
 }
 
-DistLockComponentBase::~DistLockComponentBase() {
-    statistics_holder_.Unregister();
-    subscription_token_.Unsubscribe();
-}
+DistLockComponentBase::~DistLockComponentBase() { subscription_token_.Unsubscribe(); }
 
 dist_lock::DistLockedWorker& DistLockComponentBase::GetWorker() { return *worker_; }
 

@@ -59,7 +59,6 @@ public:
     static constexpr std::string_view kName = "cache-http-translations";
 
     HttpCachedTranslations(const components::ComponentConfig& config, const components::ComponentContext& context);
-    ~HttpCachedTranslations() override;
 
     void Update(
         cache::UpdateType type,
@@ -98,11 +97,8 @@ HttpCachedTranslations::HttpCachedTranslations(
     : CachingComponentBase(config, context),
       http_client_(context.FindComponent<components::HttpClient>().GetHttpClient()),
       translations_url_(config["translations-url"].As<std::string>())
-{
-    CacheUpdateTrait::StartPeriodicUpdates();
-}
+{}
 
-HttpCachedTranslations::~HttpCachedTranslations() { CacheUpdateTrait::StopPeriodicUpdates(); }
 /// [HTTP caching sample - constructor destructor]
 
 /// [HTTP caching sample - update]

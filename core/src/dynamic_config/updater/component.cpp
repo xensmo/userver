@@ -78,11 +78,7 @@ DynamicConfigClientUpdater::DynamicConfigClientUpdater(
       config_client_(component_context.FindComponent<components::DynamicConfigClient>().GetClient()),
       docs_map_defaults_(component_context.FindComponent<components::DynamicConfig>().GetDefaultDocsMap()),
       docs_map_keys_(utils::AsContainer<DocsMapKeys>(docs_map_defaults_.GetNames()))
-{
-    StartPeriodicUpdates();
-}
-
-DynamicConfigClientUpdater::~DynamicConfigClientUpdater() { StopPeriodicUpdates(); }
+{}
 
 void DynamicConfigClientUpdater::SetDisabledKillSwitchesToDefault(
     dynamic_config::DocsMap& docs_map,

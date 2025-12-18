@@ -14,6 +14,7 @@
 #include <userver/cache/exceptions.hpp>
 #include <userver/compiler/demangle.hpp>
 #include <userver/components/component_base.hpp>
+#include <userver/components/component_context.hpp>
 #include <userver/components/component_fwd.hpp>
 #include <userver/concurrent/async_event_channel.hpp>
 #include <userver/dump/helpers.hpp>
@@ -36,9 +37,7 @@ namespace components {
 /// @brief Base class for caching components
 ///
 /// Provides facilities for creating periodically updated caches.
-/// You need to override cache::CacheUpdateTrait::Update
-/// then call cache::CacheUpdateTrait::StartPeriodicUpdates after setup
-/// and cache::CacheUpdateTrait::StopPeriodicUpdates before teardown.
+/// You need to override cache::CacheUpdateTrait::Update.
 /// You can also override cache::CachingComponentBase::PreAssignCheck and set
 /// has-pre-assign-check: true in the static config to enable check.
 ///
@@ -208,8 +207,6 @@ protected:
     virtual void PreAssignCheck(const T* old_value_ptr, const T* new_value_ptr) const;
 
 private:
-    void OnAllComponentsLoaded() final;
-
     void Cleanup() final;
 
     void MarkAsExpired() final;
@@ -237,9 +234,7 @@ CachingComponentBase<T>::CachingComponentBase(const ComponentConfig& config, con
               }
           }
       )
-{
-    const auto initial_config = GetConfig();
-}
+{}
 
 template <typename T>
 CachingComponentBase<T>::~CachingComponentBase() {
@@ -354,11 +349,6 @@ std::unique_ptr<const T> CachingComponentBase<T>::ReadContents(dump::Reader& rea
     } else {
         dump::ThrowDumpUnimplemented(Name());
     }
-}
-
-template <typename T>
-void CachingComponentBase<T>::OnAllComponentsLoaded() {
-    AssertPeriodicUpdateStarted();
 }
 
 template <typename T>

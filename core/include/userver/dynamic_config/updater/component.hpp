@@ -75,8 +75,6 @@ public:
 
     DynamicConfigClientUpdater(const ComponentConfig&, const ComponentContext&);
 
-    ~DynamicConfigClientUpdater() override;
-
     // After calling this method, `Get()` will return a dynamic_config containing
     // the specified keys while the token that this method returned is alive.
     dynamic_config::AdditionalKeysToken SetAdditionalKeys(std::vector<std::string> keys);

@@ -374,24 +374,6 @@ void CacheUpdateTrait::Impl::OnUpdateSkipped() {
     }
 }
 
-void CacheUpdateTrait::Impl::AssertPeriodicUpdateStarted() {
-    UASSERT_MSG(
-        is_running_.load(),
-        "Cache " + name_ +
-            " has been constructed without calling "
-            "StartPeriodicUpdates(), call it in ctr"
-    );
-}
-
-void CacheUpdateTrait::Impl::AssertPeriodicUpdateStopped() {
-    UASSERT_MSG(
-        !is_running_.load(),
-        "Cache " + name_ +
-            " has been destructed without calling "
-            "StopPeriodicUpdates(), call it in dtr"
-    );
-}
-
 void CacheUpdateTrait::Impl::OnCacheModified() { cache_modified_ = true; }
 
 bool CacheUpdateTrait::Impl::HasPreAssignCheck() const { return static_config_.has_pre_assign_check; }
@@ -418,6 +400,7 @@ void CacheUpdateTrait::Impl::DoUpdate(UpdateType update_type, const Config& conf
     try {
         customized_trait_.Update(update_type, last_update_, now, stats);
         CheckUpdateState(stats.GetState(utils::impl::InternalTag{}), update_type_str);
+        tracing::Span::CurrentSpan().AddTag("documents_count", statistics_.documents_current_count);
     } catch (const std::exception& e) {
         OnUpdateFailure(config);
         throw;

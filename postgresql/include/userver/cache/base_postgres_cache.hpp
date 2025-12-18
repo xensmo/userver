@@ -449,7 +449,6 @@ public:
     constexpr static auto kName = PolicyType::kName;
 
     PostgreCache(const ComponentConfig&, const ComponentContext&);
-    ~PostgreCache() override;
 
     static yaml_config::Schema GetStaticConfigSchema();
 
@@ -548,13 +547,6 @@ PostgreCache<PostgreCachePolicy>::PostgreCache(const ComponentConfig& config, co
     LOG_INFO()
         << "Cache " << kName << " full update query `" << GetAllQuery().GetStatementView()
         << "` incremental update query `" << GetDeltaQuery().GetStatementView() << "`";
-
-    this->StartPeriodicUpdates();
-}
-
-template <typename PostgreCachePolicy>
-PostgreCache<PostgreCachePolicy>::~PostgreCache() {
-    this->StopPeriodicUpdates();
 }
 
 template <typename PostgreCachePolicy>

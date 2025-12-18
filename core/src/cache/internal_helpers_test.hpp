@@ -37,7 +37,7 @@ struct MockEnvironment final {
 };
 
 class CacheMockBase : public CacheUpdateTrait {
-protected:
+public:
     CacheMockBase(std::string_view name, const yaml_config::YamlConfig& config, MockEnvironment& environment);
 
 private:

@@ -24,11 +24,7 @@ public:
 
     CachedTranslations(const components::ComponentConfig& config, const components::ComponentContext& context)
         : CachingComponentBase(config, context)
-    {
-        CacheUpdateTrait::StartPeriodicUpdates();
-    }
-
-    ~CachedTranslations() override { CacheUpdateTrait::StopPeriodicUpdates(); }
+    {}
 
     void Update(
         cache::UpdateType /*type*/,

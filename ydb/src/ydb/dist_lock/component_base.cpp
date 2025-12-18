@@ -118,15 +118,13 @@ DistLockComponentBase::DistLockComponentBase(
         }
     );
 
-    auto& statistics_storage = component_context.FindComponent<components::StatisticsStorage>();
-    statistics_holder_ = statistics_storage.GetStorage().RegisterWriter(
+    utils::statistics::RegisterWriterScope(
+        component_context,
         "distlock",
         [this](utils::statistics::Writer& writer) { writer = *worker_; },
         {{"distlock_name", component_config.Name()}}
     );
 }
-
-DistLockComponentBase::~DistLockComponentBase() { statistics_holder_.Unregister(); }
 
 bool DistLockComponentBase::OwnsLock() const noexcept { return worker_->OwnsLock(); }
 

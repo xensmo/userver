@@ -42,12 +42,14 @@ constexpr std::size_t kDummyDocumentsCount = 42;
 class FakeCache final : public cache::CacheMockBase {
 public:
     FakeCache(std::string_view name, const yaml_config::YamlConfig& config, cache::MockEnvironment& environment)
-        : CacheMockBase(name, config, environment)
+        : cache::CacheMockBase(name, config, environment)
     {
-        StartPeriodicUpdates(cache::CacheUpdateTrait::Flag::kNoFirstUpdate);
+        EarlyStartPeriodicUpdates(cache::CacheUpdateTrait::Flag::kNoFirstUpdate);
     }
 
-    ~FakeCache() final { StopPeriodicUpdates(); }
+    ~FakeCache() override { EarlyStopPeriodicUpdates(); }
+
+    utils::Flags<Flag> GetStartFlags() const override { return cache::CacheUpdateTrait::Flag::kNoFirstUpdate; }
 
     const std::string& Get() const { return value_; }
     size_t UpdatesCount() const { return updates_count_; }

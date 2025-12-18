@@ -146,6 +146,8 @@ public:
 
     /// @brief Add a writer function. Note that `func` is called concurrently with
     /// other code, so it should be thread-safe.
+    ///
+    /// @note Prefer using @ref RegisterWriterScope instead.
     Entry RegisterWriter(std::string common_prefix, WriterFunc func, std::vector<Label> add_labels = {});
 
     /// @deprecated Use RegisterWriter instead.

@@ -39,10 +39,10 @@ public:
     ToyCache(const components::ComponentConfig& config, const components::ComponentContext& context)
         : CachingComponentBase(config, context)
     {
-        StartPeriodicUpdates();
+        EarlyStartPeriodicUpdates({});
     }
 
-    ~ToyCache() override { StopPeriodicUpdates(); }
+    ~ToyCache() override { EarlyStopPeriodicUpdates(); }
 
     void Update(
         cache::UpdateType /*type*/,

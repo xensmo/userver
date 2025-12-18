@@ -2,6 +2,7 @@
 
 #include <server/server_config.hpp>
 #include <userver/components/component.hpp>
+#include <userver/components/scope.hpp>
 #include <userver/components/statistics_storage.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
@@ -36,21 +37,16 @@ Server::Server(
           component_context
       ))
 {
-    auto& statistics_storage = component_context.FindComponent<StatisticsStorage>().GetStorage();
-    server_statistics_holder_ = statistics_storage.RegisterWriter("server", [this](utils::statistics::Writer& writer) {
+    utils::statistics::RegisterWriterScope(component_context, "server", [this](utils::statistics::Writer& writer) {
         WriteStatistics(writer);
     });
-    handler_statistics_holder_ =
-        statistics_storage.RegisterWriter("http.handler.total", [this](utils::statistics::Writer& writer) {
-            return server_->WriteTotalHandlerStatistics(writer);
-        });
-
     server_->StartMonitorPort();
-}
 
-Server::~Server() {
-    server_statistics_holder_.Unregister();
-    handler_statistics_holder_.Unregister();
+    utils::statistics::RegisterWriterScope(
+        component_context,
+        "http.handler.total",
+        [this](utils::statistics::Writer& writer) { return server_->WriteTotalHandlerStatistics(writer); }
+    );
 }
 
 void Server::OnAllComponentsLoaded() { server_->Start(); }

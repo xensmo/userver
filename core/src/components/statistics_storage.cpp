@@ -1,5 +1,8 @@
 #include <userver/components/statistics_storage.hpp>
 
+#include <userver/components/component_context.hpp>
+#include <userver/components/scope.hpp>
+
 #include <userver/yaml_config/merge_schemas.hpp>
 
 #ifndef ARCADIA_ROOT
@@ -28,5 +31,27 @@ yaml_config::Schema StatisticsStorage::GetStaticConfigSchema() {
 }
 
 }  // namespace components
+
+namespace utils::statistics {
+
+void RegisterWriterScope(
+    const components::ComponentContext& context,
+    std::string common_prefix,
+    WriterFunc func,
+    std::vector<Label> add_labels
+)
+{
+    auto& storage = context.FindComponent<components::StatisticsStorage>().GetStorage();
+    context.RegisterScope(components::MakeScope(
+        [&storage,
+         common_prefix = std::move(common_prefix),
+         func = std::move(func),
+         add_labels = std::move(add_labels)] {
+            return storage.RegisterWriter(common_prefix, std::move(func), std::move(add_labels));
+        }
+    ));
+}
+
+}  // namespace utils::statistics
 
 USERVER_NAMESPACE_END

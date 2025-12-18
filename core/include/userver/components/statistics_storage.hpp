@@ -68,4 +68,21 @@ inline constexpr auto kConfigFileMode<StatisticsStorage> = ConfigFileMode::kNotR
 
 }  // namespace components
 
+namespace utils::statistics {
+
+/// @brief Add a writer function to @ref Storage from @ref StatisticsStorage.
+/// It automatically calls @ref Storage::RegisterWriter just after the component
+/// construction and @ref Entry::Unregister just before the component
+/// destructor.
+///
+/// @see @ref Storage::RegisterWriter.
+void RegisterWriterScope(
+    const components::ComponentContext&,
+    std::string common_prefix,
+    WriterFunc func,
+    std::vector<Label> add_labels = {}
+);
+
+}  // namespace utils::statistics
+
 USERVER_NAMESPACE_END

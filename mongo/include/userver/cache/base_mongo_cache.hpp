@@ -126,8 +126,6 @@ public:
 
     MongoCache(const ComponentConfig&, const ComponentContext&);
 
-    ~MongoCache();
-
     static yaml_config::Schema GetStaticConfigSchema();
 
 private:
@@ -186,13 +184,6 @@ MongoCache<MongoCacheTraits>::MongoCache(const ComponentConfig& config, const Co
             components::GetCurrentComponentName(context)
         ));
     }
-
-    this->StartPeriodicUpdates();
-}
-
-template <class MongoCacheTraits>
-MongoCache<MongoCacheTraits>::~MongoCache() {
-    this->StopPeriodicUpdates();
 }
 
 template <class MongoCacheTraits>

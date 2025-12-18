@@ -53,8 +53,6 @@ public:
 
     Server(const components::ComponentConfig& component_config, const components::ComponentContext& component_context);
 
-    ~Server() override;
-
     void OnAllComponentsLoaded() override;
 
     void OnAllComponentsAreStopping() override;
@@ -71,8 +69,6 @@ private:
     void WriteStatistics(utils::statistics::Writer& writer);
 
     std::unique_ptr<server::Server> server_;
-    utils::statistics::Entry server_statistics_holder_;
-    utils::statistics::Entry handler_statistics_holder_;
 };
 
 template <>

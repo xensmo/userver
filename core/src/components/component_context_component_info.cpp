@@ -40,6 +40,9 @@ ComponentInfo::ComponentInfo(std::string name)
 void ComponentInfo::SetComponent(std::unique_ptr<RawComponentBase>&& component) {
     bool call_on_loading_cancelled = false;
     {
+        // Calling user callback under no lock
+        AfterConstruction();
+
         const std::lock_guard lock{mutex_};
         component_ = std::move(component);
         stage_ = ComponentLifetimeStage::kCreated;
@@ -47,8 +50,6 @@ void ComponentInfo::SetComponent(std::unique_ptr<RawComponentBase>&& component) 
             call_on_loading_cancelled = true;
         }
     }
-
-    AfterConstruction();
 
     if (call_on_loading_cancelled) {
         OnLoadingCancelled();

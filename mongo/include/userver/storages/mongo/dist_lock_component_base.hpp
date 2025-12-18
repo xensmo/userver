@@ -55,8 +55,6 @@ public:
         storages::mongo::Collection
     );
 
-    ~DistLockComponentBase() override;
-
     dist_lock::DistLockedWorker& GetWorker();
 
     /// @note In testsuite always returns `true`, because there is only one host.
@@ -109,9 +107,6 @@ protected:
 private:
     std::unique_ptr<dist_lock::DistLockedWorker> worker_;
     bool testsuite_enabled_{false};
-
-    // Subscriptions must be the last fields.
-    utils::statistics::Entry statistics_holder_;
 };
 
 }  // namespace storages::mongo

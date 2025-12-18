@@ -8,7 +8,6 @@
 #include <userver/dynamic_config/snapshot.hpp>
 #include <userver/dynamic_config/source.hpp>
 #include <userver/storages/postgres/dist_lock_strategy.hpp>
-#include <userver/utils/statistics/entry.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -138,9 +137,6 @@ private:
     dist_lock::DistLockSettings default_settings_;
 
     concurrent::AsyncEventSubscriberScope subscription_token_;
-
-    // Subscriptions must be the last fields.
-    USERVER_NAMESPACE::utils::statistics::Entry statistics_holder_;
 };
 
 }  // namespace storages::postgres

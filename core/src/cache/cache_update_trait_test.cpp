@@ -54,10 +54,10 @@ public:
     FakeCache(const yaml_config::YamlConfig& config, cache::MockEnvironment& environment)
         : CacheMockBase(kName, config, environment)
     {
-        StartPeriodicUpdates();
+        EarlyStartPeriodicUpdates({});
     }
 
-    ~FakeCache() final { StopPeriodicUpdates(); }
+    ~FakeCache() override { EarlyStopPeriodicUpdates(); }
 
     cache::UpdateType LastUpdateType() const { return last_update_type_; }
 
@@ -119,10 +119,10 @@ public:
         : cache::CacheMockBase(kName, config, environment),
           data_source_(data_source)
     {
-        StartPeriodicUpdates();
+        EarlyStartPeriodicUpdates({});
     }
 
-    ~DumpedCache() final { StopPeriodicUpdates(); }
+    ~DumpedCache() override { EarlyStopPeriodicUpdates(); }
 
     std::uint64_t Get() const { return value_; }
 
@@ -596,10 +596,10 @@ public:
 
     FaultyDumpedCache(const yaml_config::YamlConfig& config, cache::MockEnvironment& environment)
         : cache::CacheMockBase(kName, config, environment) {
-        StartPeriodicUpdates();
+        EarlyStartPeriodicUpdates({});
     }
 
-    ~FaultyDumpedCache() final { StopPeriodicUpdates(); }
+    ~FaultyDumpedCache() override { EarlyStopPeriodicUpdates(); }
 
 private:
     void Update(
@@ -666,10 +666,10 @@ public:
         : CacheMockBase(kName, config, environment),
           is_update_failed_(std::move(is_update_failed))
     {
-        StartPeriodicUpdates();
+        EarlyStartPeriodicUpdates({});
     }
 
-    ~ExpirableCache() override { StopPeriodicUpdates(); }
+    ~ExpirableCache() override { EarlyStopPeriodicUpdates(); }
 
     const auto& GetExpiredLog() const { return expired_log_; }
 
@@ -798,15 +798,23 @@ public:
             InvalidateAsync(UpdateType::kFull);
             InvalidateAsync(UpdateType::kFull);
         }
-        auto flag = Flag::kNone;
-        if (!settings_.first_sync_update) {
-            flag = Flag::kNoFirstUpdate;
+        if (settings_.first_sync_update) {
+            EarlyStartPeriodicUpdates({});
+        } else {
+            EarlyStartPeriodicUpdates(cache::CacheUpdateTrait::Flag::kNoFirstUpdate);
         }
-        StartPeriodicUpdates(flag);
+    }
+
+    utils::Flags<Flag> GetStartFlags() const override {
+        if (!settings_.first_sync_update) {
+            return Flag::kNoFirstUpdate;
+        } else {
+            return Flag::kNone;
+        }
     }
 
     ~ForcedUpdateCache() override {
-        StopPeriodicUpdates();
+        EarlyStopPeriodicUpdates();
         const std::size_t before = GetUpdatesCount();
         InvalidateAsync(UpdateType::kFull);
         InvalidateAsync(UpdateType::kFull);
@@ -1095,10 +1103,12 @@ public:
     FinishWithErrorCache(const yaml_config::YamlConfig& config, cache::MockEnvironment& environment)
         : CacheMockBase(kName, config, environment)
     {
-        StartPeriodicUpdates(cache::CacheUpdateTrait::Flag::kNoFirstUpdate);
+        EarlyStartPeriodicUpdates(cache::CacheUpdateTrait::Flag::kNoFirstUpdate);
     }
 
-    ~FinishWithErrorCache() override { StopPeriodicUpdates(); }
+    ~FinishWithErrorCache() override { EarlyStopPeriodicUpdates(); }
+
+    utils::Flags<Flag> GetStartFlags() const override { return cache::CacheUpdateTrait::Flag::kNoFirstUpdate; }
 
 private:
     void Update(
