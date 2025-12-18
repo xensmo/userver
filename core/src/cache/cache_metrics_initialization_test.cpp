@@ -10,6 +10,7 @@
 #include <userver/components/run.hpp>
 #include <userver/components/statistics_storage.hpp>
 #include <userver/engine/deadline.hpp>
+#include <userver/engine/single_consumer_event.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 #include <userver/utest/utest.hpp>
@@ -18,6 +19,8 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace {
+
+engine::SingleConsumerEvent checked_metrics_before_update;
 
 const auto kStaticConfig = tests::MergeYaml(tests::kMinimalStaticConfig, R"(
 components_manager:
@@ -47,8 +50,9 @@ public:
         const std::chrono::system_clock::time_point& /*now*/,
         cache::UpdateStatisticsScope& stats_scope
     ) override {
-        // Simulate a 3-second update.
-        engine::SleepFor(std::chrono::seconds(3));
+        // Wait until the checker component checks metrics at least once.
+        const bool wait_succeeded = checked_metrics_before_update.WaitForEventFor(utest::kMaxTestWaitTime);
+        EXPECT_TRUE(wait_succeeded) << "Timed out waiting for metrics checker";
 
         // Complete successfully with size 10.
         Set(10);
@@ -98,6 +102,9 @@ public:
                 cache_size_seen = true;
             }
 
+            // Signal to the cache that we checked the metrics state.
+            checked_metrics_before_update.Send();
+
             // If both metrics are set, we're done.
             if (cache_age_seen && cache_size_seen) {
                 break;
@@ -115,6 +122,8 @@ class CacheMetricsInitializationTest : public ComponentList {};
 }  // namespace
 
 TEST_F(CacheMetricsInitializationTest, MetricsNotWrittenBeforeInitialization) {
+    checked_metrics_before_update.Reset();
+
     components::RunOnce(
         components::InMemoryConfig{kStaticConfig},
         components::MinimalComponentList()
