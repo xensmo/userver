@@ -480,13 +480,18 @@ void ConnectionPool::TryCreateConnectionAsync() {
     auto conn_settings = conn_settings_.ReadCopy();
     // Checking errors is more expensive than incrementing an atomic, so we
     // check it only if we can start a new connection.
-    if (recent_conn_errors_.GetStatsForPeriod(kRecentErrorPeriod, true) < conn_settings.recent_errors_threshold) {
+    const auto recent_errors = recent_conn_errors_.GetStatsForPeriod(kRecentErrorPeriod, true);
+    if (recent_errors < conn_settings.recent_errors_threshold) {
         engine::SemaphoreLock size_lock{size_semaphore_, std::try_to_lock};
         if (size_lock || connect_task_storage_.ActiveTasksApprox() <= kPendingConnectsMax) {
             connect_task_storage_.Detach(Connect(std::move(size_lock), std::move(conn_settings)));
         }
     } else {
-        LOG_DEBUG() << "Too many connection errors in recent period";
+        LOG_LIMITED_WARNING(
+            "Too many connection errors in recent period: {} >= {}",
+            recent_errors,
+            conn_settings.recent_errors_threshold
+        );
     }
 }
 
