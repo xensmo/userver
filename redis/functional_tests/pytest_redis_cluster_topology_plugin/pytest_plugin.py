@@ -189,7 +189,9 @@ class _RedisClusterNode:
 
     def assert_running(self):
         pid = self._read_pid()
-        assert _is_pid_running(pid), f'Redis server process is dead, please look at the logfile {self.logpath}'
+        assert pid is not None and _is_pid_running(pid), (
+            f'Redis server process is dead, please look at the logfile {self.log_path}'
+        )
 
     def _check_instance(self):
         with self.get_client() as client:

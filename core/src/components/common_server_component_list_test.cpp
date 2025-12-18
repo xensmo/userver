@@ -60,8 +60,6 @@ components_manager:
           overflow_behavior: $overflow_behavior
     tracer:
         service-name: config-service
-    statistics-storage:
-      # Nothing
     dynamic-config:
       updates-enabled: true
       fs-cache-path: $dynamic-config-cache-path
@@ -109,8 +107,6 @@ components_manager:
       config-settings: false
       additional-cleanup-interval: 5m
       first-update-fail-ok: true
-    tracer:
-        service-name: config-service
     statistics-storage:
       # Nothing
     http-client-statistics-core:
