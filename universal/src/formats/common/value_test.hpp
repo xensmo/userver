@@ -1,12 +1,16 @@
+#include <userver/formats/common/type.hpp>
 #include <userver/formats/parse/boost_flat_containers.hpp>
 #include <userver/formats/parse/boost_optional.hpp>
 #include <userver/formats/parse/time_of_day.hpp>
 #include <userver/formats/parse/to.hpp>
 #include <userver/formats/parse/variant.hpp>
+#include <userver/utils/meta_light.hpp>
 
+#include <limits>
 #include <map>
 #include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -199,6 +203,23 @@ TYPED_TEST_P(Parsing, IntOverflow) {
     EXPECT_EQ(65535, value.template As<uint16_t>());
 }
 
+TYPED_TEST_P(Parsing, MaxMinFloat) {
+    using Value = std::decay_t<decltype(this->kFromString(""))>;
+
+    constexpr float kFloatMax = std::numeric_limits<float>::max();
+    constexpr float kFloatMin = std::numeric_limits<float>::min();
+
+    auto float_max = this->kFromString(fmt::format("[{}]", kFloatMax))[0];
+    auto float_negative_max = this->kFromString(fmt::format("[{}]", -kFloatMax))[0];
+    auto float_min = this->kFromString(fmt::format("[{}]", kFloatMin))[0];
+    auto float_negative_min = this->kFromString(fmt::format("[{}]", -kFloatMin))[0];
+
+    EXPECT_EQ(float_max.template As<float>(), kFloatMax);
+    EXPECT_EQ(float_negative_max.template As<float>(), -kFloatMax);
+    EXPECT_EQ(float_min.template As<float>(), kFloatMin);
+    EXPECT_EQ(float_negative_min.template As<float>(), -kFloatMin);
+}
+
 TYPED_TEST_P(Parsing, UserProvidedCommonParser) {
     auto value = this->kFromString("[42]")[0];
 
@@ -372,6 +393,7 @@ REGISTER_TYPED_TEST_SUITE_P(
     Int,
     UInt,
     IntOverflow,
+    MaxMinFloat,
     UserProvidedCommonParser,
 
     ChronoDoubleSeconds,
