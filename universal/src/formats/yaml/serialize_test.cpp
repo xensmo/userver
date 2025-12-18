@@ -113,18 +113,30 @@ TEST(FormatsYamlDuplicateKeys, VariousScalarsInMapKeys) {
 }
 
 TEST(FormatsYamlDuplicateKeys, NonScalarsInMapKeys) {
-    {
-        const std::string yaml_string = R"(
-            [1, 2, 3]: foo
-            [1, 2, 3]: bar
-        )";
-        formats::yaml::Value value;
-        // This check relies on implementation of FromString. Currently, we do not throw an exception in this case,
-        // but we could do so in the future. In that case the test should be changed.
-        // Anyway, we should not hang or crash here.
-        UEXPECT_NO_THROW(value = formats::yaml::FromString(yaml_string));
-        EXPECT_EQ(value.GetSize(), 2);
-    }
+    const std::string yaml_string = R"(
+        [1, 2, 3]: foo
+        [1, 2, 3]: bar
+    )";
+    formats::yaml::Value value;
+    // This check relies on implementation of FromString. Currently, we do not throw an exception in this case,
+    // but we could do so in the future. In that case the test should be changed.
+    // Anyway, we should not hang or crash here.
+    UEXPECT_NO_THROW(value = formats::yaml::FromString(yaml_string));
+    EXPECT_EQ(value.GetSize(), 2);
+}
+
+TEST(FormatsYamlDuplicateKeys, SameKeysInDifferentNestingLevels) {
+    const std::string yaml_string = R"(
+        Key1: &values
+            Key1: &keys
+                Key1: 1
+                Key2: 2
+                Key3: 3
+            Key2: *keys
+            Key3: *keys
+        Key2: *values
+    )";
+    UEXPECT_NO_THROW(formats::yaml::FromString(yaml_string));
 }
 
 USERVER_NAMESPACE_END
