@@ -150,7 +150,7 @@ bool Write(GrpcStream& stream, const Request& request, grpc::WriteOptions option
     const auto lock = state.TakeMutexIfBidirectional();
     if (state.IsFinished()) {
         // It't forbidden to work with a stream after Finish.
-        throw ugrpc::client::RpcInterruptedError{state.GetCallName(), "Write"};
+        return false;
     }
 
     UINVARIANT(IsWriteAvailable(state), "'impl::Write' called on a stream that is closed for writes");

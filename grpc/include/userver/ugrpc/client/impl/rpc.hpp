@@ -427,6 +427,10 @@ bool BidirectionalStream<Request, Response>::Write(const Request& request) {
 
     {
         const auto lock = state_.TakeMutexIfBidirectional();
+        if (state_.IsFinished()) {
+            // It't forbidden to work with a stream after Finish.
+            return false;
+        }
         RunMiddlewarePipeline(state_, MiddlewareHooks::SendMessageHooks(request));
     }
 
@@ -445,6 +449,10 @@ void BidirectionalStream<Request, Response>::WriteAndCheck(const Request& reques
 
     {
         const auto lock = state_.TakeMutexIfBidirectional();
+        if (state_.IsFinished()) {
+            // It't forbidden to work with a stream after Finish.
+            throw ugrpc::client::RpcInterruptedError{state_.GetCallName(), "WriteAndCheck"};
+        }
         RunMiddlewarePipeline(state_, MiddlewareHooks::SendMessageHooks(request));
     }
 
