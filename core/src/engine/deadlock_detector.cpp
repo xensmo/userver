@@ -122,6 +122,9 @@ struct StateBase::Impl {
 StateBase::StateBase(DeadlockDetector dd) {
     impl_->enabled = dd != DeadlockDetector::kOff;
     impl_->collect_stacktrace = dd == DeadlockDetector::kOn;
+    LOG_INFO()
+        << "Deadlock detector is " << (impl_->enabled ? "enabled" : "disabled") << ", stacktraces collection is "
+        << (impl_->collect_stacktrace ? "enabled" : "disabled");
 }
 
 StateBase::~StateBase() = default;
