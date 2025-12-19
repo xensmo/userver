@@ -5,12 +5,13 @@
 
 #include <atomic>
 
-#include <userver/utils/statistics/fwd.hpp>
 #include <userver/utils/statistics/rate.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace utils::statistics {
+
+class Writer;
 
 /// @brief Atomic counter of type Rate with relaxed memory ordering
 ///

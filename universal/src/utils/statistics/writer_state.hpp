@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <userver/utils/statistics/storage.hpp>
+#include <userver/utils/statistics/request.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
