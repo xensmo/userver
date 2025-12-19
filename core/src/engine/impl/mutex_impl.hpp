@@ -8,11 +8,11 @@
 #include <userver/utils/fast_scope_guard.hpp>
 
 #include <engine/deadlock_detector.hpp>
-#include <engine/deadlock_detector/actor.hpp>
 #include <engine/impl/wait_list.hpp>
 #include <engine/impl/wait_list_light.hpp>
 #include <engine/task/task_context.hpp>
 #include <userver/compiler/impl/tsan.hpp>
+#include <userver/engine/impl/actor.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -22,7 +22,7 @@ template <class Waiters>
 class MutexImpl : public deadlock_detector::Actor {
 public:
     MutexImpl();
-    ~MutexImpl() override;
+    ~MutexImpl();
 
     MutexImpl(const MutexImpl&) = delete;
     MutexImpl(MutexImpl&&) = delete;
@@ -162,7 +162,7 @@ void MutexImpl<Waiters>::lock() {
 
 template <class Waiters>
 void MutexImpl<Waiters>::unlock() {
-    auto& dd_state = deadlock_detector::GetState();
+    auto& dd_state = engine::deadlock_detector::GetState();
     dd_state.OnResourceRelease(current_task::GetCurrentTaskContext(), *this);
 
 #if USERVER_IMPL_HAS_TSAN
@@ -198,7 +198,7 @@ bool MutexImpl<Waiters>::try_lock() {
     __tsan_mutex_post_lock(this, __tsan_mutex_try_lock | (result ? 0 : __tsan_mutex_try_lock_failed), 0);
 #endif
 
-    auto& dd_state = deadlock_detector::GetState();
+    auto& dd_state = engine::deadlock_detector::GetState();
     if (result) {
         dd_state.OnResourceAcquire(current_task::GetCurrentTaskContext(), *this);
     }
@@ -219,7 +219,7 @@ bool MutexImpl<Waiters>::try_lock_until(Deadline deadline) {
     });
 #endif
 
-    std::optional<deadlock_detector::WaitScope> scope;
+    std::optional<engine::deadlock_detector::WaitScope> scope;
     if (!deadline.IsReachable()) {
         scope.emplace(*this);
     }
@@ -234,7 +234,7 @@ bool MutexImpl<Waiters>::try_lock_until(Deadline deadline) {
 
     scope.reset();
 
-    auto& dd_state = deadlock_detector::GetState();
+    auto& dd_state = engine::deadlock_detector::GetState();
     if (result) {
         dd_state.OnResourceAcquire(current_task::GetCurrentTaskContext(), *this);
     }

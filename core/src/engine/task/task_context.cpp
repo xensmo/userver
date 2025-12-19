@@ -182,7 +182,7 @@ FutureStatus TaskContext::WaitUntil(Deadline deadline) const noexcept {
     static_assert(noexcept(current_task::GetCurrentTaskContext()));
     auto& current = current_task::GetCurrentTaskContext();
 
-    std::optional<deadlock_detector::WaitScope> scope;
+    std::optional<engine::deadlock_detector::WaitScope> scope;
     if (!deadline.IsReachable()) {
         scope.emplace(*this);
     }

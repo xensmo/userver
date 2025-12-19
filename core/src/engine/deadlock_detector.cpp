@@ -24,6 +24,7 @@ namespace {
 
 class CycleDetector final {
 public:
+    using Actor = engine::impl::deadlock_detector::Actor;
     using Vertex = const Actor*;
 
     explicit CycleDetector(const std::unordered_map<const Actor*, std::vector<const Actor*>>& edges)
@@ -232,7 +233,7 @@ State& GetState() {
     return pool.GetDeadlockDetectorState();
 }
 
-WaitScope::WaitScope(const Actor& resource)
+WaitScope::WaitScope(const engine::impl::deadlock_detector::Actor& resource)
     : resource_(resource)
 {
     auto& dd_state = GetState();

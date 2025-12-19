@@ -27,21 +27,21 @@ TEST(DeadlockDetectorDeathTest, Smoke) {
 }
 
 struct CycleDetected : public std::runtime_error {
-    CycleDetected(std::vector<const engine::deadlock_detector::Actor*> cycle)
+    CycleDetected(std::vector<const engine::impl::deadlock_detector::Actor*> cycle)
         : std::runtime_error(""),
           cycle(std::move(cycle))
     {}
 
-    std::vector<const engine::deadlock_detector::Actor*> cycle;
+    std::vector<const engine::impl::deadlock_detector::Actor*> cycle;
 };
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define EXPECT_THROW_CYCLE(cmd, ...)                                                             \
-    try {                                                                                        \
-        cmd;                                                                                     \
-        FAIL() << "Deadlock was expected, but not found";                                        \
-    } catch (const CycleDetected& c) {                                                           \
-        EXPECT_EQ(c.cycle, (std::vector<const engine::deadlock_detector::Actor*>{__VA_ARGS__})); \
+#define EXPECT_THROW_CYCLE(cmd, ...)                                                                   \
+    try {                                                                                              \
+        cmd;                                                                                           \
+        FAIL() << "Deadlock was expected, but not found";                                              \
+    } catch (const CycleDetected& c) {                                                                 \
+        EXPECT_EQ(c.cycle, (std::vector<const engine::impl::deadlock_detector::Actor*>{__VA_ARGS__})); \
     }
 
 class MockState final : public engine::deadlock_detector::StateBase {
@@ -51,12 +51,12 @@ public:
     {}
 
 protected:
-    void OnCycleFound(const std::vector<const engine::deadlock_detector::Actor*>& cycle) override {
+    void OnCycleFound(const std::vector<const engine::impl::deadlock_detector::Actor*>& cycle) override {
         throw CycleDetected(cycle);
     }
 };
 
-class MockActor final : public engine::deadlock_detector::Actor {
+class MockActor final : public engine::impl::deadlock_detector::Actor {
     utils::StringLiteral GetActorType() const override { return "mock"; }
 };
 
