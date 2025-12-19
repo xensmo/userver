@@ -220,6 +220,29 @@ TYPED_TEST_P(Parsing, MaxMinFloat) {
     EXPECT_EQ(float_negative_min.template As<float>(), -kFloatMin);
 }
 
+TYPED_TEST_P(Parsing, InfNanFloatDouble) {
+// May abort in test builds
+#ifdef NDEBUG
+    using Value = std::decay_t<decltype(this->kFromString(""))>;
+    using Exception = typename Value::Exception;
+
+    constexpr float kFloatInf = std::numeric_limits<float>::infinity();
+    constexpr float kFloatNan = std::numeric_limits<float>::quiet_NaN();
+
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", kFloatInf))[0].template As<float>(), Exception);
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", -kFloatInf))[0].template As<float>(), Exception);
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", kFloatNan))[0].template As<float>(), Exception);
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", -kFloatNan))[0].template As<float>(), Exception);
+
+    constexpr double kDoubleInf = std::numeric_limits<double>::infinity();
+    constexpr double kDoubleNan = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", kDoubleInf))[0].template As<double>(), Exception);
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", -kDoubleInf))[0].template As<double>(), Exception);
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", kDoubleNan))[0].template As<double>(), Exception);
+    EXPECT_THROW(this->kFromString(fmt::format("[{}]", -kDoubleNan))[0].template As<double>(), Exception);
+#endif
+}
+
 TYPED_TEST_P(Parsing, UserProvidedCommonParser) {
     auto value = this->kFromString("[42]")[0];
 
@@ -394,6 +417,7 @@ REGISTER_TYPED_TEST_SUITE_P(
     UInt,
     IntOverflow,
     MaxMinFloat,
+    InfNanFloatDouble,
     UserProvidedCommonParser,
 
     ChronoDoubleSeconds,

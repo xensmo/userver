@@ -37,9 +37,14 @@ void CheckInBounds(const Value& value, T x, T min, T max) {
 
 template <typename Value>
 void CheckDoubleFitsInFloat(const Value& value, const double dval) {
-    if (std::isinf(dval) || std::isnan(dval)) {
-        // double infinity and NaN are directly convertible to float infinity and NaN
-        return;
+    if (!std::isfinite(dval)) {
+        auto msg = fmt::format(
+            "Double value ({}) of '{}' is prohibited for use. Inf and NaN values lead to vulnerabilities in code",
+            dval,
+            value.GetPath()
+        );
+        UASSERT_MSG(false, msg);
+        throw typename Value::ParseException(std::move(msg));
     }
 
     auto fval = static_cast<float>(dval);
@@ -53,7 +58,7 @@ void CheckDoubleFitsInFloat(const Value& value, const double dval) {
 
 template <typename Value>
 float NarrowToFloat(double x, const Value& value) {
-    CheckDoubleFitsInFloat(value, x);
+    impl::CheckDoubleFitsInFloat(value, x);
     return static_cast<float>(x);
 }
 
