@@ -364,7 +364,7 @@ def test_openapi_parameters(simple_parser):
                     ),
                     model.Parameter(
                         name='pamparam2',
-                        in_=model.In.query,
+                        in_=model.In.queryExplode,
                         description='override',
                         required=False,
                         schema=types.Array(items=types.Number()),

@@ -114,9 +114,15 @@ class Parser:
     ) -> model.Parameter:
         if isinstance(parameter, openapi.Ref):
             return self._state.service.parameters[self._locate_ref(parameter.ref)]
+
+        if parameter.explode and parameter.in_ == openapi.In.query:
+            in_ = model.In.queryExplode
+        else:
+            in_ = model.In(parameter.in_)
+
         p = model.Parameter(
             name=parameter.name,
-            in_=model.In(parameter.in_),
+            in_=in_,
             description=parameter.description or '',
             examples=parameter.examples,
             deprecated=parameter.deprecated,
