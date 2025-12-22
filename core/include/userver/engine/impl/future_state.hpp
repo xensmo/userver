@@ -5,6 +5,7 @@
 
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future_status.hpp>
+#include <userver/engine/impl/actor.hpp>
 #include <userver/engine/impl/context_accessor.hpp>
 #include <userver/engine/impl/wait_list_fwd.hpp>
 #include <userver/utils/result_store.hpp>
@@ -13,7 +14,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
-class FutureStateBase : private ContextAccessor {
+class FutureStateBase : private ContextAccessor, public deadlock_detector::Actor {
 public:
     bool IsReady() const noexcept final;
 
@@ -24,6 +25,8 @@ public:
 
     // Internal helper for WaitAny/WaitAll
     ContextAccessor* TryGetContextAccessor() noexcept { return this; }
+
+    utils::StringLiteral GetActorType() const override { return "Future"; }
 
 protected:
     FutureStateBase() noexcept;
