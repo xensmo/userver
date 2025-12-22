@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include <userver/utils/mock_now.hpp>
+#include <userver/utils/statistics/writer.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -112,6 +113,7 @@ bool TokenBucket::Obtain() { return ObtainAll(1); }
 bool TokenBucket::ObtainAll(size_t count) {
     if (max_size_ < count) {
         // not satisfiable
+        obtain_failed_.Add(statistics::Rate{count});
         return false;
     }
 
@@ -125,6 +127,7 @@ bool TokenBucket::ObtainAll(size_t count) {
     auto expected = tokens_.load();
     do {
         if (expected < count) {
+            obtain_failed_.Add(statistics::Rate{count});
             return false;
         }
     } while (!tokens_.compare_exchange_strong(expected, expected - count));
@@ -186,6 +189,12 @@ void TokenBucket::Update() {
         // Someone has updated the counter just now.
         // Do not retry as there is no token updates yet.
     }
+}
+
+void DumpMetric(statistics::Writer& writer, const TokenBucket& bucket) {
+    const static std::string kObtainFailed = "obtain_failed";
+
+    writer[kObtainFailed] = bucket.obtain_failed_.Load();
 }
 
 }  // namespace utils
