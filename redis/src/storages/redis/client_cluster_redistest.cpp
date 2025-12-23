@@ -192,6 +192,16 @@ UTEST_F(RedisClusterClientTest, TransactionDistinctShards) {
     UASSERT_THROW(transaction->Exec(kDefaultCc).Get(), storages::redis::RequestFailedException);
 }
 
+UTEST_F(RedisClusterClientTest, Generic) {
+    auto client = GetClient();
+    const storages::redis::CommandControl command_control{};
+    constexpr size_t kKeyIndex = 0;
+    /// [Sample generic command usage]
+    client->GenericCommand<void>("set", {"key0", "foo"}, kKeyIndex, command_control).Wait();
+    EXPECT_EQ(client->GenericCommand<std::string>("get", {"key0"}, kKeyIndex, command_control).Get(), "foo");
+    /// [Sample generic command usage]
+}
+
 // Must abort in debug builds
 #ifdef NDEBUG
 UTEST_F(RedisClusterClientTest, NotStartedTransactionNoExec) {

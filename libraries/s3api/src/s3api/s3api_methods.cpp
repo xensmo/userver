@@ -48,7 +48,7 @@ constexpr std::string_view kEncodingTypeValueUrl = "url";
 
 constexpr std::string_view kS3AwsXmlNamespace = "http://s3.amazonaws.com/doc/2006-03-01/";
 
-// see @ref https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html
+// see https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListMultipartUploads.html
 const unsigned kMaxUploadsListLimit = 1000u;
 
 }  // namespace

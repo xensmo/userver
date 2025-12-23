@@ -39,18 +39,33 @@ Changelog news also go to the
 
 * Added a @ref ugrpc::RichStatus builder for creating rich gRPC error statuses with
   structured details following Google's error model
+* Added a @ref utils::statistics::RegisterWriterScope for safe and easy registration of statistics.
+* No more need to call `CacheUpdateTrait::StartPeriodicUpdates()` from your caching components.  
 * Implemented a Multi Index LRU container, thanks to [hzhdlrp](https://github.com/hzhdlrp).
 * Statement name is now logged when using @ref storages::postgres::Portal.
+* Monitor port is now opened before all the components and handlers are started, leading to more control and
+  information on service start.
 * @ref storages::postgres::DistLockComponentBase now can be configured at runtime via @ref POSTGRES_DISTLOCK_SETTINGS.
 * Added @ref utils::TaskBuilder
 * ‎@ref scripts/docs/en/userver/libraries/s3api.md now has @ref QUALITY_TIERS "Platinum Tier".
 * Kafka is now more accurate in computing message time spent in @ref kafka::ConsumerComponent queue.
 * @ref utils::statistics::RecentPeriod is does not lose precision under heavy contention.
-* Added functionality to @ref ‎scripts/docs/en/userver/dump_coroutines.md
+* Added functionality to @ref scripts/docs/en/userver/dump_coroutines.md
 * Added DeadlockDetector that can be enabled via `coro_pool.deadlock_detector` option
   in @ref components::ManagerControllerComponent.
 * Added @ref storages::mongo::Transaction
 * Added @ref server::middlewares::Cors
+* Added @ref utils::FromStringNoThrow
+* Fixed unnecessary lock in TaskContext desctructor when there are no plugins. Many thanks to
+  [Ivan Trofimov](https://github.com/itrofimow) for the PR
+* @ref formats::yaml::Value now checks for key uniqueness in mappings.
+* @ref scripts/docs/en/userver/gdb_debugging.md "Stack monitor usage" is not automatically disabled under GDB.
+* Disabled phdr cache if ASAN is enabled. Many thanks to
+  [Yury Bogomolov](https://github.com/ybogo) for the PR
+* Allowed using mapped enums in @ref storages::postgres::ParameterStore. Many thanks to Aleksey Popov for the patch and
+  help!
+* Fixed error in [uservice-dynconf](https://github.com/userver-framework/uservice-dynconf) schema. Many thanks to
+  [Repin Daniil](https://github.com/Repin-Daniil) for the PR!
 * @ref components::ComponentContext::RegisterScope() now can be used to register some resource that will be
   called after the component is successfully created (including all
   class descendants) and destroyed right before calling the destructor of the most derived component. This is a low
@@ -77,15 +92,19 @@ Changelog news also go to the
   * Added multipart methods support for testsuite @ref pytest_userver.plugins.s3api "s3api plugin".
   * @ref utils::FromString() now reports if input sequence of chars to convert contains '\0' character.
   * Improved diagnostics for PostgreSQL composite types related errors, including nested composite types.
+  * Fixed typo in third party. Many thanks to [shuric80](https://github.com/shuric80) for the PR!
+  * Fixed typo in Docker badge link for upastebin. Many thanks to [Гуща Иван](https://github.com/Ivan160927777)
+    for the PR!
   * A lot of updates for different sections of documentation, including @ref utils::FixedArray,
-    @ref ‎scripts/docs/en/userver/deadline_propagation.md, @ref clients::http::Request,
-    @ref ‎scripts/docs/en/userver/gdb_debugging.md.
+    @ref scripts/docs/en/userver/deadline_propagation.md, @ref clients::http::Request,
+    @ref scripts/docs/en/userver/gdb_debugging.md, @ref scripts/docs/en/userver/long_transactions.md,
+    @ref scripts/docs/en/userver/mongodb.md, @ref scripts/docs/en/userver/congestion_control.md
 
 
 Plugins are renamed to middlewares and @ref components::HttpClient was split into @ref components::HttpClient
   and @ref components::HttpClientCore.
 
-**Migration guide**:
+#### Migration guide from v2.13 to v2.14
 
 1. Instead of `.Append<components::HttpClient>()` use `.AppendComponentList(clients::http::ComponentList())` in
    your component list (see @ref clients::http::ComponentList "docs").
@@ -208,6 +227,8 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
    +                http-client-middleware-with-dynamic-config:
    +                    enabled: false
    ```
+7. Remove calls to `CacheUpdateTrait::StopPeriodicUpdates()`. Remove calls to `CacheUpdateTrait::StartPeriodicUpdates()`
+   or replace them with @ref CacheUpdateTrait::EarlyStartPeriodicUpdates() if early update is required.
 
 
 ### Release v2.13
@@ -275,7 +296,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
   * Clarified ownership of buckets in @ref utils::statistics::Histogram.
   * Added mirrors to the videos at @ref scripts/docs/en/userver/publications.md.
   * Redis now provides much more information in logs.
-  * Added troubleshooting info on `SIGUSR1` to @ref ‎scripts/docs/en/userver/faq.md .
+  * Added troubleshooting info on `SIGUSR1` to @ref scripts/docs/en/userver/faq.md .
 
 
 ### Release v2.12

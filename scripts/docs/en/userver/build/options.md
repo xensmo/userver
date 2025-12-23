@@ -83,6 +83,8 @@ The exact format of setting cmake options varies depending on the method of buil
 | `USERVER_FEATURE_GRPC_REFLECTION` | Provide reflection service for gRPC                                               | `${USERVER_BUILD_ALL_COMPONENTS}`                           |
 | `USERVER_FEATURE_S3API`           | Provide S3 client for gRPC                                                        | `${USERVER_BUILD_ALL_COMPONENTS}`                           |
 | `USERVER_FEATURE_EASY`            | Provide library for easy prototyping                                              | `${USERVER_BUILD_ALL_COMPONENTS}`                           |
+| `USERVER_FEATURE_MULTI_INDEX_LRU` | Provide library for Multi Index LRU containers                                    | `${USERVER_BUILD_ALL_COMPONENTS}`                           |
+
 
 ### CMake options for building everything
 

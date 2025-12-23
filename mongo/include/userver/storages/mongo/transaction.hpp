@@ -25,7 +25,7 @@ class TransactionImpl;
 ///
 /// ## Usage example:
 ///
-/// @snippet mongo/src/storages/mongo/transaction_mongotest.cpp [transaction]
+/// @snippet mongo/src/storages/mongo/transaction_mongotest.cpp transaction
 ///
 /// @note Transactions require MongoDB replica sets or sharded clusters.
 /// @note Operations within a transaction are automatically retried according

@@ -12,14 +12,11 @@ USERVER_NAMESPACE_BEGIN
 
 namespace components {
 
-// clang-format off
-
 /// @ingroup userver_components
 ///
-/// @brief Component that keeps a utils::statistics::Storage storage for
-/// metrics.
+/// @brief Component that keeps a @ref utils::statistics::Storage storage for metrics.
 ///
-/// Returned references to utils::statistics::Storage live for a lifetime
+/// Returned references to @ref utils::statistics::Storage live for a lifetime
 /// of the component and are safe for concurrent use.
 ///
 /// The component does **not** have any options for service config.
@@ -27,8 +24,6 @@ namespace components {
 /// ## Static configuration example:
 ///
 /// @snippet components/common_component_list_test.cpp  Sample statistics storage component config
-
-// clang-format on
 class StatisticsStorage final : public RawComponentBase {
 public:
     /// @ingroup userver_component_names
@@ -70,9 +65,9 @@ inline constexpr auto kConfigFileMode<StatisticsStorage> = ConfigFileMode::kNotR
 
 namespace utils::statistics {
 
-/// @brief Add a writer function to @ref Storage from @ref StatisticsStorage.
-/// It automatically calls @ref Storage::RegisterWriter just after the component
-/// construction and @ref Entry::Unregister just before the component
+/// @brief Add a writer function to @ref Storage from @ref components::StatisticsStorage.
+/// It automatically calls @ref utils::statistics::Storage::RegisterWriter() just after the component
+/// construction and @ref utils::statistics::Entry::Unregister() just before the component
 /// destructor.
 ///
 /// @see @ref Storage::RegisterWriter.
