@@ -2,7 +2,6 @@
 
 #include <future>
 
-#include <engine/deadlock_detector.hpp>
 #include <engine/impl/future_utils.hpp>
 #include <engine/impl/wait_list_light.hpp>
 #include <engine/task/task_context.hpp>
@@ -25,13 +24,8 @@ FutureStatus FutureStateBase::WaitUntil(Deadline deadline) {
     }
 
     auto& context = current_task::GetCurrentTaskContext();
+
     FutureWaitStrategy wait_strategy{*this, context};
-
-    std::optional<engine::deadlock_detector::WaitScope> scope;
-    if (!deadline.IsReachable()) {
-        scope.emplace(*this);
-    }
-
     const auto wakeup_source = context.Sleep(wait_strategy, deadline);
     return ToFutureStatus(wakeup_source);
 }
