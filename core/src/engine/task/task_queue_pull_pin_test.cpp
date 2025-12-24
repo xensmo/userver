@@ -2,6 +2,7 @@
 
 #include <engine/task/task_processor.hpp>
 #include <userver/engine/async.hpp>
+#include <userver/engine/get_all.hpp>
 #include <userver/engine/run_standalone.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/task_base.hpp>
@@ -11,9 +12,9 @@
 
 USERVER_NAMESPACE_BEGIN
 
-TEST(TaskQueueTSan, TheSameThreadAfterYield) {
+TEST(TaskQueuePullPin, TheSameThreadAfterYield) {
     engine::TaskProcessorPoolsConfig config{};
-    config.queue_type = engine::TaskQueueType::kTSanTaskQueue;
+    config.queue_type = engine::TaskQueueType::kPullPinTaskQueue;
 
     static constexpr std::size_t kWorkerThreads = 16;
     engine::RunStandalone(kWorkerThreads, config, []() {
@@ -30,28 +31,43 @@ TEST(TaskQueueTSan, TheSameThreadAfterYield) {
         };
 
         constexpr std::size_t kAsyncTasksTourtureCount = kWorkerThreads * 1000;
-        std::vector<engine::Task> tasks;
+        std::vector<engine::TaskWithResult<void>> tasks;
         tasks.reserve(kAsyncTasksTourtureCount);
         for (std::size_t i = 0; i < kAsyncTasksTourtureCount; ++i) {
             tasks.emplace_back(engine::AsyncNoSpan(payload));
         }
+
+        engine::GetAll(tasks);
     });
 }
 
-TEST(TaskQueueTSan, RoundRobin) {
+TEST(TaskQueuePullPin, TheSameThreadAfterLockUnlock) {
     engine::TaskProcessorPoolsConfig config{};
-    config.queue_type = engine::TaskQueueType::kTSanTaskQueue;
+    config.queue_type = engine::TaskQueueType::kPullPinTaskQueue;
 
     static constexpr std::size_t kWorkerThreads = 16;
     engine::RunStandalone(kWorkerThreads, config, []() {
-        std::unordered_set<std::thread::id> ids;
-        const auto payload = [&ids]() { ids.insert(test::GetThreadIdSafe()); };
+        engine::Mutex mutexes[4];
 
-        for (std::size_t i = 0; i < kWorkerThreads; ++i) {
-            engine::AsyncNoSpan(payload).Get();
+        const auto payload = [&mutexes]() {
+            const auto id_initial = test::GetThreadIdSafe();
+
+            {
+                const std::scoped_lock lock{mutexes[0], mutexes[1], mutexes[2], mutexes[3]};
+                engine::SleepFor(std::chrono::milliseconds(1));
+                EXPECT_EQ(id_initial, test::GetThreadIdSafe());
+            }
+            EXPECT_EQ(id_initial, test::GetThreadIdSafe());
+        };
+
+        constexpr std::size_t kAsyncTasksTourtureCount = kWorkerThreads * 10;
+        std::vector<engine::TaskWithResult<void>> tasks;
+        tasks.reserve(kAsyncTasksTourtureCount);
+        for (std::size_t i = 0; i < kAsyncTasksTourtureCount; ++i) {
+            tasks.emplace_back(engine::AsyncNoSpan(payload));
         }
 
-        EXPECT_EQ(ids.size(), kWorkerThreads);
+        engine::GetAll(tasks);
     });
 }
 
