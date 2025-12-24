@@ -178,9 +178,11 @@ void StateBase::RemoveDependency(const Actor& from, const Actor& to) noexcept {
 
     auto it = std::find(v.begin(), v.end(), &to);
     if (it == v.end()) {
-        utils::AbortWithStacktrace(
-            fmt::format("Trying to stop waiting while not waiting! {} => {}", ToAssertString(from), ToAssertString(to))
-        );
+        utils::AbortWithStacktrace(fmt::format(
+            "Trying to remove dependency that does not exist! {} => {}",
+            ToAssertString(from),
+            ToAssertString(to)
+        ));
     }
     if (v.size() == 1) {
         edges->erase(&from);
