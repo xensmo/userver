@@ -41,7 +41,8 @@ Changelog news also go to the
   structured details following Google's error model
 * Added a @ref utils::statistics::RegisterWriterScope for safe and easy registration of statistics.
 * No more need to call `CacheUpdateTrait::StartPeriodicUpdates()` from your caching components.  
-* Implemented a Multi Index LRU container, thanks to [hzhdlrp](https://github.com/hzhdlrp).
+* Implemented a @ref scripts/docs/en/userver/libraries/multi_index_lru.md, thanks to
+  [hzhdlrp](https://github.com/hzhdlrp).
 * Statement name is now logged when using @ref storages::postgres::Portal.
 * Monitor port is now opened before all the components and handlers are started, leading to more control and
   information on service start.
