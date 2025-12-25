@@ -163,6 +163,11 @@ void StateBase::AddDependency(const Actor& from, const Actor& to) {
             }
             LOG_CRITICAL() << "Deadlocked task " << ToAssertString(*actor) << boost::stacktrace::to_string(it->second);
         }
+    } else {
+        LOG_CRITICAL()
+            << "A deadlock has been identified, but stacktrace collection is currently disabled. To enable "
+               "stacktrace collection, set the `coro_pool.deadlock_detector` option in the "
+               "`components::ManagerControllerComponent` static configuration to `enabled`.";
     }
 
     OnCycleFound(*cycle);
