@@ -4491,6 +4491,7 @@
   "scripts/docs/en/userver/mysql/design_and_details.md":"taxi/uservices/userver/scripts/docs/en/userver/mysql/design_and_details.md",
   "scripts/docs/en/userver/mysql/mysql_driver.md":"taxi/uservices/userver/scripts/docs/en/userver/mysql/mysql_driver.md",
   "scripts/docs/en/userver/mysql/supported_types.md":"taxi/uservices/userver/scripts/docs/en/userver/mysql/supported_types.md",
+  "scripts/docs/en/userver/odbc.md":"taxi/uservices/userver/scripts/docs/en/userver/odbc.md",
   "scripts/docs/en/userver/os_signals.md":"taxi/uservices/userver/scripts/docs/en/userver/os_signals.md",
   "scripts/docs/en/userver/periodics.md":"taxi/uservices/userver/scripts/docs/en/userver/periodics.md",
   "scripts/docs/en/userver/pg_connlimit_mode_auto.md":"taxi/uservices/userver/scripts/docs/en/userver/pg_connlimit_mode_auto.md",
