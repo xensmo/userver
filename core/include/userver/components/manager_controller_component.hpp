@@ -92,7 +92,6 @@ private:
     void OnConfigUpdate(const dynamic_config::Snapshot& cfg);
 
     const components::impl::Manager& components_manager_;
-    utils::statistics::Entry statistics_holder_;
     concurrent::AsyncEventSubscriberScope config_subscription_;
 };
 
