@@ -55,9 +55,7 @@ auto GetJsonValue(const formats::json::Value& json) {
         return json.As<double>();
     } else if constexpr (std::is_same_v<Type, float>) {
         return json.As<float>();
-    } else if constexpr (std::is_same_v<Type, std::int64_t>) {
-        return utils::FromString<Type>(json.As<std::string>());
-    } else if constexpr (std::is_same_v<Type, std::uint64_t>) {
+    } else if constexpr (std::is_same_v<Type, std::int64_t> || std::is_same_v<Type, std::uint64_t>) {
         return utils::FromString<Type>(json.As<std::string>());
     } else if constexpr (std::is_same_v<Type, std::int32_t>) {
         return json.As<std::int32_t>();

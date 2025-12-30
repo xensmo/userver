@@ -1,4 +1,3 @@
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -11,6 +10,7 @@
 #include <userver/proto-structs/io/userver/utils/box.hpp>
 #include <userver/proto-structs/io/userver/utils/strong_typedef.hpp>
 #include <userver/proto-structs/oneof.hpp>
+#include <userver/utest/assert_macros.hpp>
 #include <userver/utils/box.hpp>
 #include <userver/utils/strong_typedef.hpp>
 
@@ -123,10 +123,7 @@ TEST(OneofTest, GetSetEmplace) {
 
     CheckAlternativeSet(oneof, 0);
     EXPECT_EQ(oneof.Get<0>(), 0);
-    EXPECT_THAT(
-        [&oneof]() { static_cast<void>(oneof.Get<1>()); },
-        ::testing::ThrowsMessage<OneofAccessError>(::testing::HasSubstr("index = 1"))
-    );
+    UEXPECT_THROW_MSG(static_cast<void>(oneof.Get<1>()), OneofAccessError, "index = 1");
 
     oneof.Set<0>(42);
 

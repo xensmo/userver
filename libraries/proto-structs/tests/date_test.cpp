@@ -1,8 +1,8 @@
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <userver/proto-structs/date.hpp>
 #include <userver/proto-structs/exceptions.hpp>
+#include <userver/utest/assert_macros.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
 
 using namespace std::literals::chrono_literals;
@@ -46,14 +46,8 @@ TEST(DateTest, IsValid) {
              std::chrono::days>(std::chrono::system_clock::time_point{std::chrono::years(9000 /* +epoch */)})),
         ValueError
     );
-    EXPECT_THAT(
-        []() { [[maybe_unused]] Date d(2025y, std::chrono::February, 29d); },
-        ::testing::ThrowsMessage<ValueError>(::testing::HasSubstr("2025y/2m/29d"))
-    );
-    EXPECT_THAT(
-        []() { [[maybe_unused]] Date d(utils::impl::InternalTag{}, 10, -10, 5); },
-        ::testing::ThrowsMessage<ValueError>(::testing::HasSubstr("10y/-10m/5d"))
-    );
+    UEXPECT_THROW_MSG(Date(2025y, std::chrono::February, 29d), ValueError, "2025y/2m/29d");
+    UEXPECT_THROW_MSG(Date(utils::impl::InternalTag{}, 10, -10, 5), ValueError, "10y/-10m/5d");
 
     EXPECT_TRUE(Date::IsValid(std::nullopt, std::nullopt, std::nullopt));
     EXPECT_TRUE(Date::IsValid(2024y, std::chrono::February, 29d));

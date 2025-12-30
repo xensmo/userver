@@ -1,4 +1,4 @@
-#include <userver/proto-structs/io/userver/proto_structs/time_of_day.hpp>
+#include <userver/proto-structs/io/userver/proto_structs/time_of_day_conv.hpp>
 
 #include <google/type/timeofday.pb.h>
 
@@ -6,14 +6,17 @@
 #include <userver/proto-structs/io/context.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
 
+USERVER_NAMESPACE_BEGIN
+
 namespace proto_structs::io {
 
-TimeOfDay ReadProtoStruct(ReadContext& ctx, To<TimeOfDay>, const ::google::type::TimeOfDay& msg) try
-{
-    return TimeOfDay(utils::impl::InternalTag{}, msg.hours(), msg.minutes(), msg.seconds(), msg.nanos());
-} catch (const ValueError& e) {
-    ctx.AddError(e.what());
-    return TimeOfDay{};
+TimeOfDay ReadProtoStruct(ReadContext& ctx, To<TimeOfDay>, const ::google::type::TimeOfDay& msg) {
+    try {
+        return TimeOfDay(utils::impl::InternalTag{}, msg.hours(), msg.minutes(), msg.seconds(), msg.nanos());
+    } catch (const ValueError& e) {
+        ctx.AddError(e.what());
+        return TimeOfDay{};
+    }
 }
 
 void WriteProtoStruct(WriteContext&, const TimeOfDay& obj, ::google::type::TimeOfDay& msg) {
@@ -24,3 +27,5 @@ void WriteProtoStruct(WriteContext&, const TimeOfDay& obj, ::google::type::TimeO
 }
 
 }  // namespace proto_structs::io
+
+USERVER_NAMESPACE_END

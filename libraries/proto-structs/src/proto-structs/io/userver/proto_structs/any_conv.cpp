@@ -1,4 +1,4 @@
-#include <userver/proto-structs/io/userver/proto_structs/any.hpp>
+#include <userver/proto-structs/io/userver/proto_structs/any_conv.hpp>
 
 #include <userver/proto-structs/any.hpp>
 

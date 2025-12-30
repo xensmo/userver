@@ -636,7 +636,7 @@ void ReadField(
     const ReadOptions& options,
     ReadMessageFunc& read_message
 ) {
-    using namespace ::google::protobuf;
+    using ::google::protobuf::FieldDescriptor;
 
     UASSERT(message.GetReflection() == &reflection);
     UASSERT(field_desc.containing_type() == message.GetDescriptor());
@@ -800,7 +800,7 @@ void ReadMapField(
     const ::google::protobuf::FieldDescriptor& field_desc,
     const ReadOptions& options
 ) {
-    using namespace ::google::protobuf;
+    using ::google::protobuf::FieldDescriptor;
 
     UASSERT(message.GetReflection() == &reflection);
     UASSERT(field_desc.containing_type() == message.GetDescriptor());

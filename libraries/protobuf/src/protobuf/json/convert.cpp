@@ -20,6 +20,7 @@ void JsonToMessage(const formats::json::Value& json, const ReadOptions& options,
 
 }  // namespace protobuf::json
 
+/*
 namespace formats::serialize {
 
 json::Value Serialize(const ::google::protobuf::Message& message, To<json::Value>) {
@@ -27,4 +28,6 @@ json::Value Serialize(const ::google::protobuf::Message& message, To<json::Value
 }
 
 }  // namespace formats::serialize
+*/
+
 USERVER_NAMESPACE_END

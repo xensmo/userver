@@ -28,11 +28,10 @@ template <typename TErrorCode>
                 return "unexpected";
         }
     } else {
-        switch (code) {
-            case TErrorCode::kInvalidValue:
-                return "invalid value";
-            default:
-                return "unexpected";
+        if (code == TErrorCode::kInvalidValue) {
+            return "invalid value";
+        } else {
+            return "unexpected";
         }
     }
 }

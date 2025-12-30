@@ -198,7 +198,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     }
 
     {
-        const char* json_str = "\"hello\"";
+        const char* json_str = R"("hello")";
         const auto json = formats::json::FromString(json_str);
         Message message, sample;
 
@@ -271,7 +271,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     }
 
     {
-        const char* json_str = "{\"aaa\":true,\"bbb\":false}";
+        const char* json_str = R"({"aaa":true,"bbb":false})";
         const auto json = formats::json::FromString(json_str);
         Message message, sample;
 
@@ -315,7 +315,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullListValue) {
     }
 
     {
-        const char* json_str = "[null, 1.5, \"hello\", true]";
+        const char* json_str = R"([null, 1.5, "hello", true])";
         const auto json = formats::json::FromString(json_str);
         Message message, sample;
 
@@ -357,7 +357,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullStruct) {
     }
 
     {
-        const char* json_str = "{\"aaa\":1.5,\"\":false}";
+        const char* json_str = R"({"aaa":1.5,"":false})";
         const auto json = formats::json::FromString(json_str);
         Message message, sample;
 
@@ -458,7 +458,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
     }
 
     {
-        const char* json_str = "\"hello\"";
+        const char* json_str = R"("hello")";
         const auto json = formats::json::FromString(json_str);
         ::google::protobuf::DynamicMessageFactory factory;
 
@@ -523,7 +523,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
     }
 
     {
-        const char* json_str = "{\"aaa\":\"hello\"}";
+        const char* json_str = R"({"aaa":"hello"})";
         const auto json = formats::json::FromString(json_str);
         ::google::protobuf::DynamicMessageFactory factory;
 

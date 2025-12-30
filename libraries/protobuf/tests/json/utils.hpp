@@ -21,6 +21,7 @@
 
 #include "proto_json/messages.pb.h"
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define EXPECT_WRITE_ERROR(EXPR, CODE, PATH)                             \
     try {                                                                \
         (EXPR);                                                          \
@@ -32,6 +33,7 @@
         ADD_FAILURE() << "Unexpected exception, should be 'WriteError'"; \
     }
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define EXPECT_READ_ERROR(EXPR, CODE, PATH)                             \
     try {                                                               \
         (EXPR);                                                         \

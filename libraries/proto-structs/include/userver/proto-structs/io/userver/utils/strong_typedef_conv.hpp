@@ -7,6 +7,8 @@
 
 #include <userver/proto-structs/io/context.hpp>
 
+USERVER_NAMESPACE_BEGIN
+
 namespace proto_structs::io {
 
 template <typename TTag, typename TStructField, utils::StrongTypedefOps Ops, typename TEnable, typename TMessageField>
@@ -41,3 +43,5 @@ void WriteProtoField(
 }
 
 }  // namespace proto_structs::io
+
+USERVER_NAMESPACE_END

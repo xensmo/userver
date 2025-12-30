@@ -12,6 +12,54 @@
 
 namespace structs {
 
+namespace {
+
+void CheckJsonValue(const formats::json::Value& json, const ::google::protobuf::Value& msg);
+void CheckJsonValue(const formats::json::Value& json, const ::google::protobuf::ListValue& msg);
+void CheckJsonValue(const formats::json::Value& json, const ::google::protobuf::Struct& msg);
+
+void CheckJsonValue(const formats::json::Value& json, const ::google::protobuf::Value& msg) {
+    if (msg.has_null_value()) {
+        ASSERT_TRUE(json.IsNull());
+    } else if (msg.has_number_value()) {
+        ASSERT_TRUE(json.IsNumber());
+        EXPECT_EQ(json.As<double>(), msg.number_value());
+    } else if (msg.has_string_value()) {
+        ASSERT_TRUE(json.IsString());
+        EXPECT_EQ(json.As<std::string>(), msg.string_value());
+    } else if (msg.has_bool_value()) {
+        ASSERT_TRUE(json.IsBool());
+        EXPECT_EQ(json.As<bool>(), msg.bool_value());
+    } else if (msg.has_list_value()) {
+        CheckJsonValue(json, msg.list_value());
+    } else if (msg.has_struct_value()) {
+        CheckJsonValue(json, msg.struct_value());
+    } else {
+        ADD_FAILURE() << "incomparable 'google::protobuf::Value'";
+    }
+}
+
+void CheckJsonValue(const formats::json::Value& json, const ::google::protobuf::ListValue& msg) {
+    ASSERT_TRUE(json.IsArray());
+    ASSERT_EQ(static_cast<int>(json.GetSize()), msg.values().size());
+
+    for (int i = 0; i < msg.values().size(); ++i) {
+        CheckJsonValue(json[i], msg.values()[i]);
+    }
+}
+
+void CheckJsonValue(const formats::json::Value& json, const ::google::protobuf::Struct& msg) {
+    ASSERT_TRUE(json.IsObject());
+    EXPECT_EQ(json.GetSize(), msg.fields().size());
+
+    for (const auto& [key, val] : msg.fields()) {
+        ASSERT_TRUE(json.HasMember(key));
+        CheckJsonValue(json[key], val);
+    }
+}
+
+}  // namespace
+
 ConversionFailure ReadProtoStruct(
     ups::io::ReadContext& ctx,
     ups::io::To<ConversionFailure>,
@@ -397,6 +445,69 @@ void WriteProtoStruct(ups::io::WriteContext& ctx, const WellKnownUsrv& obj, mess
 
 void WriteProtoStruct(ups::io::WriteContext& ctx, WellKnownUsrv&& obj, messages::WellKnownUsrv& msg) {
     WriteWellKnownStruct(ctx, std::move(obj), msg);
+}
+
+WellKnownJson ReadProtoStruct(
+    ups::io::ReadContext& ctx,
+    ups::io::To<WellKnownJson>,
+    const messages::WellKnownJson& msg
+) {
+    return {
+        .f1 = ups::io::impl::ReadField<formats::json::Value>(
+            ctx,
+            ups::io::impl::CreateFieldGetter(msg, messages::WellKnownJson::kF1FieldNumber, &messages::WellKnownJson::f1)
+        ),
+        .f2 = ups::io::impl::ReadField<formats::json::Array>(
+            ctx,
+            ups::io::impl::CreateFieldGetter(msg, messages::WellKnownJson::kF2FieldNumber, &messages::WellKnownJson::f2)
+        ),
+        .f3 = ups::io::impl::ReadField<formats::json::Object>(
+            ctx,
+            ups::io::impl::CreateFieldGetter(msg, messages::WellKnownJson::kF3FieldNumber, &messages::WellKnownJson::f3)
+        )
+    };
+}
+
+template <typename T>
+void WriteWellKnownJsonStruct(ups::io::WriteContext& ctx, T&& obj, messages::WellKnownJson& msg) {
+    ups::io::impl::WriteField(
+        ctx,
+        std::forward<T>(obj).f1,
+        ups::io::impl::CreateFieldSetter(
+            msg,
+            messages::WellKnownJson::kF1FieldNumber,
+            &messages::WellKnownJson::mutable_f1,
+            &messages::WellKnownJson::clear_f1
+        )
+    );
+    ups::io::impl::WriteField(
+        ctx,
+        std::forward<T>(obj).f2,
+        ups::io::impl::CreateFieldSetter(
+            msg,
+            messages::WellKnownJson::kF2FieldNumber,
+            &messages::WellKnownJson::mutable_f2,
+            &messages::WellKnownJson::clear_f2
+        )
+    );
+    ups::io::impl::WriteField(
+        ctx,
+        std::forward<T>(obj).f3,
+        ups::io::impl::CreateFieldSetter(
+            msg,
+            messages::WellKnownJson::kF3FieldNumber,
+            &messages::WellKnownJson::mutable_f3,
+            &messages::WellKnownJson::clear_f3
+        )
+    );
+}
+
+void WriteProtoStruct(ups::io::WriteContext& ctx, const WellKnownJson& obj, messages::WellKnownJson& msg) {
+    WriteWellKnownJsonStruct(ctx, obj, msg);
+}
+
+void WriteProtoStruct(ups::io::WriteContext& ctx, WellKnownJson&& obj, messages::WellKnownJson& msg) {
+    WriteWellKnownJsonStruct(ctx, std::move(obj), msg);
 }
 
 Optional ReadProtoStruct(ups::io::ReadContext& ctx, ups::io::To<Optional>, const messages::Optional& msg) {
@@ -1104,6 +1215,12 @@ void CheckWellKnownUsrvEqual(const WellKnownUsrv& obj, const messages::WellKnown
 
     EXPECT_EQ(obj.f7, decimal64::Decimal<3>(msg.f7().value()));
     EXPECT_EQ(ToString(obj.f7), msg.f7().value());
+}
+
+void CheckWellKnownJsonEqual(const WellKnownJson& obj, const messages::WellKnownJson& msg) {
+    CheckJsonValue(obj.f1, msg.f1());
+    CheckJsonValue(obj.f2.GetValue(), msg.f2());
+    CheckJsonValue(obj.f3.GetValue(), msg.f3());
 }
 
 void CheckOptionalEqual(const Optional& obj, const messages::Optional& msg) {

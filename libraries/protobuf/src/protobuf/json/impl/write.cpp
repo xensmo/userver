@@ -322,7 +322,7 @@ template <typename TReader>
     WriteMessageFunc& write_message,
     const int index = -1
 ) {
-    using namespace ::google::protobuf;
+    using ::google::protobuf::FieldDescriptor;
 
     UASSERT(message.GetReflection() == &reflection);
     UASSERT(field_desc.containing_type() == message.GetDescriptor());
@@ -453,7 +453,7 @@ template <typename TReader>
     const ::google::protobuf::FieldDescriptor& field_desc,
     const WriteOptions& options
 ) {
-    using namespace ::google::protobuf;
+    using ::google::protobuf::FieldDescriptor;
 
     UASSERT(message.GetReflection() == &reflection);
     UASSERT(field_desc.containing_type() == message.GetDescriptor());
@@ -660,6 +660,8 @@ formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Mess
     // Communications of the Association of Computing Machines, vol. 11 (1968), p. 657.
     // Implementation is taken from protobuf sources:
     // https://github.com/protocolbuffers/protobuf/blob/v33.2/src/google/protobuf/json/internal/unparser.cc#L612
+
+    // NOLINTNEXTLINE(readability-identifier-naming)
     std::int32_t L = 0, N = 0, I = 0, J = 0, K = 0;
     L = static_cast<std::int32_t>(seconds / 86400) - 719162 + 68569 + 2440588;
     N = 4 * L / 146097;
@@ -734,10 +736,8 @@ formats::json::ValueBuilder WriteFieldMaskMessage(const ::google::protobuf::Mess
                 } else {
                     json_path.push_back(ascii_toupper(c));
                 }
-            } else if (ascii_isdigit(c) && !underscore_seen) {
+            } else if (c == '.' || (ascii_isdigit(c) && !underscore_seen)) {
                 // parser will not be able to restore original path if it contains digit after underscore
-                json_path.push_back(c);
-            } else if (c == '.') {
                 json_path.push_back(c);
             } else if (c == '_' && !underscore_seen) {
                 underscore_seen = true;

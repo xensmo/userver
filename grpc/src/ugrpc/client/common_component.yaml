@@ -35,8 +35,7 @@ properties:
                 additionalProperties: false
                 properties:
                     disable_proxy:
-                        description: list of addresses that should be accessed directly,
-                            bypassing proxy server
+                        description: list of addresses that should be accessed directly, bypassing proxy server
                         type: array
                         items:
                             description: |
