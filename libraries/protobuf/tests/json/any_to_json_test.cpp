@@ -218,7 +218,7 @@ TEST(AnyToJsonAdditionalTest, InlinedNonNull) {
     auto message = PrepareTestData(data);
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsObject());
     EXPECT_EQ(json, sample);
@@ -232,7 +232,7 @@ TEST(AnyToJsonAdditionalTest, InlinedNull) {
     proto_json::messages::AnyMessage message;
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsObject());
     EXPECT_EQ(json, sample);
@@ -267,7 +267,7 @@ TEST(AnyToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsObject());
         ASSERT_EQ(json.GetSize(), std::size_t{4});
         EXPECT_EQ(json["@type"].As<std::string>(), "type.googleapis.com/proto_json.messages.Int32Message");

@@ -15,7 +15,7 @@ formats::json::Object ReadProtoStruct(
     const ::google::protobuf::Struct& msg
 ) {
     try {
-        return formats::json::Object{protobuf::json::MessageToJson(msg)};
+        return formats::json::Object{protobuf::json::MessageToJson(msg, protobuf::json::WriteOptions{})};
     } catch (const protobuf::json::WriteError& e) {
         ctx.AddError(e.what());
         return formats::json::Object{};

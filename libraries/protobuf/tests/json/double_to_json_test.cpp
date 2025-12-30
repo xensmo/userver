@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
     DoubleToJsonSuccessTest,
     ::testing::Values(
         DoubleToJsonSuccessTestParam{DoubleMessageData{0.0}},
-        DoubleToJsonSuccessTestParam{DoubleMessageData{0}, WriteOptions{.always_print_fields_with_no_presence = true}},
+        DoubleToJsonSuccessTestParam{DoubleMessageData{0}, {.always_print_fields_with_no_presence = true}},
         DoubleToJsonSuccessTestParam{DoubleMessageData{1}},
         DoubleToJsonSuccessTestParam{DoubleMessageData{-1}},
         DoubleToJsonSuccessTestParam{DoubleMessageData{100.12357}},

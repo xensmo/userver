@@ -164,7 +164,7 @@ TEST(TimestampToJsonAdditionalTest, InlinedNonNull) {
     auto message = PrepareTestData(data);
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsString());
     EXPECT_EQ(json, sample);
@@ -175,7 +175,7 @@ TEST(TimestampToJsonAdditionalTest, InlinedNull) {
     proto_json::messages::TimestampMessage message;
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsString());
     EXPECT_EQ(json, sample);
@@ -197,7 +197,7 @@ TEST(TimestampToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsString());
         EXPECT_EQ(json.As<std::string>(), "2016-02-29T00:00:00.123450Z");
     }

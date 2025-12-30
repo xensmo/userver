@@ -11,7 +11,7 @@ namespace proto_structs::io {
 
 formats::json::Value ReadProtoStruct(ReadContext& ctx, To<formats::json::Value>, const ::google::protobuf::Value& msg) {
     try {
-        return protobuf::json::MessageToJson(msg);
+        return protobuf::json::MessageToJson(msg, protobuf::json::WriteOptions{});
     } catch (const protobuf::json::WriteError& e) {
         ctx.AddError(e.what());
         return formats::json::Value{};

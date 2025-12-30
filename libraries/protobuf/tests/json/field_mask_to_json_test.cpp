@@ -84,7 +84,7 @@ INSTANTIATE_TEST_SUITE_P(
         FieldMaskToJsonSuccessTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some_field"}},
             R"({"field1":"someField"})",
-            WriteOptions{.preserve_proto_field_names = true}  // does not affect field mask serialization!
+            {.preserve_proto_field_names = true}  // does not affect field mask serialization!
         },
         FieldMaskToJsonSuccessTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some_field.another_field..one_more", "_a_b0_c"}},
@@ -188,7 +188,7 @@ TEST(FieldMaskToJsonAdditionalTest, InlinedNonNull) {
     auto message = PrepareTestData(data);
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsString());
     ASSERT_TRUE(sample.IsString());
@@ -208,7 +208,7 @@ TEST(FieldMaskToJsonAdditionalTest, InlinedNull) {
     auto message = PrepareTestData(data);
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsString());
     ASSERT_TRUE(sample.IsString());
@@ -230,7 +230,7 @@ TEST(FieldMaskToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsString());
 
         auto paths = ParseFieldMaskStr(json.As<std::string>());

@@ -179,7 +179,7 @@ TYPED_TEST(WrapperToJsonAdditionalTest, InlinedNonNull) {
     Message message;
     SetWrappedValue(message, Param::kValue);
 
-    UASSERT_NO_THROW((json = MessageToJson(message)));
+    UASSERT_NO_THROW((json = MessageToJson(message, {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message)));
     EXPECT_EQ(json, sample);
     EXPECT_EQ(GetJsonValue<Param>(json), Param::kValue);
@@ -192,7 +192,7 @@ TYPED_TEST(WrapperToJsonAdditionalTest, InlinedNull) {
     formats::json::Value json, sample;
     Message message;
 
-    UASSERT_NO_THROW((json = MessageToJson(message)));
+    UASSERT_NO_THROW((json = MessageToJson(message, {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message)));
     EXPECT_EQ(json, sample);
 }
@@ -209,7 +209,7 @@ TYPED_TEST(WrapperToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         EXPECT_EQ(GetJsonValue<Param>(json), Param::kValue);
     }
 }

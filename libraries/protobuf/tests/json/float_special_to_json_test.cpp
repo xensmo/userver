@@ -52,7 +52,7 @@ TYPED_TEST(FloatSpecialToJsonTest, Test) {
     auto input = PrepareTestData(value);
     formats::json::Value json, sample_json;
 
-    UASSERT_NO_THROW((json = MessageToJson(input)));
+    UASSERT_NO_THROW((json = MessageToJson(input, {})));
     UASSERT_NO_THROW((sample_json = CreateSampleJson(input)));
 
     EXPECT_EQ(json["field1"].As<std::string>(), GetFloatSpecialValue(value.field1));

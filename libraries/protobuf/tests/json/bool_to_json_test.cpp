@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
         BoolToJsonSuccessTestParam{
             BoolMessageData{false},
             R"({"field1":false})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         BoolToJsonSuccessTestParam{BoolMessageData{true}, R"({"field1":true})"}
     )

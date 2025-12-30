@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
         StringToJsonSuccessTestParam{
             StringMessageData{""},
             R"({"field1":""})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         StringToJsonSuccessTestParam{StringMessageData{"hello world"}, R"({"field1":"hello world"})"}
     )

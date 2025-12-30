@@ -37,13 +37,13 @@ INSTANTIATE_TEST_SUITE_P(
         NestedToJsonSuccessTestParam{
             NestedMessageData{std::nullopt},
             R"({})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         NestedToJsonSuccessTestParam{NestedMessageData{0}, R"({"parent":{}})"},
         NestedToJsonSuccessTestParam{
             NestedMessageData{0},
             R"({"parent":{"field1":0}})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         NestedToJsonSuccessTestParam{NestedMessageData{123}, R"({"parent":{"field1":123}})"}
     )

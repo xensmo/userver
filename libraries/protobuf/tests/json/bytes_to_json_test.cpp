@@ -35,7 +35,7 @@ INSTANTIATE_TEST_SUITE_P(
         BytesToJsonSuccessTestParam{
             BytesMessageData{""},
             R"({"field1":""})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         BytesToJsonSuccessTestParam{BytesMessageData{std::string("\xfb\xfb", 2)}, R"({"field1":"+/s="})"}
     )

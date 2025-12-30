@@ -31,7 +31,7 @@ namespace protobuf::json {
 ///          are not supported, but also some other `proto2`-specific parts of the syntax may not be correctly handled.
 [[nodiscard]] formats::json::ValueBuilder MessageToJsonBuilder(
     const ::google::protobuf::Message& message,
-    const WriteOptions& options = {}
+    const WriteOptions& options
 );
 
 /// @brief Converts protobuf @a message to JSON `Value`.
@@ -46,7 +46,7 @@ namespace protobuf::json {
 ///          are not supported, but also some other `proto2`-specific parts of the syntax may not be correctly handled.
 [[nodiscard]] inline formats::json::Value MessageToJson(
     const ::google::protobuf::Message& message,
-    const WriteOptions& options = {}
+    const WriteOptions& options
 ) {
     return protobuf::json::MessageToJsonBuilder(message, options).ExtractValue();
 }

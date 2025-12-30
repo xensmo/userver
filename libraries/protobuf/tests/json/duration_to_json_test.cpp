@@ -123,7 +123,7 @@ TEST(DurationToJsonAdditionalTest, InlinedNonNull) {
     auto message = PrepareTestData(data);
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsString());
     EXPECT_EQ(json, sample);
@@ -134,7 +134,7 @@ TEST(DurationToJsonAdditionalTest, InlinedNull) {
     proto_json::messages::DurationMessage message;
     formats::json::Value json, sample;
 
-    UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+    UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
     ASSERT_TRUE(json.IsString());
     EXPECT_EQ(json, sample);
@@ -156,7 +156,7 @@ TEST(DurationToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsString());
         EXPECT_EQ(json.As<std::string>(), "-123.000000987s");
     }

@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(
         Int64ToJsonSuccessTestParam{
             Int64MessageData{0, 0, 0},
             R"({"field1":"0","field2":"0","field3":"0"})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         Int64ToJsonSuccessTestParam{Int64MessageData{1, 2, 3}, R"({"field1":"1","field2":"2","field3":"3"})"},
         Int64ToJsonSuccessTestParam{Int64MessageData{-1, -2, -3}, R"({"field1":"-1","field2":"-2","field3":"-3"})"},

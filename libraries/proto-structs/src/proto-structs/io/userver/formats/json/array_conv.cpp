@@ -15,7 +15,7 @@ formats::json::Array ReadProtoStruct(
     const ::google::protobuf::ListValue& msg
 ) {
     try {
-        return formats::json::Array{protobuf::json::MessageToJson(msg)};
+        return formats::json::Array{protobuf::json::MessageToJson(msg, protobuf::json::WriteOptions{})};
     } catch (const protobuf::json::WriteError& e) {
         ctx.AddError(e.what());
         return formats::json::Array{};

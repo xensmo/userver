@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
     FloatToJsonSuccessTest,
     ::testing::Values(
         FloatToJsonSuccessTestParam{FloatMessageData{0.0}},
-        FloatToJsonSuccessTestParam{FloatMessageData{0}, WriteOptions{.always_print_fields_with_no_presence = true}},
+        FloatToJsonSuccessTestParam{FloatMessageData{0}, {.always_print_fields_with_no_presence = true}},
         FloatToJsonSuccessTestParam{FloatMessageData{1}},
         FloatToJsonSuccessTestParam{FloatMessageData{-1}},
         FloatToJsonSuccessTestParam{FloatMessageData{100.12357}},

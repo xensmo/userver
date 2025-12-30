@@ -210,7 +210,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         EXPECT_TRUE(json.IsNull());
@@ -221,7 +221,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         ASSERT_TRUE(json.IsNumber());
@@ -233,7 +233,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         EXPECT_TRUE(json.IsString());
@@ -245,7 +245,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         EXPECT_TRUE(json.IsBool());
@@ -257,7 +257,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         EXPECT_TRUE(json.IsArray());
@@ -269,7 +269,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         EXPECT_TRUE(json.IsArray());
@@ -283,7 +283,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         EXPECT_TRUE(json.IsObject());
@@ -295,7 +295,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
         auto message = PrepareTestData(data);
         formats::json::Value json, sample;
 
-        UASSERT_NO_THROW((json = MessageToJson(message.field1())));
+        UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
         EXPECT_EQ(json, sample);
         EXPECT_TRUE(json.IsObject());
@@ -311,7 +311,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNull) {
     ValueMessageData data{std::monostate{}};
     auto message = PrepareTestData(data);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(message.field1()), WriteErrorCode::kInvalidValue, "/");
+    EXPECT_WRITE_ERROR((void)MessageToJson(message.field1(), {}), WriteErrorCode::kInvalidValue, "/");
 }
 
 TEST(ValueToJsonAdditionalTest, DynamicMessage) {
@@ -327,7 +327,7 @@ TEST(ValueToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsNull());
     }
 
@@ -340,7 +340,7 @@ TEST(ValueToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsNumber());
         EXPECT_EQ(json.As<double>(), 1.5);
     }
@@ -354,7 +354,7 @@ TEST(ValueToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsString());
         EXPECT_EQ(json.As<std::string>(), "hello");
     }
@@ -368,7 +368,7 @@ TEST(ValueToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsBool());
         EXPECT_EQ(json.As<bool>(), true);
     }
@@ -388,7 +388,7 @@ TEST(ValueToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsArray());
         ASSERT_EQ(json.GetSize(), std::size_t{1});
         EXPECT_EQ(json[0].As<double>(), 1.5);
@@ -414,7 +414,7 @@ TEST(ValueToJsonAdditionalTest, DynamicMessage) {
 
         formats::json::Value json;
 
-        UASSERT_NO_THROW((json = MessageToJson(*message)));
+        UASSERT_NO_THROW((json = MessageToJson(*message, {})));
         ASSERT_TRUE(json.IsObject());
         ASSERT_EQ(json.GetSize(), std::size_t{1});
         ASSERT_TRUE(json.HasMember("aaa"));

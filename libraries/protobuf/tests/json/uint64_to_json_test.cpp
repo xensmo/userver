@@ -37,7 +37,7 @@ INSTANTIATE_TEST_SUITE_P(
         UInt64ToJsonSuccessTestParam{
             UInt64MessageData{0, 0},
             R"({"field1":"0","field2":"0"})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         UInt64ToJsonSuccessTestParam{UInt64MessageData{1, 2}, R"({"field1":"1","field2":"2"})"},
         UInt64ToJsonSuccessTestParam{

@@ -36,7 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
         EnumToJsonSuccessTestParam{
             EnumMessageData{msgs::EnumMessage::TEST_UNSPECIFIED},
             R"({"field1":"TEST_UNSPECIFIED"})",
-            WriteOptions{.always_print_fields_with_no_presence = true}
+            {.always_print_fields_with_no_presence = true}
         },
         EnumToJsonSuccessTestParam{EnumMessageData{msgs::EnumMessage::TEST_VALUE1}, R"({"field1":"TEST_VALUE1"})"},
         EnumToJsonSuccessTestParam{EnumMessageData{msgs::EnumMessage::TEST_VALUE2}, R"({"field1":"TEST_VALUE2"})"},
@@ -48,27 +48,27 @@ INSTANTIATE_TEST_SUITE_P(
         EnumToJsonSuccessTestParam{
             EnumMessageData{msgs::EnumMessage::TEST_UNSPECIFIED},
             R"({"field1":0})",
-            WriteOptions{.always_print_fields_with_no_presence = true, .always_print_enums_as_ints = true}
+            {.always_print_fields_with_no_presence = true, .always_print_enums_as_ints = true}
         },
         EnumToJsonSuccessTestParam{
             EnumMessageData{msgs::EnumMessage::TEST_VALUE1},
             R"({"field1":1})",
-            WriteOptions{.always_print_enums_as_ints = true}
+            {.always_print_enums_as_ints = true}
         },
         EnumToJsonSuccessTestParam{
             EnumMessageData{msgs::EnumMessage::TEST_VALUE2},
             R"({"field1":2})",
-            WriteOptions{.always_print_enums_as_ints = true}
+            {.always_print_enums_as_ints = true}
         },
         EnumToJsonSuccessTestParam{
             EnumMessageData{msgs::EnumMessage::TEST_VALUE2_ALIAS},
             R"({"field1":2})",
-            WriteOptions{.always_print_enums_as_ints = true}
+            {.always_print_enums_as_ints = true}
         },
         EnumToJsonSuccessTestParam{
             EnumMessageData{msgs::EnumMessage::TEST_VALUE3},
             R"({"field1":3})",
-            WriteOptions{.always_print_enums_as_ints = true}
+            {.always_print_enums_as_ints = true}
         }
     )
 );
