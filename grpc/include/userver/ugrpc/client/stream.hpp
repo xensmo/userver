@@ -4,8 +4,10 @@
 /// @brief Client streaming interfaces
 
 #include <memory>
+#include <utility>
 
 #include <userver/ugrpc/client/impl/rpc.hpp>
+#include <userver/ugrpc/client/stream_read_future.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -168,9 +170,6 @@ private:
 template <typename Request, typename Response>
 class [[nodiscard]] ReaderWriter final {
 public:
-    using StreamReadFuture = ugrpc::client::StreamReadFuture<
-        typename impl::BidirectionalStream<Request, Response>::RawStream>;
-
     /// @cond
     // For internal use only
     template <typename Stub>
@@ -202,7 +201,7 @@ public:
     /// @return StreamReadFuture future
     /// @throws ugrpc::client::RpcError on an RPC error
     /// @throws ugrpc::client::RpcError if the stream is already closed for reads
-    StreamReadFuture ReadAsync(Response& response) { return stream_->ReadAsync(response); }
+    StreamReadFuture<Response> ReadAsync(Response& response) { return stream_->ReadAsync(response); }
 
     /// @brief Write the next outgoing message
     ///

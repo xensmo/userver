@@ -2354,6 +2354,7 @@
   "grpc/include/userver/ugrpc/client/impl/retry_backoff.hpp":"taxi/uservices/userver/grpc/include/userver/ugrpc/client/impl/retry_backoff.hpp",
   "grpc/include/userver/ugrpc/client/impl/retry_policy.hpp":"taxi/uservices/userver/grpc/include/userver/ugrpc/client/impl/retry_policy.hpp",
   "grpc/include/userver/ugrpc/client/impl/rpc.hpp":"taxi/uservices/userver/grpc/include/userver/ugrpc/client/impl/rpc.hpp",
+  "grpc/include/userver/ugrpc/client/impl/stream_read_future_impl_base.hpp":"taxi/uservices/userver/grpc/include/userver/ugrpc/client/impl/stream_read_future_impl_base.hpp",
   "grpc/include/userver/ugrpc/client/impl/stub_any.hpp":"taxi/uservices/userver/grpc/include/userver/ugrpc/client/impl/stub_any.hpp",
   "grpc/include/userver/ugrpc/client/impl/stub_handle.hpp":"taxi/uservices/userver/grpc/include/userver/ugrpc/client/impl/stub_handle.hpp",
   "grpc/include/userver/ugrpc/client/impl/stub_pool.hpp":"taxi/uservices/userver/grpc/include/userver/ugrpc/client/impl/stub_pool.hpp",
