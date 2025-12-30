@@ -40,6 +40,7 @@ std::string GetHeadersLogString(
 ) {
     constexpr std::string_view kTruncateSuffix = "...(truncated, total {} bytes)";
     constexpr size_t kMaxTruncateSuffixSize = kTruncateSuffix.size() + std::numeric_limits<size_t>::digits10;
+    constexpr std::string_view kMask = "***";
 
     // Sort to prevent flaky headers reordering, appearing and disappearing for different requests.
     using HeaderRef = utils::NotNull<const http::HttpRequest::HeadersMap::const_iterator::value_type*>;
@@ -50,8 +51,9 @@ std::string GetHeadersLogString(
     size_t max_result_size = 0;
 
     for (const auto& header : request.GetHeaders()) {
-        max_result_size += header.first.size() + header.second.size() + 3;
-        sorted_headers.emplace_back(header, headers_whitelist.find(header.first) == headers_whitelist.end());
+        const IsValueHidden header_hide = headers_whitelist.find(header.first) == headers_whitelist.end();
+        max_result_size += header.first.size() + (header_hide ? kMask.size() : header.second.size()) + 3;
+        sorted_headers.emplace_back(header, header_hide);
     }
     std::sort(sorted_headers.begin(), sorted_headers.end(), [](const auto& lhs, const auto& rhs) {
         return std::tie(lhs.second, *lhs.first) < std::tie(rhs.second, *rhs.first);
@@ -62,7 +64,7 @@ std::string GetHeadersLogString(
 
     for (const auto& [header_ref, header_hide] : sorted_headers) {
         const auto& [header_name, header_value] = *header_ref;
-        const auto& header_log_value = header_hide ? "***" : header_value;
+        const std::string_view header_log_value = header_hide ? kMask : header_value;
         if (result.size() + header_name.size() + header_log_value.size() + 3 > response_data_size_log_limit) {
             result += fmt::format(kTruncateSuffix, max_result_size);
             break;
