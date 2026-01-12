@@ -120,7 +120,9 @@ function(userver_venv_setup)
 
     message(STATUS "Setting up the venv at ${venv_dir}")
 
-    if(NOT EXISTS "${venv_dir}")
+    if(NOT EXISTS "${venv_dir}/.venv-settled")
+	file(REMOVE_RECURSE "${venv_dir}")
+
         execute_process(
             COMMAND "${USERVER_PYTHON_PATH}" -m venv "${venv_dir}" ${venv_additional_args} RESULT_VARIABLE status
         )
@@ -131,6 +133,9 @@ function(userver_venv_setup)
                             "On Debian-based systems, venv is installed separately:\n" "sudo apt install python3-venv"
             )
         endif()
+
+	# to be sure 'python -m venv' is atomic
+	file(TOUCH "${venv_dir}/.venv-settled")
     endif()
 
     # If pip has already installed packages using the same requirements, then don't run it again. This optimization
