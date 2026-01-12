@@ -6,6 +6,7 @@
 #include <benchmark/benchmark.h>
 #include <boost/stacktrace.hpp>
 
+#include <userver/engine/run_standalone.hpp>
 #include <userver/logging/impl/logger_base.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/logging/null_logger.hpp>
@@ -89,7 +90,7 @@ BENCHMARK_DEFINE_F(Stacktrace, Cached)(benchmark::State& state) {
 
 BENCHMARK_REGISTER_F(Stacktrace, Cached)->RangeMultiplier(4)->Range(1, 1024);
 
-BENCHMARK_DEFINE_F(Stacktrace, Get)(benchmark::State& state) {
+void StacktraceGetCommon(benchmark::State& state) {
     std::function<boost::stacktrace::stacktrace(std::size_t)> recursion;
     recursion = [&recursion](std::size_t depth) {
         if (depth) {
@@ -106,6 +107,16 @@ BENCHMARK_DEFINE_F(Stacktrace, Get)(benchmark::State& state) {
     }
 }
 
+BENCHMARK_DEFINE_F(Stacktrace, Get)(benchmark::State& state) { StacktraceGetCommon(state); }
+
 BENCHMARK_REGISTER_F(Stacktrace, Get)->RangeMultiplier(4)->Range(1, 1024);
+
+BENCHMARK_DEFINE_F(Stacktrace, GetInCoroutine)(benchmark::State& state) {
+    engine::TaskProcessorPoolsConfig config{};
+    config.coro_stack_size = 1024 * 1024;
+    engine::RunStandalone(1, config, [&state]() { StacktraceGetCommon(state); });
+}
+
+BENCHMARK_REGISTER_F(Stacktrace, GetInCoroutine)->RangeMultiplier(4)->Range(1, 1024);
 
 USERVER_NAMESPACE_END
