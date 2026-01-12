@@ -88,7 +88,7 @@ public:
 
     size_t ShardsCount() const;
 
-    SentinelStatistics GetStatistics(const MetricsSettings& settings) const;
+    std::unique_ptr<SentinelStatistics> GetStatistics(const MetricsSettings& settings) const;
 
     void Start();
     void Stop();

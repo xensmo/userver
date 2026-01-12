@@ -294,7 +294,7 @@ void Sentinel::CheckShardIdx(size_t shard_idx, size_t shard_count) {
     }
 }
 
-SentinelStatistics Sentinel::GetStatistics(const MetricsSettings& settings) const {
+std::unique_ptr<SentinelStatistics> Sentinel::GetStatistics(const MetricsSettings& settings) const {
     return impl_->GetStatistics(settings);
 }
 

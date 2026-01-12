@@ -531,13 +531,13 @@ void SentinelImpl::SetRetryBudgetSettings(const utils::RetryBudgetSettings& sett
     }
 }
 
-SentinelStatistics SentinelImpl::GetStatistics(const MetricsSettings& settings) const {
+std::unique_ptr<SentinelStatistics> SentinelImpl::GetStatistics(const MetricsSettings& settings) const {
     if (!topology_holder_) {
-        return {settings, {}};
+        return std::make_unique<SentinelStatistics>(settings, SentinelStatisticsInternal{});
     }
 
-    SentinelStatistics stats(settings, statistics_internal_);
-    topology_holder_->GetStatistics(stats, settings);
+    auto stats = std::make_unique<SentinelStatistics>(settings, statistics_internal_);
+    topology_holder_->GetStatistics(*stats, settings);
     return stats;
 }
 

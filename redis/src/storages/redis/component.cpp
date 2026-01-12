@@ -290,7 +290,7 @@ Redis::~Redis() {
 void Redis::WriteStatistics(utils::statistics::Writer& writer) {
     auto settings = metrics_settings_.Read();
     for (const auto& [name, redis] : sentinels_) {
-        writer.ValueWithLabels(redis->GetStatistics(*settings), {"redis_database", name});
+        writer.ValueWithLabels(*redis->GetStatistics(*settings), {"redis_database", name});
     }
     auto threads_writer = writer["ev_threads"]["cpu_load_percent"];
     threads_writer.ValueWithLabels(*thread_pools_->GetRedisThreadPool(), {});
