@@ -18,6 +18,7 @@ with section('parse'):  # noqa: F821
                 'PATCHES': '*',
                 'SOURCE_SUBDIR': '*',
                 'GIT_TAG': '*',
+                'GIT_SHALLOW': '*',
             },
         },
         'userver_module': {

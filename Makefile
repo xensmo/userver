@@ -3,7 +3,6 @@ CMAKE_DEBUG_FLAGS ?= '-DUSERVER_SANITIZE=addr;ub'
 CMAKE_RELEASE_FLAGS ?=
 KERNEL := $(shell uname -s)
 NPROCS ?= $(shell nproc)
-DOCKER_COMPOSE ?= docker-compose
 
 # NOTE: use Makefile.local for customization
 -include Makefile.local
@@ -50,27 +49,6 @@ build-debug build-release: build-%: cmake-%
 test-debug test-release: test-%: build-%
 	ulimit -n 4096
 	cd build_$* && ((test -t 1 && GTEST_COLOR=1 PYTEST_ADDOPTS="--color=yes" ctest -V) || ctest -V)
-
-# Start targets makefile in docker environment
-.PHONY: docker-cmake-debug docker-build-debug docker-test-debug docker-cmake-release docker-build-release docker-test-release
-docker-cmake-debug docker-build-debug docker-test-debug docker-cmake-release docker-build-release docker-test-release: docker-%:
-	$(DOCKER_COMPOSE) run --rm userver-ubuntu make $*
-
-# Stop docker container and remove PG data
-.PHONY: docker-clean-data
-docker-clean-data:
-	$(DOCKER_COMPOSE) down -v
-
-.PHONY: docker-enter
-docker-enter:
-	$(DOCKER_COMPOSE) run --rm userver-ubuntu bash
-
-.PHONY: docker-run-ydb docker-kill
-docker-run-ydb:
-	$(DOCKER_COMPOSE) run -d --rm --service-ports run-ydb
-
-docker-kill:
-	$(DOCKER_COMPOSE) kill
 
 # clean build folders
 .PHONY: dist-clean
