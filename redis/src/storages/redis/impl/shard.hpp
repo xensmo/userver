@@ -37,6 +37,7 @@ public:
     void SetConnectionSecurity(ConnectionSecurity value);
     ConnectionSecurity GetConnectionSecurity() const;
 
+    /// Returns address as string like "host:port"
     const std::string& Fulltext() const;
 
     void Connect(Redis&) const;

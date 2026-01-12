@@ -119,7 +119,7 @@ std::optional<std::string> KeyShardGpsStorageDriver::Parse(const std::string& s)
     return parts[2];  // data/db/driver_id/data/bucket
 }
 
-std::unique_ptr<KeyShard> KeyShardFactory::operator()(size_t nshards) {
+std::unique_ptr<KeyShard> KeyShardFactory::operator()(size_t nshards) const {
     LOG_TRACE() << "Create KeyShard with type '" << type_ << '\'';
     if (type_ == "KeyShardGpsStorageDriver") {
         return std::make_unique<KeyShardGpsStorageDriver>(nshards);

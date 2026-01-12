@@ -84,7 +84,7 @@ std::shared_ptr<Redis> StandaloneTopologyHolder::GetRedisInstance(const HostPort
 }
 
 void StandaloneTopologyHolder::GetStatistics(SentinelStatistics& stats, const MetricsSettings& settings) const {
-    stats.internal.is_autotoplogy = false;
+    stats.internal.is_autotopology = false;
     stats.internal.cluster_topology_checks = utils::statistics::Rate{0};
     stats.internal.cluster_topology_updates = utils::statistics::Rate{
         current_topology_version_.load(std::memory_order_relaxed)

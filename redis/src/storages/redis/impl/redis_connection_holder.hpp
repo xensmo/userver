@@ -2,10 +2,10 @@
 #include <memory>
 
 #include <engine/ev/watcher/periodic_watcher.hpp>
-#include <storages/redis/impl/cluster_sentinel_impl.hpp>
 #include <storages/redis/impl/redis.hpp>
 #include <storages/redis/impl/redis_creation_settings.hpp>
 #include <storages/redis/impl/sentinel.hpp>
+#include <storages/redis/impl/sentinel_impl.hpp>
 #include <userver/concurrent/variable.hpp>
 #include <userver/rcu/rcu.hpp>
 
@@ -19,10 +19,14 @@ class RedisConnectionHolder final : public std::enable_shared_from_this<RedisCon
     class EmplaceEnabler;
 
 public:
-    static constexpr redis::RedisCreationSettings makeDefaultRedisCreationSettings() {
+    static constexpr redis::RedisCreationSettings makeClusterNodeRedisCreationSettings() {
         /// Here we allow read from replicas possibly stale data.
         /// This does not affect connections to masters
         return redis::RedisCreationSettings{ConnectionSecurity::kNone, true};
+    }
+    static constexpr redis::RedisCreationSettings makeSentinelNodeRedisCreationSettings() {
+        /// Non-cluster nodes does not support READONLY command
+        return redis::RedisCreationSettings{ConnectionSecurity::kNone, false};
     }
 
     RedisConnectionHolder() = delete;
@@ -55,7 +59,7 @@ public:
         CommandsBufferingSettings buffering_settings,
         ReplicationMonitoringSettings replication_monitoring_settings,
         utils::RetryBudgetSettings retry_budget_settings,
-        redis::RedisCreationSettings redis_creation_settings = makeDefaultRedisCreationSettings()
+        redis::RedisCreationSettings redis_creation_settings = makeClusterNodeRedisCreationSettings()
     );
 
     std::shared_ptr<Redis> Get() const;

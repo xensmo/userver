@@ -9,8 +9,6 @@
 
 #include <storages/redis/impl/cluster_subscription_storage.hpp>
 
-#include "sentinel_impl.hpp"
-
 USERVER_NAMESPACE_BEGIN
 
 namespace storages::redis::impl {

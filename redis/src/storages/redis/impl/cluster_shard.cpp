@@ -281,7 +281,7 @@ size_t GetStartIndex(
         best_dc_count = std::numeric_limits<size_t>::max();
     }
     const bool first_attempt = (attempt == 0);
-    const bool first_try = prev_instance_idx == SentinelImplBase::kDefaultPrevInstanceIdx;
+    const bool first_try = prev_instance_idx == SentinelImpl::kDefaultPrevInstanceIdx;
     /// For compatibility with non-cluster-autotopology driver:
     /// List of available servers for readonly
     /// requests still contains master. Master is the last server in list.

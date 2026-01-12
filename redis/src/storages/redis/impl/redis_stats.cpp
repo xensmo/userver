@@ -260,7 +260,7 @@ void DumpMetric(utils::statistics::Writer& writer, const SentinelStatistics& sta
     DumpMetric(writer, stats.shard_group_total, false);
     writer["errors"].ValueWithLabels(stats.internal.redis_not_ready.Load().value, {"redis_error", "redis_not_ready"});
     writer["errors.v2"].ValueWithLabels(stats.internal.redis_not_ready.Load(), {"redis_error", "redis_not_ready"});
-    if (stats.internal.is_autotoplogy.load()) {
+    if (stats.internal.is_autotopology.load()) {
         writer["cluster_topology_checks"] = stats.internal.cluster_topology_checks.Load().value;
         writer["cluster_topology_updates"] = stats.internal.cluster_topology_updates.Load().value;
         // We have to duplicate metrics with different sensor name to change

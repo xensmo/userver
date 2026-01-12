@@ -22,8 +22,10 @@ public:
     KeyShardFactory(const std::string& type)
         : type_(type)
     {}
-    std::unique_ptr<KeyShard> operator()(size_t nshards);
+    std::unique_ptr<KeyShard> operator()(size_t nshards) const;
     bool IsClusterStrategy() const;
+
+    const std::string& GetType() const { return type_; }
 };
 
 }  // namespace storages::redis::impl

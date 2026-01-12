@@ -40,7 +40,6 @@ const auto kProcessWaitingCommandsInterval = std::chrono::seconds(3);
 const auto kCheckRedisConnectedInterval = std::chrono::seconds(3);
 
 // Forward declarations
-class SentinelImplBase;
 class SentinelImpl;
 class Shard;
 
@@ -203,7 +202,7 @@ public:
 private:
     friend class Transaction;
 
-    std::unique_ptr<SentinelImplBase> impl_;
+    std::unique_ptr<SentinelImpl> impl_;
     const std::string shard_group_name_;
     std::shared_ptr<ThreadPools> thread_pools_;
     std::unique_ptr<engine::ev::ThreadControl> sentinel_thread_control_;

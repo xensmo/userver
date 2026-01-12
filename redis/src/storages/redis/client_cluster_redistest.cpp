@@ -4,7 +4,7 @@
 #include <userver/engine/single_consumer_event.hpp>
 #include <userver/engine/sleep.hpp>
 
-#include <storages/redis/impl/cluster_sentinel_impl.hpp>
+#include <storages/redis/impl/sentinel_impl.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -416,7 +416,7 @@ UTEST_F(RedisClusterClientTest, LongWork) {
 UTEST_F(RedisClusterClientTest, ClusterSlotsCalled) {
     auto client = GetClient();
     engine::SleepFor(std::chrono::seconds(10));
-    ASSERT_GT(storages::redis::impl::ClusterSentinelImpl::GetClusterSlotsCalledCounter(), 2);
+    ASSERT_GT(storages::redis::impl::SentinelImpl::GetClusterSlotsCalledCounter(), 2);
 }
 
 USERVER_NAMESPACE_END
