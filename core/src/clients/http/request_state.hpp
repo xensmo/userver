@@ -19,6 +19,7 @@
 #include <userver/crypto/private_key.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future.hpp>
+#include <userver/engine/single_consumer_event.hpp>
 #include <userver/http/common_headers.hpp>
 #include <userver/http/url.hpp>
 #include <userver/tracing/in_place_span.hpp>
@@ -198,6 +199,10 @@ private:
 
     void ResolveTargetAddress(clients::dns::Resolver& resolver);
 
+    void ResetRequestCompletion();
+    void RequestCompleted();
+    void WaitForRequestCompletion();
+
     // should be the first member to prevent HttpClient destruction before destruction of RequestState fields
     utils::impl::WaitTokenStorageLock wait_token_;
     /// curl handler wrapper
@@ -271,6 +276,8 @@ private:
     };
 
     std::variant<FullBufferedData, StreamData> data_;
+
+    engine::SingleConsumerEvent request_completed_{engine::SingleConsumerEvent::NoAutoReset{}};
 };
 
 }  // namespace clients::http

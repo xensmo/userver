@@ -384,8 +384,11 @@ public:
     /// Works well with @ref engine::WaitAny(), @ref engine::WaitAnyFor(), and @ref engine::WaitUntil() functions:
     /// @snippet src/clients/http/client_wait_test.cpp HTTP Client - waitany
     ///
-    /// Request object could be reused after retrieval of data from ResponseFuture, all the setup holds:
-    /// @snippet src/clients/http/client_test.cpp  HTTP Client - reuse async
+    /// Refrain from reusing the Request object.
+    /// Though it might be possible to reuse it after extracting data from ResponseFuture, a subsequent async_perform
+    /// or perform call could be delayed until the previous request fully completes. This delay can occur if the
+    /// previous request either timed out or was canceled.
+    /// Future versions might entirely forbid Request objects reuse.
     [[nodiscard]] ResponseFuture async_perform(
         utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
     );
@@ -401,8 +404,11 @@ public:
     /// Calls async_perform and wait for timeout_ms on a future. Default time  for waiting will be timeout value if it
     /// was set. If error occurred it will be thrown as exception.
     ///
-    /// Request object could be reused after return from perform(), all the setup holds:
-    /// @snippet src/clients/http/client_test.cpp  HTTP Client - request reuse
+    /// Refrain from reusing the Request object.
+    /// Though it might be possible to reuse it after extracting data from ResponseFuture, a subsequent async_perform
+    /// or perform call could be delayed until the previous request fully completes. This delay can occur if the
+    /// previous request either timed out or was canceled.
+    /// Future versions might entirely forbid Request objects reuse.
     [[nodiscard]] std::shared_ptr<Response> perform(
         utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
     );

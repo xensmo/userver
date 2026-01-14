@@ -1342,6 +1342,29 @@ UTEST(HttpClient, UsingResolverWithIpv6Addrs) {
     EXPECT_EQ(res->body(), kTestData);
 }
 
+UTEST(HttpClient, ReuseWithResolverError) {
+    const utest::SimpleServer http_server{EchoCallback{}, utest::SimpleServer::kTcpIpV6};
+
+    ResolverWrapper resolver_wrapper;
+    auto http_client_ptr = utest::impl::CreateHttpClientCore(resolver_wrapper.fs_task_processor);
+    http_client_ptr->SetDnsResolver(&resolver_wrapper.resolver);
+
+    auto request =
+        http_client_ptr->CreateRequest()
+            .post("http://bad.host.local.:8080", kTestData)
+            .retry(1)
+            .verify(true)
+            .http_version(USERVER_NAMESPACE::http::HttpVersion::k11)
+            .timeout(kTimeout);
+
+    UEXPECT_THROW(request.perform()->status_code(), clients::dns::ResolverException);
+
+    const auto server_url = "http://[::1]:" + std::to_string(http_server.GetPort());
+    auto res = request.post(server_url, kTestData).perform();
+
+    EXPECT_EQ(res->body(), kTestData);
+}
+
 UTEST(HttpClient, RequestReuseBasic) {
     const EchoCallback shared_echo_callback;
     const utest::SimpleServer http_server{shared_echo_callback, utest::SimpleServer::kTcpIpV6};

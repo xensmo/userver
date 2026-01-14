@@ -258,6 +258,8 @@ RequestState::RequestState(
     // Even if proxy is an empty string we should set it, because empty proxy
     // for CURL disables the use of *_proxy env variables.
     easy().set_proxy("");
+
+    RequestCompleted();
 }
 
 RequestState::~RequestState() {
@@ -549,6 +551,7 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
         };
         std::visit(visitor, holder->data_);
     }
+    holder->RequestCompleted();
     // it is unsafe to touch any content of holder after this point!
 }
 
@@ -723,6 +726,7 @@ std::string_view RequestState::GetLoggedEffectiveUrl() noexcept {
 }
 
 engine::Future<std::shared_ptr<Response>> RequestState::async_perform(utils::impl::SourceLocation location) {
+    WaitForRequestCompletion();
     data_.emplace<FullBufferedData>();
 
     StartNewSpan(location);
@@ -749,6 +753,7 @@ engine::Future<void> RequestState::async_perform_stream(
     const std::shared_ptr<Queue>& queue,
     utils::impl::SourceLocation location
 ) {
+    WaitForRequestCompletion();
     data_.emplace<StreamData>(queue->GetProducer());
 
     StartNewSpan(location);
@@ -790,6 +795,7 @@ void RequestState::PerformRequest(curl::easy::handler_type handler) {
                 try {
                     ResolveTargetAddress(*resolver_);
                     easy().async_perform(std::move(handler));
+                    return;
                 } catch (const clients::dns::ResolverException& ex) {
                     // TODO: should retry - TAXICOMMON-4932
                     auto* buffered_data = std::get_if<FullBufferedData>(&data_);
@@ -802,6 +808,8 @@ void RequestState::PerformRequest(curl::easy::handler_type handler) {
                         buffered_data->promise.set_exception(std::current_exception());
                     }
                 }
+                span_storage_.reset();
+                RequestCompleted();
             })
         );
     } else {
@@ -872,6 +880,8 @@ void RequestState::HandleDeadlineAlreadyPassed() {
 
     WithRequestStats([](RequestStats& stats) { stats.AccountCancelledByDeadline(); });
 
+    span_storage_.reset();
+
     auto exc = PrepareDeadlinePassedException(GetLoggedOriginalUrl(), easy().get_local_stats());
 
     const utils::Overloaded visitor{
@@ -889,6 +899,7 @@ void RequestState::HandleDeadlineAlreadyPassed() {
         }
     };
     std::visit(visitor, data_);
+    RequestCompleted();
 }
 
 void RequestState::CheckResponseDeadline(std::error_code& err, Status status_code) {
@@ -996,6 +1007,8 @@ void RequestState::ResetDataForNewRequest() {
     SetEasyTimeout(original_timeout_);
 
     StartStats();
+
+    ResetRequestCompletion();
 }
 
 size_t RequestState::StreamWriteFunction(char* ptr, size_t size, size_t nmemb, void* userdata) {
@@ -1138,6 +1151,23 @@ void RequestState::SetTracingManager(const tracing::TracingManagerBase& m) { tra
 MiddlewareRequest RequestState::GetEditableRequestInstance() { return MiddlewareRequest(*this); }
 
 void RequestState::SetWaitToken(utils::impl::WaitTokenStorageLock&& wait_token) { wait_token_ = std::move(wait_token); }
+
+void RequestState::ResetRequestCompletion() { request_completed_.Reset(); }
+
+void RequestState::RequestCompleted() { request_completed_.Send(); }
+
+void RequestState::WaitForRequestCompletion() {
+    if (request_completed_.WaitForEvent()) {
+        return;
+    }
+
+    UASSERT(engine::current_task::ShouldCancel());
+    throw CancelException(
+        "Wait for the previous HTTP response was aborted due to task cancellation",
+        easy().get_local_stats(),
+        ErrorKind::kCancel
+    );
+}
 
 }  // namespace clients::http
 
