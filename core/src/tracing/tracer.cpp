@@ -18,7 +18,7 @@ auto& GlobalNoLogSpans() {
 }
 
 auto& GlobalTracer() {
-    static rcu::Variable<Tracer, rcu::ExclusiveRcuTraits> tracer("", nullptr);
+    static rcu::Variable<Tracer, rcu::ExclusiveRcuTraits> tracer("");
     return tracer;
 }
 
