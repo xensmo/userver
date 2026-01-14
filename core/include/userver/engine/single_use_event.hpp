@@ -70,6 +70,8 @@ public:
 
     /// Sets the signal flag and wakes a task that waits on it, if any.
     /// `Send` must not be called again.
+    ///
+    /// You can safely invoke Send from outside a coroutine.
     void Send() noexcept;
 
     /// Returns true iff already signaled.

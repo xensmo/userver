@@ -93,6 +93,8 @@ public:
     /// a concurrent task may call Send on a destroyed SingleConsumerEvent.
     /// Here is an example of this situation:
     /// @snippet engine/single_consumer_event_test.cpp  Wait and destroy
+    ///
+    /// You can safely invoke Send from outside a coroutine.
     void Send();
 
     /// Returns `true` iff already signaled. Never resets the signal.
