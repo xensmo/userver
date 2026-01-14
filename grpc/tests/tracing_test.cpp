@@ -72,7 +72,10 @@ private:
     }
 };
 
-class GrpcTracing : public ugrpc::tests::ServiceFixture<UnitTestServiceWithTracingChecks> {
+class GrpcTracing
+    : public ugrpc::tests::ServiceWithClientFixture<
+          UnitTestServiceWithTracingChecks,
+          sample::ugrpc::UnitTestServiceClient> {
 private:
     logging::DefaultLoggerLevelScope log_level_scope_{logging::Level::kInfo};
 };
@@ -105,50 +108,45 @@ void CheckMetadata(const grpc::ClientContext& client_context) {
 }  // namespace
 
 UTEST_F(GrpcTracing, UnaryRPC) {
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     sample::ugrpc::GreetingRequest out;
     out.set_name("userver");
-    auto future = client.AsyncSayHello(out);
+    auto future = GetClient().AsyncSayHello(out);
     UEXPECT_NO_THROW(future.Get());
     CheckMetadata(future.GetContext().GetClientContext());
 }
 
 UTEST_F(GrpcTracing, InputStream) {
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     sample::ugrpc::StreamGreetingRequest out;
     out.set_name("userver");
     out.set_number(42);
     sample::ugrpc::StreamGreetingResponse in;
-    auto call = client.ReadMany(out);
+    auto call = GetClient().ReadMany(out);
     EXPECT_FALSE(call.Read(in));
     CheckMetadata(call.GetContext().GetClientContext());
 }
 
 UTEST_F(GrpcTracing, OutputStream) {
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
-    auto call = client.WriteMany();
+    auto call = GetClient().WriteMany();
     UEXPECT_NO_THROW(call.Finish());
     CheckMetadata(call.GetContext().GetClientContext());
 }
 
 UTEST_F(GrpcTracing, BidirectionalStream) {
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     sample::ugrpc::StreamGreetingResponse in;
-    auto call = client.Chat();
+    auto call = GetClient().Chat();
     EXPECT_FALSE(call.Read(in));
     CheckMetadata(call.GetContext().GetClientContext());
 }
 
 UTEST_F(GrpcTracing, SpansInDifferentRPCs) {
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     sample::ugrpc::GreetingRequest out;
     out.set_name("userver");
 
-    auto future1 = client.AsyncSayHello(out);
+    auto future1 = GetClient().AsyncSayHello(out);
     future1.Get();
     const auto& metadata1 = future1.GetContext().GetClientContext().GetServerInitialMetadata();
 
-    auto future2 = client.AsyncSayHello(out);
+    auto future2 = GetClient().AsyncSayHello(out);
     future2.Get();
     const auto& metadata2 = future2.GetContext().GetClientContext().GetServerInitialMetadata();
 

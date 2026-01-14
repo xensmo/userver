@@ -7,17 +7,35 @@ USERVER_NAMESPACE_BEGIN
 namespace grpc_protovalidate::client {
 
 ValidatorError::ValidatorError(std::string_view call_name)
-    : ugrpc::client::RpcError(call_name, "validator internal error") {}
+    : BaseError(call_name, "validator internal error (probably validation expression syntax is invalid)")
+{}
 
-ResponseError::ResponseError(std::string_view call_name, buf::validate::ValidationResult error_info)
-    : ugrpc::client::RpcError(
-          call_name,
-          fmt::format("response violates constraints (count={})", error_info.violations_size())
-      ),
+MessageError::MessageError(
+    std::string_view call_name,
+    std::string_view additional_info,
+    buf::validate::ValidationResult error_info
+)
+    : BaseError(call_name, additional_info),
       error_info_(std::move(error_info))
 {}
 
-const buf::validate::ValidationResult& ResponseError::GetErrorInfo() const { return error_info_; }
+const buf::validate::ValidationResult& MessageError::GetErrorInfo() const { return error_info_; }
+
+ResponseError::ResponseError(std::string_view call_name, buf::validate::ValidationResult error_info)
+    : MessageError(
+          call_name,
+          fmt::format("response violates constraints (count={})", error_info.violations_size()),
+          std::move(error_info)
+      )
+{}
+
+RequestError::RequestError(std::string_view call_name, buf::validate::ValidationResult error_info)
+    : MessageError(
+          call_name,
+          fmt::format("request violates constraints (count={})", error_info.violations_size()),
+          std::move(error_info)
+      )
+{}
 
 }  // namespace grpc_protovalidate::client
 

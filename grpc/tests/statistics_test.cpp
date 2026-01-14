@@ -39,13 +39,13 @@ public:
 
 }  // namespace
 
-using GrpcStatistics = ugrpc::tests::ServiceFixture<UnitTestServiceForStatistics>;
+using GrpcStatistics =
+    ugrpc::tests::ServiceWithClientFixture<UnitTestServiceForStatistics, sample::ugrpc::UnitTestServiceClient>;
 
 UTEST_F(GrpcStatistics, LongRequest) {
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     sample::ugrpc::GreetingRequest out;
     out.set_name("userver");
-    UEXPECT_THROW(client.SayHello(out), ugrpc::client::InvalidArgumentError);
+    UEXPECT_THROW(GetClient().SayHello(out), ugrpc::client::InvalidArgumentError);
     GetServer().StopServing();
 
     for (const auto& domain : {"client", "server"}) {
@@ -78,11 +78,10 @@ UTEST_F(GrpcStatistics, DelayBeforeGet) {
 
     utils::datetime::MockNowSet({});
 
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     sample::ugrpc::GreetingRequest out;
     out.set_name("userver");
 
-    auto future = client.AsyncSayHello(out);
+    auto future = GetClient().AsyncSayHello(out);
 
     const std::string metrics_path = "grpc.client.by-destination";
     const std::vector<utils::statistics::Label> metrics_labels{
@@ -121,19 +120,17 @@ UTEST_F(GrpcStatistics, DelayBeforeGet) {
 UTEST_F_MT(GrpcStatistics, Multithreaded, 2) {
     constexpr int kIterations = 10;
 
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
-
     auto say_hello_task = utils::Async("say-hello", [&] {
         for (int i = 0; i < kIterations; ++i) {
             sample::ugrpc::GreetingRequest out;
             out.set_name("userver");
-            UEXPECT_THROW(client.SayHello(out), ugrpc::client::InvalidArgumentError);
+            UEXPECT_THROW(GetClient().SayHello(out), ugrpc::client::InvalidArgumentError);
         }
     });
 
     auto chat_task = utils::Async("chat", [&] {
         for (int i = 0; i < kIterations; ++i) {
-            auto chat = client.Chat();
+            auto chat = GetClient().Chat();
             sample::ugrpc::StreamGreetingResponse response;
             UEXPECT_THROW((void)chat.Read(response), ugrpc::client::UnimplementedError);
         }
@@ -168,8 +165,7 @@ UTEST_F_MT(GrpcStatistics, Multithreaded, 2) {
 #if !__has_feature(undefined_behavior_sanitizer)
 // at the moment, codes out of range are UB. See https://github.com/grpc/grpc/issues/38882
 UTEST_F(GrpcStatistics, CustomCodes) {
-    auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
-    UEXPECT_THROW(client.GetCustomStatusCode(google::protobuf::Empty{}), ugrpc::client::UnknownError);
+    UEXPECT_THROW(GetClient().GetCustomStatusCode(google::protobuf::Empty{}), ugrpc::client::UnknownError);
     GetServer().StopServing();
 
     for (const auto& domain : {"client", "server"}) {

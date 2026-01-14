@@ -55,7 +55,10 @@ public:
     ///
     /// Message contains a short human-readable representation of the error.
     /// If include_violations is true, details contain the list of violations. Otherwise, details are empty.
-    grpc::Status GetGrpcStatus(bool include_violations = true) const;
+    grpc::Status GetGrpcStatus(
+        bool include_violations = true,
+        grpc::StatusCode rule_violation_status = grpc::StatusCode::INVALID_ARGUMENT
+    ) const;
 
 private:
     buf::validate::Violations MakeViolationsProto() const;
