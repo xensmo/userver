@@ -323,10 +323,9 @@ StreamReadFuture<Response> BidirectionalStream<Request, Response>::ReadAsync(Res
     }
 
     impl::ReadAsync(*stream_, response, state_);
-    using BidirectionalStreamReadFutureImpl = StreamReadFutureImpl<grpc::ClientAsyncReaderWriter<Request, Response>, Response>;
-    return StreamReadFuture<Response>{
-        std::make_unique<BidirectionalStreamReadFutureImpl>(state_, *stream_, response)
-    };
+    using BidirectionalStreamReadFutureImpl =
+        StreamReadFutureImpl<grpc::ClientAsyncReaderWriter<Request, Response>, Response>;
+    return StreamReadFuture<Response>{std::make_unique<BidirectionalStreamReadFutureImpl>(state_, *stream_, response)};
 }
 
 template <typename Request, typename Response>
