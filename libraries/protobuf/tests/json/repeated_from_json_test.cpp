@@ -52,6 +52,14 @@ INSTANTIATE_TEST_SUITE_P(
         RepeatedFromJsonSuccessTestParam{R"({"field1":null,"field2":null,"field3":null})", RepeatedMessageData{}},
         RepeatedFromJsonSuccessTestParam{
             R"({
+              "field1":[100],
+              "field2":[{"field1":true}],
+              "field3":["123.987s"]
+            })",
+            RepeatedMessageData{{100}, {{true}}, {{.seconds = 123, .nanos = 987'000'000}}}
+        },
+        RepeatedFromJsonSuccessTestParam{
+            R"({
               "field1":[100,0,200],
               "field2":[{"field1":true},{"field1":false}],
               "field3":["123.987s","0s","-987s"]
@@ -93,6 +101,20 @@ INSTANTIATE_TEST_SUITE_P(
             "field3[2]",
             {},
             true  // legacy implementation ignores null as items
+        },
+        RepeatedFromJsonFailureTestParam{
+            R"({"field1":[[1,2,3]]})",
+            ReadErrorCode::kInvalidType,
+            "field1[0]",
+            {},
+            true  // legacy implementation flattens array in this case
+        },
+        RepeatedFromJsonFailureTestParam{
+            R"({"field2":[[{"field1":true}]]})",
+            ReadErrorCode::kInvalidType,
+            "field2[0]",
+            {},
+            true  // legacy implementation flattens array in this case
         },
         RepeatedFromJsonFailureTestParam{
             R"({"field2":[{"field1":true},"oops"]})",
