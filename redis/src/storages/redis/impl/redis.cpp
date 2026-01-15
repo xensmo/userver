@@ -104,7 +104,8 @@ public:
         const engine::ev::ThreadControl& thread_control,
         Redis& redis_obj,
         const RedisCreationSettings& redis_settings,
-        const std::string& shard_group_name
+        const std::string& shard_group_name,
+        Statistics& statistics
     );
     ~RedisImpl();
 
@@ -255,7 +256,7 @@ private:
     std::atomic<double> ping_latency_ms_{kInitialPingLatencyMs};
     logging::LogExtra log_extra_;
     bool watch_command_timer_started_ = false;
-    Statistics statistics_;
+    Statistics& statistics_;
     ServerId server_id_;
     bool attached_ = false;
     std::shared_ptr<RedisImpl> self_;
@@ -280,11 +281,13 @@ std::string_view StateToString(RedisState state) {
 Redis::Redis(
     const std::shared_ptr<engine::ev::ThreadPool>& thread_pool,
     const RedisCreationSettings& redis_settings,
-    const std::string& shard_group_name
+    const std::string& shard_group_name,
+    Statistics& statistics
 )
     : thread_control_(thread_pool->NextThread())
 {
-    impl_ = std::make_shared<RedisImpl>(thread_pool, thread_control_, *this, redis_settings, shard_group_name);
+    impl_ = std::make_shared<
+        RedisImpl>(thread_pool, thread_control_, *this, redis_settings, shard_group_name, statistics);
 }
 
 Redis::~Redis() {
@@ -345,7 +348,8 @@ Redis::RedisImpl::RedisImpl(
     const engine::ev::ThreadControl& thread_control,
     Redis& redis_obj,
     const RedisCreationSettings& redis_settings,
-    const std::string& shard_group_name
+    const std::string& shard_group_name,
+    Statistics& statistics
 )
     : redis_obj_(&redis_obj),
       ev_thread_control_(thread_control),
@@ -353,6 +357,7 @@ Redis::RedisImpl::RedisImpl(
       shard_group_name_(shard_group_name),
       send_readonly_(redis_settings.send_readonly),
       connection_security_(redis_settings.connection_security),
+      statistics_(statistics),
       server_id_(ServerId::Generate()),
       retry_budget_(utils::RetryBudgetSettings{100, 0.1, false})
 {
@@ -814,7 +819,9 @@ void Redis::RedisImpl::SetState(State state) {
       << "Redis server connection state for server=" << GetServer() << " (server_id=" << GetServerId().GetId()
       << ") changed from " << StateToString(state_) << " to " << StateToString(state);
     state_ = state;
-    statistics_.AccountStateChanged(state);
+    if (!IsDestroying()) {
+        statistics_.AccountStateChanged(state);
+    }
 
     auto self = shared_from_this();  // prevents deleting this in Disconnect()
     if (state == State::kConnected) {

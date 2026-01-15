@@ -55,6 +55,7 @@ bool operator<(const ConnectionInfoInt&, const ConnectionInfoInt&);
 using ConnInfoMap = std::map<std::string, std::vector<ConnectionInfoInt>>;
 
 struct ConnectionStatus {
+    std::unique_ptr<Statistics> statistics;
     ConnectionInfoInt info;
     std::shared_ptr<Redis> instance;
 };

@@ -29,7 +29,8 @@ public:
     Redis(
         const std::shared_ptr<engine::ev::ThreadPool>& thread_pool,
         const RedisCreationSettings& redis_settings,
-        const std::string& shard_group_name
+        const std::string& shard_group_name,
+        Statistics& external_statistics
     );
     ~Redis();
 

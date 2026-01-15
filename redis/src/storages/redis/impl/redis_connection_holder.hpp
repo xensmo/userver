@@ -88,6 +88,7 @@ private:
     const uint16_t port_;
     const Password password_;
     const std::size_t database_index_;
+    Statistics statistics_;
     rcu::Variable<std::shared_ptr<Redis>, rcu::BlockingRcuTraits> redis_;
     engine::ev::PeriodicWatcher connection_check_timer_;
     const RedisCreationSettings redis_creation_settings_;

@@ -87,7 +87,8 @@ void RedisConnectionHolder::EnsureConnected() {
 }
 
 void RedisConnectionHolder::CreateConnection() {
-    auto instance = std::make_shared<Redis>(redis_thread_pool_, redis_creation_settings_, shard_group_name_);
+    auto instance = std::make_shared<
+        Redis>(redis_thread_pool_, redis_creation_settings_, shard_group_name_, statistics_);
     UASSERT(weak_from_this().lock());
     instance->signal_state_change.connect([weak_ptr{weak_from_this()}](Redis::State state) {
         const auto ptr = weak_ptr.lock();

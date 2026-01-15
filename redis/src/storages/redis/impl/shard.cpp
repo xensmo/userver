@@ -311,14 +311,18 @@ bool Shard::ProcessCreation(const std::shared_ptr<engine::ev::ThreadPool>& redis
     // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
     for (const auto& id : need_to_create) {
         const auto redis_settings = RedisCreationSettings{id.GetConnectionSecurity(), cluster_mode_ && id.IsReadOnly()};
+        auto statistics_ptr = std::make_unique<Statistics>();
+        auto& statistics_ref = *statistics_ptr;
         ConnectionStatus entry{
+            std::move(statistics_ptr),
             id,
             std::make_shared<Redis>(
                 redis_thread_pool,
                 // https://github.com/boostorg/signals2/issues/59
                 // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
                 redis_settings,
-                shard_group_name_
+                shard_group_name_,
+                statistics_ref
             )
         };
         if (auto commands_buffering_settings = commands_buffering_settings_.Get()) {
