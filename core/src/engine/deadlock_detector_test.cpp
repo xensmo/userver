@@ -171,4 +171,31 @@ UTEST(DeadlockDetector, NoCycleOnDiamond) {
     SUCCEED();
 }
 
+UTEST(DeadlockDetector, ReentrantNoCycle) {
+    MockState state;
+    MockActor actor;
+    MockActor resource;
+
+    state.OnReentrantResourceAcquire(actor, resource);
+    state.OnReentrantResourceAcquire(actor, resource);
+    state.OnResourceRelease(actor, resource);
+    state.OnResourceRelease(actor, resource);
+
+    state.OnWaitForResourceStart(actor, resource);
+    state.OnWaitForResourceFinish(actor, resource);
+
+    SUCCEED();
+}
+
+UTEST(DeadlockDetector, Cycle2ReentrantAcquireWait) {
+    MockState state;
+    MockActor actor;
+    MockActor resource;
+
+    // actor -> resource -> actor
+    state.OnReentrantResourceAcquire(actor, resource);
+    state.OnReentrantResourceAcquire(actor, resource);
+    EXPECT_THROW_CYCLE(state.OnWaitForResourceStart(actor, resource), &resource, &actor);
+}
+
 USERVER_NAMESPACE_END

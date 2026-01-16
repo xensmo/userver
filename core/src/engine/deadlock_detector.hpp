@@ -22,6 +22,8 @@ public:
 
     void OnResourceAcquire(const Actor& owner, const Actor& resource);
 
+    void OnReentrantResourceAcquire(const Actor& owner, const Actor& resource);
+
     void OnResourceRelease(const Actor& owner, const Actor& resource) noexcept;
 
     void OnWaitForResourceStart(const Actor& waiting, const Actor& resource);
@@ -34,7 +36,7 @@ protected:
     virtual void OnCycleFound(const std::vector<const Actor*>& cycle) = 0;
 
 private:
-    void AddDependency(const Actor& from, const Actor& to);
+    void AddDependency(const Actor& from, const Actor& to, bool allow_repeated_deps);
 
     void RemoveDependency(const Actor& from, const Actor& to) noexcept;
 
