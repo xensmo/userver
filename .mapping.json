@@ -1747,6 +1747,7 @@
   "core/src/logging/log_json_test.cpp":"taxi/uservices/userver/core/src/logging/log_json_test.cpp",
   "core/src/logging/log_ltsv_test.cpp":"taxi/uservices/userver/core/src/logging/log_ltsv_test.cpp",
   "core/src/logging/log_message_benchmark.cpp":"taxi/uservices/userver/core/src/logging/log_message_benchmark.cpp",
+  "core/src/logging/log_message_skipped_test.cpp":"taxi/uservices/userver/core/src/logging/log_message_skipped_test.cpp",
   "core/src/logging/log_message_test.cpp":"taxi/uservices/userver/core/src/logging/log_message_test.cpp",
   "core/src/logging/log_message_test.hpp":"taxi/uservices/userver/core/src/logging/log_message_test.hpp",
   "core/src/logging/log_test.cpp":"taxi/uservices/userver/core/src/logging/log_test.cpp",
