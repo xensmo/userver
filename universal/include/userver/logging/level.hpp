@@ -19,7 +19,7 @@ enum class Level : std::uint8_t {
     kInfo = 2,      ///< Level for non-error informational messages
     kWarning = 3,   ///< Level for warning messages
     kError = 4,     ///< Level for error messages
-    kCritical = 5,  ///< Level for fatal error messages tat can not be disabled
+    kCritical = 5,  ///< Level for fatal error messages that can not be disabled
     kNone = 6,      ///< "Do not output messages" level
 };
 
