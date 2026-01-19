@@ -63,3 +63,8 @@ dist-clean:
 .PHONY: gen-debian-directory
 gen-debian-directory:
 	scripts/generate-debian-directory.sh
+
+.PHONY: cmake-format
+cmake-format:
+	find $$(ls */ -d | grep -v ^build) -name '*.cmake' -o -name 'CMakeLists.txt' | \
+		xargs cmake-format -i
