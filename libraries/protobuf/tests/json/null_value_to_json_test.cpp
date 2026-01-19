@@ -14,7 +14,7 @@ namespace protobuf::json::tests {
 struct NullValueToJsonSuccessTestParam {
     NullValueMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 class NullValueToJsonSuccessTest : public ::testing::TestWithParam<NullValueToJsonSuccessTestParam> {};

@@ -21,7 +21,7 @@ constexpr std::int32_t kMin = std::numeric_limits<std::int32_t>::min();  // -214
 struct Int32ToJsonSuccessTestParam {
     Int32MessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const Int32ToJsonSuccessTestParam& param, std::ostream* os) {

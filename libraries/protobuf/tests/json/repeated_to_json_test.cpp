@@ -14,14 +14,14 @@ namespace protobuf::json::tests {
 struct RepeatedToJsonSuccessTestParam {
     RepeatedMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 struct RepeatedToJsonFailureTestParam {
     RepeatedMessageData input = {};
-    WriteErrorCode expected_errc = {};
+    PrintErrorCode expected_errc = {};
     std::string expected_path = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 class RepeatedToJsonSuccessTest : public ::testing::TestWithParam<RepeatedToJsonSuccessTestParam> {};
@@ -60,7 +60,7 @@ INSTANTIATE_TEST_SUITE_P(
         RepeatedMessageData{
             .field3 = {{.seconds = 1, .nanos = 1}, {.seconds = 1, .nanos = -1}, {.seconds = 0, .nanos = 1}}
         },
-        WriteErrorCode::kInvalidValue,
+        PrintErrorCode::kInvalidValue,
         "field3[1]"
     })
 );
@@ -83,7 +83,7 @@ TEST_P(RepeatedToJsonFailureTest, Test) {
     const auto& param = GetParam();
     auto input = PrepareTestData(param.input);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PRINT_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
     UEXPECT_THROW((void)CreateSampleJson(input, param.options), SampleError);
 }
 

@@ -77,7 +77,7 @@ auto GetJsonValue(const formats::json::Value& json) {
 struct WrapperToJsonSuccessTestParam {
     WrapperMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 class WrapperToJsonSuccessTest : public ::testing::TestWithParam<WrapperToJsonSuccessTestParam> {};

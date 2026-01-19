@@ -25,14 +25,14 @@ constexpr auto kTestSeconds = 1s + 1min + 1h + 24h + (31 * 24h) + (365 * 24h);
 struct TimestampToJsonSuccessTestParam {
     TimestampMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 struct TimestampToJsonFailureTestParam {
     TimestampMessageData input = {};
-    WriteErrorCode expected_errc = {};
+    PrintErrorCode expected_errc = {};
     std::string expected_path = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 
     // Older protobuf versions erroneously pass some checks, we need a way to disable them.
     bool skip_native_check = false;
@@ -101,17 +101,17 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         TimestampToJsonFailureTestParam{
             TimestampMessageData{kMaxTimestampSeconds + 1, 0},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         TimestampToJsonFailureTestParam{
             TimestampMessageData{kMinTimestampSeconds - 1, 0},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         TimestampToJsonFailureTestParam{
             TimestampMessageData{0, kMaxTimestampNanos + 1},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1",
             {},
 #if GOOGLE_PROTOBUF_VERSION >= 6033000
@@ -122,7 +122,7 @@ INSTANTIATE_TEST_SUITE_P(
         },
         TimestampToJsonFailureTestParam{
             TimestampMessageData{0, kMinTimestampNanos - 1},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1",
             {},
 #if GOOGLE_PROTOBUF_VERSION >= 6033000
@@ -152,7 +152,7 @@ TEST_P(TimestampToJsonFailureTest, Test) {
     const auto& param = GetParam();
     auto input = PrepareTestData(param.input);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PRINT_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
 
     if (!param.skip_native_check) {
         UEXPECT_THROW((void)CreateSampleJson(input, param.options), SampleError);

@@ -17,7 +17,7 @@ namespace protobuf::json::tests {
 struct OneofToJsonSuccessTestParam {
     OneofMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const OneofToJsonSuccessTestParam& param, std::ostream* os) {

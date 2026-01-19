@@ -19,14 +19,14 @@ namespace protobuf::json::tests {
 struct ValueToJsonSuccessTestParam {
     ValueMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 struct ValueToJsonFailureTestParam {
     ValueMessageData input = {};
-    WriteErrorCode expected_errc = {};
+    PrintErrorCode expected_errc = {};
     std::string expected_path = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 
     // We want to skip some native checks because userver implementation has stricter requirements.
     bool skip_native_check = false;
@@ -125,34 +125,34 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         ValueToJsonFailureTestParam{
             ValueMessageData{ProtoValue{std::monostate{}}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1",
             {},
             true  // native implementation silently discards 'Value' without any alternative set which we find bug-prone
         },
         ValueToJsonFailureTestParam{
             ValueMessageData{ProtoValue{std::numeric_limits<double>::quiet_NaN()}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1.number_value"
         },
         ValueToJsonFailureTestParam{
             ValueMessageData{ProtoValue{std::numeric_limits<double>::signaling_NaN()}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1.number_value"
         },
         ValueToJsonFailureTestParam{
             ValueMessageData{ProtoValue{std::numeric_limits<double>::infinity()}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1.number_value"
         },
         ValueToJsonFailureTestParam{
             ValueMessageData{ProtoValue{-std::numeric_limits<double>::infinity()}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1.number_value"
         },
         ValueToJsonFailureTestParam{
             ValueMessageData{std::vector<ProtoValue>{ProtoValue{1.5}, ProtoValue{std::monostate{}}, ProtoValue{true}}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1.list_value.values[1]",
             {},
             true
@@ -163,7 +163,7 @@ INSTANTIATE_TEST_SUITE_P(
                 ProtoValue{std::vector<double>{1.5, std::numeric_limits<double>::infinity()}},
                 ProtoValue{true}
             }},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1.list_value.values[1].list_value.values[1].number_value"
         },
         ValueToJsonFailureTestParam{
@@ -171,7 +171,7 @@ INSTANTIATE_TEST_SUITE_P(
                 std::string,
                 ProtoValue>{{"aaa", ProtoValue{1.5}}, {"bbb", ProtoValue{std::monostate{}}}, {"ccc", ProtoValue{true}}}
             },
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1.struct_value.fields['bbb']",
             {},
             true
@@ -197,7 +197,7 @@ TEST_P(ValueToJsonFailureTest, Test) {
     const auto& param = GetParam();
     auto input = PrepareTestData(param.input);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PRINT_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
 
     if (!param.skip_native_check) {
         UEXPECT_THROW((void)CreateSampleJson(input, param.options), SampleError);
@@ -311,7 +311,7 @@ TEST(ValueToJsonAdditionalTest, InlinedNull) {
     ValueMessageData data{std::monostate{}};
     auto message = PrepareTestData(data);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(message.field1(), {}), WriteErrorCode::kInvalidValue, "/");
+    EXPECT_PRINT_ERROR((void)MessageToJson(message.field1(), {}), PrintErrorCode::kInvalidValue, "/");
 }
 
 TEST(ValueToJsonAdditionalTest, DynamicMessage) {

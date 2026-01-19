@@ -45,7 +45,7 @@ TYPED_TEST(FloatSpecialFromJsonTest, Test) {
     message.set_field1(100.001);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(input)));
-    UASSERT_NO_THROW(InitSampleMessage(json, {}, sample_message));
+    UASSERT_NO_THROW(InitSampleMessage(json, sample_message));
 
     CheckMessageEqual(message, sample_message);
     CheckMessageEqual(message, expected_message);

@@ -12,7 +12,7 @@ namespace {
 
 template <typename TErrorCode>
 [[nodiscard]] constexpr const char* GetConversionErrorCodeStr(const TErrorCode code) noexcept {
-    if constexpr (std::is_same_v<TErrorCode, ReadErrorCode>) {
+    if constexpr (std::is_same_v<TErrorCode, ParseErrorCode>) {
         switch (code) {
             case TErrorCode::kUnknownField:
                 return "unknown field";
@@ -38,7 +38,7 @@ template <typename TErrorCode>
 
 template <typename TErrorCode>
 [[nodiscard]] constexpr const char* GetConversionErrorDescription() noexcept {
-    if constexpr (std::is_same_v<TErrorCode, ReadErrorCode>) {
+    if constexpr (std::is_same_v<TErrorCode, ParseErrorCode>) {
         return "Failed to convert JSON field '{}' with error '{}'";
     } else {
         return "Failed to convert protobuf message field '{}' with error '{}'";
@@ -55,8 +55,8 @@ ConversionError<TErrorCode>::ConversionError(const ConversionError<TErrorCode>::
       error_info_(code, std::move(path))
 {}
 
-template class ConversionError<ReadErrorCode>;
-template class ConversionError<WriteErrorCode>;
+template class ConversionError<ParseErrorCode>;
+template class ConversionError<PrintErrorCode>;
 
 }  // namespace protobuf::json
 

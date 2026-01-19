@@ -14,14 +14,14 @@ namespace protobuf::json::tests {
 struct MapToJsonSuccessTestParam {
     MapMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 struct MapToJsonFailureTestParam {
     MapMessageData input = {};
-    WriteErrorCode expected_errc = {};
+    PrintErrorCode expected_errc = {};
     std::string expected_path = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 class MapToJsonSuccessTest : public ::testing::TestWithParam<MapToJsonSuccessTestParam> {};
@@ -76,7 +76,7 @@ INSTANTIATE_TEST_SUITE_P(
     MapToJsonFailureTest,
     ::testing::Values(MapToJsonFailureTestParam{
         MapMessageData{.field7 = {{"aaa", {.seconds = 1, .nanos = -1}}}},
-        WriteErrorCode::kInvalidValue,
+        PrintErrorCode::kInvalidValue,
         "field7['aaa']"
     })
 );
@@ -99,7 +99,7 @@ TEST_P(MapToJsonFailureTest, Test) {
     const auto& param = GetParam();
     auto input = PrepareTestData(param.input);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PRINT_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
     UEXPECT_THROW((void)CreateSampleJson(input, param.options), SampleError);
 }
 

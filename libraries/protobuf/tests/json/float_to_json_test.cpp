@@ -20,7 +20,7 @@ constexpr float kMin = std::numeric_limits<float>::min();
 
 struct FloatToJsonSuccessTestParam {
     FloatMessageData input = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const FloatToJsonSuccessTestParam& param, std::ostream* os) {

@@ -10,17 +10,17 @@ namespace protobuf::json::tests {
 TEST(ExceptionsTest, CtorCorrectlyInitializesObject) {
     {
         const std::string path = "field.array[0].item[1]";
-        const std::vector<ReadErrorCode> codes{
-            ReadErrorCode::kUnknownField,
-            ReadErrorCode::kUnknownEnum,
-            ReadErrorCode::kMultipleOneofFields,
-            ReadErrorCode::kInvalidType,
-            ReadErrorCode::kInvalidValue,
-            static_cast<ReadErrorCode>(100)
+        const std::vector<ParseErrorCode> codes{
+            ParseErrorCode::kUnknownField,
+            ParseErrorCode::kUnknownEnum,
+            ParseErrorCode::kMultipleOneofFields,
+            ParseErrorCode::kInvalidType,
+            ParseErrorCode::kInvalidValue,
+            static_cast<ParseErrorCode>(100)
         };
 
         for (const auto& code : codes) {
-            ReadError error(code, path);
+            ParseError error(code, path);
 
             EXPECT_EQ(error.GetErrorInfo().GetCode(), code);
             EXPECT_EQ(error.GetErrorInfo().GetPath(), path);
@@ -30,10 +30,10 @@ TEST(ExceptionsTest, CtorCorrectlyInitializesObject) {
 
     {
         const std::string path = "field.array[0].item[1].map['key']";
-        const std::vector<WriteErrorCode> codes{WriteErrorCode::kInvalidValue, static_cast<WriteErrorCode>(100)};
+        const std::vector<PrintErrorCode> codes{PrintErrorCode::kInvalidValue, static_cast<PrintErrorCode>(100)};
 
         for (const auto& code : codes) {
-            WriteError error(code, path);
+            PrintError error(code, path);
 
             EXPECT_EQ(error.GetErrorInfo().GetCode(), code);
             EXPECT_EQ(error.GetErrorInfo().GetPath(), path);
@@ -45,14 +45,14 @@ TEST(ExceptionsTest, CtorCorrectlyInitializesObject) {
 TEST(ExceptionsTest, WhatContainsImportantDetails) {
     {
         const std::string path = "field.array[0].item[1]";
-        const ReadError error(ReadErrorCode::kInvalidType, path);
+        const ParseError error(ParseErrorCode::kInvalidType, path);
 
         EXPECT_THAT(error.what(), ::testing::HasSubstr(path));
     }
 
     {
         const std::string path = "field.array[0].item[1].map['key']";
-        const WriteError error(WriteErrorCode::kInvalidValue, path);
+        const PrintError error(PrintErrorCode::kInvalidValue, path);
 
         EXPECT_THAT(error.what(), ::testing::HasSubstr(path));
     }

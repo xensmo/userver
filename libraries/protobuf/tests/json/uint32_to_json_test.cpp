@@ -20,7 +20,7 @@ constexpr std::uint32_t kMax = std::numeric_limits<std::uint32_t>::max();  // 42
 struct UInt32ToJsonSuccessTestParam {
     UInt32MessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const UInt32ToJsonSuccessTestParam& param, std::ostream* os) {

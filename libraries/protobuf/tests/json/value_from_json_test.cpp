@@ -21,14 +21,14 @@ namespace protobuf::json::tests {
 struct ValueFromJsonSuccessTestParam {
     std::string input = {};
     ValueMessageData expected_message = {};
-    ReadOptions options = {};
+    ParseOptions options = {};
 };
 
 struct ListValueFromJsonFailureTestParam {
     std::string input = {};
-    ReadErrorCode expected_errc = {};
+    ParseErrorCode expected_errc = {};
     std::string expected_path = {};
-    ReadOptions options = {};
+    ParseOptions options = {};
 
     // We want to skip some native checks because userver implementation has stricter requirements.
     bool skip_native_check = false;
@@ -36,9 +36,9 @@ struct ListValueFromJsonFailureTestParam {
 
 struct StructFromJsonFailureTestParam {
     std::string input = {};
-    ReadErrorCode expected_errc = {};
+    ParseErrorCode expected_errc = {};
     std::string expected_path = {};
-    ReadOptions options = {};
+    ParseOptions options = {};
 };
 
 void PrintTo(const ValueFromJsonSuccessTestParam& param, std::ostream* os) {
@@ -122,10 +122,10 @@ INSTANTIATE_TEST_SUITE_P(
     ,
     ListValueFromJsonFailureTest,
     ::testing::Values(
-        ListValueFromJsonFailureTestParam{R"({})", ReadErrorCode::kInvalidType, "/", {}, true},
-        ListValueFromJsonFailureTestParam{R"(true)", ReadErrorCode::kInvalidType, "/"},
-        ListValueFromJsonFailureTestParam{R"(10)", ReadErrorCode::kInvalidType, "/"},
-        ListValueFromJsonFailureTestParam{R"("")", ReadErrorCode::kInvalidType, "/"}
+        ListValueFromJsonFailureTestParam{R"({})", ParseErrorCode::kInvalidType, "/", {}, true},
+        ListValueFromJsonFailureTestParam{R"(true)", ParseErrorCode::kInvalidType, "/"},
+        ListValueFromJsonFailureTestParam{R"(10)", ParseErrorCode::kInvalidType, "/"},
+        ListValueFromJsonFailureTestParam{R"("")", ParseErrorCode::kInvalidType, "/"}
     )
 );
 
@@ -133,10 +133,10 @@ INSTANTIATE_TEST_SUITE_P(
     ,
     StructFromJsonFailureTest,
     ::testing::Values(
-        StructFromJsonFailureTestParam{R"([])", ReadErrorCode::kInvalidType, "/"},
-        StructFromJsonFailureTestParam{R"(true)", ReadErrorCode::kInvalidType, "/"},
-        StructFromJsonFailureTestParam{R"(10)", ReadErrorCode::kInvalidType, "/"},
-        StructFromJsonFailureTestParam{R"("")", ReadErrorCode::kInvalidType, "/"}
+        StructFromJsonFailureTestParam{R"([])", ParseErrorCode::kInvalidType, "/"},
+        StructFromJsonFailureTestParam{R"(true)", ParseErrorCode::kInvalidType, "/"},
+        StructFromJsonFailureTestParam{R"(10)", ParseErrorCode::kInvalidType, "/"},
+        StructFromJsonFailureTestParam{R"("")", ParseErrorCode::kInvalidType, "/"}
     )
 );
 
@@ -150,7 +150,7 @@ TEST_P(ValueFromJsonSuccessTest, Test) {
     message.mutable_field1()->set_number_value(100001);
 
     UASSERT_NO_THROW((message = JsonToMessage<proto_json::messages::ValueMessage>(input, param.options)));
-    UASSERT_NO_THROW(InitSampleMessage(param.input, param.options, sample_message));
+    UASSERT_NO_THROW(InitSampleMessage(param.input, sample_message, param.options));
 
     CheckMessageEqual(message, sample_message);
     CheckMessageEqual(message, expected_message);
@@ -163,7 +163,7 @@ TEST_P(ListValueFromJsonFailureTest, Test) {
     Message sample;
     formats::json::Value input = PrepareJsonTestData(param.input);
 
-    EXPECT_READ_ERROR((void)JsonToMessage<Message>(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PARSE_ERROR((void)JsonToMessage<Message>(input, param.options), param.expected_errc, param.expected_path);
 
     if (!param.skip_native_check) {
         EXPECT_FALSE(::google::protobuf::util::JsonStringToMessage(param.input, &sample, {}).ok());
@@ -177,7 +177,7 @@ TEST_P(StructFromJsonFailureTest, Test) {
     Message sample;
     formats::json::Value input = PrepareJsonTestData(param.input);
 
-    EXPECT_READ_ERROR((void)JsonToMessage<Message>(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PARSE_ERROR((void)JsonToMessage<Message>(input, param.options), param.expected_errc, param.expected_path);
     EXPECT_FALSE(::google::protobuf::util::JsonStringToMessage(param.input, &sample, {}).ok());
 }
 
@@ -192,7 +192,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
         message.set_number_value(100001);
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_EQ(message.number_value(), 1.5);
         CheckMessageEqual(message, sample);
     }
@@ -205,7 +205,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
         message.set_number_value(100001);
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_EQ(message.string_value(), "hello");
         CheckMessageEqual(message, sample);
     }
@@ -218,7 +218,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
         message.set_number_value(100001);
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_TRUE(message.has_bool_value());
         EXPECT_TRUE(message.bool_value());
         CheckMessageEqual(message, sample);
@@ -232,7 +232,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
         message.set_number_value(100001);
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_TRUE(message.has_list_value());
         EXPECT_TRUE(message.list_value().values().empty());
         CheckMessageEqual(message, sample);
@@ -246,7 +246,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
         message.set_number_value(100001);
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_TRUE(message.has_list_value());
         ASSERT_EQ(message.list_value().values().size(), 2);
         EXPECT_TRUE(message.list_value().values()[0].has_bool_value());
@@ -264,7 +264,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
         message.set_number_value(100001);
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_TRUE(message.has_struct_value());
         EXPECT_EQ(message.struct_value().fields().size(), std::size_t{0});
         CheckMessageEqual(message, sample);
@@ -278,7 +278,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
         message.set_number_value(100001);
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_TRUE(message.has_struct_value());
         EXPECT_EQ(message.struct_value().fields().size(), std::size_t{2});
         ASSERT_TRUE(message.struct_value().fields().contains("aaa"));
@@ -299,8 +299,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullListValue) {
         const auto json = formats::json::FromString(json_str);
         Message sample;
 
-        EXPECT_READ_ERROR((void)JsonToMessage<Message>(json), ReadErrorCode::kInvalidType, "/");
-        UEXPECT_THROW(InitSampleMessage(json_str, {}, sample), SampleError);
+        EXPECT_PARSE_ERROR((void)JsonToMessage<Message>(json), ParseErrorCode::kInvalidType, "/");
+        UEXPECT_THROW(InitSampleMessage(json_str, sample), SampleError);
     }
 
     {
@@ -309,7 +309,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullListValue) {
         Message message, sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_TRUE(message.values().empty());
         CheckMessageEqual(message, sample);
     }
@@ -320,7 +320,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullListValue) {
         Message message, sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         ASSERT_EQ(message.values().size(), 4);
         EXPECT_TRUE(message.values()[0].has_null_value());
         EXPECT_TRUE(message.values()[1].has_number_value());
@@ -341,8 +341,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullStruct) {
         const auto json = formats::json::FromString(json_str);
         Message sample;
 
-        EXPECT_READ_ERROR((void)JsonToMessage<Message>(json), ReadErrorCode::kInvalidType, "/");
-        UEXPECT_THROW(InitSampleMessage(json_str, {}, sample), SampleError);
+        EXPECT_PARSE_ERROR((void)JsonToMessage<Message>(json), ParseErrorCode::kInvalidType, "/");
+        UEXPECT_THROW(InitSampleMessage(json_str, sample), SampleError);
     }
 
     {
@@ -351,7 +351,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullStruct) {
         Message message, sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         EXPECT_EQ(message.fields().size(), std::size_t{0});
         CheckMessageEqual(message, sample);
     }
@@ -362,7 +362,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullStruct) {
         Message message, sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-        UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+        UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
         ASSERT_EQ(message.fields().size(), std::size_t{2});
         ASSERT_TRUE(message.fields().contains("aaa"));
         EXPECT_TRUE(message.fields().at("aaa").has_number_value());
@@ -384,7 +384,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNullValue) {
     message.set_number_value(100001);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-    UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+    UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
     EXPECT_TRUE(message.has_null_value());
     CheckMessageEqual(message, sample);
 }
@@ -399,7 +399,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNullListValue) {
     message.add_values()->set_number_value(100001);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-    UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+    UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
     EXPECT_TRUE(message.values().empty());
     CheckMessageEqual(message, sample);
 }
@@ -414,7 +414,7 @@ TEST(ValueFromJsonAdditionalTest, InlinedNullStruct) {
     (*message.mutable_fields())["aaa"].set_number_value(100001);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
-    UASSERT_NO_THROW(InitSampleMessage(json_str, {}, sample));
+    UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
     EXPECT_TRUE(message.fields().empty());
     CheckMessageEqual(message, sample);
 }
@@ -430,7 +430,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
         {
             std::unique_ptr<::google::protobuf::Message> message(factory.GetPrototype(Message::descriptor())->New());
 
-            UASSERT_NO_THROW(JsonToMessage(json, {}, *message));
+            UASSERT_NO_THROW(JsonToMessage(json, *message));
 
             const auto reflection = message->GetReflection();
             const auto field_desc = message->GetDescriptor()->FindFieldByName("null_value");
@@ -447,7 +447,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
         {
             std::unique_ptr<::google::protobuf::Message> message(factory.GetPrototype(Message::descriptor())->New());
 
-            UASSERT_NO_THROW(JsonToMessage(json, {}, *message));
+            UASSERT_NO_THROW(JsonToMessage(json, *message));
 
             const auto reflection = message->GetReflection();
             const auto field_desc = message->GetDescriptor()->FindFieldByName("number_value");
@@ -465,7 +465,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
         {
             std::unique_ptr<::google::protobuf::Message> message(factory.GetPrototype(Message::descriptor())->New());
 
-            UASSERT_NO_THROW(JsonToMessage(json, {}, *message));
+            UASSERT_NO_THROW(JsonToMessage(json, *message));
 
             const auto reflection = message->GetReflection();
             const auto field_desc = message->GetDescriptor()->FindFieldByName("string_value");
@@ -483,7 +483,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
         {
             std::unique_ptr<::google::protobuf::Message> message(factory.GetPrototype(Message::descriptor())->New());
 
-            UASSERT_NO_THROW(JsonToMessage(json, {}, *message));
+            UASSERT_NO_THROW(JsonToMessage(json, *message));
 
             const auto reflection = message->GetReflection();
             const auto field_desc = message->GetDescriptor()->FindFieldByName("bool_value");
@@ -501,7 +501,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
         {
             std::unique_ptr<::google::protobuf::Message> message(factory.GetPrototype(Message::descriptor())->New());
 
-            UASSERT_NO_THROW(JsonToMessage(json, {}, *message));
+            UASSERT_NO_THROW(JsonToMessage(json, *message));
 
             const auto reflection = message->GetReflection();
             const auto field_desc = message->GetDescriptor()->FindFieldByName("list_value");
@@ -530,7 +530,7 @@ TEST(ValueFromJsonAdditionalTest, DynamicMessage) {
         {
             std::unique_ptr<::google::protobuf::Message> message(factory.GetPrototype(Message::descriptor())->New());
 
-            UASSERT_NO_THROW(JsonToMessage(json, {}, *message));
+            UASSERT_NO_THROW(JsonToMessage(json, *message));
 
             const auto reflection = message->GetReflection();
             const auto field_desc = message->GetDescriptor()->FindFieldByName("struct_value");

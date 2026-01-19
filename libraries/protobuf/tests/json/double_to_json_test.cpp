@@ -20,7 +20,7 @@ constexpr double kMin = std::numeric_limits<double>::min();
 
 struct DoubleToJsonSuccessTestParam {
     DoubleMessageData input = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const DoubleToJsonSuccessTestParam& param, std::ostream* os) {

@@ -22,14 +22,14 @@ namespace protobuf::json::tests {
 struct FieldMaskToJsonSuccessTestParam {
     FieldMaskMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 struct FieldMaskToJsonFailureTestParam {
     FieldMaskMessageData input = {};
-    WriteErrorCode expected_errc = {};
+    PrintErrorCode expected_errc = {};
     std::string expected_path = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 std::vector<std::string> ParseFieldMaskStr(std::string_view paths) {
@@ -103,42 +103,42 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"Some_field"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some_Field"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some_fielD"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some_f!ield"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"__some_field"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some__field"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some_field_"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         FieldMaskToJsonFailureTestParam{
             FieldMaskMessageData{std::vector<std::string>{"some_0field"}},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         }
     )
@@ -180,7 +180,7 @@ TEST_P(FieldMaskToJsonFailureTest, Test) {
     const auto& param = GetParam();
     auto input = PrepareTestData(param.input);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PRINT_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
 }
 
 TEST(FieldMaskToJsonAdditionalTest, InlinedNonNull) {

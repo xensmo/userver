@@ -20,7 +20,7 @@ constexpr std::uint64_t kMax = std::numeric_limits<std::uint64_t>::max();  // 18
 struct UInt64ToJsonSuccessTestParam {
     UInt64MessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const UInt64ToJsonSuccessTestParam& param, std::ostream* os) {

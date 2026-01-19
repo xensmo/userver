@@ -17,14 +17,14 @@ namespace protobuf::json::tests {
 struct RepeatedFromJsonSuccessTestParam {
     std::string input = {};
     RepeatedMessageData expected_message = {};
-    ReadOptions options = {};
+    ParseOptions options = {};
 };
 
 struct RepeatedFromJsonFailureTestParam {
     std::string input = {};
-    ReadErrorCode expected_errc = {};
+    ParseErrorCode expected_errc = {};
     std::string expected_path = {};
-    ReadOptions options = {};
+    ParseOptions options = {};
 
     // Protobuf ProtoJSON legacy syntax supports some features which we want to prohibit (because
     // we do not want our clients to use syntax that may break in the newer protobuf versions). This
@@ -77,53 +77,53 @@ INSTANTIATE_TEST_SUITE_P(
     ,
     RepeatedFromJsonFailureTest,
     ::testing::Values(
-        RepeatedFromJsonFailureTestParam{R"({"field1":{}})", ReadErrorCode::kInvalidType, "field1"},
+        RepeatedFromJsonFailureTestParam{R"({"field1":{}})", ParseErrorCode::kInvalidType, "field1"},
         RepeatedFromJsonFailureTestParam{
             R"({"field1":1})",
-            ReadErrorCode::kInvalidType,
+            ParseErrorCode::kInvalidType,
             "field1",
             {},
             true  // legacy implementation treats single value as array of one item
         },
-        RepeatedFromJsonFailureTestParam{R"({"field2":true})", ReadErrorCode::kInvalidType, "field2", {}, true},
-        RepeatedFromJsonFailureTestParam{R"({"field3":"test"})", ReadErrorCode::kInvalidType, "field3", {}, true},
+        RepeatedFromJsonFailureTestParam{R"({"field2":true})", ParseErrorCode::kInvalidType, "field2", {}, true},
+        RepeatedFromJsonFailureTestParam{R"({"field3":"test"})", ParseErrorCode::kInvalidType, "field3", {}, true},
         RepeatedFromJsonFailureTestParam{
             R"({"field1":[1, null, 2]})",
-            ReadErrorCode::kInvalidValue,
+            ParseErrorCode::kInvalidValue,
             "field1[1]",
             {},
             true  // legacy implementation ignores null as items
         },
-        RepeatedFromJsonFailureTestParam{R"({"field2":[null]})", ReadErrorCode::kInvalidValue, "field2[0]", {}, true},
+        RepeatedFromJsonFailureTestParam{R"({"field2":[null]})", ParseErrorCode::kInvalidValue, "field2[0]", {}, true},
         RepeatedFromJsonFailureTestParam{
             R"({"field3":["123.100s", "-123.100s", null]})",
-            ReadErrorCode::kInvalidValue,
+            ParseErrorCode::kInvalidValue,
             "field3[2]",
             {},
             true  // legacy implementation ignores null as items
         },
         RepeatedFromJsonFailureTestParam{
             R"({"field1":[[1,2,3]]})",
-            ReadErrorCode::kInvalidType,
+            ParseErrorCode::kInvalidType,
             "field1[0]",
             {},
             true  // legacy implementation flattens array in this case
         },
         RepeatedFromJsonFailureTestParam{
             R"({"field2":[[{"field1":true}]]})",
-            ReadErrorCode::kInvalidType,
+            ParseErrorCode::kInvalidType,
             "field2[0]",
             {},
             true  // legacy implementation flattens array in this case
         },
         RepeatedFromJsonFailureTestParam{
             R"({"field2":[{"field1":true},"oops"]})",
-            ReadErrorCode::kInvalidType,
+            ParseErrorCode::kInvalidType,
             "field2[1]"
         },
         RepeatedFromJsonFailureTestParam{
             R"({"field3":["123.100s", "oops"]})",
-            ReadErrorCode::kInvalidValue,
+            ParseErrorCode::kInvalidValue,
             "field3[1]"
         }
     )
@@ -138,7 +138,7 @@ TEST_P(RepeatedFromJsonSuccessTest, Test) {
     expected_message = PrepareTestData(param.expected_message);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(input, param.options)));
-    UASSERT_NO_THROW(InitSampleMessage(param.input, param.options, sample_message));
+    UASSERT_NO_THROW(InitSampleMessage(param.input, sample_message, param.options));
 
     CheckMessageEqual(message, sample_message);
     CheckMessageEqual(message, expected_message);
@@ -151,10 +151,10 @@ TEST_P(RepeatedFromJsonFailureTest, Test) {
     Message sample;
     formats::json::Value input = PrepareJsonTestData(param.input);
 
-    EXPECT_READ_ERROR((void)JsonToMessage<Message>(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PARSE_ERROR((void)JsonToMessage<Message>(input, param.options), param.expected_errc, param.expected_path);
 
     if (!param.skip_native_check) {
-        UEXPECT_THROW(InitSampleMessage(param.input, param.options, sample), SampleError);
+        UEXPECT_THROW(InitSampleMessage(param.input, sample, param.options), SampleError);
     }
 }
 

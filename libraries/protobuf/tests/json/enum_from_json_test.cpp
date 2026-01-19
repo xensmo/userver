@@ -23,14 +23,14 @@ constexpr std::int32_t kMin = std::numeric_limits<std::int32_t>::min();  // -214
 struct EnumFromJsonSuccessTestParam {
     std::string input = {};
     EnumMessageData expected_message = {};
-    ReadOptions options = {};
+    ParseOptions options = {};
 };
 
 struct EnumFromJsonFailureTestParam {
     std::string input = {};
-    ReadErrorCode expected_errc = {};
+    ParseErrorCode expected_errc = {};
     std::string expected_path = {};
-    ReadOptions options = {};
+    ParseOptions options = {};
 };
 
 void PrintTo(const EnumFromJsonSuccessTestParam& param, std::ostream* os) {
@@ -82,12 +82,12 @@ INSTANTIATE_TEST_SUITE_P(
     ,
     EnumFromJsonFailureTest,
     ::testing::Values(
-        EnumFromJsonFailureTestParam{R"({"field1":[]})", ReadErrorCode::kInvalidType, "field1"},
-        EnumFromJsonFailureTestParam{R"({"field1":{}})", ReadErrorCode::kInvalidType, "field1"},
-        EnumFromJsonFailureTestParam{R"({"field1":true})", ReadErrorCode::kInvalidType, "field1"},
-        EnumFromJsonFailureTestParam{R"({"field1":"TEST_NON_EXISTENT"})", ReadErrorCode::kUnknownEnum, "field1"},
-        EnumFromJsonFailureTestParam{R"({"field1":2147483648})", ReadErrorCode::kInvalidValue, "field1"},
-        EnumFromJsonFailureTestParam{R"({"field1":-2147483649})", ReadErrorCode::kInvalidValue, "field1"}
+        EnumFromJsonFailureTestParam{R"({"field1":[]})", ParseErrorCode::kInvalidType, "field1"},
+        EnumFromJsonFailureTestParam{R"({"field1":{}})", ParseErrorCode::kInvalidType, "field1"},
+        EnumFromJsonFailureTestParam{R"({"field1":true})", ParseErrorCode::kInvalidType, "field1"},
+        EnumFromJsonFailureTestParam{R"({"field1":"TEST_NON_EXISTENT"})", ParseErrorCode::kUnknownEnum, "field1"},
+        EnumFromJsonFailureTestParam{R"({"field1":2147483648})", ParseErrorCode::kInvalidValue, "field1"},
+        EnumFromJsonFailureTestParam{R"({"field1":-2147483649})", ParseErrorCode::kInvalidValue, "field1"}
     )
 );
 
@@ -101,7 +101,7 @@ TEST_P(EnumFromJsonSuccessTest, Test) {
     message.set_field1(static_cast<proto_json::messages::EnumMessage::Test>(100001));
 
     UASSERT_NO_THROW((message = JsonToMessage<proto_json::messages::EnumMessage>(input, param.options)));
-    UASSERT_NO_THROW(InitSampleMessage(param.input, param.options, sample_message));
+    UASSERT_NO_THROW(InitSampleMessage(param.input, sample_message, param.options));
 
     CheckMessageEqual(message, sample_message);
     CheckMessageEqual(message, expected_message);
@@ -113,13 +113,13 @@ TEST_P(EnumFromJsonFailureTest, Test) {
     proto_json::messages::EnumMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
 
-    EXPECT_READ_ERROR(
+    EXPECT_PARSE_ERROR(
         (void)JsonToMessage<proto_json::messages::EnumMessage>(input, param.options),
         param.expected_errc,
         param.expected_path
     );
 
-    UEXPECT_THROW(InitSampleMessage(param.input, param.options, sample_message), SampleError);
+    UEXPECT_THROW(InitSampleMessage(param.input, sample_message, param.options), SampleError);
 }
 
 }  // namespace protobuf::json::tests

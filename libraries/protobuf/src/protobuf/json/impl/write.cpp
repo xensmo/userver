@@ -25,53 +25,53 @@ using ProtobufStringType =
     decltype(std::declval<::google::protobuf::Reflection>()
                  .GetString(std::declval<const ::google::protobuf::Message&>(), nullptr));
 
-[[nodiscard]] formats::json::ValueBuilder WriteGeneralMessage(const ::google::protobuf::Message&, const WriteOptions&);
+[[nodiscard]] formats::json::ValueBuilder WriteGeneralMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
-[[nodiscard]] formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message&, const WriteOptions&);
+[[nodiscard]] formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
-[[nodiscard]] formats::json::ValueBuilder WriteDurationMessage(const ::google::protobuf::Message&, const WriteOptions&);
-
-[[nodiscard]] formats::json::ValueBuilder
-WriteTimestampMessage(const ::google::protobuf::Message&, const WriteOptions&);
+[[nodiscard]] formats::json::ValueBuilder WriteDurationMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteFieldMaskMessage(const ::google::protobuf::Message&, const WriteOptions&);
-
-[[nodiscard]] formats::json::ValueBuilder WriteValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteTimestampMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteListValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteFieldMaskMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
-[[nodiscard]] formats::json::ValueBuilder WriteStructMessage(const ::google::protobuf::Message&, const WriteOptions&);
-
-[[nodiscard]] formats::json::ValueBuilder
-WriteDoubleValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+[[nodiscard]] formats::json::ValueBuilder WriteValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteFloatValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteListValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
+
+[[nodiscard]] formats::json::ValueBuilder WriteStructMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteInt64ValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteDoubleValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteUInt64ValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteFloatValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteInt32ValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteInt64ValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteUInt32ValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteUInt64ValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteBoolValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteInt32ValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteStringValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteUInt32ValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
 [[nodiscard]] formats::json::ValueBuilder
-WriteBytesValueMessage(const ::google::protobuf::Message&, const WriteOptions&);
+WriteBoolValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
 
-using WriteMessageFunc = formats::json::ValueBuilder (*)(const ::google::protobuf::Message&, const WriteOptions&);
+[[nodiscard]] formats::json::ValueBuilder
+WriteStringValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
+
+[[nodiscard]] formats::json::ValueBuilder
+WriteBytesValueMessage(const ::google::protobuf::Message&, const PrintOptions&);
+
+using WriteMessageFunc = formats::json::ValueBuilder (*)(const ::google::protobuf::Message&, const PrintOptions&);
 
 class SingularGetter {
 public:
@@ -318,7 +318,7 @@ template <typename TReader>
     const ::google::protobuf::Message& message,
     const ::google::protobuf::Reflection& reflection,
     const ::google::protobuf::FieldDescriptor& field_desc,
-    const WriteOptions& options,
+    const PrintOptions& options,
     WriteMessageFunc& write_message,
     const int index = -1
 ) {
@@ -406,7 +406,7 @@ template <typename TReader>
     const ::google::protobuf::Message& message,
     const ::google::protobuf::Reflection& reflection,
     const ::google::protobuf::FieldDescriptor& field_desc,
-    const WriteOptions& options
+    const PrintOptions& options
 ) {
     UASSERT(message.GetReflection() == &reflection);
     UASSERT(field_desc.containing_type() == message.GetDescriptor());
@@ -425,7 +425,7 @@ template <typename TReader>
     const ::google::protobuf::Message& message,
     const ::google::protobuf::Reflection& reflection,
     const ::google::protobuf::FieldDescriptor& field_desc,
-    const WriteOptions& options
+    const PrintOptions& options
 ) {
     UASSERT(message.GetReflection() == &reflection);
     UASSERT(field_desc.containing_type() == message.GetDescriptor());
@@ -451,7 +451,7 @@ template <typename TReader>
     const ::google::protobuf::Message& message,
     const ::google::protobuf::Reflection& reflection,
     const ::google::protobuf::FieldDescriptor& field_desc,
-    const WriteOptions& options
+    const PrintOptions& options
 ) {
     using ::google::protobuf::FieldDescriptor;
 
@@ -522,7 +522,7 @@ template <typename TReader>
 
 formats::json::ValueBuilder WriteGeneralMessage(
     const ::google::protobuf::Message& message,
-    const WriteOptions& options
+    const PrintOptions& options
 ) {
     formats::json::ValueBuilder json(formats::common::Type::kObject);
     const auto& desc = *message.GetDescriptor();
@@ -554,7 +554,7 @@ formats::json::ValueBuilder WriteGeneralMessage(
     return json;
 }
 
-formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message& message, const WriteOptions& options) {
+formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message& message, const PrintOptions& options) {
     const auto& desc = *message.GetDescriptor();
     const auto& type_url_desc = GetMessageFieldDesc(desc, AnyTraits::kTypeUrlFieldNumber, AnyTraits::kTypeUrlFieldType);
     const auto& value_desc = GetMessageFieldDesc(desc, AnyTraits::kValueFieldNumber, AnyTraits::kValueFieldType);
@@ -575,7 +575,7 @@ formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message& m
     const auto payload_desc = FindMessageDescByTypeUrl(*message.GetDescriptor()->file()->pool(), type_url);
 
     if (!payload_desc) {
-        throw FieldError(WriteErrorCode::kInvalidValue);
+        throw FieldError(PrintErrorCode::kInvalidValue);
     }
 
     ::google::protobuf::DynamicMessageFactory factory;
@@ -585,7 +585,7 @@ formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message& m
         std::unique_ptr<::google::protobuf::Message> payload_message(factory.GetPrototype(payload_desc)->New());
 
         if (!payload_message->ParsePartialFromString(value)) {
-            throw FieldError(WriteErrorCode::kInvalidValue);
+            throw FieldError(PrintErrorCode::kInvalidValue);
         }
 
         const WriteMessageFunc write_message = GetWriteMessageFunc(payload_desc->full_name());
@@ -602,7 +602,7 @@ formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message& m
     return object;
 }
 
-formats::json::ValueBuilder WriteDurationMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteDurationMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& desc = *message.GetDescriptor();
     const auto& seconds_desc =
         GetMessageFieldDesc(desc, DurationTraits::kSecondsFieldNumber, DurationTraits::kSecondsFieldType);
@@ -614,7 +614,7 @@ formats::json::ValueBuilder WriteDurationMessage(const ::google::protobuf::Messa
     const auto nanos = reflection.GetInt32(message, &nanos_desc);
 
     if (!IsValidDuration(seconds, nanos)) {
-        throw FieldError(WriteErrorCode::kInvalidValue);
+        throw FieldError(PrintErrorCode::kInvalidValue);
     }
 
     std::string value;
@@ -637,7 +637,7 @@ formats::json::ValueBuilder WriteDurationMessage(const ::google::protobuf::Messa
     return formats::json::ValueBuilder{std::move(value)};
 }
 
-formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& desc = *message.GetDescriptor();
     const auto& seconds_desc =
         GetMessageFieldDesc(desc, TimestampTraits::kSecondsFieldNumber, TimestampTraits::kSecondsFieldType);
@@ -649,7 +649,7 @@ formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Mess
     const auto nanos = reflection.GetInt32(message, &nanos_desc);
 
     if (!IsValidTimestamp(seconds, nanos)) {
-        throw FieldError(WriteErrorCode::kInvalidValue);
+        throw FieldError(PrintErrorCode::kInvalidValue);
     }
 
     // ensure that seconds is positive (kMinTimestampSeconds is negative)
@@ -707,7 +707,7 @@ formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Mess
     return formats::json::ValueBuilder{std::move(value)};
 }
 
-formats::json::ValueBuilder WriteFieldMaskMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteFieldMaskMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     std::string json_paths;
     const auto& reflection = *message.GetReflection();
     const auto& field_desc = GetMessageFieldDesc(
@@ -743,7 +743,7 @@ formats::json::ValueBuilder WriteFieldMaskMessage(const ::google::protobuf::Mess
                 underscore_seen = true;
                 continue;
             } else {
-                throw FieldError(WriteErrorCode::kInvalidValue);
+                throw FieldError(PrintErrorCode::kInvalidValue);
             }
 
             underscore_seen = false;
@@ -751,7 +751,7 @@ formats::json::ValueBuilder WriteFieldMaskMessage(const ::google::protobuf::Mess
 
         if (underscore_seen) {
             // parser will not be able to restore original path if it contains trailing underscore
-            throw FieldError(WriteErrorCode::kInvalidValue);
+            throw FieldError(PrintErrorCode::kInvalidValue);
         }
 
         json_paths.append(json_path);
@@ -765,7 +765,7 @@ formats::json::ValueBuilder WriteFieldMaskMessage(const ::google::protobuf::Mess
     return formats::json::ValueBuilder{std::move(json_paths)};
 }
 
-formats::json::ValueBuilder WriteValueMessage(const ::google::protobuf::Message& message, const WriteOptions& options) {
+formats::json::ValueBuilder WriteValueMessage(const ::google::protobuf::Message& message, const PrintOptions& options) {
     const auto& desc = *message.GetDescriptor();
     const auto& reflection = *message.GetReflection();
 
@@ -786,7 +786,7 @@ formats::json::ValueBuilder WriteValueMessage(const ::google::protobuf::Message&
 
             if (std::isnan(value) || std::isinf(value)) {
                 // not supported for google.protobuf.Value (would be represented as string in JSON)
-                throw FieldError(WriteErrorCode::kInvalidValue, field_desc.name());
+                throw FieldError(PrintErrorCode::kInvalidValue, field_desc.name());
             }
 
             return formats::json::ValueBuilder{value};
@@ -842,12 +842,12 @@ formats::json::ValueBuilder WriteValueMessage(const ::google::protobuf::Message&
     }
 
     // one of the Value's oneof field must be set
-    throw FieldError(WriteErrorCode::kInvalidValue);
+    throw FieldError(PrintErrorCode::kInvalidValue);
 }
 
 formats::json::ValueBuilder WriteListValueMessage(
     const ::google::protobuf::Message& message,
-    const WriteOptions& options
+    const PrintOptions& options
 ) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
@@ -860,7 +860,7 @@ formats::json::ValueBuilder WriteListValueMessage(
 
 formats::json::ValueBuilder WriteStructMessage(
     const ::google::protobuf::Message& message,
-    const WriteOptions& options
+    const PrintOptions& options
 ) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
@@ -872,7 +872,7 @@ formats::json::ValueBuilder WriteStructMessage(
     return WriteMapField(message, *message.GetReflection(), field_desc, options);
 }
 
-formats::json::ValueBuilder WriteDoubleValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteDoubleValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         DoubleValueTraits::kValueFieldNumber,
@@ -881,7 +881,7 @@ formats::json::ValueBuilder WriteDoubleValueMessage(const ::google::protobuf::Me
     return GetFloatJsonValue(message.GetReflection()->GetDouble(message, &field_desc));
 }
 
-formats::json::ValueBuilder WriteFloatValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteFloatValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         FloatValueTraits::kValueFieldNumber,
@@ -890,7 +890,7 @@ formats::json::ValueBuilder WriteFloatValueMessage(const ::google::protobuf::Mes
     return GetFloatJsonValue(message.GetReflection()->GetFloat(message, &field_desc));
 }
 
-formats::json::ValueBuilder WriteInt64ValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteInt64ValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         Int64ValueTraits::kValueFieldNumber,
@@ -899,7 +899,7 @@ formats::json::ValueBuilder WriteInt64ValueMessage(const ::google::protobuf::Mes
     return formats::json::ValueBuilder{std::to_string(message.GetReflection()->GetInt64(message, &field_desc))};
 }
 
-formats::json::ValueBuilder WriteUInt64ValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteUInt64ValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         UInt64ValueTraits::kValueFieldNumber,
@@ -908,7 +908,7 @@ formats::json::ValueBuilder WriteUInt64ValueMessage(const ::google::protobuf::Me
     return formats::json::ValueBuilder{std::to_string(message.GetReflection()->GetUInt64(message, &field_desc))};
 }
 
-formats::json::ValueBuilder WriteInt32ValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteInt32ValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         Int32ValueTraits::kValueFieldNumber,
@@ -917,7 +917,7 @@ formats::json::ValueBuilder WriteInt32ValueMessage(const ::google::protobuf::Mes
     return formats::json::ValueBuilder{message.GetReflection()->GetInt32(message, &field_desc)};
 }
 
-formats::json::ValueBuilder WriteUInt32ValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteUInt32ValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         UInt32ValueTraits::kValueFieldNumber,
@@ -926,7 +926,7 @@ formats::json::ValueBuilder WriteUInt32ValueMessage(const ::google::protobuf::Me
     return formats::json::ValueBuilder{message.GetReflection()->GetUInt32(message, &field_desc)};
 }
 
-formats::json::ValueBuilder WriteBoolValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteBoolValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         BoolValueTraits::kValueFieldNumber,
@@ -935,7 +935,7 @@ formats::json::ValueBuilder WriteBoolValueMessage(const ::google::protobuf::Mess
     return formats::json::ValueBuilder{message.GetReflection()->GetBool(message, &field_desc)};
 }
 
-formats::json::ValueBuilder WriteStringValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteStringValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         StringValueTraits::kValueFieldNumber,
@@ -949,7 +949,7 @@ formats::json::ValueBuilder WriteStringValueMessage(const ::google::protobuf::Me
     return formats::json::ValueBuilder{str};
 }
 
-formats::json::ValueBuilder WriteBytesValueMessage(const ::google::protobuf::Message& message, const WriteOptions&) {
+formats::json::ValueBuilder WriteBytesValueMessage(const ::google::protobuf::Message& message, const PrintOptions&) {
     const auto& field_desc = GetMessageFieldDesc(
         *message.GetDescriptor(),
         BytesValueTraits::kValueFieldNumber,
@@ -962,12 +962,12 @@ formats::json::ValueBuilder WriteBytesValueMessage(const ::google::protobuf::Mes
 
 }  // namespace
 
-formats::json::ValueBuilder WriteMessage(const ::google::protobuf::Message& message, const WriteOptions& options) try
+formats::json::ValueBuilder WriteMessage(const ::google::protobuf::Message& message, const PrintOptions& options) try
 {
     const auto write = GetWriteMessageFunc(message.GetDescriptor()->full_name());
     return write(message, options);
 } catch (FieldError& error) {
-    throw WriteError(error.GetCode<WriteErrorCode>(), std::move(error).GetPath());
+    throw PrintError(error.GetCode<PrintErrorCode>(), std::move(error).GetPath());
 }
 
 }  // namespace protobuf::json::impl

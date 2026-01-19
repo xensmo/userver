@@ -16,7 +16,7 @@ USERVER_NAMESPACE_BEGIN
 namespace protobuf::json::tests {
 
 struct CustomNameToJsonTestParam {
-    WriteOptions options = {};
+    PrintOptions options = {};
     std::string expected_json = {};
 };
 
@@ -88,7 +88,7 @@ TEST_P(CustomNameFromJsonTest, Test) {
     formats::json::Value input = formats::json::FromString(param.input);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(input)));
-    UASSERT_NO_THROW(InitSampleMessage(param.input, {}, sample));
+    UASSERT_NO_THROW(InitSampleMessage(param.input, sample));
 
     EXPECT_EQ(message.field(), sample.field());
     EXPECT_EQ(message.another_field(), sample.another_field());

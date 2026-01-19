@@ -18,7 +18,7 @@ namespace protobuf::json::tests {
 struct PresenceToJsonTestParam {
     PresenceMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 struct PresenceFromJsonTestParam {
@@ -133,7 +133,7 @@ TEST_P(PresenceFromJsonTest, Test) {
     expected_message = PrepareTestData(param.expected_message);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(input)));
-    UASSERT_NO_THROW(InitSampleMessage(param.input, {}, sample_message));
+    UASSERT_NO_THROW(InitSampleMessage(param.input, sample_message));
 
     CheckMessageEqual(message, sample_message);
     CheckMessageEqual(message, expected_message);

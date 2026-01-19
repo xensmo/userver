@@ -20,14 +20,14 @@ namespace protobuf::json::tests {
 struct DurationToJsonSuccessTestParam {
     DurationMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 struct DurationToJsonFailureTestParam {
     DurationMessageData input = {};
-    WriteErrorCode expected_errc = {};
+    PrintErrorCode expected_errc = {};
     std::string expected_path = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const DurationToJsonSuccessTestParam& param, std::ostream* os) {
@@ -74,25 +74,25 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         DurationToJsonFailureTestParam{
             DurationMessageData{kMaxDurationSeconds + 1, 0},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         DurationToJsonFailureTestParam{
             DurationMessageData{kMinDurationSeconds - 1, 0},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         DurationToJsonFailureTestParam{
             DurationMessageData{0, kMaxDurationNanos + 1},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
         DurationToJsonFailureTestParam{
             DurationMessageData{0, kMinDurationNanos - 1},
-            WriteErrorCode::kInvalidValue,
+            PrintErrorCode::kInvalidValue,
             "field1"
         },
-        DurationToJsonFailureTestParam{DurationMessageData{1, -1}, WriteErrorCode::kInvalidValue, "field1"}
+        DurationToJsonFailureTestParam{DurationMessageData{1, -1}, PrintErrorCode::kInvalidValue, "field1"}
     )
 );
 
@@ -114,7 +114,7 @@ TEST_P(DurationToJsonFailureTest, Test) {
     const auto& param = GetParam();
     auto input = PrepareTestData(param.input);
 
-    EXPECT_WRITE_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
+    EXPECT_PRINT_ERROR((void)MessageToJson(input, param.options), param.expected_errc, param.expected_path);
     UEXPECT_THROW((void)CreateSampleJson(input, param.options), SampleError);
 }
 

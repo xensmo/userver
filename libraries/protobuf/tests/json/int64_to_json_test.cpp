@@ -21,7 +21,7 @@ constexpr std::int64_t kMin = std::numeric_limits<std::int64_t>::min();  // -922
 struct Int64ToJsonSuccessTestParam {
     Int64MessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const Int64ToJsonSuccessTestParam& param, std::ostream* os) {

@@ -132,7 +132,7 @@ TEST_P(UnkownJsonFieldAcceptedTest, Test) {
     expected_message = PrepareTestData(param.expected_message);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(input, {.ignore_unknown_fields = true})));
-    UASSERT_NO_THROW(InitSampleMessage(param.input, {.ignore_unknown_fields = true}, sample_message));
+    UASSERT_NO_THROW(InitSampleMessage(param.input, sample_message, {.ignore_unknown_fields = true}));
 
     CheckMessageEqual(message, sample_message);
     CheckMessageEqual(message, expected_message);
@@ -145,12 +145,12 @@ TEST_P(UnkownJsonFieldRejectedTest, Test) {
     Message sample;
     formats::json::Value input = PrepareJsonTestData(param.input);
 
-    EXPECT_READ_ERROR(
+    EXPECT_PARSE_ERROR(
         (void)JsonToMessage<proto_json::messages::UnknownFieldMessage>(input, {.ignore_unknown_fields = false}),
-        ReadErrorCode::kUnknownField,
+        ParseErrorCode::kUnknownField,
         param.expected_path
     );
-    UEXPECT_THROW(InitSampleMessage(param.input, {.ignore_unknown_fields = false}, sample), SampleError);
+    UEXPECT_THROW(InitSampleMessage(param.input, sample, {.ignore_unknown_fields = false}), SampleError);
 }
 
 }  // namespace protobuf::json::tests

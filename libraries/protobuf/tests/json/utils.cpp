@@ -50,7 +50,7 @@ void AreProtobufMapsEqual(const T& lhs, const T& rhs) {
 
 formats::json::Value PrepareJsonTestData(const std::string& json_data) { return formats::json::FromString(json_data); }
 
-formats::json::Value CreateSampleJson(const ::google::protobuf::Message& message, const WriteOptions& options) {
+formats::json::Value CreateSampleJson(const ::google::protobuf::Message& message, const PrintOptions& options) {
     using StringType = std::decay_t<decltype(message.DebugString())>;
 
     StringType result;
@@ -72,7 +72,7 @@ formats::json::Value CreateSampleJson(const ::google::protobuf::Message& message
     }
 }
 
-void InitSampleMessage(const std::string& json, const ReadOptions& options, ::google::protobuf::Message& message) {
+void InitSampleMessage(const std::string& json, ::google::protobuf::Message& message, const ParseOptions& options) {
     ::google::protobuf::util::ParseOptions native_options;
     native_options.ignore_unknown_fields = options.ignore_unknown_fields;
 

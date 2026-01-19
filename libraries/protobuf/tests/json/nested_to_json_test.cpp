@@ -17,7 +17,7 @@ namespace protobuf::json::tests {
 struct NestedToJsonSuccessTestParam {
     NestedMessageData input = {};
     std::string expected_json = {};
-    WriteOptions options = {};
+    PrintOptions options = {};
 };
 
 void PrintTo(const NestedToJsonSuccessTestParam& param, std::ostream* os) {
