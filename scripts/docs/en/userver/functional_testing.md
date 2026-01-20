@@ -409,7 +409,7 @@ An example on testsuite tasks could be found here:
 * Testcase: @ref samples/testsuite-support/tests/test_tasks.py
 
 @anchor TESTSUITE_METRICS_TESTING
-#### Metrics
+#### Metrics tesing in testsuite
 
 Testsuite provides access to userver metrics written by
 utils::statistics::Writer and utils::statistics::MetricTag via
@@ -453,12 +453,12 @@ comparable:
 * Testcase: @ref samples/testsuite-support/tests/test_metrics.py
 
 
-#### Metrics Portability
+#### Metrics Portability Testing in Testsuite
 
 Different monitoring systems and time series databases have different
 limitations. To make sure that the metrics of your service could be used on
 most of the popular systems, there is special action in
-server::handlers::TestsControl.
+@ref server::handlers::TestsControl.
 
 To use it you could just write the following test:
 

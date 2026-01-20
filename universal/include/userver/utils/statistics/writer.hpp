@@ -44,8 +44,6 @@ constexpr auto HasDumpMetricWriter(Args...) noexcept {
 template <class Metric>
 inline constexpr bool kHasWriterSupport = impl::HasDumpMetricWriter<Metric>();
 
-// clang-format off
-
 /// @brief Class for writing metrics that is provided by utils::statistics::Storage.
 ///
 /// Usage is quite straightforward:
@@ -86,9 +84,8 @@ inline constexpr bool kHasWriterSupport = impl::HasDumpMetricWriter<Metric>();
 /// @ref TESTSUITE_METRICS_TESTING "Testsuite - Metrics".
 ///
 /// For metrics testing in unit-tests see utils::statistics::Snapshot.
-
-// clang-format on
-
+///
+/// For introduction to metrics see @ref scripts/docs/en/userver/metrics.md
 class Writer final {
 public:
     /// Path parts delimiter. In other words, writer["a"]["b"] becomes "a.b"

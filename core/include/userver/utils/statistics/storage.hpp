@@ -50,6 +50,8 @@ inline constexpr bool kCheckSubscriptionUB = utils::impl::kEnableAssert;
 /// Storage of metrics, usually retrieved from components::StatisticsStorage.
 ///
 /// See utils::statistics::Writer for an information on how to write metrics.
+///
+/// For introduction to metrics see @ref scripts/docs/en/userver/metrics.md
 class Storage final {
 public:
     Storage();

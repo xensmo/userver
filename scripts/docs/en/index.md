@@ -126,6 +126,7 @@ and make sure that it builds and passes tests.
     * @ref scripts/docs/en/dynamic_configs/dynamic_configs.md
 * @ref scripts/docs/en/userver/log_level_running_service.md
 * @ref scripts/docs/en/userver/requests_in_flight.md
+* @ref scripts/docs/en/userver/metrics.md
 * @ref scripts/docs/en/userver/service_monitor.md
 * @ref scripts/docs/en/userver/memory_profile_running_service.md
 * @ref scripts/docs/en/userver/dns_control.md

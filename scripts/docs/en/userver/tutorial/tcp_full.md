@@ -36,7 +36,7 @@ or do not modify shared data in `ProcessSocket`.
 ### Statistics registration
 
 To automatically deliver the metrics they should be registered via
-utils::statistics::MetricTag and DumpMetric+ResetMetric functions should be
+@ref utils::statistics::MetricTag and DumpMetric+ResetMetric functions should be
 defined:
 
 @snippet samples/tcp_full_duplex_service/main.cpp  TCP sample - Stats tag
