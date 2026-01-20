@@ -7,6 +7,20 @@ description: |
 
     Locations are easy to retrieve from the logs: tracing::Span writes the "component" tag with the
     location. For example: 'component: "DoParse ( taxi/uservices/services/my_service/src/parser.cpp:128 )"'.
+
+    Note that if you are taking the location from source editor and you have multiline logging macro:
+
+    ```
+    #299
+    #300    LOG_INFO(
+    #301        "Do not send '{}', instead send the '{}' command",
+    #302        incoming,
+    #303        correct_data
+    #304    );
+    #305
+    ```
+
+    then the line number depends on the compiler (can be `304` on clang, `300` on GCC).
 schema:
     type: object
     additionalProperties: false

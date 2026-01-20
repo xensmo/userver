@@ -346,7 +346,62 @@ TEST_F(LoggingTest, DynamicDebugEnableMultilineMacro) {
     const auto do_log = [](std::string_view string_value_that_must_be_long_for_this_test) {
 #line 80001
         LOG_INFO(
-            "Value is '{}', making this line very long to make the log macro consume multiple lines in source code. {}",
+            "Value 1 is '{}', making this line very long to make the log macro consume multiple lines in sources. {}",
+            string_value_that_must_be_long_for_this_test,
+            string_value_that_must_be_long_for_this_test
+        );
+
+#line 80101
+        LOG_LIMITED_INFO(
+            "Value 2 is '{}', making this line very long to make the log macro consume multiple lines in sources. {}",
+            string_value_that_must_be_long_for_this_test,
+            string_value_that_must_be_long_for_this_test
+        );
+
+#line 80201
+        LOG(logging::Level::kInfo,
+            "Value 3 is '{}', making this line very long to make the log macro consume multiple lines. {}",
+            string_value_that_must_be_long_for_this_test,
+            string_value_that_must_be_long_for_this_test);
+
+#line 80301
+        LOG_INFO_TO(
+            logging::GetDefaultLogger(),
+            "Value 4 is '{}', making this line very long to make the log macro consume multiple lines. {}",
+            string_value_that_must_be_long_for_this_test,
+            string_value_that_must_be_long_for_this_test
+        );
+
+#line 80401
+        LOG_LIMITED_INFO_TO(
+            logging::GetDefaultLogger(),
+            "Value 5 is '{}', making this line very long to make the log macro consume multiple lines. {}",
+            string_value_that_must_be_long_for_this_test,
+            string_value_that_must_be_long_for_this_test
+        );
+
+#line 80501
+        LOG_TO(
+            logging::GetDefaultLogger(),
+            logging::Level::kInfo,
+            "Value 6 is '{}', making this line very long to make the log macro consume multiple lines. {}",
+            string_value_that_must_be_long_for_this_test,
+            string_value_that_must_be_long_for_this_test
+        );
+
+#line 80601
+        LOG_LIMITED_TO(
+            logging::GetDefaultLogger(),
+            logging::Level::kInfo,
+            "Value 7 is '{}', making this line very long to make the log macro consume multiple lines. {}",
+            string_value_that_must_be_long_for_this_test,
+            string_value_that_must_be_long_for_this_test
+        );
+
+#line 80701
+        LOG_LIMITED(
+            logging::Level::kInfo,
+            "Value 8 is '{}', making this line very long to make the log macro consume multiple lines. {}",
             string_value_that_must_be_long_for_this_test,
             string_value_that_must_be_long_for_this_test
         );
@@ -356,31 +411,43 @@ TEST_F(LoggingTest, DynamicDebugEnableMultilineMacro) {
     LOG_INFO() << "unrelated 1";
 
     // The preprocessor behavior is platform-dependent
-    // Will fix in https://st.yandex-team.ru/TAXICOMMON-11145
-    int line = 0;
-    try {
-        logging::AddDynamicDebugLog(filename, 80005);
-        line = 80005;
-    } catch (const std::exception&) {
+    constexpr int kMaxLinesLengthOfMacro = 7;
+    for (int line = 80001; line < 80800; line += 100) {
+        bool success = false;
+        for (int i = 0; i < kMaxLinesLengthOfMacro; ++i) {
+            try {
+                logging::AddDynamicDebugLog(filename, line + i);
+                success = true;
+                break;
+            } catch (const std::exception&) {
+            }
+        }
+        ASSERT_TRUE(success) << "Failed log enabling for line: " << line;
     }
-    try {
-        logging::AddDynamicDebugLog(filename, 80001);
-        ASSERT_EQ(line, 0);
-        line = 80001;
-    } catch (const std::exception&) {
-    }
-    ASSERT_NE(line, 0);
 
     do_log("enabled");
     LOG_INFO() << "unrelated 2";
 
-    logging::RemoveDynamicDebugLog(filename, line);
+    for (int line = 80001; line < 80800; line += 100) {
+        bool success = false;
+        for (int i = 0; i < kMaxLinesLengthOfMacro; ++i) {
+            try {
+                logging::RemoveDynamicDebugLog(filename, line + i);
+                success = true;
+                break;
+            } catch (const std::exception&) {
+            }
+        }
+        ASSERT_TRUE(success) << "Failed log disabling for line: " << line;
+    }
 
     do_log("after");
     LOG_INFO() << "unrelated 3";
 
     EXPECT_THAT(GetStreamString(), testing::Not(testing::HasSubstr("before")));
-    EXPECT_THAT(GetStreamString(), testing::HasSubstr("Value is 'enabled'"));
+    for (std::size_t i = 1; i < 9; ++i) {
+        EXPECT_THAT(GetStreamString(), testing::HasSubstr(fmt::format("Value {} is 'enabled'", i)));
+    }
     EXPECT_THAT(GetStreamString(), testing::Not(testing::HasSubstr("after")));
     EXPECT_THAT(GetStreamString(), testing::Not(testing::HasSubstr("unrelated")));
 }
