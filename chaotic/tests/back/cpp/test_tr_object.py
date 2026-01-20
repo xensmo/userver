@@ -6,6 +6,7 @@ from chaotic.back.cpp.types import CppPrimitiveType
 from chaotic.back.cpp.types import CppPrimitiveValidator
 from chaotic.back.cpp.types import CppStruct
 from chaotic.back.cpp.types import CppStructField
+from chaotic.front.types import Schema
 
 
 def test_empty(simple_gen):
@@ -17,7 +18,7 @@ def test_empty(simple_gen):
     assert schemas == {
         '::type': CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             fields={},
@@ -34,7 +35,7 @@ def test_additional_properties_simple(simple_gen, cpp_primitive_type):
     assert schemas == {
         '::type': CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             fields={},
@@ -59,7 +60,7 @@ def test_field_external(simple_gen, cpp_primitive_type):
     assert schemas == {
         '::type': CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
@@ -89,7 +90,7 @@ def test_field_with_default(simple_gen, cpp_primitive_type):
     assert schemas == {
         '::type': CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
@@ -120,7 +121,7 @@ def test_field_inplace(simple_gen, cpp_primitive_type):
     assert schemas == {
         '::type': CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
@@ -157,7 +158,7 @@ def test_field_is_struct(simple_gen):
     assert schemas == {
         '::type': CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
@@ -169,7 +170,7 @@ def test_field_is_struct(simple_gen):
                         raw_cpp_type=type_name.TypeName(
                             '::type::Field',
                         ),
-                        json_schema=None,
+                        json_schema=Schema(),
                         nullable=False,
                         user_cpp_type=None,
                         fields={},
@@ -190,7 +191,7 @@ def test_field_required(simple_gen):
     assert schemas == {
         '::type': CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
@@ -200,7 +201,7 @@ def test_field_required(simple_gen):
                     required=True,
                     schema=CppPrimitiveType(
                         raw_cpp_type=type_name.TypeName('int'),
-                        json_schema=None,
+                        json_schema=Schema(),
                         nullable=False,
                         user_cpp_type=None,
                         validators=CppPrimitiveValidator(

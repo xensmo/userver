@@ -5,6 +5,7 @@ import pytest
 from chaotic.back.cpp.translator import Generator
 from chaotic.back.cpp.translator import GeneratorConfig
 from chaotic.back.cpp.types import CppType
+from chaotic.front.types import Schema
 from chaotic.main import generate_cpp_name_func
 from chaotic.main import NameMapItem
 
@@ -34,8 +35,14 @@ def simple_gen(simple_parse, clean, cpp_name_func):
 def _clean():
     def func(ordered_dict: OrderedDict) -> dict[str, CppType]:
         res = {}
+
+        def visit(child: CppType, parent: CppType):
+            child.json_schema = Schema()
+
         for key, val in ordered_dict.items():
-            res[key] = val.without_json_schema()
+            visit(val, None)
+            val.visit_children(visit)
+            res[key] = val
         return res
 
     return func

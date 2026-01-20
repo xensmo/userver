@@ -713,7 +713,7 @@ class Generator:
             user_cpp_type=None,
             orig_cpp_type=cpp_types.CppType(
                 raw_cpp_type=type_name.TypeName(''),
-                json_schema=None,
+                json_schema=types.Schema(),
                 nullable=False,
                 user_cpp_type=None,
             ),

@@ -339,6 +339,7 @@
   "chaotic/src/chaotic/io/userver/utils/datetime/time_point_tz_iso_basic.cpp":"taxi/uservices/userver/chaotic/src/chaotic/io/userver/utils/datetime/time_point_tz_iso_basic.cpp",
   "chaotic/tests/back/cpp/conftest.py":"taxi/uservices/userver/chaotic/tests/back/cpp/conftest.py",
   "chaotic/tests/back/cpp/test_external.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_external.py",
+  "chaotic/tests/back/cpp/test_json_schema.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_json_schema.py",
   "chaotic/tests/back/cpp/test_tr_array.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_tr_array.py",
   "chaotic/tests/back/cpp/test_tr_int.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_tr_int.py",
   "chaotic/tests/back/cpp/test_tr_object.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_tr_object.py",

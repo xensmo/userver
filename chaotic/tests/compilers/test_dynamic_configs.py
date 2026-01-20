@@ -5,6 +5,7 @@ from typing import Any
 from chaotic import error
 from chaotic.back.cpp import types
 from chaotic.compilers import dynamic_config
+from chaotic.front.types import Schema
 
 
 def parse_variable_content(
@@ -29,7 +30,8 @@ def test_smoke(cpp_primitive_type):
         ),
         raw_cpp_type_str='int',
     )
-    assert var.without_json_schema() == expected
+    var.json_schema = Schema()
+    assert var == expected
 
 
 def test_sort():

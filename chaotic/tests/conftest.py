@@ -59,6 +59,8 @@ def cpp_primitive_type():
         nullable: bool = False,
         default: Any = None,
     ):
+        if json_schema is None:
+            json_schema = Schema()
         kwargs = {
             'raw_cpp_type': type_name.TypeName(raw_cpp_type_str),
             'user_cpp_type': user_cpp_type,

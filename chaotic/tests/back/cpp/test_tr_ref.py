@@ -4,8 +4,7 @@ from chaotic.back.cpp.translator import GeneratorConfig
 from chaotic.back.cpp.types import CppRef
 from chaotic.back.cpp.types import CppStruct
 from chaotic.front import ref_resolver
-from chaotic.front.types import SchemaObject
-from chaotic.front.types import SourceLocation
+from chaotic.front.types import Schema
 
 
 def test_simple_ref(clean, cpp_name_func, schema_parser):
@@ -32,14 +31,14 @@ def test_simple_ref(clean, cpp_name_func, schema_parser):
     assert cpp_types == {
         '::Type': CppStruct(
             raw_cpp_type=type_name.TypeName('::Type'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             user_cpp_type=None,
             fields={},
         ),
         '::ref': CppRef(
             raw_cpp_type=type_name.TypeName('::ref'),
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             indirect=False,
             self_ref=False,
@@ -47,11 +46,7 @@ def test_simple_ref(clean, cpp_name_func, schema_parser):
             user_cpp_type=None,
             orig_cpp_type=CppStruct(
                 raw_cpp_type=type_name.TypeName('::Type'),
-                json_schema=SchemaObject(
-                    source_location_=SourceLocation(filepath='vfull', location='/definitions/Type'),
-                    additionalProperties=False,
-                    properties={},
-                ),
+                json_schema=Schema(),
                 nullable=False,
                 user_cpp_type=None,
                 fields={},

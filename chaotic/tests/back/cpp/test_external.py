@@ -42,7 +42,7 @@ def parse(path, input_, external_schemas, external_types, cpp_name_func):
     return resolved_schemas, types
 
 
-def test_import(cpp_name_func, cpp_primitive_type):
+def test_import(cpp_name_func, cpp_primitive_type, clean):
     ext_schemas, ext_types = parse('/type1', {'type': 'string'}, types.ResolvedSchemas(schemas={}), {}, cpp_name_func)
     assert ext_schemas.schemas == {'vfull#/type1': types.String(type='string')}
     assert ext_types == {
@@ -62,6 +62,7 @@ def test_import(cpp_name_func, cpp_primitive_type):
             schema_=ext_schemas.schemas['vfull#/type1'],
         ),
     }
+    clean(new_types)
     assert new_types == {
         '::type2': cpp_types.CppRef(
             orig_cpp_type=ext_types['::type1'],
@@ -70,7 +71,7 @@ def test_import(cpp_name_func, cpp_primitive_type):
             raw_cpp_type=type_name.TypeName('::type2'),
             nullable=False,
             user_cpp_type=None,
-            json_schema=new_schemas.schemas['vfull#/type2'],
+            json_schema=types.Schema(),
         ),
     }
 

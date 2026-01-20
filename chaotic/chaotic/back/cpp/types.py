@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+from collections.abc import Callable
 import dataclasses
 import itertools
 from typing import Any
@@ -13,7 +14,7 @@ USERVER_COLONCOLON = 'userver::'
 @dataclasses.dataclass
 class CppType:
     raw_cpp_type: type_name.TypeName
-    json_schema: types.Schema | None
+    json_schema: types.Schema
     nullable: bool  # TODO: maybe move into  field?
     user_cpp_type: str | None
 
@@ -28,8 +29,6 @@ class CppType:
         if self == other:
             return True
 
-        assert self.json_schema is not None
-        assert other.json_schema is not None
         left = self.json_schema.model_dump()
         right = other.json_schema.model_dump()
         return self._is_isomorphic_dicts(left, right)
@@ -64,8 +63,10 @@ class CppType:
 
         return True
 
-    def without_json_schema(self) -> 'CppType':
-        return dataclasses.replace(self, json_schema=None)
+    def visit_children(self, cb: Callable[['CppType', 'CppType'], None]) -> None:
+        for subtype in self.subtypes():
+            cb(subtype, self)
+            subtype.visit_children(cb)
 
     # Should return only direct subtypes, not recursively because
     # jinja's generate_*() is called recursively.
@@ -144,8 +145,6 @@ class CppType:
         return self.cpp_global_name().replace('::', '__')
 
     def cpp_comment(self) -> str:
-        assert self.json_schema
-
         schema = self.json_schema
         description = ((schema.title or '') + '\n' + (schema.description or '')).strip()
         if description:
@@ -282,7 +281,6 @@ class CppPrimitiveType(CppType):
         if self.user_cpp_type:
             includes += self.get_includes_by_cpp_type(self.user_cpp_type)
 
-        assert self.json_schema
         type_ = self.json_schema.type  # type: ignore
         if type_ == 'integer':
             includes.append('cstdint')
@@ -562,15 +560,6 @@ class CppStructField:
     required: bool
     schema: CppType
 
-    def without_json_schema(self) -> 'CppStructField':
-        if self.schema:
-            return dataclasses.replace(
-                self,
-                schema=self.schema.without_json_schema(),
-            )
-        else:
-            return self
-
     def _default(self) -> str | None:
         return getattr(self.schema, 'default', None)
 
@@ -656,20 +645,6 @@ class CppStruct(CppType):
             self.extra_type = self.fields['__default__'].schema
             self.fields['__default__'].required = False
 
-    def without_json_schema(self) -> CppType:
-        tmp = super().without_json_schema()
-        assert isinstance(tmp, CppStruct)
-
-        tmp.fields = dict(
-            map(
-                lambda x: (x[0], x[1].without_json_schema()),
-                self.fields.items(),
-            ),
-        )
-        if isinstance(self.extra_type, CppType):
-            tmp.extra_type = self.extra_type.without_json_schema()
-        return tmp
-
     def _is_default_dict_candidate(self) -> bool:
         if len(self.fields) != 1:
             return False
@@ -702,7 +677,6 @@ class CppStruct(CppType):
         return types
 
     def extra_container(self) -> str:
-        assert self.json_schema
         kwargs = self.json_schema.x_properties
         return kwargs.get(
             'x-usrv-cpp-extra-type',
@@ -789,13 +763,6 @@ class CppArray(CppType):
 
     def _cpp_name(self) -> str:
         return f'{self.container}<{self.items.cpp_user_name()}>'
-
-    def without_json_schema(self) -> 'CppArray':
-        tmp = super().without_json_schema()
-        assert isinstance(tmp, CppArray)
-
-        tmp.items = self.items.without_json_schema()
-        return tmp
 
     def subtypes(self) -> list[CppType]:
         return [self.items]

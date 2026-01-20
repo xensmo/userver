@@ -5,6 +5,7 @@ from chaotic.back.cpp import type_name
 from chaotic.back.cpp.types import CppIntEnum
 from chaotic.back.cpp.types import CppIntEnumItem
 from chaotic.back.cpp.types import CppPrimitiveValidator
+from chaotic.front.types import Schema
 
 
 def test_int(simple_gen, cpp_primitive_type):
@@ -170,7 +171,7 @@ def test_int_enum(simple_gen):
             raw_cpp_type=type_name.TypeName('::type'),
             user_cpp_type=None,
             name='::type',
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             enums=[
                 CppIntEnumItem(value=0, raw_name='CamelCase', cpp_name='CamelCase'),

@@ -2,6 +2,7 @@ from chaotic.back.cpp import type_name
 from chaotic.back.cpp.types import CppArray
 from chaotic.back.cpp.types import CppArrayValidator
 from chaotic.back.cpp.types import CppPrimitiveValidator
+from chaotic.front.types import Schema
 
 
 def test_array_int(simple_gen, cpp_primitive_type):
@@ -10,7 +11,7 @@ def test_array_int(simple_gen, cpp_primitive_type):
         '::type': CppArray(
             raw_cpp_type=type_name.TypeName('::type'),
             user_cpp_type=None,
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             items=cpp_primitive_type(
                 validators=CppPrimitiveValidator(prefix='typeA'),
@@ -31,12 +32,12 @@ def test_array_array_with_validators(simple_gen, cpp_primitive_type):
         '::type': CppArray(
             raw_cpp_type=type_name.TypeName('::type'),
             user_cpp_type=None,
-            json_schema=None,
+            json_schema=Schema(),
             nullable=False,
             items=CppArray(
                 raw_cpp_type=type_name.TypeName('::typeA'),
                 user_cpp_type=None,
-                json_schema=None,
+                json_schema=Schema(),
                 nullable=False,
                 items=cpp_primitive_type(
                     validators=CppPrimitiveValidator(
