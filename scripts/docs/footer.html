@@ -37,9 +37,8 @@ $generatedby <a href="https://www.doxygen.org/index.html">Doxygen</a> $doxygenve
       document.getElementById('main-navbar').appendChild(links);
   }
 
-  $(function() {
-    $(document).ready(function() {
-      setTimeout(() => {
+  document.addEventListener("DOMContentLoaded", function (event) {
+    setTimeout(() => {
       init_all_results_button();
       init_search_hotkey();
       init_header();
@@ -54,7 +53,6 @@ $generatedby <a href="https://www.doxygen.org/index.html">Doxygen</a> $doxygenve
       highlight_code();
       styleNavButtons();
     }, 0);
-    });
   });
 </script>
 <script type="module" src="$relpath^toc.js"></script>

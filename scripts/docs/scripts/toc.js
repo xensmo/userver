@@ -87,28 +87,33 @@ function draw_toc() {
 
   toc += "</ul></div>";
 
-  $("<div>")
-    .append([
-      $(".header"),
-      $("<div>")
-        .addClass("contents")
-        .append([toc, $(".contents").attr("class", "textblock")]),
-    ])
-    .insertAfter("#MSearchResultsWindow");
+  let new_contents = document.createElement("div");
+  new_contents.classList.add("contents");
+  new_contents.innerHTML = toc;
+  document.querySelectorAll(".contents").forEach(function(element) {
+      element.setAttribute("class", "textblock");
+      new_contents.appendChild(element);
+  });
+
+  let toc_additions = document.createElement("div");
+  document.querySelectorAll(".header").forEach(function(element) {
+      toc_additions.appendChild(element);
+  });
+  toc_additions.appendChild(new_contents);
+
+  document.getElementById("MSearchResultsWindow").after(toc_additions);
 }
 
-$(function () {
-  $(document).ready(function () {
-    setTimeout(() => {
-      const isLanding = document.getElementById("landing_logo_id") !== null;
+document.addEventListener("DOMContentLoaded", function (event) {
+  setTimeout(() => {
+    const isLanding = document.getElementById("landing_logo_id") !== null;
 
-      if (isLanding) {
-        LandingFeedback.init();
-      } else {
-        draw_toc();
-        DoxygenAwesomeInteractiveToc.init();
-        PageFeedback.init();
-      }
-    }, 0);
-  });
+    if (isLanding) {
+      LandingFeedback.init();
+    } else {
+      draw_toc();
+      DoxygenAwesomeInteractiveToc.init();
+      PageFeedback.init();
+    }
+  }, 0);
 });
