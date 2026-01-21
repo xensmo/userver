@@ -170,6 +170,9 @@ class Operation:
                 return True
         return False
 
+    def destination_metric_name(self) -> str:
+        return self.path.replace('{', '_').replace('}', '_')
+
 
 @dataclasses.dataclass
 class ClientSpec:
