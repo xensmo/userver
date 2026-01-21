@@ -44,6 +44,8 @@ constexpr auto HasDumpMetricWriter(Args...) noexcept {
 template <class Metric>
 inline constexpr bool kHasWriterSupport = impl::HasDumpMetricWriter<Metric>();
 
+/// @ingroup userver_universal
+///
 /// @brief Class for writing metrics that is provided by utils::statistics::Storage.
 ///
 /// Usage is quite straightforward:
@@ -66,7 +68,7 @@ inline constexpr bool kHasWriterSupport = impl::HasDumpMetricWriter<Metric>();
 /// @snippet core/src/utils/statistics/writer_test.cpp  DumpMetric nested
 ///
 /// To use the above writers register the metric writer in
-/// utils::statistics::Storage component:
+/// @ref utils::statistics::Storage component:
 ///
 /// @snippet core/src/utils/statistics/writer_test.cpp  DumpMetric RegisterWriter
 ///

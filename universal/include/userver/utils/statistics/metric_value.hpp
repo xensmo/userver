@@ -14,6 +14,8 @@ USERVER_NAMESPACE_BEGIN
 
 namespace utils::statistics {
 
+/// @ingroup userver_universal
+///
 /// @brief The value of a metric.
 ///
 /// Cheap to copy, expected to be passed around by value.

@@ -9,7 +9,9 @@ USERVER_NAMESPACE_BEGIN
 
 namespace utils::statistics {
 
-/// `Rate` metrics (or "counter" metrics) are metrics that only monotonically
+/// @ingroup userver_universal
+///
+/// @brief `Rate` metrics (or "counter" metrics) are metrics that only monotonically
 /// increase or are reset to zero on restart. Some monitoring systems give them
 /// special treatment with regard to maintaining proper non-negative derivative.
 struct Rate {

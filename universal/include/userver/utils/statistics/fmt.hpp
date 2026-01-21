@@ -2,6 +2,7 @@
 
 /// @file userver/utils/statistics/fmt.hpp
 /// @brief fmt formatters for various statistics types
+/// @ingroup userver_universal
 ///
 /// - utils::statistics::LabelView
 /// - utils::statistics::Label

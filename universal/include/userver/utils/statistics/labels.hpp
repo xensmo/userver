@@ -15,6 +15,8 @@ namespace utils::statistics {
 
 class Label;
 
+/// @ingroup userver_universal
+///
 /// @brief Non owning label name+value storage.
 class LabelView final {
 public:
@@ -46,6 +48,8 @@ private:
 bool operator<(const LabelView& x, const LabelView& y) noexcept;
 bool operator==(const LabelView& x, const LabelView& y) noexcept;
 
+/// @ingroup userver_universal
+///
 /// @brief Label name+value storage.
 class Label final {
 public:
@@ -74,6 +78,8 @@ private:
 bool operator<(const Label& x, const Label& y) noexcept;
 bool operator==(const Label& x, const Label& y) noexcept;
 
+/// @ingroup userver_universal
+///
 /// @brief View over a continuous range of LabelView.
 class LabelsSpan final {
 public:

@@ -30,7 +30,7 @@ from testsuite.daemons import service_client
 from testsuite.utils import approx
 from testsuite.utils import http
 
-import pytest_userver.metrics as metric_module  # pylint: disable=import-error
+import pytest_userver.metrics  # pylint: disable=import-error
 from pytest_userver.plugins import caches
 
 # @cond
@@ -98,7 +98,7 @@ class TestsuiteClientConfig:
     server_monitor_path: str | None = None
 
 
-Metric: TypeAlias = metric_module.Metric
+Metric: TypeAlias = pytest_userver.metrics.Metric
 
 
 class ClientWrapper:
@@ -360,14 +360,14 @@ class AiohttpClientMonitor(service_client.AiohttpClient):
         path: str = None,
         prefix: str = None,
         labels: dict[str, str] | None = None,
-    ) -> metric_module.MetricsSnapshot:
+    ) -> pytest_userver.metrics.MetricsSnapshot:
         response = await self.metrics_raw(
             output_format='json',
             path=path,
             prefix=prefix,
             labels=labels,
         )
-        return metric_module.MetricsSnapshot.from_json(str(response))
+        return pytest_userver.metrics.MetricsSnapshot.from_json(str(response))
 
     async def single_metric_optional(
         self,
@@ -422,8 +422,8 @@ class ClientMonitor(ClientWrapper):
         It's recommended to use this method over `metrics` to make sure
         the tests don't affect each other.
 
-        With `diff_gauge` off, only RATE metrics are differentiated.
-        With `diff_gauge` on, GAUGE metrics are differentiated as well,
+        With `diff_gauge` off, only `RATE` metrics are differentiated.
+        With `diff_gauge` on, `GAUGE` metrics are differentiated as well,
         which may lead to nonsensical results for those.
 
         @param path Optional full metric path
@@ -431,11 +431,7 @@ class ClientMonitor(ClientWrapper):
         @param labels Optional dictionary of labels that must be in the metric
         @param diff_gauge Whether to differentiate GAUGE metrics
 
-        @code
-        async with monitor_client.metrics_diff(prefix='foo') as differ:
-            # Do something that makes the service update its metrics
-        assert differ.value_at('path-suffix', {'label'}) == 42
-        @endcode
+        @snippet samples/testsuite-support/tests/test_metrics.py metrics diff
         """
         return MetricsDiffer(
             _client=self,
@@ -452,13 +448,15 @@ class ClientMonitor(ClientWrapper):
         path: str | None = None,
         prefix: str | None = None,
         labels: dict[str, str] | None = None,
-    ) -> metric_module.MetricsSnapshot:
+    ) -> pytest_userver.metrics.MetricsSnapshot:
         """
         Returns a dict of metric names to Metric.
 
         @param path Optional full metric path
         @param prefix Optional prefix on which the metric paths should start
         @param labels Optional dictionary of labels that must be in the metric
+
+        @snippet samples/testsuite-support/tests/test_metrics.py metrics metrics
         """
         return await self._client.metrics(
             path=path,
@@ -480,6 +478,8 @@ class ClientMonitor(ClientWrapper):
         @param labels Optional dictionary of labels that must be in the metric
 
         @throws AssertionError if more than one metric returned
+
+        @snippet samples/testsuite-support/tests/test_metrics.py metrics single_metric_optional
         """
         return await self._client.single_metric_optional(path, labels=labels)
 
@@ -497,6 +497,8 @@ class ClientMonitor(ClientWrapper):
         @param labels Optional dictionary of labels that must be in the metric
 
         @throws AssertionError if more than one metric or no metric found
+
+        @snippet samples/testsuite-support/tests/test_metrics.py metrics single_metric
         """
         return await self._client.single_metric(path, labels=labels)
 
@@ -552,6 +554,10 @@ class MetricsDiffer:
     A helper class for computing metric differences.
 
     @see ClientMonitor.metrics_diff
+
+    Example with @ref pytest_userver.client.ClientMonitor.metrics_diff "await monitor_client.metrics_diff()":
+    @snippet samples/testsuite-support/tests/test_metrics.py metrics diff
+
     @ingroup userver_testsuite
     """
 
@@ -569,19 +575,19 @@ class MetricsDiffer:
         self._prefix = _prefix
         self._labels = _labels
         self._diff_gauge = _diff_gauge
-        self._baseline: metric_module.MetricsSnapshot | None = None
-        self._current: metric_module.MetricsSnapshot | None = None
-        self._diff: metric_module.MetricsSnapshot | None = None
+        self._baseline: pytest_userver.metrics.MetricsSnapshot | None = None
+        self._current: pytest_userver.metrics.MetricsSnapshot | None = None
+        self._diff: pytest_userver.metrics.MetricsSnapshot | None = None
 
     # @endcond
 
     @property
-    def baseline(self) -> metric_module.MetricsSnapshot:
+    def baseline(self) -> pytest_userver.metrics.MetricsSnapshot:
         assert self._baseline is not None
         return self._baseline
 
     @baseline.setter
-    def baseline(self, value: metric_module.MetricsSnapshot) -> None:
+    def baseline(self, value: pytest_userver.metrics.MetricsSnapshot) -> None:
         self._baseline = value
         if self._current is not None:
             self._diff = _subtract_metrics_snapshots(
@@ -591,12 +597,12 @@ class MetricsDiffer:
             )
 
     @property
-    def current(self) -> metric_module.MetricsSnapshot:
+    def current(self) -> pytest_userver.metrics.MetricsSnapshot:
         assert self._current is not None, 'Set self.current first'
         return self._current
 
     @current.setter
-    def current(self, value: metric_module.MetricsSnapshot) -> None:
+    def current(self, value: pytest_userver.metrics.MetricsSnapshot) -> None:
         self._current = value
         assert self._baseline is not None, 'Set self.baseline first'
         self._diff = _subtract_metrics_snapshots(
@@ -606,7 +612,7 @@ class MetricsDiffer:
         )
 
     @property
-    def diff(self) -> metric_module.MetricsSnapshot:
+    def diff(self) -> pytest_userver.metrics.MetricsSnapshot:
         assert self._diff is not None, 'Set self.current first'
         return self._diff
 
@@ -616,17 +622,14 @@ class MetricsDiffer:
         add_labels: dict[str, str] | None = None,
         *,
         default: float | None = None,
-    ) -> metric_module.MetricValue:
+    ) -> pytest_userver.metrics.MetricValue:
         """
         Returns a single metric value at the specified path, prepending
         the path provided at construction. If a dict of labels is provided,
-        does en exact match of labels, prepending the labels provided
-        at construction.
+        does en exact match of labels, prepending the labels provided at construction.
 
-        @param subpath Suffix of the metric path; the path provided
-        at construction is prepended
-        @param add_labels Labels that the metric must have in addition
-        to the labels provided at construction
+        @param subpath Suffix of the metric path; the path provided at construction is prepended
+        @param add_labels Labels that the metric must have in addition to the labels provided at construction
         @param default An optional default value in case the metric is missing
         @throws AssertionError if not one metric by path
         """
@@ -641,7 +644,7 @@ class MetricsDiffer:
             labels = {**(self._labels or {}), **(add_labels or {})}
         return self.diff.value_at(path, labels, default=default)
 
-    async def fetch(self) -> metric_module.MetricsSnapshot:
+    async def fetch(self) -> pytest_userver.metrics.MetricsSnapshot:
         """
         Fetches metric values from the service.
         """
@@ -664,11 +667,11 @@ class MetricsDiffer:
 
 
 def _subtract_metrics_snapshots(
-    current: metric_module.MetricsSnapshot,
-    initial: metric_module.MetricsSnapshot,
+    current: pytest_userver.metrics.MetricsSnapshot,
+    initial: pytest_userver.metrics.MetricsSnapshot,
     diff_gauge: bool,
-) -> metric_module.MetricsSnapshot:
-    return metric_module.MetricsSnapshot({
+) -> pytest_userver.metrics.MetricsSnapshot:
+    return pytest_userver.metrics.MetricsSnapshot({
         path: {_subtract_metrics(path, current_metric, initial, diff_gauge) for current_metric in current_group}
         for path, current_group in current.items()
     })
@@ -676,10 +679,10 @@ def _subtract_metrics_snapshots(
 
 def _subtract_metrics(
     path: str,
-    current_metric: metric_module.Metric,
-    initial: metric_module.MetricsSnapshot,
+    current_metric: pytest_userver.metrics.Metric,
+    initial: pytest_userver.metrics.MetricsSnapshot,
     diff_gauge: bool,
-) -> metric_module.Metric:
+) -> pytest_userver.metrics.Metric:
     initial_group = initial.get(path, None)
     if initial_group is None:
         return current_metric
@@ -690,7 +693,7 @@ def _subtract_metrics(
     if initial_metric is None:
         return current_metric
 
-    return metric_module.Metric(
+    return pytest_userver.metrics.Metric(
         labels=current_metric.labels,
         value=_subtract_metric_values(
             current=current_metric,
@@ -702,19 +705,19 @@ def _subtract_metrics(
 
 
 def _subtract_metric_values(
-    current: metric_module.Metric,
-    initial: metric_module.Metric,
+    current: pytest_userver.metrics.Metric,
+    initial: pytest_userver.metrics.Metric,
     diff_gauge: bool,
-) -> metric_module.MetricValue:
-    assert current.type() is not metric_module.MetricType.UNSPECIFIED
-    assert initial.type() is not metric_module.MetricType.UNSPECIFIED
+) -> pytest_userver.metrics.MetricValue:
+    assert current.type() is not pytest_userver.metrics.MetricType.UNSPECIFIED
+    assert initial.type() is not pytest_userver.metrics.MetricType.UNSPECIFIED
     assert current.type() == initial.type()
 
-    if isinstance(current.value, metric_module.Histogram):
-        assert isinstance(initial.value, metric_module.Histogram)
+    if isinstance(current.value, pytest_userver.metrics.Histogram):
+        assert isinstance(initial.value, pytest_userver.metrics.Histogram)
         return _subtract_metric_values_hist(current=current, initial=initial)
     else:
-        assert not isinstance(initial.value, metric_module.Histogram)
+        assert not isinstance(initial.value, pytest_userver.metrics.Histogram)
         return _subtract_metric_values_num(
             current=current,
             initial=initial,
@@ -723,26 +726,28 @@ def _subtract_metric_values(
 
 
 def _subtract_metric_values_num(
-    current: metric_module.Metric,
-    initial: metric_module.Metric,
+    current: pytest_userver.metrics.Metric,
+    initial: pytest_userver.metrics.Metric,
     diff_gauge: bool,
 ) -> float:
     current_value = typing.cast(float, current.value)
     initial_value = typing.cast(float, initial.value)
     should_diff = (
-        current.type() is metric_module.MetricType.RATE or initial.type() is metric_module.MetricType.RATE or diff_gauge
+        current.type() is pytest_userver.metrics.MetricType.RATE
+        or initial.type() is pytest_userver.metrics.MetricType.RATE
+        or diff_gauge
     )
     return current_value - initial_value if should_diff else current_value
 
 
 def _subtract_metric_values_hist(
-    current: metric_module.Metric,
-    initial: metric_module.Metric,
-) -> metric_module.Histogram:
-    current_value = typing.cast(metric_module.Histogram, current.value)
-    initial_value = typing.cast(metric_module.Histogram, initial.value)
+    current: pytest_userver.metrics.Metric,
+    initial: pytest_userver.metrics.Metric,
+) -> pytest_userver.metrics.Histogram:
+    current_value = typing.cast(pytest_userver.metrics.Histogram, current.value)
+    initial_value = typing.cast(pytest_userver.metrics.Histogram, initial.value)
     assert current_value.bounds == initial_value.bounds
-    return metric_module.Histogram(
+    return pytest_userver.metrics.Histogram(
         bounds=current_value.bounds,
         buckets=[t[0] - t[1] for t in zip(current_value.buckets, initial_value.buckets, strict=True)],
         inf=current_value.inf - initial_value.inf,
@@ -1184,7 +1189,12 @@ class Client(ClientWrapper):
 
     async def reset_metrics(self) -> None:
         """
-        Calls `ResetMetric(metric);` for each metric that has such C++ function
+        Calls `ResetMetric(metric);` for each metric that has such C++ function.
+
+        Note that using `reset_metrics()` is discouraged, prefer using a more reliable
+        @ref pytest_userver.client.ClientMonitor.metrics_diff "await monitor_client.metrics_diff()".
+
+        @snippet samples/testsuite-support/tests/test_metrics.py metrics reset
         """
         await self._client.reset_metrics()
 

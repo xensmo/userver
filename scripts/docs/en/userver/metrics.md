@@ -95,6 +95,9 @@ Now the tag could be used in component constructor to get a reference to the
 
 @snippet samples/tcp_full_duplex_service/main.cpp  TCP sample - constructor
 
+Note that using `reset_metrics()` is discouraged, prefer using a more reliable
+@ref pytest_userver.client.ClientMonitor.metrics_diff "await monitor_client.metrics_diff()".
+
 See also @ref scripts/docs/en/userver/tutorial/tcp_full.md for a complete example.
 
 
@@ -202,6 +205,22 @@ Key scenarios where such metrics are useful:
 Prefer testing metrics in unit tests if possible. Otherwise, metrics could be tested in testsuite, see
 @ref TESTSUITE_METRICS_TESTING "Metrics testing in testsuite".
 
+**Short Examples for the Impatient**:
+
+- Retrieve specific service metric by path and (optionally) labels:
+  @snippet samples/testsuite-support/tests/test_metrics.py metrics single_metric
+
+- Retrieve array of metrics by path prefix and (optionally) labels:
+  @snippet samples/testsuite-support/tests/test_metrics.py metrics metrics
+
+- Retrieve specific service metric by path and (optionally) labels or `None` if no such metric:
+  @snippet samples/testsuite-support/tests/test_metrics.py metrics single_metric_optional
+
+- Diff of metrics:
+  @snippet samples/testsuite-support/tests/test_metrics.py metrics diff
+
+- Reset metrics (discouraged):
+  @snippet samples/testsuite-support/tests/test_metrics.py metrics reset
 
 ----------
 

@@ -18,6 +18,8 @@ struct Bucket;
 struct Access;
 }  // namespace impl::histogram
 
+/// @ingroup userver_universal
+///
 /// @brief The non-owning reader API for "histogram" metrics.
 ///
 /// @see utils::statistics::Histogram for details on semantics

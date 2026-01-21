@@ -13,10 +13,12 @@ namespace utils::statistics {
 
 class Writer;
 
+/// @ingroup userver_universal
+///
 /// @brief Atomic counter of type Rate with relaxed memory ordering
 ///
 /// This class is represented as Rate metric when serializing to statistics.
-/// Otherwise it is the same class as RelaxedCounter
+/// Otherwise it is the same class as @ref utils::statistics::RelaxedCounter.
 class RateCounter final {
 public:
     using ValueType = Rate;

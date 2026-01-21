@@ -18,6 +18,8 @@ namespace impl::histogram {
 struct BoundsBlock;
 }  // namespace impl::histogram
 
+/// @ingroup userver_universal
+///
 /// @brief A histogram with a dynamically-allocated array of buckets.
 ///
 /// ## Histogram metrics
