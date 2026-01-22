@@ -90,8 +90,20 @@ bool SharedMutex::try_lock_until(Deadline deadline) {
 bool SharedMutex::try_lock() { return try_lock_until(Deadline::Passed()); }
 
 void SharedMutex::lock_shared() {
-    const bool locked = try_lock_shared_until(Deadline{});
-    UASSERT(locked);
+    WaitForNoRegisteredWriters(Deadline{});
+    /*
+     * There is a deliberate TOCTOU race between "wait for no writers" and
+     * "ok, now let's lock" - it's just a cheap way to avoid writers starvation.
+     * If one or two readers sneak just before a writer out of turn,
+     * we just don't care.
+     *
+     * Also we do not track possible blocking wait on semaphore in deadlock detector.
+     * An attempt to track it there may lead to a false deadlock.
+     */
+    semaphore_.lock_shared();
+
+    auto& dd_state = deadlock_detector::GetState();
+    dd_state.OnReentrantResourceAcquire(current_task::GetCurrentTaskContext(), mutex_actor_);
 }
 
 void SharedMutex::unlock_shared() {
@@ -124,16 +136,9 @@ bool SharedMutex::try_lock_shared_until(Deadline deadline) {
         return false;
     }
 
-    /*
-     * There is a deliberate TOCTOU race between "wait for no writers" and
-     * "ok, now let's lock" - it's just a cheap way to avoid writers starvation.
-     * If one or two readers sneak just before a writer out of turn,
-     * we just don't care.
-     */
-    while (!semaphore_.try_lock_shared()) {
-        if (!WaitForNoRegisteredWriters(deadline)) {
-            return false;
-        }
+    /* Same deliberate race, see comment in lock_shared() */
+    if (!semaphore_.try_lock_shared_until(deadline)) {
+        return false;
     }
     auto& dd_state = deadlock_detector::GetState();
     dd_state.OnReentrantResourceAcquire(current_task::GetCurrentTaskContext(), mutex_actor_);
