@@ -7,6 +7,8 @@
 #include <string_view>
 #include <type_traits>
 
+#include <fmt/format.h>
+
 #include <userver/utils/assert.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -112,3 +114,35 @@ private:
 }  // namespace utils::statistics
 
 USERVER_NAMESPACE_END
+
+template <>
+struct fmt::formatter<USERVER_NAMESPACE::utils::statistics::LabelView> {
+    constexpr static auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename FormatContext>
+    auto format(USERVER_NAMESPACE::utils::statistics::LabelView value, FormatContext& ctx) const {
+        return fmt::format_to(ctx.out(), "{}={}", value.Name(), value.Value());
+    }
+};
+
+template <>
+struct fmt::formatter<USERVER_NAMESPACE::utils::statistics::Label>
+    : public fmt::formatter<USERVER_NAMESPACE::utils::statistics::LabelView> {
+    template <typename FormatContext>
+    auto format(const USERVER_NAMESPACE::utils::statistics::Label& value, FormatContext& ctx) const {
+        return formatter<USERVER_NAMESPACE::utils::statistics::LabelView>::format(
+            USERVER_NAMESPACE::utils::statistics::LabelView{value},
+            ctx
+        );
+    }
+};
+
+template <>
+struct fmt::formatter<USERVER_NAMESPACE::utils::statistics::LabelsSpan> {
+    constexpr static auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    fmt::format_context::iterator format(
+        USERVER_NAMESPACE::utils::statistics::LabelsSpan value,
+        fmt::format_context& ctx
+    ) const;
+};

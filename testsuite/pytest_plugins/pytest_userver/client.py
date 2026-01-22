@@ -374,7 +374,7 @@ class AiohttpClientMonitor(service_client.AiohttpClient):
         path: str,
         *,
         labels: dict[str, str] | None = None,
-    ) -> Metric | None:
+    ) -> pytest_userver.metrics.Metric | None:
         response = await self.metrics(path=path, labels=labels)
         metrics_list = response.get(path, [])
 
@@ -390,7 +390,7 @@ class AiohttpClientMonitor(service_client.AiohttpClient):
         path: str,
         *,
         labels: dict[str, str] | None = None,
-    ) -> Metric:
+    ) -> pytest_userver.metrics.Metric:
         value = await self.single_metric_optional(path, labels=labels)
         assert value is not None, (f'No metric was found for path {path} and labels {labels}',)
         return value
@@ -470,9 +470,9 @@ class ClientMonitor(ClientWrapper):
         path: str,
         *,
         labels: dict[str, str] | None = None,
-    ) -> Metric | None:
+    ) -> pytest_userver.metrics.Metric | None:
         """
-        Either return a Metric or None if there's no such metric.
+        Either return a pytest_userver.metrics.Metric or None if there's no such metric.
 
         @param path Full metric path
         @param labels Optional dictionary of labels that must be in the metric
@@ -489,9 +489,9 @@ class ClientMonitor(ClientWrapper):
         path: str,
         *,
         labels: dict[str, str] | None = None,
-    ) -> Metric | None:
+    ) -> pytest_userver.metrics.Metric | None:
         """
-        Returns the Metric.
+        Returns the pytest_userver.metrics.Metric.
 
         @param path Full metric path
         @param labels Optional dictionary of labels that must be in the metric
@@ -510,13 +510,13 @@ class ClientMonitor(ClientWrapper):
         path: str | None = None,
         prefix: str | None = None,
         labels: dict[str, str] | None = None,
-    ) -> dict[str, Metric]:
+    ) -> dict[str, pytest_userver.metrics.Metric]:
         """
         Low level function that returns metrics in a specific format.
         Use `metrics` and `single_metric` instead if possible.
 
-        @param output_format Metric output format. See
-               server::handlers::ServerMonitor for a list of supported formats.
+        @param output_format pytest_userver.metrics.Metric output format. See
+               @ref server::handlers::ServerMonitor for a list of supported formats.
         @param path Optional full metric path
         @param prefix Optional prefix on which the metric paths should start
         @param labels Optional dictionary of labels that must be in the metric

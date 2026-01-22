@@ -112,7 +112,7 @@ void DoRecv(engine::io::Socket& sock, Queue::Producer producer, Stats& stats) {
 void Echo::ProcessSocket(engine::io::Socket&& sock) {
     const auto sock_num = ++stats_.opened_sockets;
 
-    tracing::Span span{fmt::format("sock_{}", sock_num.Load())};
+    tracing::Span span{fmt::format("sock_{}", sock_num)};
     span.AddTag("fd", std::to_string(sock.Fd()));
 
     const utils::FastScopeGuard guard{[this]() noexcept {

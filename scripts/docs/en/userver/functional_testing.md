@@ -439,7 +439,7 @@ and used like:
 
 the metrics could be checked in the following way:
 
-@snippet testsuite/tests/metrics/test_metrics.py  metrics diff
+@snippet samples/testsuite-support/tests/test_metrics.py  metrics diff
 
 For metrics with labels, they could be retrieved in the following way:
 

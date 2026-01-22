@@ -7,6 +7,8 @@
 #include <type_traits>
 #include <variant>
 
+#include <fmt/format.h>
+
 #include <userver/utils/statistics/histogram_view.hpp>
 #include <userver/utils/statistics/rate.hpp>
 
@@ -85,3 +87,14 @@ private:
 }  // namespace utils::statistics
 
 USERVER_NAMESPACE_END
+
+template <>
+class fmt::formatter<USERVER_NAMESPACE::utils::statistics::MetricValue> {
+public:
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename FormatContext>
+    auto format(USERVER_NAMESPACE::utils::statistics::MetricValue value, FormatContext& ctx) const {
+        return value.Visit([&ctx](auto x) { return fmt::format_to(ctx.out(), "{}", x); });
+    }
+};

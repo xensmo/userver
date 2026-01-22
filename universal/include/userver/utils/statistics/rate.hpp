@@ -5,6 +5,8 @@
 
 #include <cstdint>
 
+#include <fmt/format.h>
+
 USERVER_NAMESPACE_BEGIN
 
 namespace utils::statistics {
@@ -58,3 +60,14 @@ inline Rate operator+(Rate first, Rate second) noexcept { return Rate{first.valu
 }  // namespace utils::statistics
 
 USERVER_NAMESPACE_END
+
+template <>
+class fmt::formatter<USERVER_NAMESPACE::utils::statistics::Rate> {
+public:
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename FormatCtx>
+    auto format(const USERVER_NAMESPACE::utils::statistics::Rate& rate, FormatCtx& ctx) const {
+        return fmt::format_to(ctx.out(), "{}", rate.value);
+    }
+};
