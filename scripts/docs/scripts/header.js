@@ -5,9 +5,6 @@ function loadVersions() {
     return import('/versions.js').then((imported_versions_module) => {
         versions = imported_versions_module.versions
         return versions
-    }
-    ).catch(() => {
-        console.log("Versions loading failed")
     });
 }
 
@@ -198,11 +195,13 @@ const add_docs_versioning = () => {
 
         footer.innerHTML = footer_prefix + footer_infix
             + footer.innerHTML;
-    })
+    }).catch((e) => {
+        console.log("Versions file unreachable. Details: " + e);
+    });
 
 }
 
-const init_header = () => {
+export const init_header = () => {
     addModal();
     create_nav_wrapper();
     remove_legacy_searchbox();

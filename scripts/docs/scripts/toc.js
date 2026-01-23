@@ -1,5 +1,3 @@
-import { LandingFeedback, PageFeedback } from "./feedback.js";
-
 const LOWER_CASE_TRANSLITTERATION_MAPPING = {
   а: "a",
   б: "b",
@@ -48,7 +46,7 @@ function make_id(raw_id) {
     .replace(/\W/g, "");
 }
 
-function draw_toc() {
+export function draw_toc() {
   const headers = document.querySelectorAll(
     ".contents h1, .contents h2, .contents h3, .contents h4, .contents h5, .contents h6"
   );
@@ -103,17 +101,3 @@ function draw_toc() {
 
   document.getElementById("MSearchResultsWindow").after(toc_additions);
 }
-
-document.addEventListener("DOMContentLoaded", function (event) {
-  setTimeout(() => {
-    const isLanding = document.getElementById("landing_logo_id") !== null;
-
-    if (isLanding) {
-      LandingFeedback.init();
-    } else {
-      draw_toc();
-      DoxygenAwesomeInteractiveToc.init();
-      PageFeedback.init();
-    }
-  }, 0);
-});
