@@ -64,7 +64,7 @@ void Finish(
 
     switch (wait_status) {
         case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kOk:
-            state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
+            state.GetStatsScope().SetFinishTime(invocation.GetNotifyTime());
             try {
                 ugrpc::impl::ClampStatusCodeToValidRange(state.GetStatus());
                 ProcessFinish(state, state.GetStatus(), final_response);
@@ -81,7 +81,7 @@ void Finish(
             break;
 
         case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kError:
-            state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
+            state.GetStatsScope().SetFinishTime(invocation.GetNotifyTime());
             ProcessNetworkError(state, "Finish");
             if (throw_on_error) {
                 ThrowIfDeadlineIsExceeded(state.GetClientContext(), state.GetCallName());
@@ -116,7 +116,7 @@ void FinishAbandoned(GrpcStream& stream, StreamingCallState& state) noexcept try
     stream.Finish(&state.GetStatus(), invocation.GetCompletionTag());
     const auto ok = invocation.WaitNonCancellable();
 
-    state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
+    state.GetStatsScope().SetFinishTime(invocation.GetNotifyTime());
 
     if (ok) {
         ugrpc::impl::ClampStatusCodeToValidRange(state.GetStatus());
