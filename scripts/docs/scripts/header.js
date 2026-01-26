@@ -3,8 +3,7 @@ const NONE_VERSION = "none"
 
 function loadVersions() {
     return import('/versions.js').then((imported_versions_module) => {
-        versions = imported_versions_module.versions
-        return versions
+        return imported_versions_module.versions
     });
 }
 
@@ -181,7 +180,7 @@ const add_docs_versioning = () => {
             footer_infix += `<a href="/index.html">${TRUNK_VERSION}</a>, `
         }
 
-        not_trunk_versions = [latest_version, second_likely_popular_version]
+        const not_trunk_versions = [latest_version, second_likely_popular_version]
 
         for (let version of not_trunk_versions) {
             if (current_version != version) {

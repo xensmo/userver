@@ -23,17 +23,40 @@ const addLinks = () =>  {
     document.getElementById('main-navbar').appendChild(links);
 }
 
-// All the `search` scripts start working only after window.onload(). Postponing search box adjustments
-window.onload = function (event) {
+function waitForElm(selector) {
+    return new Promise(resolve => {
+        if (document.querySelector(selector)) {
+            return resolve(document.querySelector(selector));
+        }
+
+        const observer = new MutationObserver(mutations => {
+            if (document.querySelector(selector)) {
+                observer.disconnect();
+                resolve(document.querySelector(selector));
+            }
+        });
+
+        /* If you get "parameter 1 is not of type 'Node'" error, see https://stackoverflow.com/a/77855838/492336 */
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+}
+
+waitForElm('#MSearchField').then((elm) => {
     init_all_results_button();
     init_search_hotkey();
     init_search_observer();
 
-    init_header();
+    /* Following actions require '#MSearchField' AND 'doxygen-awesome-dark-mode-toggle' */
+    waitForElm('doxygen-awesome-dark-mode-toggle').then((elm) => {
+        init_header();
 
-    addLinks();
-    changeTelegramChannelLanguageForRussianSpeakingUser();
-};
+        addLinks();
+        changeTelegramChannelLanguageForRussianSpeakingUser();
+    });
+});
 
 const isLanding = document.getElementById('landing_logo_id') !== null;
 if (isLanding) {
