@@ -10,6 +10,7 @@
 #include <userver/ugrpc/client/impl/async_method_invocation.hpp>
 #include <userver/ugrpc/client/impl/async_methods.hpp>
 #include <userver/ugrpc/client/impl/call_state.hpp>
+#include <userver/ugrpc/impl/status_utils.hpp>
 #include <userver/ugrpc/time_utils.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -65,6 +66,7 @@ void Finish(
         case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kOk:
             state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
             try {
+                ugrpc::impl::ClampStatusCodeToValidRange(state.GetStatus());
                 ProcessFinish(state, state.GetStatus(), final_response);
             } catch (const std::exception& ex) {
                 if (throw_on_error) {
@@ -117,6 +119,7 @@ void FinishAbandoned(GrpcStream& stream, StreamingCallState& state) noexcept try
     state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
 
     if (ok) {
+        ugrpc::impl::ClampStatusCodeToValidRange(state.GetStatus());
         ProcessFinishAbandoned(state, state.GetStatus());
     } else {
         ProcessNetworkError(state, "Finish");

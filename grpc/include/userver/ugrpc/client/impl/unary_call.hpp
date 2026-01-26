@@ -22,6 +22,7 @@
 #include <userver/ugrpc/client/impl/retry_policy.hpp>
 #include <userver/ugrpc/client/impl/tracing.hpp>
 #include <userver/ugrpc/impl/async_method_invocation.hpp>
+#include <userver/ugrpc/impl/status_utils.hpp>
 #include <userver/ugrpc/status_codes.hpp>
 #include <userver/ugrpc/time_utils.hpp>
 
@@ -157,6 +158,8 @@ private:
             // Do not attempt further operations on the RPC.
             return AttemptCompletionStatus::kError;
         }
+
+        ugrpc::impl::ClampStatusCodeToValidRange(status_);
 
         RunFinishHooks(status_);
 
