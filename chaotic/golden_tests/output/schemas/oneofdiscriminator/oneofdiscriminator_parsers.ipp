@@ -1,7 +1,5 @@
 #pragma once
 
-#include "oneofdiscriminator.hpp"
-
 #include <userver/chaotic/object.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
@@ -11,6 +9,8 @@
 #include <userver/formats/serialize/common_containers.hpp>
 #include <userver/utils/trivial_map.hpp>
 
+#include "oneofdiscriminator.hpp"
+
 namespace ns {
 
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__A_PropertiesNames = [](auto selector) {
@@ -18,11 +18,11 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__A_PropertiesNames =
 };
 
 template <typename Value>
-::ns::A Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::A>) {
+A Parse(Value value, USERVER_NAMESPACE::formats::parse::To<A>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::A res;
+    A res;
 
     res.type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
     res.a_prop = value["a_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
@@ -37,11 +37,11 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__B_PropertiesNames =
 };
 
 template <typename Value>
-::ns::B Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::B>) {
+B Parse(Value value, USERVER_NAMESPACE::formats::parse::To<B>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::B res;
+    B res;
 
     res.type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
     res.b_prop = value["b_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
@@ -56,11 +56,11 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__C_PropertiesNames =
 };
 
 template <typename Value>
-::ns::C Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::C>) {
+C Parse(Value value, USERVER_NAMESPACE::formats::parse::To<C>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::C res;
+    C res;
 
     res.version = value["version"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
 
@@ -74,11 +74,11 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__D_PropertiesNames =
 };
 
 template <typename Value>
-::ns::D Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::D>) {
+D Parse(Value value, USERVER_NAMESPACE::formats::parse::To<D>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::D res;
+    D res;
 
     res.version = value["version"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
 
@@ -91,18 +91,18 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__IntegerOneOfDiscrim
     [](auto selector) { return selector().template Type<std::string_view>().Case("foo"); };
 
 template <typename Value>
-::ns::IntegerOneOfDiscriminator
-Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::IntegerOneOfDiscriminator>) {
+IntegerOneOfDiscriminator Parse(Value value, USERVER_NAMESPACE::formats::parse::To<IntegerOneOfDiscriminator>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::IntegerOneOfDiscriminator res;
+    IntegerOneOfDiscriminator res;
 
-    res.foo = value["foo"]
-                  .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
-                      &::ns::IntegerOneOfDiscriminator::kFoo_Settings,
-                      USERVER_NAMESPACE::chaotic::Primitive<::ns::C>,
-                      USERVER_NAMESPACE::chaotic::Primitive<::ns::D>>>>();
+    res.foo =
+        value["foo"]
+            .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
+                &::ns::IntegerOneOfDiscriminator::kFoo_Settings,
+                USERVER_NAMESPACE::chaotic::Primitive<::ns::C>,
+                USERVER_NAMESPACE::chaotic::Primitive<::ns::D>>>>();
 
     USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__IntegerOneOfDiscriminator_PropertiesNames);
 
@@ -114,17 +114,18 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__OneOfDiscriminator_
 };
 
 template <typename Value>
-::ns::OneOfDiscriminator Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::OneOfDiscriminator>) {
+OneOfDiscriminator Parse(Value value, USERVER_NAMESPACE::formats::parse::To<OneOfDiscriminator>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::OneOfDiscriminator res;
+    OneOfDiscriminator res;
 
-    res.foo = value["foo"]
-                  .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
-                      &::ns::OneOfDiscriminator::kFoo_Settings,
-                      USERVER_NAMESPACE::chaotic::Primitive<::ns::A>,
-                      USERVER_NAMESPACE::chaotic::Primitive<::ns::B>>>>();
+    res.foo =
+        value["foo"]
+            .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
+                &::ns::OneOfDiscriminator::kFoo_Settings,
+                USERVER_NAMESPACE::chaotic::Primitive<::ns::A>,
+                USERVER_NAMESPACE::chaotic::Primitive<::ns::B>>>>();
 
     USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__OneOfDiscriminator_PropertiesNames);
 
@@ -132,4 +133,3 @@ template <typename Value>
 }
 
 }  // namespace ns
-

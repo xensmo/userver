@@ -1,7 +1,5 @@
 #pragma once
 
-#include "allof.hpp"
-
 #include <userver/chaotic/object.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
@@ -10,6 +8,8 @@
 #include <userver/formats/parse/common_containers.hpp>
 #include <userver/formats/serialize/common_containers.hpp>
 #include <userver/utils/trivial_map.hpp>
+
+#include "allof.hpp"
 
 namespace ns {
 
@@ -26,11 +26,11 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__AllOf_PropertiesNam
 };
 
 template <typename Value>
-::ns::AllOf::Foo__P0 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::AllOf::Foo__P0>) {
+AllOf::Foo__P0 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P0>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::AllOf::Foo__P0 res;
+    AllOf::Foo__P0 res;
 
     res.foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
 
@@ -41,11 +41,11 @@ template <typename Value>
 }
 
 template <typename Value>
-::ns::AllOf::Foo__P1 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::AllOf::Foo__P1>) {
+AllOf::Foo__P1 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P1>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::AllOf::Foo__P1 res;
+    AllOf::Foo__P1 res;
 
     res.bar = value["bar"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
 
@@ -56,16 +56,16 @@ template <typename Value>
 }
 
 template <typename Value>
-::ns::AllOf::Foo Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::AllOf::Foo>) {
-    return ::ns::AllOf::Foo(value.template As<::ns::AllOf::Foo__P0>(), value.template As<::ns::AllOf::Foo__P1>());
+AllOf::Foo Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo>) {
+    return AllOf::Foo(value.template As<AllOf::Foo__P0>(), value.template As<AllOf::Foo__P1>());
 }
 
 template <typename Value>
-::ns::AllOf Parse(Value value, USERVER_NAMESPACE::formats::parse::To<::ns::AllOf>) {
+AllOf Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf>) {
     value.CheckNotMissing();
     value.CheckObjectOrNull();
 
-    ::ns::AllOf res;
+    AllOf res;
 
     res.foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::AllOf::Foo>>>();
 
@@ -75,4 +75,3 @@ template <typename Value>
 }
 
 }  // namespace ns
-
