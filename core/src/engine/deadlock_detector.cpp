@@ -204,12 +204,28 @@ void StateBase::OnResourceAcquire(const Actor& owner, const Actor& resource) {
     AddDependency(resource, owner, false);
 }
 
+void StateBase::OnResourceAcquire(const Actor& resource) {
+    if (!impl_->enabled) {
+        return;
+    }
+    // Resource release is dependent on the owner
+    AddDependency(resource, current_task::GetCurrentTaskContext(), false);
+}
+
 void StateBase::OnReentrantResourceAcquire(const Actor& owner, const Actor& resource) {
     if (!impl_->enabled) {
         return;
     }
     // Resource release is dependent on the owner
     AddDependency(resource, owner, true);
+}
+
+void StateBase::OnReentrantResourceAcquire(const Actor& resource) {
+    if (!impl_->enabled) {
+        return;
+    }
+    // Resource release is dependent on the owner
+    AddDependency(resource, current_task::GetCurrentTaskContext(), true);
 }
 
 void StateBase::OnResourceRelease(const Actor& owner, const Actor& resource) noexcept {
@@ -219,6 +235,13 @@ void StateBase::OnResourceRelease(const Actor& owner, const Actor& resource) noe
     RemoveDependency(resource, owner);
 }
 
+void StateBase::OnResourceRelease(const Actor& resource) noexcept {
+    if (!impl_->enabled) {
+        return;
+    }
+    RemoveDependency(resource, current_task::GetCurrentTaskContext());
+}
+
 void StateBase::OnWaitForResourceStart(const Actor& waiting, const Actor& resource) {
     if (!impl_->enabled) {
         return;
@@ -226,11 +249,25 @@ void StateBase::OnWaitForResourceStart(const Actor& waiting, const Actor& resour
     AddDependency(waiting, resource, false);
 }
 
+void StateBase::OnWaitForResourceStart(const Actor& resource) {
+    if (!impl_->enabled) {
+        return;
+    }
+    AddDependency(current_task::GetCurrentTaskContext(), resource, false);
+}
+
 void StateBase::OnWaitForResourceFinish(const Actor& waiting, const Actor& resource) noexcept {
     if (!impl_->enabled) {
         return;
     }
     RemoveDependency(waiting, resource);
+}
+
+void StateBase::OnWaitForResourceFinish(const Actor& resource) noexcept {
+    if (!impl_->enabled) {
+        return;
+    }
+    RemoveDependency(current_task::GetCurrentTaskContext(), resource);
 }
 
 void StateBase::OnActorDestroy(const Actor& actor) {
@@ -266,12 +303,12 @@ WaitScope::WaitScope(const engine::impl::deadlock_detector::Actor& resource)
     : resource_(resource)
 {
     auto& dd_state = GetState();
-    dd_state.OnWaitForResourceStart(current_task::GetCurrentTaskContext(), resource_);
+    dd_state.OnWaitForResourceStart(resource_);
 }
 
 WaitScope::~WaitScope() {
     auto& dd_state = GetState();
-    dd_state.OnWaitForResourceFinish(current_task::GetCurrentTaskContext(), resource_);
+    dd_state.OnWaitForResourceFinish(resource_);
 }
 
 }  // namespace engine::deadlock_detector
