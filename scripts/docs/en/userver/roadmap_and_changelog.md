@@ -26,14 +26,44 @@ Changelog news also go to the
 * ✔️ Improved Conan support.
 * ✔️ SQLite driver
 * ✔️ Web interface for the [uservice-dynconf](https://github.com/userver-framework/uservice-dynconf)
-* ✔️ Retry budget plugin for HTTP clients clients::http::plugins::retry_budget::Component.
+* ✔️ Retry budget middleware for HTTP clients @ref clients::http::middlewares::retry_budget::Component.
 * 👨‍💻 gRPC simplification and functionality improvement.
 * 👨‍💻 Generate full-blown accessories for OpenAPI:
   * clients
   * handlers
+* New experimental HTTP client on top of Boost.Beast instead of `libcurl`.
+* Drop C++17 support.
 
 
 ## Changelog
+
+### Release v2.15
+
+* **Support of C++17 is deprecated and will be removed in one on the next releases**. C++20 is the default for
+  userver for quite some time. Use C++20 or even a more modern C++.
+* Deadlock detector is now enabled by default in testsuite runs. The behavior can be changed by overriding the
+  @ref pytest_userver.plugins.config.userver_deadlock_detector_mode() fixture.
+* Redis driver internals were rewritten to remove duplicate code in `Sentinel`/`ClusterImpl`, simplify inheritance and
+  reduce binary size.
+* New `pull-pin-task-queue` experimental scheduler where each task gets pinned to a thread-specific
+  queue and is executed only in that thread. See static config option 'task-processor-queue' of the
+  @ref components::ManagerControllerComponent for more info.
+* Drastically reduced memory usage by @ref components::Redis statistics/metrics in case of network topology changes or
+  multiple Valkey/Redis nodes going down.
+* Stacktrace capturing via `boost::stacktrace` / `std::stacktrace` in Boost.Context became more than x50 faster on
+  LLVM version of `libunwind`. Other unwinding libraries could have also gained profit.
+* gRPC now clamps status codes outside the valid `[0, 16]` range to `UNKNOWN`.
+* More docs for the @ref USERVER_LOG_DYNAMIC_DEBUG, logging macros and @ref engine::SharedMutex.
+* Documented the metrics testing and creation. See @ref scripts/docs/en/userver/metrics.md
+* Added `use_secure_connection` static config option for @ref storages::mysql::Component.
+  Many thanks to [Yury Bogomolov](https://github.com/ybogo) for the PR.
+* Workaround `+=` use for `std::atomic<double>` for llvm-17/libc++. Many thanks to
+  [Alexander Chernov](https://github.com/blackav) for the PR.
+* Added missing `<ctime>` include. Many thanks to [Alexander Chernov](https://github.com/blackav) for the PR.
+* Added missing `<iterator>` include. Many thanks to [Alexander Chernov](https://github.com/blackav) for the PR.
+* Added missing `<fmt/ranges.h>` include. Many thanks to [Taras Litvinenko](https://github.com/xensmo) for the PR.
+* Fixed flapping YDB tests. Many thanks to [Bulat Gayazov](https://github.com/Gazizonoki) for the PR!
+
 
 ### Release v2.14
 
