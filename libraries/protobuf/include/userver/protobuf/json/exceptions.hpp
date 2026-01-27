@@ -106,7 +106,7 @@ public:
 
     /// @brief Creates error for invalid json/protobuf field identified by @a path .
     /// See @ref ConversionErrorInfo::ConversionErrorInfo for more information about @a path format.
-    ConversionError(ErrorCodeType code, std::string path);
+    ConversionError(ErrorCodeType code, std::string path, std::string_view description = "");
 
     /// @brief Returns information about occurred error.
     [[nodiscard]] const ErrorInfoType& GetErrorInfo() const& noexcept { return error_info_; }

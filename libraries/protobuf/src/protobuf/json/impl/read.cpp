@@ -419,7 +419,7 @@ template <typename T, typename TString>
         }
     }
 
-    throw FieldError(ParseErrorCode::kInvalidValue);
+    throw FieldError(ParseErrorCode::kInvalidValue, "can't convert string to number");
 }
 
 [[nodiscard]] std::optional<int> StringToEnumValue(
@@ -440,7 +440,7 @@ template <typename T, typename TString>
         if (result) {
             return result.value();
         } else {
-            throw FieldError(ParseErrorCode::kInvalidValue);
+            throw FieldError(ParseErrorCode::kInvalidValue, "can't convert string to enum value");
         }
     }
 
@@ -457,7 +457,7 @@ template <typename T, typename TString>
     const std::string_view prefix
 ) {
     if ((str.size() < digit_count + prefix.size()) || !StartsWith(str, prefix)) {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(ParseErrorCode::kInvalidValue, "invalid time format");
     }
 
     str.remove_prefix(prefix.size());
@@ -468,7 +468,7 @@ template <typename T, typename TString>
             result *= 10;
             result += str[i] - '0';
         } else {
-            throw FieldError(ParseErrorCode::kInvalidValue);
+            throw FieldError(ParseErrorCode::kInvalidValue, "digit is expected");
         }
     }
 
@@ -495,7 +495,7 @@ template <typename T, typename TString>
     }
 
     if (digit_count == 0 || digit_count > 9) {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(ParseErrorCode::kInvalidValue, "invalid number of digits in nanoseconds part of the time");
     }
 
     nanos = StringToNumber<std::uint32_t>(str.substr(0, digit_count));
@@ -535,9 +535,11 @@ template <typename T, typename TString>
 template <typename T>
 [[nodiscard]] T ReadNumber(const formats::json::Value& value) {
     ParseErrorCode error_code = ParseErrorCode::kInvalidType;
+    std::string_view error_description = "";
 
     if (value.IsNumber()) {
         error_code = ParseErrorCode::kInvalidValue;
+        error_description = "number does not fit to a protobuf integer/float field";
 
         if constexpr (std::is_same_v<T, std::int32_t>) {
             if (value.IsInt()) {
@@ -579,7 +581,7 @@ template <typename T>
         return StringToNumber<T>(str);
     }
 
-    throw FieldError(error_code);
+    throw FieldError(error_code, error_description);
 }
 
 [[nodiscard]] bool ReadBool(const formats::json::Value& value) {
@@ -605,7 +607,7 @@ template <typename T>
         if (crypto::base64::Base64UniversalDecodeInPlace(data)) {
             return data;
         } else {
-            throw FieldError(ParseErrorCode::kInvalidValue);
+            throw FieldError(ParseErrorCode::kInvalidValue, "failed to decode base64");
         }
     } else {
         throw FieldError(ParseErrorCode::kInvalidType);
@@ -671,7 +673,10 @@ void ReadField(
             if (!field_desc.is_repeated() || field_desc.is_map()) {
                 return;
             } else {
-                throw FieldError(ParseErrorCode::kInvalidValue);
+                throw FieldError(
+                    ParseErrorCode::kInvalidValue,
+                    "array contains null which is prohibited for protobuf repeated fields"
+                );
             }
         }
     }
@@ -853,7 +858,7 @@ void ReadMapField(
                     } else if (name == "false") {
                         item_reflection.SetBool(&item_message, &key_desc, false);
                     } else {
-                        throw FieldError(ParseErrorCode::kInvalidValue);
+                        throw FieldError(ParseErrorCode::kInvalidValue, "failed to convert string to bool");
                     }
 
                     break;
@@ -954,7 +959,10 @@ void ReadAnyMessage(
     }
 
     if (!json.HasMember("@type")) {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(
+            ParseErrorCode::kInvalidValue,
+            "json object must contain '@type' to be converted to 'google.protobuf.Any'"
+        );
     }
 
     const auto type_url_json = json["@type"];
@@ -962,14 +970,14 @@ void ReadAnyMessage(
     if (!type_url_json.IsString()) {
         // throwing 'kInvalidValue', not 'kInvalidType' because JSON field type here is
         // mapped to 'google.protobuf.Any' itself
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(ParseErrorCode::kInvalidValue, "'@type' field is not a string");
     }
 
     std::string type_url = type_url_json.As<std::string>();
     const auto payload_desc = FindMessageDescByTypeUrl(*message.GetDescriptor()->file()->pool(), type_url);
 
     if (!payload_desc) {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(ParseErrorCode::kInvalidValue, "descriptor identified by '@type' is not found");
     }
 
     ::google::protobuf::DynamicMessageFactory factory;
@@ -995,7 +1003,7 @@ void ReadAnyMessage(
                 // taking first unknown field
                 for (const auto& [name, value] : formats::common::Items(json)) {
                     if (name != "@type" && name != "value") {
-                        throw FieldError(ParseErrorCode::kUnknownField, name);
+                        throw FieldError(ParseErrorCode::kUnknownField, "", name);
                     }
                 }
 
@@ -1039,7 +1047,7 @@ void ReadDurationMessage(const formats::json::Value& json, ::google::protobuf::M
     std::int32_t nanos = TakeNanos(unparsed_str);
 
     if (unparsed_str != "s") {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(ParseErrorCode::kInvalidValue, "duration does not end with 's'");
     }
 
     UASSERT(!seconds_str.empty());
@@ -1053,7 +1061,10 @@ void ReadDurationMessage(const formats::json::Value& json, ::google::protobuf::M
         reflection.SetInt64(&message, &seconds_desc, seconds);
         reflection.SetInt32(&message, &nanos_desc, nanos);
     } else {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(
+            ParseErrorCode::kInvalidValue,
+            "duration's seconds/nanos combination is invalid or represents out of bounds value"
+        );
     }
 }
 
@@ -1085,7 +1096,7 @@ void ReadTimestampMessage(const formats::json::Value& json, ::google::protobuf::
     const std::int32_t nanos = TakeNanos(unparsed_str);
 
     if (unparsed_str.empty()) {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(ParseErrorCode::kInvalidValue, "timestamp does not contain timezone information");
     }
 
     bool is_negative_offset = false;
@@ -1110,7 +1121,7 @@ void ReadTimestampMessage(const formats::json::Value& json, ::google::protobuf::
     }
 
     if (!unparsed_str.empty()) {
-        throw FieldError(ParseErrorCode::kInvalidValue);
+        throw FieldError(ParseErrorCode::kInvalidValue, "unexpected timestamp suffix");
     }
 
     reflection.SetInt64(&message, &seconds_desc, seconds_since_epoch);
@@ -1149,7 +1160,7 @@ void ReadFieldMaskMessage(const formats::json::Value& json, ::google::protobuf::
             path.push_back('_');
             path.push_back(ascii_tolower(c));
         } else {
-            throw FieldError(ParseErrorCode::kInvalidValue);
+            throw FieldError(ParseErrorCode::kInvalidValue, "field mask path contains unexpected symbol");
         }
     }
 
@@ -1347,25 +1358,22 @@ void ReadBytesValueMessage(const formats::json::Value& json, ::google::protobuf:
 
 }  // namespace
 
-void ReadMessage(
-    const formats::json::Value& json,
-    ::google::protobuf::Message& message,
-    const ParseOptions& options
-) try
-{
+void ReadMessage(const formats::json::Value& json, ::google::protobuf::Message& message, const ParseOptions& options) {
     json.CheckNotMissing();
     message.Clear();
     const auto read = GetReadMessageFunc(message.GetDescriptor()->full_name());
 
-    if (read == &ReadGeneralMessage && json.IsNull()) {
-        // null JSON can be used only for some well-known types
-        // ('google.protobuf.Duration', 'google.protobuf.Struct', etc.))
-        throw FieldError(ParseErrorCode::kInvalidType);
-    }
+    try {
+        if (read == &ReadGeneralMessage && json.IsNull()) {
+            // null JSON can be used only for some well-known types
+            // ('google.protobuf.Duration', 'google.protobuf.Struct', etc.))
+            throw FieldError(ParseErrorCode::kInvalidType, "top-level null can't be converted to a protobuf message");
+        }
 
-    read(json, message, options);
-} catch (FieldError& error) {
-    throw ParseError(error.GetCode<ParseErrorCode>(), std::move(error).GetPath());
+        read(json, message, options);
+    } catch (const FieldError& error) {
+        throw ParseError(error.GetCode<ParseErrorCode>(), error.GetPath(), error.GetDescription());
+    }
 }
 
 }  // namespace protobuf::json::impl

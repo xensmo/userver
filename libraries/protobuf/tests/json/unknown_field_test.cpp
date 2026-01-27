@@ -89,36 +89,36 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         UnkownJsonFieldRejectedTestParam{
             R"({
-              "unknown_field": true,
+              "unknown.field": true,
               "field1":{"field1":"aaa"},
               "field2":[{"field1":"item1"}],
               "field3":{"1":{"field1":"value1"}}
             })",
-            "unknown_field"
+            "'unknown.field'"
         },
         UnkownJsonFieldRejectedTestParam{
             R"({
-              "field1":{"field1":"aaa","unknown_field":true},
+              "field1":{"field1":"aaa","unknown.field":true},
               "field2":[{"field1":"item1"}],
               "field3":{"1":{"field1":"value1"}}
             })",
-            "field1.unknown_field"
+            "field1.'unknown.field'"
         },
         UnkownJsonFieldRejectedTestParam{
             R"({
               "field1":{"field1":"aaa"},
-              "field2":[{"field1":"item1","unknown_field":true}],
+              "field2":[{"field1":"item1","unknown.field":true}],
               "field3":{"1":{"field1":"value1"}}
             })",
-            "field2[0].unknown_field",
+            "field2[0].'unknown.field'",
         },
         UnkownJsonFieldRejectedTestParam{
             R"({
               "field1":{"field1":"aaa"},
               "field2":[{"field1":"item1"}],
-              "field3":{"1":{"field1":"value1","unknown_field":true}}
+              "field3":{"1":{"field1":"value1","unknown.field":true}}
             })",
-            "field3.1.unknown_field"
+            "field3.1.'unknown.field'"
         }
     )
 );

@@ -42,6 +42,7 @@ INSTANTIATE_TEST_SUITE_P(
         testing::
             Values(
                 ValueToJsonSuccessTestParam{ValueMessageData{}, R"({})"},
+                ValueToJsonSuccessTestParam{ValueMessageData{ProtoValue{std::monostate{}}}, R"({})"},
                 ValueToJsonSuccessTestParam{ValueMessageData{ProtoValue{kProtoNullValue}}, R"({"field1":null})"},
                 ValueToJsonSuccessTestParam{ValueMessageData{ProtoValue{1.5}}, R"({"field1":1.5})"},
                 ValueToJsonSuccessTestParam{ValueMessageData{ProtoValue{"hello"}}, R"({"field1":"hello"})"},
@@ -92,6 +93,12 @@ INSTANTIATE_TEST_SUITE_P(
                     R"({"field1":[null,1.5,"hello",true,[1.5,1.5],{"aaa":"hello","bbb":"world"}]})"
                 },
                 ValueToJsonSuccessTestParam{
+                    ValueMessageData{std::vector<
+                        ProtoValue>{ProtoValue{1.5}, ProtoValue{std::monostate{}}, ProtoValue{true}}},
+                    R"({"field1":[1.5,true]})"
+                },
+
+                ValueToJsonSuccessTestParam{
                     ValueMessageData{
                         std::map<std::string, ProtoValue>{},
                     },
@@ -115,6 +122,16 @@ INSTANTIATE_TEST_SUITE_P(
                         },
                     },
                     R"({"field1":{"aaa":null,"bbb":1.5,"ccc":"hello","ddd":true,"eee":[1.5,1.5],"":{"":"hello","bbb":"world"}}})"
+                },
+                ValueToJsonSuccessTestParam{
+                    ValueMessageData{
+                        std::map<std::string, ProtoValue>{
+                            {"aaa", ProtoValue{1.5}},
+                            {"bbb", ProtoValue{std::monostate{}}},
+                            {"ccc", ProtoValue{true}}
+                        },
+                    },
+                    R"({"field1":{"aaa":1.5,"ccc":true}})"
                 }
             )
 );
@@ -123,13 +140,6 @@ INSTANTIATE_TEST_SUITE_P(
     ,
     ValueToJsonFailureTest,
     ::testing::Values(
-        ValueToJsonFailureTestParam{
-            ValueMessageData{ProtoValue{std::monostate{}}},
-            PrintErrorCode::kInvalidValue,
-            "field1",
-            {},
-            true  // native implementation silently discards 'Value' without any alternative set which we find bug-prone
-        },
         ValueToJsonFailureTestParam{
             ValueMessageData{ProtoValue{std::numeric_limits<double>::quiet_NaN()}},
             PrintErrorCode::kInvalidValue,
@@ -151,13 +161,6 @@ INSTANTIATE_TEST_SUITE_P(
             "field1.number_value"
         },
         ValueToJsonFailureTestParam{
-            ValueMessageData{std::vector<ProtoValue>{ProtoValue{1.5}, ProtoValue{std::monostate{}}, ProtoValue{true}}},
-            PrintErrorCode::kInvalidValue,
-            "field1.list_value.values[1]",
-            {},
-            true
-        },
-        ValueToJsonFailureTestParam{
             ValueMessageData{std::vector<ProtoValue>{
                 ProtoValue{1.5},
                 ProtoValue{std::vector<double>{1.5, std::numeric_limits<double>::infinity()}},
@@ -165,16 +168,6 @@ INSTANTIATE_TEST_SUITE_P(
             }},
             PrintErrorCode::kInvalidValue,
             "field1.list_value.values[1].list_value.values[1].number_value"
-        },
-        ValueToJsonFailureTestParam{
-            ValueMessageData{std::map<
-                std::string,
-                ProtoValue>{{"aaa", ProtoValue{1.5}}, {"bbb", ProtoValue{std::monostate{}}}, {"ccc", ProtoValue{true}}}
-            },
-            PrintErrorCode::kInvalidValue,
-            "field1.struct_value.fields['bbb']",
-            {},
-            true
         }
     )
 );
