@@ -9,7 +9,7 @@ import yaml
 from chaotic.back.cpp import types as cpp_types
 from chaotic.front import parser as chaotic_parser
 from chaotic.front import ref
-from . import renderer
+from chaotic_openapi.back.cpp_client import renderer
 
 TYPES_INCLUDES = [
     'cstdint',

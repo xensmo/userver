@@ -4,7 +4,7 @@ import dataclasses
 from chaotic import cpp_names
 from chaotic import error
 from chaotic.back.cpp import types as cpp_types
-from . import middleware
+from chaotic_openapi.back.cpp_client import middleware
 
 
 @dataclasses.dataclass
