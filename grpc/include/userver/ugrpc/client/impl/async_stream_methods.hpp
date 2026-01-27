@@ -10,6 +10,7 @@
 #include <userver/ugrpc/client/impl/async_method_invocation.hpp>
 #include <userver/ugrpc/client/impl/async_methods.hpp>
 #include <userver/ugrpc/client/impl/call_state.hpp>
+#include <userver/ugrpc/impl/status_utils.hpp>
 #include <userver/ugrpc/time_utils.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -63,8 +64,9 @@ void Finish(
 
     switch (wait_status) {
         case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kOk:
-            state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
+            state.GetStatsScope().SetFinishTime(invocation.GetNotifyTime());
             try {
+                ugrpc::impl::ClampStatusCodeToValidRange(state.GetStatus());
                 ProcessFinish(state, state.GetStatus(), final_response);
             } catch (const std::exception& ex) {
                 if (throw_on_error) {
@@ -79,7 +81,7 @@ void Finish(
             break;
 
         case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kError:
-            state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
+            state.GetStatsScope().SetFinishTime(invocation.GetNotifyTime());
             ProcessNetworkError(state, "Finish");
             if (throw_on_error) {
                 ThrowIfDeadlineIsExceeded(state.GetClientContext(), state.GetCallName());
@@ -114,9 +116,10 @@ void FinishAbandoned(GrpcStream& stream, StreamingCallState& state) noexcept try
     stream.Finish(&state.GetStatus(), invocation.GetCompletionTag());
     const auto ok = invocation.WaitNonCancellable();
 
-    state.GetStatsScope().SetFinishTime(invocation.GetFinishTime());
+    state.GetStatsScope().SetFinishTime(invocation.GetNotifyTime());
 
     if (ok) {
+        ugrpc::impl::ClampStatusCodeToValidRange(state.GetStatus());
         ProcessFinishAbandoned(state, state.GetStatus());
     } else {
         ProcessNetworkError(state, "Finish");

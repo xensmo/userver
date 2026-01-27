@@ -1,4 +1,4 @@
-from . import cpp_keywords
+from chaotic import cpp_keywords
 
 
 def camel_case(string: str, no_lower_casing: bool = False) -> str:

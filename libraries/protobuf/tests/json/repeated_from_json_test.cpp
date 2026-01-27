@@ -48,15 +48,49 @@ INSTANTIATE_TEST_SUITE_P(
     RepeatedFromJsonSuccessTest,
     ::testing::Values(
         RepeatedFromJsonSuccessTestParam{R"({})", RepeatedMessageData{}},
-        RepeatedFromJsonSuccessTestParam{R"({"field1":[],"field2":[],"field3":[]})", RepeatedMessageData{}},
-        RepeatedFromJsonSuccessTestParam{R"({"field1":null,"field2":null,"field3":null})", RepeatedMessageData{}},
         RepeatedFromJsonSuccessTestParam{
             R"({
-              "field1":[100],
-              "field2":[{"field1":true}],
-              "field3":["123.987s"]
+                "field1":[],"field2":[],"field3":[],"field4":[],"field5":[],"field6":[],"field7":[],
+                "field8":[],"field9":[],"field10":[],"field11":[],"field12":[]
             })",
-            RepeatedMessageData{{100}, {{true}}, {{.seconds = 123, .nanos = 987'000'000}}}
+            RepeatedMessageData{}
+        },
+        RepeatedFromJsonSuccessTestParam{
+            R"({
+                "field1":null,"field2":null,"field3":null,"field5":null,"field6":null,"field7":null,"field8":null,
+                "field9":null,"field10":null,"field11":null,"field12":null
+            })",  // can't use "field4:null" because native legacy parser treats this as a single item array
+            RepeatedMessageData{}
+        },
+        RepeatedFromJsonSuccessTestParam{
+            R"({
+                "field1":[100],
+                "field2":[{"field1":true}],
+                "field3":["123.987s"],
+                "field4":[null],
+                "field5":[1],
+                "field6":["-1"],
+                "field7":["1"],
+                "field8":["-1.5"],
+                "field9":[1.5],
+                "field10":[false],
+                "field11":["hello"],
+                "field12":["TEST_VALUE1"]
+            })",
+            RepeatedMessageData{
+                {100},
+                {{true}},
+                {{.seconds = 123, .nanos = 987'000'000}},
+                {ProtoValue{ProtoNullValue{}}},
+                {1},
+                {-1},
+                {1},
+                {-1.5},
+                {1.5},
+                {false},
+                {"hello"},
+                {proto_json::messages::RepeatedMessage::TEST_VALUE1}
+            }
         },
         RepeatedFromJsonSuccessTestParam{
             R"({

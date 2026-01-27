@@ -212,6 +212,7 @@ struct BytesMessageData {
 
 struct EnumMessageData {
     proto_json::messages::EnumMessage::Test field1 = proto_json::messages::EnumMessage::TEST_UNSPECIFIED;
+    std::optional<proto_json::messages::EnumMessage::Test> field2 = {};
 };
 
 struct NestedMessageData {
@@ -269,6 +270,15 @@ struct RepeatedMessageData {
     std::vector<std::int32_t> field1 = {};
     std::vector<BoolMessageData> field2 = {};
     std::vector<DurationMessageData> field3 = {};
+    std::vector<ProtoValue> field4 = {};
+    std::vector<std::uint32_t> field5 = {};
+    std::vector<std::int64_t> field6 = {};
+    std::vector<std::uint64_t> field7 = {};
+    std::vector<float> field8 = {};
+    std::vector<double> field9 = {};
+    std::vector<bool> field10 = {};
+    std::vector<std::string> field11 = {};
+    std::vector<proto_json::messages::RepeatedMessage::Test> field12 = {};
 };
 
 struct MapMessageData {
@@ -279,6 +289,7 @@ struct MapMessageData {
     std::map<bool, proto_json::messages::MapMessage::TestEnum> field5 = {};
     std::map<std::string, BoolMessageData> field6 = {};
     std::map<std::string, DurationMessageData> field7 = {};
+    std::map<std::int32_t, ProtoValue> field8 = {};
 };
 
 struct NullValueMessageData {

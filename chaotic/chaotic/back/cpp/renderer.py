@@ -59,6 +59,21 @@ def open_namespace(new_ns: str) -> str:
         return ''
 
 
+def shortest_cpp_name(type_: cpp_types.CppType, blacklist: list[str] | None = None) -> str:
+    if blacklist is None:
+        blacklist = []
+
+    if isinstance(type_, (cpp_types.CppRef, cpp_types.CppArray)):
+        return type_.cpp_global_name()
+
+    shortest = type_.raw_cpp_type.in_scope(get_current_namespace())
+    if shortest.split('::')[0] not in blacklist:
+        return shortest
+    else:
+        # Name collision, fallback to fully qualified name
+        return type_.cpp_global_name()
+
+
 def cpp_namespace(name: str) -> str:
     if '::' not in name:
         return ''
@@ -129,6 +144,7 @@ def make_env() -> jinja2.Environment:
     env.globals['open_namespace'] = open_namespace
     env.globals['close_namespace'] = close_namespace
     env.globals['get_current_namespace'] = get_current_namespace
+    env.globals['shortest_cpp_name'] = shortest_cpp_name
 
     return env
 

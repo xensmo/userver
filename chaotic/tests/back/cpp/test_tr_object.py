@@ -2,11 +2,8 @@ import pytest
 
 from chaotic import error
 from chaotic.back.cpp import type_name
-from chaotic.back.cpp.types import CppPrimitiveType
-from chaotic.back.cpp.types import CppPrimitiveValidator
-from chaotic.back.cpp.types import CppStruct
-from chaotic.back.cpp.types import CppStructField
-from chaotic.front.types import Schema
+from chaotic.back.cpp import types as cpp_types
+from chaotic.front import types as front_types
 
 
 def test_empty(simple_gen):
@@ -16,9 +13,9 @@ def test_empty(simple_gen):
         'additionalProperties': False,
     })
     assert schemas == {
-        '::type': CppStruct(
+        '::type': cpp_types.CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=Schema(),
+            json_schema=front_types.Schema(),
             nullable=False,
             user_cpp_type=None,
             fields={},
@@ -33,14 +30,14 @@ def test_additional_properties_simple(simple_gen, cpp_primitive_type):
         'additionalProperties': {'type': 'integer'},
     })
     assert schemas == {
-        '::type': CppStruct(
+        '::type': cpp_types.CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=Schema(),
+            json_schema=front_types.Schema(),
             nullable=False,
             user_cpp_type=None,
             fields={},
             extra_type=cpp_primitive_type(
-                validators=CppPrimitiveValidator(
+                validators=cpp_types.CppPrimitiveValidator(
                     namespace='::type',
                     prefix='Extra',
                 ),
@@ -58,18 +55,18 @@ def test_field_external(simple_gen, cpp_primitive_type):
         'additionalProperties': False,
     })
     assert schemas == {
-        '::type': CppStruct(
+        '::type': cpp_types.CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=Schema(),
+            json_schema=front_types.Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
             fields={
-                'field': CppStructField(
+                'field': cpp_types.CppStructField(
                     name='field',
                     required=False,
                     schema=cpp_primitive_type(
-                        validators=CppPrimitiveValidator(
+                        validators=cpp_types.CppPrimitiveValidator(
                             namespace='::type',
                             prefix='Field',
                         ),
@@ -88,18 +85,18 @@ def test_field_with_default(simple_gen, cpp_primitive_type):
         'additionalProperties': False,
     })
     assert schemas == {
-        '::type': CppStruct(
+        '::type': cpp_types.CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=Schema(),
+            json_schema=front_types.Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
             fields={
-                'field': CppStructField(
+                'field': cpp_types.CppStructField(
                     name='field',
                     required=False,
                     schema=cpp_primitive_type(
-                        validators=CppPrimitiveValidator(
+                        validators=cpp_types.CppPrimitiveValidator(
                             namespace='::type',
                             prefix='Field',
                         ),
@@ -119,18 +116,18 @@ def test_field_inplace(simple_gen, cpp_primitive_type):
         'additionalProperties': False,
     })
     assert schemas == {
-        '::type': CppStruct(
+        '::type': cpp_types.CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=Schema(),
+            json_schema=front_types.Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
             fields={
-                'field': CppStructField(
+                'field': cpp_types.CppStructField(
                     name='field',
                     required=False,
                     schema=cpp_primitive_type(
-                        validators=CppPrimitiveValidator(
+                        validators=cpp_types.CppPrimitiveValidator(
                             min=1,
                             namespace='::type',
                             prefix='Field',
@@ -156,21 +153,21 @@ def test_field_is_struct(simple_gen):
         'additionalProperties': False,
     })
     assert schemas == {
-        '::type': CppStruct(
+        '::type': cpp_types.CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=Schema(),
+            json_schema=front_types.Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
             fields={
-                'field': CppStructField(
+                'field': cpp_types.CppStructField(
                     name='field',
                     required=False,
-                    schema=CppStruct(
+                    schema=cpp_types.CppStruct(
                         raw_cpp_type=type_name.TypeName(
                             '::type::Field',
                         ),
-                        json_schema=Schema(),
+                        json_schema=front_types.Schema(),
                         nullable=False,
                         user_cpp_type=None,
                         fields={},
@@ -189,22 +186,22 @@ def test_field_required(simple_gen):
         'additionalProperties': False,
     })
     assert schemas == {
-        '::type': CppStruct(
+        '::type': cpp_types.CppStruct(
             raw_cpp_type=type_name.TypeName('::type'),
-            json_schema=Schema(),
+            json_schema=front_types.Schema(),
             nullable=False,
             user_cpp_type=None,
             # name='vfull#/definitions/type',
             fields={
-                'field': CppStructField(
+                'field': cpp_types.CppStructField(
                     name='field',
                     required=True,
-                    schema=CppPrimitiveType(
+                    schema=cpp_types.CppPrimitiveType(
                         raw_cpp_type=type_name.TypeName('int'),
-                        json_schema=Schema(),
+                        json_schema=front_types.Schema(),
                         nullable=False,
                         user_cpp_type=None,
-                        validators=CppPrimitiveValidator(
+                        validators=cpp_types.CppPrimitiveValidator(
                             min=1,
                             namespace='::type',
                             prefix='Field',

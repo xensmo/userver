@@ -1,9 +1,8 @@
 import pytest
 
+from chaotic.back.cpp import translator
 from chaotic.back.cpp import type_name
 from chaotic.back.cpp import types as cpp_types
-from chaotic.back.cpp.translator import Generator
-from chaotic.back.cpp.translator import GeneratorConfig
 from chaotic.front import parser
 from chaotic.front import ref_resolver
 from chaotic.front import types
@@ -31,8 +30,10 @@ def parse(path, input_, external_schemas, external_types, cpp_name_func):
         schemas,
         external_schemas=external_schemas,
     )
-    gen = Generator(
-        config=GeneratorConfig(namespaces={'vfull': ''}, include_dirs=None, infile_to_name_func=cpp_name_func),
+    gen = translator.Generator(
+        config=translator.GeneratorConfig(
+            namespaces={'vfull': ''}, include_dirs=None, infile_to_name_func=cpp_name_func
+        ),
     )
     types = gen.generate_types(
         resolved_schemas,
@@ -101,8 +102,8 @@ def test_duplicate_name(cpp_name_func):
         schemas,
     )
 
-    gen = Generator(
-        config=GeneratorConfig(
+    gen = translator.Generator(
+        config=translator.GeneratorConfig(
             namespaces={'vfull': '', 'vfull2': ''},
             include_dirs=None,
             infile_to_name_func=cpp_name_func,

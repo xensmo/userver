@@ -8,7 +8,7 @@ from typing import Any
 import pydantic
 
 from chaotic import error
-from . import base_model
+from chaotic.front import base_model
 
 
 class FieldError(Exception):

@@ -26,7 +26,7 @@ void SharedMutex::lock() {
 
 void SharedMutex::unlock() {
     auto& dd_state = deadlock_detector::GetState();
-    dd_state.OnResourceRelease(current_task::GetCurrentTaskContext(), mutex_actor_);
+    dd_state.OnResourceRelease(mutex_actor_);
 
     const utils::ScopeGuard stop_wait([this] { UnregisterWriter(DeadlockDetectorTrackingStatus::kTracked); });
 
@@ -41,7 +41,7 @@ void SharedMutex::UnregisterWriter(DeadlockDetectorTrackingStatus tracking_statu
      */
     if (tracking_status == DeadlockDetectorTrackingStatus::kTracked) {
         auto& dd_state = deadlock_detector::GetState();
-        dd_state.OnResourceRelease(current_task::GetCurrentTaskContext(), registered_writers_actor_);
+        dd_state.OnResourceRelease(registered_writers_actor_);
     }
     auto writers_left = registered_writers_count_.fetch_sub(1, std::memory_order_relaxed);
     UASSERT_MSG(writers_left > 0, "unlock without lock");
@@ -60,7 +60,7 @@ bool SharedMutex::try_lock_until(Deadline deadline) {
     DeadlockDetectorTrackingStatus tracking_status = DeadlockDetectorTrackingStatus::kUntracked;
     auto& dd_state = deadlock_detector::GetState();
     if (!deadline.IsReachable()) {
-        dd_state.OnResourceAcquire(current_task::GetCurrentTaskContext(), registered_writers_actor_);
+        dd_state.OnResourceAcquire(registered_writers_actor_);
         tracking_status = DeadlockDetectorTrackingStatus::kTracked;
     }
 
@@ -80,9 +80,9 @@ bool SharedMutex::try_lock_until(Deadline deadline) {
     }
     stop_wait.Release();
 
-    dd_state.OnResourceAcquire(current_task::GetCurrentTaskContext(), mutex_actor_);
+    dd_state.OnResourceAcquire(mutex_actor_);
     if (tracking_status == DeadlockDetectorTrackingStatus::kUntracked) {
-        dd_state.OnResourceAcquire(current_task::GetCurrentTaskContext(), registered_writers_actor_);
+        dd_state.OnResourceAcquire(registered_writers_actor_);
     }
     return true;
 }
@@ -103,12 +103,12 @@ void SharedMutex::lock_shared() {
     semaphore_.lock_shared();
 
     auto& dd_state = deadlock_detector::GetState();
-    dd_state.OnReentrantResourceAcquire(current_task::GetCurrentTaskContext(), mutex_actor_);
+    dd_state.OnReentrantResourceAcquire(mutex_actor_);
 }
 
 void SharedMutex::unlock_shared() {
     auto& dd_state = deadlock_detector::GetState();
-    dd_state.OnResourceRelease(current_task::GetCurrentTaskContext(), mutex_actor_);
+    dd_state.OnResourceRelease(mutex_actor_);
     semaphore_.unlock_shared();
 }
 
@@ -127,7 +127,7 @@ bool SharedMutex::try_lock_shared() {
         return false;
     }
     auto& dd_state = deadlock_detector::GetState();
-    dd_state.OnReentrantResourceAcquire(current_task::GetCurrentTaskContext(), mutex_actor_);
+    dd_state.OnReentrantResourceAcquire(mutex_actor_);
     return true;
 }
 
@@ -141,7 +141,7 @@ bool SharedMutex::try_lock_shared_until(Deadline deadline) {
         return false;
     }
     auto& dd_state = deadlock_detector::GetState();
-    dd_state.OnReentrantResourceAcquire(current_task::GetCurrentTaskContext(), mutex_actor_);
+    dd_state.OnReentrantResourceAcquire(mutex_actor_);
     return true;
 }
 

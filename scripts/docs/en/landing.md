@@ -242,11 +242,11 @@ int main(int argc, char* argv[]) {
     <!-- Highlight codeblocks -->
     <script src="highlight.min.js"></script>
     <script>
-      document.querySelectorAll(".codeblock__body").forEach((el) => {
-        hljs.highlightElement(el);
+      document.querySelectorAll(".codeblock__body code").forEach((el) => {
+        el.parentNode.innerHTML = hljs.highlightAuto(el.textContent).value;
       });
-      document.querySelectorAll("#intro_sample").forEach((el) => {
-        hljs.highlightElement(el);
+      document.querySelectorAll("#intro_sample code").forEach((el) => {
+        el.parentNode.innerHTML = hljs.highlightAuto(el.textContent).value;
       });
     </script>
     <!-- Hide some blocks on landing page -->

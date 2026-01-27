@@ -1,36 +1,32 @@
-#include "oneofdiscriminator.hpp"
-
 #include <userver/chaotic/type_bundle_cpp.hpp>
 
+#include "oneofdiscriminator.hpp"
 #include "oneofdiscriminator_parsers.ipp"
 
 namespace ns {
 
-bool operator==(const ::ns::A& lhs, const ::ns::A& rhs) {
+bool operator==(const A& lhs, const A& rhs) {
     return lhs.type == rhs.type && lhs.a_prop == rhs.a_prop && lhs.extra == rhs.extra &&
 
            true;
 }
 
-USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const ::ns::A& value) {
+USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const A& value) {
     return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
 }
 
-A Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::A> to) {
+A Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<A> to) {
     return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<::ns::A>) was not generated: ::ns::A has JSON-specific field
- * "extra" */
+/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<A>) was not generated: ::ns::A has JSON-specific field "extra" */
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<::ns::A>) was not generated: ::ns::A has JSON-specific field "extra"
- */
+/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<A>) was not generated: ::ns::A has JSON-specific field "extra" */
 
-USERVER_NAMESPACE::
-    formats::
-        json::
-            Value
-            Serialize([[maybe_unused]] const ::ns::A& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
+USERVER_NAMESPACE::formats::
+    json::
+        Value
+        Serialize([[maybe_unused]] const A& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
     USERVER_NAMESPACE::formats::json::ValueBuilder vb = value.extra;
 
     if (value.type) {
@@ -44,31 +40,28 @@ USERVER_NAMESPACE::
     return vb.ExtractValue();
 }
 
-bool operator==(const ::ns::B& lhs, const ::ns::B& rhs) {
+bool operator==(const B& lhs, const B& rhs) {
     return lhs.type == rhs.type && lhs.b_prop == rhs.b_prop && lhs.extra == rhs.extra &&
 
            true;
 }
 
-USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const ::ns::B& value) {
+USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const B& value) {
     return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
 }
 
-B Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::B> to) {
+B Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<B> to) {
     return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<::ns::B>) was not generated: ::ns::B has JSON-specific field
- * "extra" */
+/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<B>) was not generated: ::ns::B has JSON-specific field "extra" */
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<::ns::B>) was not generated: ::ns::B has JSON-specific field "extra"
- */
+/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<B>) was not generated: ::ns::B has JSON-specific field "extra" */
 
-USERVER_NAMESPACE::
-    formats::
-        json::
-            Value
-            Serialize([[maybe_unused]] const ::ns::B& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
+USERVER_NAMESPACE::formats::
+    json::
+        Value
+        Serialize([[maybe_unused]] const B& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
     USERVER_NAMESPACE::formats::json::ValueBuilder vb = value.extra;
 
     if (value.type) {
@@ -82,29 +75,28 @@ USERVER_NAMESPACE::
     return vb.ExtractValue();
 }
 
-bool operator==(const ::ns::C& lhs, const ::ns::C& rhs) { return lhs.version == rhs.version && true; }
+bool operator==(const C& lhs, const C& rhs) { return lhs.version == rhs.version && true; }
 
-USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const ::ns::C& value) {
+USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const C& value) {
     return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
 }
 
-C Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::C> to) {
+C Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<C> to) {
     return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-C Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::C> to) {
+C Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<C> to) {
     return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
 }
 
-C Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::C> to) {
+C Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<C> to) {
     return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
 }
 
-USERVER_NAMESPACE::
-    formats::
-        json::
-            Value
-            Serialize([[maybe_unused]] const ::ns::C& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
+USERVER_NAMESPACE::formats::
+    json::
+        Value
+        Serialize([[maybe_unused]] const C& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
     USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
 
     if (value.version) {
@@ -114,29 +106,28 @@ USERVER_NAMESPACE::
     return vb.ExtractValue();
 }
 
-bool operator==(const ::ns::D& lhs, const ::ns::D& rhs) { return lhs.version == rhs.version && true; }
+bool operator==(const D& lhs, const D& rhs) { return lhs.version == rhs.version && true; }
 
-USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const ::ns::D& value) {
+USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const D& value) {
     return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
 }
 
-D Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::D> to) {
+D Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<D> to) {
     return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-D Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::D> to) {
+D Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<D> to) {
     return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
 }
 
-D Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<::ns::D> to) {
+D Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<D> to) {
     return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
 }
 
-USERVER_NAMESPACE::
-    formats::
-        json::
-            Value
-            Serialize([[maybe_unused]] const ::ns::D& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
+USERVER_NAMESPACE::formats::
+    json::
+        Value
+        Serialize([[maybe_unused]] const D& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
     USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
 
     if (value.version) {
@@ -146,31 +137,31 @@ USERVER_NAMESPACE::
     return vb.ExtractValue();
 }
 
-bool operator==(const ::ns::IntegerOneOfDiscriminator& lhs, const ::ns::IntegerOneOfDiscriminator& rhs) {
+bool operator==(const IntegerOneOfDiscriminator& lhs, const IntegerOneOfDiscriminator& rhs) {
     return lhs.foo == rhs.foo && true;
 }
 
 USERVER_NAMESPACE::logging::LogHelper& operator<<(
     USERVER_NAMESPACE::logging::LogHelper& lh,
-    const ::ns::IntegerOneOfDiscriminator& value
+    const IntegerOneOfDiscriminator& value
 ) {
     return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
 }
 
 IntegerOneOfDiscriminator Parse(
     USERVER_NAMESPACE::formats::json::Value json,
-    USERVER_NAMESPACE::formats::parse::To<::ns::IntegerOneOfDiscriminator> to
+    USERVER_NAMESPACE::formats::parse::To<IntegerOneOfDiscriminator> to
 ) {
     return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<::ns::IntegerOneOfDiscriminator>) was not generated:
+/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<IntegerOneOfDiscriminator>) was not generated:
  * ::ns::IntegerOneOfDiscriminator::Foo has JSON-specific field "extra" */
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<::ns::IntegerOneOfDiscriminator>) was not generated:
+/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<IntegerOneOfDiscriminator>) was not generated:
  * ::ns::IntegerOneOfDiscriminator::Foo has JSON-specific field "extra" */
 
-USERVER_NAMESPACE::formats::json::Value Serialize([[maybe_unused]] const ::ns::IntegerOneOfDiscriminator& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
+USERVER_NAMESPACE::formats::json::Value Serialize([[maybe_unused]] const IntegerOneOfDiscriminator& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
     USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
 
     if (value.foo) {
@@ -183,32 +174,32 @@ USERVER_NAMESPACE::formats::json::Value Serialize([[maybe_unused]] const ::ns::I
     return vb.ExtractValue();
 }
 
-bool operator==(const ::ns::OneOfDiscriminator& lhs, const ::ns::OneOfDiscriminator& rhs) {
-    return lhs.foo == rhs.foo && true;
-}
+bool operator==(const OneOfDiscriminator& lhs, const OneOfDiscriminator& rhs) { return lhs.foo == rhs.foo && true; }
 
 USERVER_NAMESPACE::logging::LogHelper& operator<<(
     USERVER_NAMESPACE::logging::LogHelper& lh,
-    const ::ns::OneOfDiscriminator& value
+    const OneOfDiscriminator& value
 ) {
     return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
 }
 
 OneOfDiscriminator Parse(
     USERVER_NAMESPACE::formats::json::Value json,
-    USERVER_NAMESPACE::formats::parse::To<::ns::OneOfDiscriminator> to
+    USERVER_NAMESPACE::formats::parse::To<OneOfDiscriminator> to
 ) {
     return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<::ns::OneOfDiscriminator>) was not generated:
+/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<OneOfDiscriminator>) was not generated:
  * ::ns::OneOfDiscriminator::Foo has JSON-specific field "extra" */
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<::ns::OneOfDiscriminator>) was not generated:
- * ::ns::OneOfDiscriminator::Foo has JSON-specific field "extra" */
+/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<OneOfDiscriminator>) was not generated: ::ns::OneOfDiscriminator::Foo
+ * has JSON-specific field "extra" */
 
-USERVER_NAMESPACE::formats::json::Value
-Serialize([[maybe_unused]] const ::ns::OneOfDiscriminator& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
+USERVER_NAMESPACE::formats::
+    json::
+        Value
+        Serialize([[maybe_unused]] const OneOfDiscriminator& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
     USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
 
     if (value.foo) {

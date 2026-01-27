@@ -70,7 +70,7 @@ class _S3Upload:
 
 @dataclasses.dataclass
 class _S3BucketUploadStorage:
-    def __init__(self):
+    def __init__(self) -> None:
         self._storage: dict[str, _S3Upload] = {}
 
     @staticmethod

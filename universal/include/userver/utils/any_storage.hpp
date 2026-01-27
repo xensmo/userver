@@ -167,7 +167,13 @@ AnyStorage<StorageTag>::~AnyStorage() {
 
 template <typename StorageTag>
 void AnyStorage<StorageTag>::Destroy() noexcept {
+    if (!raw_data_) {
+        // moved out data
+        return;
+    }
+
     auto records = GetRecords();
+
     for (std::size_t i = 0; i < any_storage::impl::count<StorageTag>; i++) {
         auto& record = records[i];
         if (record.deleter) {

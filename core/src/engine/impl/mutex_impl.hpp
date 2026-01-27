@@ -200,7 +200,7 @@ bool MutexImpl<Waiters>::try_lock() {
 
     auto& dd_state = engine::deadlock_detector::GetState();
     if (result) {
-        dd_state.OnResourceAcquire(current_task::GetCurrentTaskContext(), *this);
+        dd_state.OnResourceAcquire(current, *this);
     }
 
     return result;
@@ -236,7 +236,7 @@ bool MutexImpl<Waiters>::try_lock_until(Deadline deadline) {
 
     auto& dd_state = engine::deadlock_detector::GetState();
     if (result) {
-        dd_state.OnResourceAcquire(current_task::GetCurrentTaskContext(), *this);
+        dd_state.OnResourceAcquire(current, *this);
     }
 
     return result;

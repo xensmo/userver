@@ -1,4 +1,4 @@
-function highlight_code() {
+export function highlight_code() {
     if (window.location.href.indexOf("pp_source") !== -1
         || window.location.href.indexOf("cpp-example") !== -1) {
         // Header listing is already nicely highlighted by Doxygen
@@ -17,7 +17,7 @@ function highlight_code() {
         let requires_highlighting = true;
 
         node.querySelectorAll('div.line').forEach(function(item, i) {
-            line = item.textContent;
+            let line = item.textContent;
             if (i === 0) {
                 line = line.trimLeft().replace(/^# /, '');
                 if (line === 'autodetect') {
