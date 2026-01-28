@@ -13,6 +13,7 @@ with section('parse'):  # noqa: F821
                 'NAME': '*',
                 'VERSION': '*',
                 'GITHUB_REPOSITORY': '*',
+                'GIT_SHALLOW': '*',
                 'URL': '*',
                 'OPTIONS': '*',
                 'PATCHES': '*',
@@ -226,3 +227,11 @@ with section('format'):  # noqa: F821
     # If a statement is wrapped to more than one line, than dangle the closing
     # parenthesis on its own line.
     dangle_parens = True
+
+
+# ------------------------------------------------
+# Options affecting comment reflow and formatting.
+# ------------------------------------------------
+with section('markup'):
+    # enable comment markup parsing and reflow
+    enable_markup = False

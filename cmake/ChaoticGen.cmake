@@ -33,6 +33,7 @@ function(_userver_prepare_chaotic)
     find_program(CLANG_FORMAT_BIN clang-format)
     message(STATUS "Found clang-format: ${CLANG_FORMAT_BIN}")
     set_property(GLOBAL PROPERTY userver_clang_format_bin "${CLANG_FORMAT_BIN}")
+    # @ingroup compilation
     option(USERVER_CHAOTIC_FORMAT "Whether to format generated code" ON)
 
     if(NOT USERVER_CHAOTIC_SCRIPTS_PATH)
@@ -53,15 +54,13 @@ _userver_prepare_chaotic()
 
 # Generates ${TARGET} cmake target for C++ types, parsers, serializers from JSONSchema file(s).
 #
-# Options:
-#
-# * OUTPUT_DIR - where to put generated .cpp/.hpp/.ipp files, usually ${CMAKE_CURRENT_BINARY_DIR}/smth
-# * RELATIVE_TO - --relative-to option to chaotic-gen
-# * FORMAT - can be ON/OFF, enable to format generated files, defaults to USERVER_CHAOTIC_FORMAT
-# * SCHEMAS - JSONSchema source files
-# * ARGS - extra args to chaotic-gen
-# * INSTALL_INCLUDES_COMPONENT - component to install generated includes
-# * LINK_TARGETS - targets to link (used by x-usrv-cpp-type)
+# @arg TARGET smth
+# @param OUTPUT_DIR - where to put generated .cpp/.hpp/.ipp files, usually ${CMAKE_CURRENT_BINARY_DIR}/smth
+# @param RELATIVE_TO - --relative-to option to chaotic-gen
+# @param FORMAT - can be ON/OFF, enable to format generated files, defaults to USERVER_CHAOTIC_FORMAT
+# @multiparam SCHEMAS - JSONSchema source files
+# @param INSTALL_INCLUDES_COMPONENT - component to install generated includes
+# @multiparam LINK_TARGETS - targets to link (used by x-usrv-cpp-type)
 function(userver_target_generate_chaotic TARGET)
     set(OPTIONS GENERATE_SERIALIZERS PARSE_EXTRA_FORMATS)
     set(ONE_VALUE_ARGS OUTPUT_DIR RELATIVE_TO FORMAT INSTALL_INCLUDES_COMPONENT OUTPUT_PREFIX ERASE_PATH_PREFIX)
@@ -177,6 +176,7 @@ function(userver_target_generate_chaotic TARGET)
     endif()
 endfunction()
 
+# TODO
 function(userver_target_generate_openapi_client TARGET)
     set(OPTIONS)
     set(ONE_VALUE_ARGS OUTPUT_DIR NAME)
@@ -238,6 +238,7 @@ function(userver_target_generate_openapi_client TARGET)
     target_include_directories("${TARGET}" PUBLIC "${PARSE_OUTPUT_DIR}/include")
 endfunction()
 
+#TODO
 function(userver_target_generate_chaotic_dynamic_configs TARGET SCHEMAS_REGEX)
     file(GLOB CHGEN_FILENAMES ${SCHEMAS_REGEX})
     set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/dynamic_configs)

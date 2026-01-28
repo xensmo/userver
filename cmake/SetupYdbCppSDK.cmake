@@ -1,3 +1,4 @@
+# @ingroup download
 option(USERVER_DOWNLOAD_PACKAGE_YDBCPPSDK "Download and setup ydb-cpp-sdk" ${USERVER_DOWNLOAD_PACKAGES})
 
 include(DownloadUsingCPM)

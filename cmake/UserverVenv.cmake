@@ -12,12 +12,16 @@
 include_guard(GLOBAL)
 
 function(_userver_prepare_venv_variables)
+    # @ingroup dependencies
     set(USERVER_PYTHON_PATH
         "python3"
         CACHE FILEPATH "Path to python3 executable to use"
     )
     message(STATUS "Python: ${USERVER_PYTHON_PATH}")
+    # @ingroup compilation
     option(USERVER_PIP_USE_SYSTEM_PACKAGES "Use system python packages inside venv" OFF)
+
+    # @ingroup dependencies
     set(USERVER_PIP_OPTIONS
         ""
         CACHE STRING "Options for all pip calls"
@@ -49,6 +53,7 @@ function(_userver_append_requirements_from_file output_variable)
     )
 endfunction()
 
+# TODO
 function(userver_venv_setup)
     set(options UNIQUE)
     set(oneValueArgs NAME PYTHON_OUTPUT_VAR)

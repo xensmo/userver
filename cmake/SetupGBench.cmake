@@ -2,6 +2,7 @@ if(TARGET benchmark::benchmark)
     return()
 endif()
 
+# @ingroup download
 option(USERVER_DOWNLOAD_PACKAGE_GBENCH "Download and setup gbench if no gbench of matching version was found"
        ${USERVER_DOWNLOAD_PACKAGES}
 )

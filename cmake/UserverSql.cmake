@@ -18,6 +18,14 @@ endfunction()
 
 _userver_prepare_sql()
 
+# Generate C++ files with static variables of `storages::Query` type from '.sql' files with SQL queries.
+#
+# @arg TARGET New library target name
+# @param SOURCE_DIR Source directory (defaults to ".")
+# @param OUTPUT_DIR @required Directory to generate C++ files
+# @param NAMESPACE @required C++ namespace to use
+# @param QUERY_LOG_MODE ??? "full" or "" (defaults to "full")
+# @multiparam SQL_FILES Paths to SQL files with queries
 function(userver_add_sql_library TARGET)
     set(OPTIONS)
     set(ONE_VALUE_ARGS SOURCE_DIR OUTPUT_DIR NAMESPACE QUERY_LOG_MODE)
