@@ -29,6 +29,12 @@ ClientFactory::ClientFactory(
       testsuite_grpc_(testsuite_grpc)
 {}
 
+ClientFactory::~ClientFactory() {
+    if (!alive_clients_indicator_.IsFree()) {
+        utils::AbortWithStacktrace("Some clients are still alive");
+    }
+}
+
 impl::ClientInternals ClientFactory::MakeClientInternals(
     ClientSettings&& client_settings,
     std::optional<ugrpc::impl::StaticServiceMetadata> meta
@@ -64,6 +70,7 @@ impl::ClientInternals ClientFactory::MakeClientInternals(
         client_settings.destination_prefix_in_metrics.value_or(fmt::format("client({})", client_settings.client_name));
 
     return impl::ClientInternals{
+        alive_clients_indicator_.GetLock(),
         std::move(client_settings.client_name),
         std::move(destination_prefix_in_metrics),
         std::move(client_settings.endpoint),
@@ -80,7 +87,7 @@ impl::ClientInternals ClientFactory::MakeClientInternals(
         client_factory_settings_.retry_config,
         client_factory_settings_.channel_args,
         client_factory_settings_.default_service_config,
-        client_factory_settings_.proxy_settings,
+        client_factory_settings_.proxy_settings
     };
 }
 

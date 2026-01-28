@@ -7,6 +7,7 @@
 
 #include <userver/dynamic_config/source.hpp>
 
+#include <userver/concurrent/impl/striped_read_indicator.hpp>
 #include <userver/ugrpc/client/client_settings.hpp>
 #include <userver/ugrpc/client/fwd.hpp>
 #include <userver/ugrpc/client/impl/channel_factory.hpp>
@@ -28,6 +29,12 @@ class ClientQosErrorsReporter;
 
 /// Contains all non-code-generated dependencies for creating a gRPC client
 struct ClientInternals final {
+    // Must be first field to ensure it's destroyed last. Other fields may use
+    // the ClientFactory, so this lock must outlive them. It keeps the
+    // ClientFactory's alive_clients_indicator_ locked while this client exists,
+    // allowing the factory to detect if any clients outlive it.
+    concurrent::impl::StripedReadIndicatorLock alive_client_indicator_lock;
+
     std::string client_name;
     std::string destination_prefix_in_metrics;
     std::string endpoint;
