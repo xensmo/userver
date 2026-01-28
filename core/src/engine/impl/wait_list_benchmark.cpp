@@ -24,7 +24,7 @@ boost::intrusive_ptr<TaskContext> MakeContext() {
     return engine::impl::MakeTask(
                {engine::current_task::GetTaskProcessor(),
                 engine::Task::Importance::kNormal,
-                engine::Task::WaitMode::kSingleWaiter,
+                engine::Task::WaitMode::kSingleAwaiter,
                 {}},
                [] {}
     ).Extract();

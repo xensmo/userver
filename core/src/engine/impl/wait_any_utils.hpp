@@ -15,8 +15,8 @@ namespace engine::impl {
 
 class WaitAnyWaitStrategy final : public WaitStrategy {
 public:
-    WaitAnyWaitStrategy(utils::span<ContextAccessor*> targets, TaskContext& waiter)
-        : waiter_(waiter),
+    WaitAnyWaitStrategy(utils::span<ContextAccessor*> targets, TaskContext& awaiter)
+        : awaiter_(awaiter),
           targets_(targets)
     {}
 
@@ -31,7 +31,7 @@ public:
             });
 
             // SetupWakeups might throw.
-            const auto early_wakeup = target->TryAppendWaiter(waiter_);
+            const auto early_wakeup = target->TryAppendAwaiter(awaiter_);
 
             if (static_cast<bool>(early_wakeup)) {
                 return EarlyWakeup{true};
@@ -51,11 +51,11 @@ private:
             if (!target) {
                 continue;
             }
-            target->RemoveWaiter(waiter_);
+            target->RemoveAwaiter(awaiter_);
         }
     }
 
-    TaskContext& waiter_;
+    TaskContext& awaiter_;
     const utils::span<ContextAccessor*> targets_;
 };
 

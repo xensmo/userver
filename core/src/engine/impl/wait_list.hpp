@@ -31,17 +31,17 @@ public:
 
     // This guard is used to optimize the hot path of unlocking:
     //
-    // Use `WaitersScopeCounter` before acquiring the `WaitList::Lock` and do
+    // Use `AwaitersScopeCounter` before acquiring the `WaitList::Lock` and do
     // not destroy it as long as the coroutine  may go to sleep.
     //
     // Now in the `unlock` part call `GetCountOfSleepies()` before
     // `WaitList::Lock + WakeupOne/WakeupAll`.
-    class WaitersScopeCounter final {
+    class AwaitersScopeCounter final {
     public:
-        explicit WaitersScopeCounter(WaitList& list) noexcept : impl_(list) {
+        explicit AwaitersScopeCounter(WaitList& list) noexcept : impl_(list) {
             ++impl_.sleepies_;
         }
-        ~WaitersScopeCounter() { --impl_.sleepies_; }
+        ~AwaitersScopeCounter() { --impl_.sleepies_; }
 
     private:
         WaitList& impl_;
@@ -68,7 +68,7 @@ public:
     void WakeupAll(Lock&);
 
     /// @brief Get the maximum amount of coroutines that may be sleeping
-    /// @returns 0 if there are definitely no waiters currently, non-0 otherwise
+    /// @returns 0 if there are definitely no awaiters currently, non-0 otherwise
     std::size_t GetCountOfSleepies() const noexcept { return sleepies_.load(); }
 
 private:

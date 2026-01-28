@@ -20,9 +20,9 @@ class FutureWaitStrategy final : public impl::WaitStrategy {
 public:
     FutureWaitStrategy(T& target, impl::TaskContext& current) noexcept : target_(target), current_(current) {}
 
-    EarlyWakeup SetupWakeups() override { return target_.TryAppendWaiter(current_); }
+    EarlyWakeup SetupWakeups() override { return target_.TryAppendAwaiter(current_); }
 
-    void DisableWakeups() noexcept override { target_.RemoveWaiter(current_); }
+    void DisableWakeups() noexcept override { target_.RemoveAwaiter(current_); }
 
 private:
     T& target_;

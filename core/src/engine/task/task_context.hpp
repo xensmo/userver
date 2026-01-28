@@ -175,8 +175,8 @@ public:
 
     // ContextAccessor implementation
     bool IsReady() const noexcept override;
-    EarlyWakeup TryAppendWaiter(TaskContext& waiter) override;
-    void RemoveWaiter(TaskContext& waiter) noexcept override;
+    EarlyWakeup TryAppendAwaiter(TaskContext& awaiter) override;
+    void RemoveAwaiter(TaskContext& awaiter) noexcept override;
     void AfterWait() noexcept override;
     void RethrowErrorResult() const override;
 
@@ -228,7 +228,7 @@ private:
     std::atomic<Task::State> state_{Task::State::kNew};
     std::atomic<DetachedTasksSyncBlock::Token*> detached_token_{nullptr};
     std::atomic<TaskCancellationReason> cancellation_reason_{TaskCancellationReason::kNone};
-    FastPimplGenericWaitList finish_waiters_;
+    FastPimplGenericWaitList finish_awaiters_;
 
     ContextTimer deadline_timer_;
     engine::Deadline cancel_deadline_;

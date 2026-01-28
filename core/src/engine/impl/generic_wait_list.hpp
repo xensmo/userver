@@ -33,7 +33,7 @@ private:
 
     static auto CreateWaitList(Task::WaitMode wait_mode) noexcept;
 
-    std::variant<WaitListLight, WaitListAndSignal> waiters_;
+    std::variant<WaitListLight, WaitListAndSignal> awaiters_;
 };
 
 }  // namespace engine::impl

@@ -38,18 +38,18 @@ public:
     /// @brief Remove the task from the `WaitListLight` without wakeup.
     void Remove(impl::TaskContext& context) noexcept;
 
-    /// @brief Wakes up the waiting task; the next waiter may not `Append` until
+    /// @brief Wakes up the waiting task; the next awaiter may not `Append` until
     /// `Remove` is called.
     void WakeupOne();
 
-    /// @brief Sets signal, which will wake up future waiters. Wakes up the
-    /// existing waiter, if any. The next waiter may not `Append` until
+    /// @brief Sets signal, which will wake up future awaiters. Wakes up the
+    /// existing awaiter, if any. The next awaiter may not `Append` until
     /// `Remove` is called.
     /// @see GetSignalOrAppend
     void SetSignalAndWakeupOne();
 
     /// @brief Resets the notification, if any.
-    /// @warning Reset with an active waiter is not allowed! A good rule of thumb
+    /// @warning Reset with an active awaiter is not allowed! A good rule of thumb
     /// is to only call this from the waiting task.
     bool GetAndResetSignal() noexcept;
 

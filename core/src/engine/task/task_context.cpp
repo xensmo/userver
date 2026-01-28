@@ -116,7 +116,7 @@ TaskContext::TaskContext(
       task_counter_token_(task_processor_.GetTaskCounter()),
       is_critical_(importance == Task::Importance::kCritical),
       payload_(&payload),
-      finish_waiters_(wait_type),
+      finish_awaiters_(wait_type),
       cancel_deadline_(deadline),
       trace_csw_left_(task_processor_.GetTaskTraceMaxCswForNewTask())
 {
@@ -153,9 +153,9 @@ bool TaskContext::IsCritical() const {
     return WasStartedAsCritical() || coro_;
 }
 
-bool TaskContext::IsSharedWaitAllowed() const { return finish_waiters_->IsShared(); }
+bool TaskContext::IsSharedWaitAllowed() const { return finish_awaiters_->IsShared(); }
 
-bool TaskContext::IsFinished() const noexcept { return finish_waiters_->IsSignaled(); }
+bool TaskContext::IsFinished() const noexcept { return finish_awaiters_->IsSignaled(); }
 
 void TaskContext::SetDetached(DetachedTasksSyncBlock::Token& token) noexcept {
     DetachedTasksSyncBlock::Token* expected = nullptr;
@@ -217,7 +217,7 @@ void TaskContext::DoStep() {
             // Seems we're out of memory
             cancellation_reason_ = TaskCancellationReason::kOOM;
             SetState(TaskBase::State::kCancelled);
-            finish_waiters_->SetSignalAndWakeupAll();
+            finish_awaiters_->SetSignalAndWakeupAll();
             throw;
         }
 
@@ -254,7 +254,7 @@ void TaskContext::DoStep() {
             }
             SetState(new_state);
             deadline_timer_.Finalize();
-            finish_waiters_->SetSignalAndWakeupAll();
+            finish_awaiters_->SetSignalAndWakeupAll();
             TraceStateTransition(new_state);
         } break;
 
@@ -604,14 +604,14 @@ task_local::Storage& TaskContext::GetLocalStorage() noexcept {
 
 bool TaskContext::IsReady() const noexcept { return IsFinished(); }
 
-EarlyWakeup TaskContext::TryAppendWaiter(TaskContext& waiter) {
-    if (&waiter == this) {
+EarlyWakeup TaskContext::TryAppendAwaiter(TaskContext& awaiter) {
+    if (&awaiter == this) {
         ReportDeadlock();
     }
-    return EarlyWakeup{finish_waiters_->GetSignalOrAppend(&waiter)};
+    return EarlyWakeup{finish_awaiters_->GetSignalOrAppend(&awaiter)};
 }
 
-void TaskContext::RemoveWaiter(TaskContext& waiter) noexcept { finish_waiters_->Remove(waiter); }
+void TaskContext::RemoveAwaiter(TaskContext& awaiter) noexcept { finish_awaiters_->Remove(awaiter); }
 
 void TaskContext::AfterWait() noexcept {}
 

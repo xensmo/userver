@@ -10,18 +10,18 @@ namespace engine::impl {
 
 auto GenericWaitList::CreateWaitList(Task::WaitMode wait_mode) noexcept {
     using ReturnType = std::variant<WaitListLight, WaitListAndSignal>;
-    if (wait_mode == Task::WaitMode::kSingleWaiter) {
+    if (wait_mode == Task::WaitMode::kSingleAwaiter) {
         return ReturnType{std::in_place_type<WaitListLight>};
     }
-    UASSERT_MSG(wait_mode == Task::WaitMode::kMultipleWaiters, "Unexpected Task::WaitMode");
+    UASSERT_MSG(wait_mode == Task::WaitMode::kMultipleAwaiters, "Unexpected Task::WaitMode");
     return ReturnType{std::in_place_type<WaitListAndSignal>};
 }
 
-GenericWaitList::GenericWaitList(Task::WaitMode wait_mode) noexcept : waiters_(CreateWaitList(wait_mode)) {}
+GenericWaitList::GenericWaitList(Task::WaitMode wait_mode) noexcept : awaiters_(CreateWaitList(wait_mode)) {}
 
 bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& context) noexcept {
     return utils::Visit(
-        waiters_,  //
+        awaiters_,  //
         [&context](WaitListLight& ws) { return ws.GetSignalOrAppend(std::move(context)); },
         [&context](WaitListAndSignal& ws) {
             if (ws.signal.load()) {
@@ -37,10 +37,10 @@ bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& cont
     );
 }
 
-// noexcept: waiters_ are never valueless_by_exception
+// noexcept: awaiters_ are never valueless_by_exception
 void GenericWaitList::Remove(TaskContext& context) noexcept {
     utils::Visit(
-        waiters_,  //
+        awaiters_,  //
         [&context](WaitListLight& ws) { ws.Remove(context); },
         [&context](WaitListAndSignal& ws) {
             WaitList::Lock lock{ws.wl};
@@ -51,7 +51,7 @@ void GenericWaitList::Remove(TaskContext& context) noexcept {
 
 void GenericWaitList::SetSignalAndWakeupAll() {
     utils::Visit(
-        waiters_,  //
+        awaiters_,  //
         [](WaitListLight& ws) { ws.SetSignalAndWakeupOne(); },
         [](WaitListAndSignal& ws) {
             if (ws.signal.load()) {
@@ -70,13 +70,13 @@ void GenericWaitList::SetSignalAndWakeupAll() {
 
 bool GenericWaitList::IsSignaled() const noexcept {
     return utils::Visit(
-        waiters_,  //
+        awaiters_,  //
         [](const WaitListLight& ws) { return ws.IsSignaled(); },
         [](const WaitListAndSignal& ws) { return ws.signal.load(); }
     );
 }
 
-bool GenericWaitList::IsShared() const noexcept { return std::holds_alternative<WaitListAndSignal>(waiters_); }
+bool GenericWaitList::IsShared() const noexcept { return std::holds_alternative<WaitListAndSignal>(awaiters_); }
 
 }  // namespace engine::impl
 

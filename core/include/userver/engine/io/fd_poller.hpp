@@ -96,7 +96,7 @@ private:
         kInUse,  /// < used only in debug to detect invalid concurrent usage
     };
 
-    void WakeupWaiters();
+    void WakeupAwaiters();
     void SwitchStateToInUse();
     void SwitchStateToReadyToUse();
 

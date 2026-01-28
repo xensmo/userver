@@ -16,17 +16,17 @@ public:
     virtual bool IsReady() const noexcept = 0;
 
     // Atomically:
-    // 1. if not `IsReady`, then store `waiter` somewhere to notify when
+    // 1. if not `IsReady`, then store `awaiter` somewhere to notify when
     //    `IsReady() == true` is reached, and return `EarlyWakeup{false}`;
-    // 2. if `IsReady`, then notify `waiter` immediately via `Wakeup*`,
+    // 2. if `IsReady`, then notify `awaiter` immediately via `Wakeup*`,
     //    and return `EarlyWakeup{true}`.
-    virtual EarlyWakeup TryAppendWaiter(TaskContext& waiter) = 0;
+    virtual EarlyWakeup TryAppendAwaiter(TaskContext& awaiter) = 0;
 
-    // Remove `waiter` from the internal wait list if it's still there.
-    // You may not sleep in `RemoveWaiter`, unlike in `AfterWait`.
-    virtual void RemoveWaiter(TaskContext& waiter) noexcept = 0;
+    // Remove `awaiter` from the internal wait list if it's still there.
+    // You may not sleep in `RemoveAwaiter`, unlike in `AfterWait`.
+    virtual void RemoveAwaiter(TaskContext& awaiter) noexcept = 0;
 
-    // Wait for some cleanup (e.g. wait for `waiter` to actually remove itself).
+    // Wait for some cleanup (e.g. wait for `awaiter` to actually remove itself).
     // You may sleep in `AfterWait`.
     virtual void AfterWait() noexcept = 0;
 

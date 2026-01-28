@@ -36,11 +36,11 @@ protected:
 private:
     friend class FutureWaitStrategy<FutureStateBase>;
 
-    EarlyWakeup TryAppendWaiter(TaskContext& waiter) final;
-    void RemoveWaiter(TaskContext& waiter) noexcept final;
+    EarlyWakeup TryAppendAwaiter(TaskContext& awaiter) final;
+    void RemoveAwaiter(TaskContext& awaiter) noexcept final;
     void AfterWait() noexcept final;
 
-    FastPimplWaitListLight finish_waiters_;
+    FastPimplWaitListLight finish_awaiters_;
     std::atomic<bool> is_result_store_locked_;
     std::atomic<bool> is_future_created_;
 };
