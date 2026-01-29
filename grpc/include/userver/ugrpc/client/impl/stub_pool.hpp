@@ -22,8 +22,6 @@ public:
 
     const utils::FixedArray<std::shared_ptr<grpc::Channel>>& GetChannels() const { return channels_; }
 
-    const utils::FixedArray<StubAny>& GetStubs() const { return stubs_; }
-
 private:
     utils::FixedArray<std::shared_ptr<grpc::Channel>> channels_;
     mutable utils::FixedArray<StubAny> stubs_;

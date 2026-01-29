@@ -63,14 +63,14 @@ void CheckOk(
     }
 }
 
-void CheckFinishStatus(CallState& state) {
+void CheckFinishStatus(StreamingCallState& state) {
     auto& status = state.GetStatus();
     if (!status.ok()) {
         ThrowErrorWithStatus(state.GetCallName(), std::move(status));
     }
 }
 
-void ProcessFinish(CallState& state, const grpc::Status& status, const google::protobuf::Message* response) {
+void ProcessFinish(StreamingCallState& state, const grpc::Status& status, const google::protobuf::Message* response) {
     RunMiddlewarePipeline(state, MiddlewareHooks::FinishHooks(status, status.ok() ? response : nullptr));
 
     HandleCallStatistics(state, status);
@@ -78,18 +78,18 @@ void ProcessFinish(CallState& state, const grpc::Status& status, const google::p
     SetStatusAndResetSpan(state, status);
 }
 
-void ProcessFinishAbandoned(CallState& state, const grpc::Status& status) noexcept {
+void ProcessFinishAbandoned(StreamingCallState& state, const grpc::Status& status) noexcept {
     // Nothing to do with statistics, `RpcStatisticsScope` automatically accounts "abandoned-error"
     SetStatusAndResetSpan(state, status);
 }
 
-void ProcessCancelled(CallState& state, std::string_view stage) noexcept {
+void ProcessCancelled(StreamingCallState& state, std::string_view stage) noexcept {
     state.GetStatsScope().OnCancelled();
     state.GetStatsScope().Flush();
     SetErrorAndResetSpan(state, fmt::format("Task cancellation at '{}'", stage));
 }
 
-void ProcessNetworkError(CallState& state, std::string_view stage) noexcept {
+void ProcessNetworkError(StreamingCallState& state, std::string_view stage) noexcept {
     state.GetStatsScope().OnNetworkError();
     state.GetStatsScope().Flush();
     SetErrorAndResetSpan(state, fmt::format("Network error at '{}'", stage));

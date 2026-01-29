@@ -18,7 +18,6 @@
 #include <userver/ugrpc/client/impl/client_internals.hpp>
 #include <userver/ugrpc/client/impl/client_qos_errors_reporter.hpp>
 #include <userver/ugrpc/client/impl/compat/channel_arguments_builder.hpp>
-#include <userver/ugrpc/client/impl/stub_handle.hpp>
 #include <userver/ugrpc/client/impl/stub_state.hpp>
 #include <userver/ugrpc/client/middlewares/fwd.hpp>
 #include <userver/ugrpc/impl/static_service_metadata.hpp>
@@ -81,10 +80,6 @@ public:
     ClientData(const ClientData&) = delete;
     ClientData& operator=(ClientData&&) = delete;
     ClientData& operator=(const ClientData&) = delete;
-
-    StubHandle NextStub(std::size_t method_id) const;
-
-    StubHandle NextStub() const;
 
     grpc::CompletionQueue& NextQueue() const;
 

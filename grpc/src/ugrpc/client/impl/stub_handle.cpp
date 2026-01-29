@@ -4,12 +4,10 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client::impl {
 
-StubHandle::StubHandle(rcu::ReadablePtr<StubState>&& state, StubAny& stub)
-    : state_{std::move(state)},
+StubHandle::StubHandle(rcu::ReadablePtr<StubState>&& stub_state, StubAny& stub)
+    : stub_state_{std::move(stub_state)},
       stub_{stub}
 {}
-
-const ClientQos& StubHandle::GetClientQos() const { return state_->client_qos; }
 
 }  // namespace ugrpc::client::impl
 

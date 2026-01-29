@@ -28,15 +28,19 @@ void CheckOk(
     std::string_view stage
 );
 
-void CheckFinishStatus(CallState& state);
+void CheckFinishStatus(StreamingCallState& state);
 
-void ProcessFinish(CallState& state, const grpc::Status& status, const google::protobuf::Message* final_response);
+void ProcessFinish(
+    StreamingCallState& state,
+    const grpc::Status& status,
+    const google::protobuf::Message* final_response
+);
 
-void ProcessFinishAbandoned(CallState& state, const grpc::Status& status) noexcept;
+void ProcessFinishAbandoned(StreamingCallState& state, const grpc::Status& status) noexcept;
 
-void ProcessCancelled(CallState& state, std::string_view stage) noexcept;
+void ProcessCancelled(StreamingCallState& state, std::string_view stage) noexcept;
 
-void ProcessNetworkError(CallState& state, std::string_view stage) noexcept;
+void ProcessNetworkError(StreamingCallState& state, std::string_view stage) noexcept;
 
 void ThrowIfDeadlineIsExceeded(grpc::ClientContext& client_context, std::string_view call_name);
 

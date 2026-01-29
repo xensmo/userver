@@ -11,18 +11,6 @@ namespace ugrpc::client::impl {
 
 ClientData::~ClientData() { config_subscription_.Unsubscribe(); }
 
-StubHandle ClientData::NextStub(std::size_t method_id) const {
-    auto stub_state = stub_state_.Read();
-    auto& stub = impl::NextStub(*stub_state, method_id);
-    return StubHandle{std::move(stub_state), stub};
-}
-
-StubHandle ClientData::NextStub() const {
-    auto stub_state = stub_state_.Read();
-    auto& stub = impl::NextStub(*stub_state);
-    return StubHandle{std::move(stub_state), stub};
-}
-
 grpc::CompletionQueue& ClientData::NextQueue() const { return internals_.completion_queues.NextQueue(); }
 
 ugrpc::impl::MethodStatistics& ClientData::GetStatistics(std::size_t method_id) const {

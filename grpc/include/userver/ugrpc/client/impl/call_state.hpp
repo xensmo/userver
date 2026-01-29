@@ -44,7 +44,7 @@ public:
     CallState(CallState&&) noexcept = delete;
     CallState& operator=(CallState&&) noexcept = delete;
 
-    StubHandle& GetStub() noexcept;
+    StubAny& GetStub() noexcept;
 
     void SetClientContext(std::unique_ptr<grpc::ClientContext> client_context) noexcept;
 
@@ -68,8 +68,6 @@ public:
 
     const testsuite::GrpcControl& GetTestsuiteControl() const noexcept;
 
-    void ResetSpan() noexcept;
-
     ugrpc::impl::RpcStatisticsScope& GetStatsScope() noexcept;
 
     bool IsDeadlinePropagated() const noexcept;
@@ -81,6 +79,8 @@ public:
     void Commit() noexcept;
 
     grpc::ClientContext& GetClientContextCommitted();
+
+    void ResetSpan() noexcept;
 
 private:
     StubHandle stub_;

@@ -7,7 +7,7 @@
 #include <grpcpp/support/async_stream.h>
 #include <grpcpp/support/async_unary_call.h>
 
-#include <userver/ugrpc/client/impl/stub_handle.hpp>
+#include <userver/ugrpc/client/impl/stub_any.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -30,9 +30,8 @@ using PrepareBidiStreamingCall = std::unique_ptr<
     grpc::ClientAsyncReaderWriter<Request, Response>> (Stub::*)(::grpc::ClientContext*, ::grpc::CompletionQueue*);
 
 template <typename F, class Stub, typename... Args>
-decltype(auto) PrepareCall(F Stub::*prepare_async_method, StubHandle& stub_handle, Args&&... args) {
-    auto& stub = stub_handle.Get<Stub>();
-    return std::invoke(prepare_async_method, stub, std::forward<Args>(args)...);
+decltype(auto) PrepareCall(F Stub::*prepare_async_method, StubAny& stub, Args&&... args) {
+    return std::invoke(prepare_async_method, StubCast<Stub>(stub), std::forward<Args>(args)...);
 }
 
 template <class Stub, class Request, class Response>
@@ -66,12 +65,12 @@ public:
     {}
 
     decltype(auto) operator()(
-        StubHandle& stub_handle,
+        StubAny& stub,
         grpc::ClientContext* client_context,
         const grpc::ByteBuffer& request,
         grpc::CompletionQueue* cq
     ) const {
-        return impl::PrepareCall(prepare_async_method_, stub_handle, client_context, method_name_, request, cq);
+        return impl::PrepareCall(prepare_async_method_, stub, client_context, method_name_, request, cq);
     }
 
 private:
