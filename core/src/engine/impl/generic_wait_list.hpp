@@ -11,15 +11,17 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
+class Awaiter;
+
 class GenericWaitList final {
 public:
     explicit GenericWaitList(Task::WaitMode wait_mode) noexcept;
 
-    bool GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& context) noexcept;
+    bool GetSignalOrAppend(boost::intrusive_ptr<Awaiter>&& awaiter) noexcept;
 
-    void Remove(TaskContext& context) noexcept;
+    void Remove(Awaiter& awaiter) noexcept;
 
-    void SetSignalAndWakeupAll();
+    void SetSignalAndNotifyAll();
 
     bool IsSignaled() const noexcept;
 

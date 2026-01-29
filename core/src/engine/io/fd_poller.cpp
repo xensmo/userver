@@ -88,15 +88,15 @@ struct FdPoller::Impl final : public engine::impl::ContextAccessor {
     // ContextAccessor implementation
     bool IsReady() const noexcept override { return awaiters->IsSignaled(); }
 
-    engine::impl::EarlyWakeup TryAppendAwaiter(engine::impl::TaskContext& awaiter) override {
+    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter) override {
         if (awaiters->GetSignalOrAppend(&awaiter)) {
-            return engine::impl::EarlyWakeup{true};
+            return engine::impl::EarlyNotify{true};
         }
         watcher.StartAsync();
-        return engine::impl::EarlyWakeup{false};
+        return engine::impl::EarlyNotify{false};
     }
 
-    void RemoveAwaiter(engine::impl::TaskContext& awaiter) noexcept override {
+    void RemoveAwaiter(engine::impl::Awaiter& awaiter) noexcept override {
         awaiters->Remove(awaiter);
         // we need to stop watcher manually to avoid racy wakeups later
         watcher.StopAsync();
@@ -112,7 +112,7 @@ struct FdPoller::Impl final : public engine::impl::ContextAccessor {
     std::atomic<FdPoller::Kind> events_that_happened{};
 };
 
-void FdPoller::Impl::WakeupAwaiters() { awaiters->SetSignalAndWakeupOne(); }
+void FdPoller::Impl::WakeupAwaiters() { awaiters->SetSignalAndNotifyOne(); }
 
 FdPoller::Impl::Impl(ev::ThreadControl control)
     : watcher(control, this)
@@ -189,7 +189,7 @@ int FdPoller::GetFd() const noexcept { return pimpl_->watcher.GetFd(); }
 
 std::optional<FdPoller::Kind> FdPoller::Wait(Deadline deadline) {
     ResetReady();
-    if (pimpl_->DoWait(deadline) == engine::impl::TaskContext::WakeupSource::kWaitList) {
+    if (pimpl_->DoWait(deadline) == engine::impl::TaskContext::WakeupSource::kNotify) {
         return pimpl_->events_that_happened.load(std::memory_order_relaxed);
     } else {
         return std::nullopt;

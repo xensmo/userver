@@ -21,19 +21,19 @@ public:
     ) noexcept
         : sem_(sem), current_(current), awaiter_token_(*sem_.lock_awaiters_), count_(count) {}
 
-    impl::EarlyWakeup SetupWakeups() override {
+    impl::EarlyNotify SetupWakeups() override {
         impl::WaitList::Lock lock(*sem_.lock_awaiters_);
         status_ = sem_.DoTryLock(count_);
         if (status_ != TryLockStatus::kTransientFailure) {
-            return impl::EarlyWakeup{status_ == TryLockStatus::kSuccess};
+            return impl::EarlyNotify{status_ == TryLockStatus::kSuccess};
         }
         if (sem_.UsedApprox() <= sem_.GetCapacity() - count_) {
-            return impl::EarlyWakeup{true};
+            return impl::EarlyNotify{true};
         }
         // A race is not possible here, because check + Append is performed under
         // WaitList::Lock, and notification also takes WaitList::Lock.
         sem_.lock_awaiters_->Append(lock, &current_);
-        return impl::EarlyWakeup{false};
+        return impl::EarlyNotify{false};
     }
 
     void DisableWakeups() noexcept override {
@@ -73,7 +73,7 @@ void CancellableSemaphore::SetCapacity(Counter capacity) {
 
     if (lock_awaiters_->GetCountOfSleepies()) {
         impl::WaitList::Lock lock{*lock_awaiters_};
-        lock_awaiters_->WakeupAll(lock);
+        lock_awaiters_->NotifyAll(lock);
     }
 }
 
@@ -125,9 +125,9 @@ void CancellableSemaphore::unlock_shared_count(const Counter count) {
     if (lock_awaiters_->GetCountOfSleepies()) {
         impl::WaitList::Lock lock{*lock_awaiters_};
         if (count > 1) {
-            lock_awaiters_->WakeupAll(lock);
+            lock_awaiters_->NotifyAll(lock);
         } else {
-            lock_awaiters_->WakeupOne(lock);
+            lock_awaiters_->NotifyOne(lock);
         }
     }
 }

@@ -58,15 +58,15 @@ public:
           awaiter_token_(mutex_.lock_awaiters_)
     {}
 
-    EarlyWakeup SetupWakeups() override {
+    EarlyNotify SetupWakeups() override {
         WaitList::Lock lock(mutex_.lock_awaiters_);
         if (mutex_.LockFastPath(current_)) {
-            return EarlyWakeup{true};
+            return EarlyNotify{true};
         }
         // A race is not possible here, because check + Append is performed under
         // WaitList::Lock, and notification also takes WaitList::Lock.
         mutex_.lock_awaiters_.Append(lock, &current_);
-        return EarlyWakeup{false};
+        return EarlyNotify{false};
     }
 
     void DisableWakeups() noexcept override {
@@ -88,16 +88,16 @@ public:
           current_(current)
     {}
 
-    EarlyWakeup SetupWakeups() override {
+    EarlyNotify SetupWakeups() override {
         if (TryLock()) {
-            return EarlyWakeup{true};
+            return EarlyNotify{true};
         }
         mutex_.lock_awaiters_.Append(&current_);
         if (mutex_.owner_.load() == nullptr) {
             mutex_.lock_awaiters_.Remove(current_);
-            return EarlyWakeup{true};
+            return EarlyNotify{true};
         }
-        return EarlyWakeup{false};
+        return EarlyNotify{false};
     }
 
     void DisableWakeups() noexcept override { mutex_.lock_awaiters_.Remove(current_); }
@@ -174,11 +174,11 @@ void MutexImpl<Awaiters>::unlock() {
     if constexpr (std::is_same_v<Awaiters, WaitList>) {
         if (lock_awaiters_.GetCountOfSleepies()) {
             WaitList::Lock lock(lock_awaiters_);
-            lock_awaiters_.WakeupOne(lock);
+            lock_awaiters_.NotifyOne(lock);
         }
     } else {
         static_assert(std::is_same_v<Awaiters, WaitListLight>);
-        lock_awaiters_.WakeupOne();
+        lock_awaiters_.NotifyOne();
     }
 
 #if USERVER_IMPL_HAS_TSAN

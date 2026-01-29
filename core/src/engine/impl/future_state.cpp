@@ -44,7 +44,7 @@ void FutureStateBase::LockResultStore() {
     }
 }
 
-void FutureStateBase::ReleaseResultStore() { finish_awaiters_->SetSignalAndWakeupOne(); }
+void FutureStateBase::ReleaseResultStore() { finish_awaiters_->SetSignalAndNotifyOne(); }
 
 void FutureStateBase::WaitForResult() {
     const auto wait_result = WaitUntil({});
@@ -53,11 +53,11 @@ void FutureStateBase::WaitForResult() {
     }
 }
 
-EarlyWakeup FutureStateBase::TryAppendAwaiter(TaskContext& awaiter) {
-    return EarlyWakeup{finish_awaiters_->GetSignalOrAppend(&awaiter)};
+EarlyNotify FutureStateBase::TryAppendAwaiter(Awaiter& awaiter) {
+    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter)};
 }
 
-void FutureStateBase::RemoveAwaiter(TaskContext& awaiter) noexcept { finish_awaiters_->Remove(awaiter); }
+void FutureStateBase::RemoveAwaiter(Awaiter& awaiter) noexcept { finish_awaiters_->Remove(awaiter); }
 
 void FutureStateBase::AfterWait() noexcept {}
 

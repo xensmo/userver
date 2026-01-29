@@ -42,7 +42,7 @@ FutureStatus DoWaitAllChecked(utils::span<ContextAccessor*> targets, Deadline de
         }
 
         switch (sleep_status) {
-            case TaskContext::WakeupSource::kWaitList:
+            case TaskContext::WakeupSource::kNotify:
                 break;
             case TaskContext::WakeupSource::kDeadlineTimer:
                 return FutureStatus::kTimeout;

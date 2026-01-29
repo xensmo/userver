@@ -1,0 +1,95 @@
+#include <userver/engine/impl/awaiter.hpp>
+
+#include <engine/task/task_context.hpp>
+#include <userver/utils/assert.hpp>
+
+USERVER_NAMESPACE_BEGIN
+
+namespace engine::impl {
+
+namespace {
+
+PolymorphicAwaiter* CastToPolymorphic(Awaiter* awaiter) {
+    UASSERT_MSG(awaiter->GetStaticType() == Awaiter::StaticType::kPolymorphic, "Unexpected awaiter type");
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    return static_cast<PolymorphicAwaiter*>(awaiter);
+}
+
+const PolymorphicAwaiter* CastToPolymorphic(const Awaiter* awaiter) {
+    UASSERT_MSG(awaiter->GetStaticType() == Awaiter::StaticType::kPolymorphic, "Unexpected awaiter type");
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    return static_cast<const PolymorphicAwaiter*>(awaiter);
+}
+
+}  // namespace
+
+Awaiter::Awaiter(StaticType type)
+    : type_(type)
+{}
+
+void Awaiter::Notify(Epoch epoch) {
+    if (GetStaticType() == StaticType::kTaskContext) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        static_cast<TaskContext*>(this)->Wakeup(TaskContext::WakeupSource::kNotify, epoch);
+        return;
+    }
+
+    CastToPolymorphic(this)->DoNotify(epoch);
+}
+
+void Awaiter::Notify(NoEpoch) {
+    if (GetStaticType() == StaticType::kTaskContext) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        static_cast<TaskContext*>(this)->Wakeup(TaskContext::WakeupSource::kNotify, NoEpoch{});
+        return;
+    }
+
+    CastToPolymorphic(this)->DoNotify(NoEpoch{});
+}
+
+Epoch Awaiter::GetEpoch() const noexcept {
+    if (GetStaticType() == StaticType::kTaskContext) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        return static_cast<const TaskContext*>(this)->GetEpoch();
+    }
+
+    return CastToPolymorphic(this)->DoGetEpoch();
+}
+
+size_t Awaiter::UseCount() const noexcept {
+    // memory order could potentially be less restrictive, but it gets very
+    // complicated to reason about
+    return intrusive_refcount_.load(std::memory_order_seq_cst);
+}
+
+Awaiter::StaticType Awaiter::GetStaticType() const noexcept { return type_; }
+
+void intrusive_ptr_add_ref(Awaiter* awaiter) noexcept {
+    UASSERT(awaiter);
+
+    // memory order could potentially be less restrictive, but it gets very
+    // complicated to reason about
+    awaiter->intrusive_refcount_.fetch_add(1, std::memory_order_seq_cst);
+}
+
+void intrusive_ptr_release(Awaiter* awaiter) noexcept {
+    UASSERT(awaiter);
+
+    // memory order could potentially be less restrictive, but it gets very
+    // complicated to reason about
+    if (awaiter->intrusive_refcount_.fetch_sub(1, std::memory_order_seq_cst) != 1) {
+        return;
+    }
+
+    if (awaiter->GetStaticType() == Awaiter::StaticType::kTaskContext) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        static_cast<TaskContext*>(awaiter)->Destroy();
+        return;
+    }
+
+    CastToPolymorphic(awaiter)->Destroy();
+}
+
+}  // namespace engine::impl
+
+USERVER_NAMESPACE_END

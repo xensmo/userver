@@ -40,7 +40,7 @@ FutureStatus SingleUseEvent::WaitUntil(Deadline deadline) {
     // There are no spurious wakeups, because the event is single-use: if a task
     // has ever been notified by this SingleUseEvent, then the task will find
     // the SingleUseEvent ready once it wakes up.
-    if (wakeup_source == impl::TaskContext::WakeupSource::kWaitList) {
+    if (wakeup_source == impl::TaskContext::WakeupSource::kNotify) {
         UASSERT(awaiters_->IsSignaled());
     }
     return impl::ToFutureStatus(wakeup_source);
@@ -71,16 +71,16 @@ void SingleUseEvent::WaitNonCancellable() noexcept {
 
 void SingleUseEvent::Send() noexcept {
     UASSERT_MSG(!awaiters_->IsSignaled(), "Multiple producers detected for the same SingleUseEvent");
-    awaiters_->SetSignalAndWakeupOne();
+    awaiters_->SetSignalAndNotifyOne();
 }
 
 bool SingleUseEvent::IsReady() const noexcept { return awaiters_->IsSignaled(); }
 
-impl::EarlyWakeup SingleUseEvent::TryAppendAwaiter(impl::TaskContext& awaiter) {
-    return impl::EarlyWakeup{awaiters_->GetSignalOrAppend(&awaiter)};
+impl::EarlyNotify SingleUseEvent::TryAppendAwaiter(impl::Awaiter& awaiter) {
+    return impl::EarlyNotify{awaiters_->GetSignalOrAppend(&awaiter)};
 }
 
-void SingleUseEvent::RemoveAwaiter(impl::TaskContext& awaiter) noexcept { awaiters_->Remove(awaiter); }
+void SingleUseEvent::RemoveAwaiter(impl::Awaiter& awaiter) noexcept { awaiters_->Remove(awaiter); }
 
 void SingleUseEvent::RethrowErrorResult() const {
     // TODO support failure states in SingleUseEvent, for WaitAllChecked?

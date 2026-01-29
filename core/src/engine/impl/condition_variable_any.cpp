@@ -21,7 +21,7 @@ public:
     CvWaitStrategy(WaitList& awaiters, TaskContext& current, std::unique_lock<MutexType>& mutex_lock) noexcept
         : awaiters_(awaiters), awaiter_token_(awaiters_), current_(current), mutex_lock_(mutex_lock) {}
 
-    EarlyWakeup SetupWakeups() override {
+    EarlyNotify SetupWakeups() override {
         UASSERT(mutex_lock_);
         UASSERT(current_.IsCurrent());
         {
@@ -33,7 +33,7 @@ public:
         // A race is not possible here, because check + Append is performed under
         // mutex_lock_, and user state that defines readiness should only be changed
         // by user under mutex_lock_.
-        return EarlyWakeup{false};
+        return EarlyNotify{false};
     }
 
     void DisableWakeups() noexcept override {
@@ -86,7 +86,7 @@ CvStatus ConditionVariableAny<MutexType>::WaitUntil(std::unique_lock<MutexType>&
         case TaskContext::WakeupSource::kBootstrap:
             UASSERT(!"invalid wakeup source");
             [[fallthrough]];
-        case TaskContext::WakeupSource::kWaitList:
+        case TaskContext::WakeupSource::kNotify:
             return CvStatus::kNoTimeout;
     }
 
@@ -97,7 +97,7 @@ template <typename MutexType>
 void ConditionVariableAny<MutexType>::NotifyOne() {
     if (awaiters_->GetCountOfSleepies()) {
         WaitList::Lock lock(*awaiters_);
-        awaiters_->WakeupOne(lock);
+        awaiters_->NotifyOne(lock);
     }
 }
 
@@ -105,7 +105,7 @@ template <typename MutexType>
 void ConditionVariableAny<MutexType>::NotifyAll() {
     if (awaiters_->GetCountOfSleepies()) {
         WaitList::Lock lock(*awaiters_);
-        awaiters_->WakeupAll(lock);
+        awaiters_->NotifyAll(lock);
     }
 }
 

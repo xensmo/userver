@@ -96,8 +96,7 @@ private:
     EhGlobals& eh_store_;
 };
 
-constexpr SleepState MakeNextEpochSleepState(SleepState::Epoch current) {
-    using Epoch = SleepState::Epoch;
+constexpr SleepState MakeNextEpochSleepState(Epoch current) {
     return {SleepFlags::kNone, Epoch{utils::UnderlyingValue(current) + 1}};
 }
 
@@ -112,7 +111,8 @@ TaskContext::TaskContext(
     Deadline deadline,
     utils::impl::WrappedCallBase& payload
 )
-    : task_processor_(task_processor),
+    : Awaiter(Awaiter::StaticType::kTaskContext),
+      task_processor_(task_processor),
       task_counter_token_(task_processor_.GetTaskCounter()),
       is_critical_(importance == Task::Importance::kCritical),
       payload_(&payload),
@@ -217,7 +217,7 @@ void TaskContext::DoStep() {
             // Seems we're out of memory
             cancellation_reason_ = TaskCancellationReason::kOOM;
             SetState(TaskBase::State::kCancelled);
-            finish_awaiters_->SetSignalAndWakeupAll();
+            finish_awaiters_->SetSignalAndNotifyAll();
             throw;
         }
 
@@ -254,7 +254,7 @@ void TaskContext::DoStep() {
             }
             SetState(new_state);
             deadline_timer_.Finalize();
-            finish_awaiters_->SetSignalAndWakeupAll();
+            finish_awaiters_->SetSignalAndNotifyAll();
             TraceStateTransition(new_state);
         } break;
 
@@ -336,7 +336,7 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
 
     if (static_cast<bool>(wait_strategy.SetupWakeups())) {
         sleep_state_.Store<std::memory_order_release>(MakeNextEpochSleepState(sleep_epoch));
-        wakeup_source_ = WakeupSource::kWaitList;
+        wakeup_source_ = WakeupSource::kNotify;
         return wakeup_source_;
     }
 
@@ -372,7 +372,7 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
     return wakeup_source_;
 }
 
-void TaskContext::ArmDeadlineTimer(Deadline deadline, SleepState::Epoch sleep_epoch) {
+void TaskContext::ArmDeadlineTimer(Deadline deadline, Epoch sleep_epoch) {
     UASSERT(deadline.IsReachable());
     if (deadline_timer_.WasStarted()) {
         deadline_timer_.RestartWakeup(deadline, sleep_epoch);
@@ -437,9 +437,9 @@ bool TaskContext::ShouldSchedule(SleepState::Flags prev_flags, WakeupSource sour
     }
 }
 
-SleepState::Epoch TaskContext::GetEpoch() noexcept { return sleep_state_.Load<std::memory_order_acquire>().epoch; }
+Epoch TaskContext::GetEpoch() const noexcept { return sleep_state_.Load<std::memory_order_acquire>().epoch; }
 
-void TaskContext::Wakeup(WakeupSource source, SleepState::Epoch epoch) {
+void TaskContext::Wakeup(WakeupSource source, Epoch epoch) {
     if (IsFinished()) {
         return;
     }
@@ -604,14 +604,14 @@ task_local::Storage& TaskContext::GetLocalStorage() noexcept {
 
 bool TaskContext::IsReady() const noexcept { return IsFinished(); }
 
-EarlyWakeup TaskContext::TryAppendAwaiter(TaskContext& awaiter) {
-    if (&awaiter == this) {
+EarlyNotify TaskContext::TryAppendAwaiter(Awaiter& awaiter) {
+    if (&awaiter == static_cast<Awaiter*>(this)) {
         ReportDeadlock();
     }
-    return EarlyWakeup{finish_awaiters_->GetSignalOrAppend(&awaiter)};
+    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter)};
 }
 
-void TaskContext::RemoveAwaiter(TaskContext& awaiter) noexcept { finish_awaiters_->Remove(awaiter); }
+void TaskContext::RemoveAwaiter(Awaiter& awaiter) noexcept { finish_awaiters_->Remove(awaiter); }
 
 void TaskContext::AfterWait() noexcept {}
 
@@ -623,19 +623,13 @@ void TaskContext::RethrowErrorResult() const {
     payload_->RethrowErrorResult();
 }
 
-size_t TaskContext::UseCount() const noexcept {
-    // memory order could potentially be less restrictive, but it gets very
-    // complicated to reason about
-    return intrusive_refcount_.load(std::memory_order_seq_cst);
-}
-
 std::size_t TaskContext::DecrementFetchSharedTaskUsages() noexcept { return --shared_task_usages_; }
 
 std::size_t TaskContext::IncrementFetchSharedTaskUsages() noexcept { return ++shared_task_usages_; }
 
 TaskContext::WakeupSource TaskContext::GetPrimaryWakeupSource(SleepState::Flags sleep_flags) {
     static constexpr std::pair<SleepState::Flags, WakeupSource> l[] = {
-        {SleepFlags::kWakeupByWaitList, WakeupSource::kWaitList},
+        {SleepFlags::kWakeupByWaitList, WakeupSource::kNotify},
         {SleepFlags::kWakeupByDeadlineTimer, WakeupSource::kDeadlineTimer},
         {SleepFlags::kWakeupByBootstrap, WakeupSource::kBootstrap},
     };
@@ -741,26 +735,12 @@ CountedCoroutinePtr& TaskContext::GetCoroutinePtr() noexcept { return coro_; }
 
 utils::StringLiteral TaskContext::GetActorType() const { return "Task"; }
 
-void intrusive_ptr_add_ref(TaskContext* p) noexcept {
-    UASSERT(p);
+void TaskContext::Destroy() noexcept {
+    ResetPayload();
 
-    // memory order could potentially be less restrictive, but it gets very
-    // complicated to reason about
-    p->intrusive_refcount_.fetch_add(1, std::memory_order_seq_cst);
-}
+    std::destroy_at(this);
 
-void intrusive_ptr_release(TaskContext* p) noexcept {
-    UASSERT(p);
-
-    // memory order could potentially be less restrictive, but it gets very
-    // complicated to reason about
-    if (p->intrusive_refcount_.fetch_sub(1, std::memory_order_seq_cst) == 1) {
-        p->ResetPayload();
-
-        std::destroy_at(p);
-
-        DeleteFusedTaskContext(reinterpret_cast<std::byte*>(p));
-    }
+    DeleteFusedTaskContext(reinterpret_cast<std::byte*>(this));
 }
 
 bool HasWaitSucceeded(TaskContext::WakeupSource wakeup_source) noexcept {
@@ -768,7 +748,7 @@ bool HasWaitSucceeded(TaskContext::WakeupSource wakeup_source) noexcept {
     // (which is counted as a success), or they can sometimes wake themselves up
     // using kWaitList.
     switch (wakeup_source) {
-        case TaskContext::WakeupSource::kWaitList:
+        case TaskContext::WakeupSource::kNotify:
             return true;
         case TaskContext::WakeupSource::kDeadlineTimer:
         case TaskContext::WakeupSource::kCancelRequest:

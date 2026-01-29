@@ -19,11 +19,11 @@ auto GenericWaitList::CreateWaitList(Task::WaitMode wait_mode) noexcept {
 
 GenericWaitList::GenericWaitList(Task::WaitMode wait_mode) noexcept : awaiters_(CreateWaitList(wait_mode)) {}
 
-bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& context) noexcept {
+bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>&& awaiter) noexcept {
     return utils::Visit(
         awaiters_,  //
-        [&context](WaitListLight& ws) { return ws.GetSignalOrAppend(std::move(context)); },
-        [&context](WaitListAndSignal& ws) {
+        [&awaiter](WaitListLight& ws) { return ws.GetSignalOrAppend(std::move(awaiter)); },
+        [&awaiter](WaitListAndSignal& ws) {
             if (ws.signal.load()) {
                 return true;
             }
@@ -31,28 +31,28 @@ bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& cont
             if (ws.signal.load()) {
                 return true;
             }
-            ws.wl.Append(lock, std::move(context));
+            ws.wl.Append(lock, std::move(awaiter));
             return false;
         }
     );
 }
 
 // noexcept: awaiters_ are never valueless_by_exception
-void GenericWaitList::Remove(TaskContext& context) noexcept {
+void GenericWaitList::Remove(Awaiter& awaiter) noexcept {
     utils::Visit(
         awaiters_,  //
-        [&context](WaitListLight& ws) { ws.Remove(context); },
-        [&context](WaitListAndSignal& ws) {
+        [&awaiter](WaitListLight& ws) { ws.Remove(awaiter); },
+        [&awaiter](WaitListAndSignal& ws) {
             WaitList::Lock lock{ws.wl};
-            ws.wl.Remove(lock, context);
+            ws.wl.Remove(lock, awaiter);
         }
     );
 }
 
-void GenericWaitList::SetSignalAndWakeupAll() {
+void GenericWaitList::SetSignalAndNotifyAll() {
     utils::Visit(
         awaiters_,  //
-        [](WaitListLight& ws) { ws.SetSignalAndWakeupOne(); },
+        [](WaitListLight& ws) { ws.SetSignalAndNotifyOne(); },
         [](WaitListAndSignal& ws) {
             if (ws.signal.load()) {
                 return;
@@ -61,9 +61,9 @@ void GenericWaitList::SetSignalAndWakeupAll() {
             if (ws.signal.load()) {
                 return;
             }
-            // seq_cst is important for the "Append-Check-Wakeup" sequence.
+            // seq_cst is important for the "Append-Check-Notify" sequence.
             ws.signal.store(true, std::memory_order_seq_cst);
-            ws.wl.WakeupAll(lock);
+            ws.wl.NotifyAll(lock);
         }
     );
 }

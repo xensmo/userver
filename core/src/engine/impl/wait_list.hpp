@@ -5,13 +5,12 @@
 
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
+#include <userver/engine/impl/awaiter.hpp>
 #include <userver/utils/fast_pimpl.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
-
-class TaskContext;
 
 /// Wait list for multiple entries with explicit control over critical section.
 class WaitList final {
@@ -35,7 +34,7 @@ public:
     // not destroy it as long as the coroutine  may go to sleep.
     //
     // Now in the `unlock` part call `GetCountOfSleepies()` before
-    // `WaitList::Lock + WakeupOne/WakeupAll`.
+    // `WaitList::Lock + NotifyOne/NotifyAll`.
     class AwaitersScopeCounter final {
     public:
         explicit AwaitersScopeCounter(WaitList& list) noexcept : impl_(list) {
@@ -59,13 +58,13 @@ public:
     bool IsEmpty(Lock&) const noexcept;
 
     /// @brief Append the task to the `WaitList`
-    void Append(Lock& lock, boost::intrusive_ptr<impl::TaskContext> context) noexcept;
+    void Append(Lock& lock, boost::intrusive_ptr<impl::Awaiter> awaiter) noexcept;
 
-    /// @brief Remove the task from the `WaitList` without wakeup
-    void Remove(Lock& lock, impl::TaskContext& context) noexcept;
+    /// @brief Remove the task from the `WaitList` without notifying
+    void Remove(Lock& lock, impl::Awaiter& awaiter) noexcept;
 
-    void WakeupOne(Lock&);
-    void WakeupAll(Lock&);
+    void NotifyOne(Lock&);
+    void NotifyAll(Lock&);
 
     /// @brief Get the maximum amount of coroutines that may be sleeping
     /// @returns 0 if there are definitely no awaiters currently, non-0 otherwise
@@ -75,10 +74,13 @@ private:
     std::atomic<std::size_t> sleepies_{0};
     std::mutex mutex_;
 
+    using MemberHookConfig =
+        boost::intrusive::member_hook<impl::Awaiter, impl::Awaiter::WaitListHook, &impl::Awaiter::wait_list_hook_>;
+
     struct List;
     static constexpr std::size_t kListSize = sizeof(void*) * 2;
     static constexpr std::size_t kListAlignment = alignof(void*);
-    utils::FastPimpl<List, kListSize, kListAlignment> waiting_contexts_;
+    utils::FastPimpl<List, kListSize, kListAlignment> awaiters_;
 };
 
 }  // namespace engine::impl

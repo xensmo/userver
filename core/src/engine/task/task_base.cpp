@@ -8,6 +8,7 @@
 #include <engine/task/task_processor.hpp>
 #include <engine/task/task_processor_pools.hpp>
 #include <userver/engine/async.hpp>
+#include <userver/engine/impl/epoch.hpp>
 #include <userver/engine/impl/task_context_holder.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/utils/assert.hpp>
@@ -27,7 +28,7 @@ static_assert(!std::is_polymorphic_v<TaskBase>, "Slicing is used by derived type
 TaskBase::TaskBase(impl::TaskContextHolder&& context)
     : pimpl_(Impl{std::move(context).Extract()})
 {
-    pimpl_->context->Wakeup(impl::TaskContext::WakeupSource::kBootstrap, impl::SleepState::Epoch{0});
+    pimpl_->context->Wakeup(impl::TaskContext::WakeupSource::kBootstrap, impl::Epoch{0});
 }
 
 bool TaskBase::IsValid() const { return !!pimpl_->context; }

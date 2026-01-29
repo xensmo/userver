@@ -8,7 +8,7 @@
 
 #include <concurrent/impl/fast_atomic.hpp>
 #include <engine/task/sleep_state.hpp>
-#include <engine/task/task_context.hpp>
+#include <userver/engine/impl/awaiter.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/underlying_value.hpp>
@@ -19,13 +19,13 @@ namespace engine::impl {
 namespace {
 
 struct alignas(8) AwaiterWithEpoch32 final {
-    TaskContext* context{nullptr};
-    SleepState::Epoch epoch{0};
+    Awaiter* awaiter{nullptr};
+    Epoch epoch{0};
 };
 
 struct alignas(16) AwaiterWithEpoch64 final {
-    TaskContext* context{nullptr};
-    SleepState::Epoch epoch{0};
+    Awaiter* awaiter{nullptr};
+    Epoch epoch{0};
     std::uint32_t padding_dont_use{0};
 };
 
@@ -48,7 +48,7 @@ struct fmt::formatter<USERVER_NAMESPACE::engine::impl::AwaiterWithEpoch> {
         return fmt::format_to(
             ctx.out(),
             "({}, {})",
-            fmt::ptr(awaiter.context),
+            fmt::ptr(awaiter.awaiter),
             USERVER_NAMESPACE::utils::UnderlyingValue(awaiter.epoch)
         );
     }
@@ -59,11 +59,11 @@ USERVER_NAMESPACE_BEGIN
 namespace engine::impl {
 namespace {
 
-TaskContext* const kSignaled = reinterpret_cast<TaskContext*>(1);
+Awaiter* const kSignaled = reinterpret_cast<Awaiter*>(1);
 
-void DoWakeup(AwaiterWithEpoch awaiter) {
-    LOG_TRACE() << "WakeupOne awaiter=" << fmt::to_string(awaiter) << " use_count=" << awaiter.context->UseCount();
-    awaiter.context->Wakeup(TaskContext::WakeupSource::kWaitList, awaiter.epoch);
+void DoNotify(AwaiterWithEpoch awaiter) {
+    LOG_TRACE() << "NotifyOne awaiter=" << fmt::to_string(awaiter) << " use_count=" << awaiter.awaiter->UseCount();
+    awaiter.awaiter->Notify(awaiter.epoch);
 }
 
 }  // namespace
@@ -78,16 +78,16 @@ WaitListLight::~WaitListLight() {
     UASSERT_MSG(IsEmptyRelaxed(), "Someone is awaiting on WaitListLight while it's being destroyed");
 }
 
-void WaitListLight::Append(boost::intrusive_ptr<impl::TaskContext>&& context) noexcept {
-    [[maybe_unused]] const bool was_signaled = GetSignalOrAppend(std::move(context));
+void WaitListLight::Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter) noexcept {
+    [[maybe_unused]] const bool was_signaled = GetSignalOrAppend(std::move(awaiter));
     UASSERT_MSG(!was_signaled, "Signals cannot be used with plain Append");
 }
 
-bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& context) noexcept {
-    UASSERT(context);
+bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter> awaiter) noexcept {
+    UASSERT(awaiter);
 
-    const AwaiterWithEpoch new_awaiter{context.get(), context->GetEpoch()};
-    LOG_TRACE() << "Append awaiter=" << fmt::to_string(new_awaiter) << " use_count=" << context->UseCount();
+    const AwaiterWithEpoch new_awaiter{awaiter.get(), awaiter->GetEpoch()};
+    LOG_TRACE() << "Append awaiter=" << fmt::to_string(new_awaiter) << " use_count=" << awaiter->UseCount();
 
     AwaiterWithEpoch expected{};
     // seq_cst is important for the "Append-Check-Wakeup" sequence.
@@ -96,7 +96,7 @@ bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& contex
         std::memory_order_relaxed>(expected, new_awaiter);
     if (!success) {
         UASSERT_MSG(
-            expected.context == kSignaled,
+            expected.awaiter == kSignaled,
             fmt::format(
                 "Attempting to wait in a single atomic Awaiter "
                 "from multiple coroutines: new={} existing={}",
@@ -110,43 +110,43 @@ bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<TaskContext>&& contex
     // Keep a reference logically stored in the WaitListLight to ensure that
     // WakeupOne can complete safely in parallel with the awaiting task being
     // cancelled, Remove-d and stopped.
-    context.detach();
+    awaiter.detach();
 
     return false;
 }
 
-void WaitListLight::WakeupOne() {
-    // seq_cst is important for the "Append-Check-Wakeup" sequence.
+void WaitListLight::NotifyOne() {
+    // seq_cst is important for the "Append-Check-Notify" sequence.
     const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithEpoch{});
-    if (old_awaiter.context == nullptr) {
+    if (old_awaiter.awaiter == nullptr) {
         return;
     }
 
-    UASSERT_MSG(old_awaiter.context != kSignaled, "Use SetSignalAndWakeupOne for dealing with signals instead");
+    UASSERT_MSG(old_awaiter.awaiter != kSignaled, "Use SetSignalAndNotifyOne for dealing with signals instead");
 
-    const boost::intrusive_ptr<TaskContext> context{
-        old_awaiter.context,
+    const boost::intrusive_ptr<Awaiter> awaiter{
+        old_awaiter.awaiter,
         /*add_ref=*/false
     };
-    DoWakeup(old_awaiter);
+    DoNotify(old_awaiter);
 }
 
-void WaitListLight::SetSignalAndWakeupOne() {
-    // seq_cst is important for the "Append-Check-Wakeup" sequence.
+void WaitListLight::SetSignalAndNotifyOne() {
+    // seq_cst is important for the "Append-Check-Notify" sequence.
     const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithEpoch{kSignaled, {}});
-    if (old_awaiter.context == nullptr || old_awaiter.context == kSignaled) {
+    if (old_awaiter.awaiter == nullptr || old_awaiter.awaiter == kSignaled) {
         return;
     }
 
-    const boost::intrusive_ptr<TaskContext> context{
-        old_awaiter.context,
+    const boost::intrusive_ptr<Awaiter> awaiter{
+        old_awaiter.awaiter,
         /*add_ref=*/false
     };
-    DoWakeup(old_awaiter);
+    DoNotify(old_awaiter);
 }
 
-void WaitListLight::Remove(TaskContext& context) noexcept {
-    const AwaiterWithEpoch expected{&context, context.GetEpoch()};
+void WaitListLight::Remove(Awaiter& awaiter) noexcept {
+    const AwaiterWithEpoch expected{&awaiter, awaiter.GetEpoch()};
 
     auto old_awaiter = expected;
     const bool success = impl_->awaiter.compare_exchange_strong<
@@ -155,9 +155,9 @@ void WaitListLight::Remove(TaskContext& context) noexcept {
 
     if (!success) {
         UASSERT_MSG(
-            old_awaiter.context == nullptr || old_awaiter.context == kSignaled,
+            old_awaiter.awaiter == nullptr || old_awaiter.awaiter == kSignaled,
             fmt::format(
-                "An unexpected context is occupying the "
+                "An unexpected awaiter is occupying the "
                 "WaitListLight: expected={} actual={}",
                 expected,
                 old_awaiter
@@ -166,8 +166,8 @@ void WaitListLight::Remove(TaskContext& context) noexcept {
         return;
     }
 
-    LOG_TRACE() << "Remove awaiter=" << fmt::to_string(expected) << " use_count=" << context.UseCount();
-    intrusive_ptr_release(&context);
+    LOG_TRACE() << "Remove awaiter=" << fmt::to_string(expected) << " use_count=" << awaiter.UseCount();
+    intrusive_ptr_release(&awaiter);
 }
 
 bool WaitListLight::GetAndResetSignal() noexcept {
@@ -176,7 +176,7 @@ bool WaitListLight::GetAndResetSignal() noexcept {
         std::memory_order_relaxed,
         std::memory_order_relaxed>(expected, AwaiterWithEpoch{});
 
-    if (!success && expected.context != nullptr) {
+    if (!success && expected.awaiter != nullptr) {
         utils::AbortWithStacktrace(
             fmt::format("ResetSignal with an active awaiter is not allowed: awaiter={}", expected)
         );
@@ -188,12 +188,12 @@ bool WaitListLight::GetAndResetSignal() noexcept {
 bool WaitListLight::IsSignaled() const noexcept {
     const auto torn_awaiter = impl_->awaiter.LoadWithTearing();
     std::atomic_thread_fence(std::memory_order_acquire);
-    return torn_awaiter.context == kSignaled;
+    return torn_awaiter.awaiter == kSignaled;
 }
 
 bool WaitListLight::IsEmptyRelaxed() noexcept {
     const auto awaiter = impl_->awaiter.load<std::memory_order_relaxed>();
-    return awaiter.context == nullptr || awaiter.context == kSignaled;
+    return awaiter.awaiter == nullptr || awaiter.awaiter == kSignaled;
 }
 
 }  // namespace engine::impl

@@ -20,7 +20,7 @@ class FutureWaitStrategy final : public impl::WaitStrategy {
 public:
     FutureWaitStrategy(T& target, impl::TaskContext& current) noexcept : target_(target), current_(current) {}
 
-    EarlyWakeup SetupWakeups() override { return target_.TryAppendAwaiter(current_); }
+    EarlyNotify SetupWakeups() override { return target_.TryAppendAwaiter(current_); }
 
     void DisableWakeups() noexcept override { target_.RemoveAwaiter(current_); }
 
@@ -31,7 +31,7 @@ private:
 
 inline FutureStatus ToFutureStatus(TaskContext::WakeupSource wakeup_source) noexcept {
     switch (wakeup_source) {
-        case impl::TaskContext::WakeupSource::kWaitList:
+        case impl::TaskContext::WakeupSource::kNotify:
             return FutureStatus::kReady;
         case impl::TaskContext::WakeupSource::kDeadlineTimer:
             return FutureStatus::kTimeout;

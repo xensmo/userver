@@ -20,7 +20,7 @@ public:
           targets_(targets)
     {}
 
-    EarlyWakeup SetupWakeups() override {
+    EarlyNotify SetupWakeups() override {
         for (auto*& target : targets_) {
             if (!target) {
                 continue;
@@ -34,13 +34,13 @@ public:
             const auto early_wakeup = target->TryAppendAwaiter(awaiter_);
 
             if (static_cast<bool>(early_wakeup)) {
-                return EarlyWakeup{true};
+                return EarlyNotify{true};
             }
 
             disable_wakeups.Release();
         }
 
-        return EarlyWakeup{false};
+        return EarlyNotify{false};
     }
 
     void DisableWakeups() noexcept override { DoDisableWakeups(targets_); }

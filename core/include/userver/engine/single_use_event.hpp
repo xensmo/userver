@@ -13,6 +13,13 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine {
 
+namespace impl {
+
+template <typename T>
+class FutureWaitStrategy;
+
+}  // namespace impl
+
 /// @ingroup userver_concurrency
 ///
 /// @brief A single-producer, single-consumer event.
@@ -85,8 +92,8 @@ public:
 private:
     friend class impl::FutureWaitStrategy<SingleUseEvent>;
 
-    impl::EarlyWakeup TryAppendAwaiter(impl::TaskContext& awaiter) override;
-    void RemoveAwaiter(impl::TaskContext& awaiter) noexcept override;
+    impl::EarlyNotify TryAppendAwaiter(impl::Awaiter& awaiter) override;
+    void RemoveAwaiter(impl::Awaiter& awaiter) noexcept override;
     void RethrowErrorResult() const override;
     void AfterWait() noexcept override;
 

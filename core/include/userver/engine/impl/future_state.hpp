@@ -13,6 +13,9 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
+template <typename T>
+class FutureWaitStrategy;
+
 class FutureStateBase : private ContextAccessor {
 public:
     bool IsReady() const noexcept final;
@@ -36,8 +39,8 @@ protected:
 private:
     friend class FutureWaitStrategy<FutureStateBase>;
 
-    EarlyWakeup TryAppendAwaiter(TaskContext& awaiter) final;
-    void RemoveAwaiter(TaskContext& awaiter) noexcept final;
+    EarlyNotify TryAppendAwaiter(Awaiter& awaiter) final;
+    void RemoveAwaiter(Awaiter& awaiter) noexcept final;
     void AfterWait() noexcept final;
 
     FastPimplWaitListLight finish_awaiters_;
