@@ -49,7 +49,8 @@ Checks:
   ,-cppcoreguidelines-pro-type-union-access\
   ,-cppcoreguidelines-pro-type-vararg\
   ,-cppcoreguidelines-special-member-functions\
-  ,-cppcoreguidelines-virtual-class-destructor
+  ,-cppcoreguidelines-virtual-class-destructor\
+  ,-cppcoreguidelines-rvalue-reference-param-not-moved\
   ,-google-explicit-constructor\
   ,-google-readability-braces-around-statements\
   ,-google-readability-function-size\
