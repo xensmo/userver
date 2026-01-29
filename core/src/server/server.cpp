@@ -19,6 +19,7 @@
 #include <userver/fs/blocking/read.hpp>
 #include <userver/server/http/http_request.hpp>
 #include <userver/server/middlewares/configuration.hpp>
+#include <userver/utils/statistics/storage.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -408,6 +409,16 @@ void Server::SetRpsRatelimit(std::optional<size_t> rps) { pimpl_->SetRpsRatelimi
 void Server::SetRpsRatelimitStatusCode(http::HttpStatus status_code) { pimpl_->SetRpsRatelimitStatusCode(status_code); }
 
 std::uint64_t Server::GetTotalRequests() const { return pimpl_->GetTotalRequests(); }
+
+void Server::WriteMetrics(utils::statistics::Writer& writer) {
+    if (auto server = writer["server"]) {
+        WriteMonitorData(server);
+    }
+
+    if (auto handler_total = writer["http.handler.total"]) {
+        WriteTotalHandlerStatistics(handler_total);
+    }
+}
 
 }  // namespace server
 

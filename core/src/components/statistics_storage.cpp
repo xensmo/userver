@@ -1,7 +1,7 @@
 #include <userver/components/statistics_storage.hpp>
 
 #include <userver/components/component_context.hpp>
-#include <userver/components/scope.hpp>
+#include <userver/utils/resource_scopes.hpp>
 
 #include <userver/yaml_config/merge_schemas.hpp>
 
@@ -42,14 +42,13 @@ void RegisterWriterScope(
 )
 {
     auto& storage = context.FindComponent<components::StatisticsStorage>().GetStorage();
-    context.RegisterScope(components::MakeScope(
-        [&storage,
-         common_prefix = std::move(common_prefix),
-         func = std::move(func),
-         add_labels = std::move(add_labels)] {
+    context.Scopes()
+        .Register([&storage,
+                   common_prefix = std::move(common_prefix),
+                   func = std::move(func),
+                   add_labels = std::move(add_labels)] {
             return storage.RegisterWriter(common_prefix, std::move(func), std::move(add_labels));
-        }
-    ));
+        });
 }
 
 }  // namespace utils::statistics
