@@ -440,8 +440,6 @@ void Manager::AddComponents(const ComponentList& component_list) {
 
     auto stop_time = std::chrono::steady_clock::now();
     load_duration_ = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time);
-
-    LOG_INFO() << "All components loaded";
 }
 
 void Manager::AddComponentImpl(
@@ -459,14 +457,11 @@ void Manager::AddComponentImpl(
         return;
     }
 
-    LOG_DEBUG() << "Starting component " << name;
-
     auto* component = component_context_->AddComponent(name, config_it->second, adder);
     if (auto* signal_processor = dynamic_cast<os_signals::ProcessorComponent*>(component)) {
         const std::lock_guard<std::shared_timed_mutex> lock(context_mutex_);
         signal_processor_ = signal_processor;
     }
-    LOG_DEBUG() << "Started component " << name;
 }
 
 void Manager::ClearComponents() noexcept {

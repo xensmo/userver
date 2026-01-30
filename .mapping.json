@@ -665,6 +665,7 @@
   "core/functional_tests/basic_chaos/tests-nonchaos/handlers/test_log_request_headers.py":"taxi/uservices/userver/core/functional_tests/basic_chaos/tests-nonchaos/handlers/test_log_request_headers.py",
   "core/functional_tests/basic_chaos/tests-nonchaos/metrics/test_has_reopening_error_metric.py":"taxi/uservices/userver/core/functional_tests/basic_chaos/tests-nonchaos/metrics/test_has_reopening_error_metric.py",
   "core/functional_tests/basic_chaos/tests-nonchaos/middlewares/test_testsuite_middleware.py":"taxi/uservices/userver/core/functional_tests/basic_chaos/tests-nonchaos/middlewares/test_testsuite_middleware.py",
+  "core/functional_tests/basic_chaos/tests-nonchaos/test_boot_log.py":"taxi/uservices/userver/core/functional_tests/basic_chaos/tests-nonchaos/test_boot_log.py",
   "core/functional_tests/basic_chaos/tests-nonchaos/test_dynamic_debug_log.py":"taxi/uservices/userver/core/functional_tests/basic_chaos/tests-nonchaos/test_dynamic_debug_log.py",
   "core/functional_tests/basic_chaos/tests-restart/conftest.py":"taxi/uservices/userver/core/functional_tests/basic_chaos/tests-restart/conftest.py",
   "core/functional_tests/basic_chaos/tests-restart/test_restart.py":"taxi/uservices/userver/core/functional_tests/basic_chaos/tests-restart/test_restart.py",
