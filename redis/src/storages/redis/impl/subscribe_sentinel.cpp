@@ -78,7 +78,7 @@ std::shared_ptr<SubscribeSentinel> SubscribeSentinel::Create(
     std::string shard_group_name,
     dynamic_config::Source dynamic_config_source,
     const std::string& client_name,
-    std::string sharding_strategy,
+    storages::redis::ShardingStrategy sharding_strategy,
     const CommandControl& command_control,
     const testsuite::RedisControl& testsuite_redis_control
 ) {

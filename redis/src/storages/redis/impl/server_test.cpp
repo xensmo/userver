@@ -91,7 +91,7 @@ struct MockSentinelServers {
             "test_shard_group_name",
             dynamic_config::GetDefaultSource(),
             "test_client_name",
-            {""}
+            {storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32}
         );
         sentinel_client->WaitConnectedDebug(std::empty(slaves));
     }
@@ -116,7 +116,7 @@ struct MockSentinelServers {
             "test_shard_group_name",
             dynconf,
             "test_client_name",
-            {""},
+            storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32,
             cc,
             redis_control
         );

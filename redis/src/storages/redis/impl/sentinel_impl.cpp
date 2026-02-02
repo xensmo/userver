@@ -245,9 +245,9 @@ SentinelImpl::SentinelImpl(
 {
     log_extra_.Extend("shard_group_name", shard_group_name_);
 
-    const auto& key_shard_type = key_shard_factory_.GetType();
+    const auto& key_shard_type = key_shard_factory_.GetShardingStrategy();
     topology_holder_ = [&]() -> std::unique_ptr<TopologyHolderBase> {
-        if (key_shard_type == "RedisCluster") {
+        if (key_shard_type == ShardingStrategy::kRedisCluster) {
             return std::make_unique<ClusterTopologyHolder>(
                 ev_thread_,
                 redis_thread_pool,
@@ -257,7 +257,7 @@ SentinelImpl::SentinelImpl(
                 conns,
                 connection_security
             );
-        } else if (key_shard_type == "RedisStandalone") {
+        } else if (key_shard_type == ShardingStrategy::kRedisStandalone) {
             LOG_DEBUG() << log_extra_ << "Construct Standalone topology holder";
             UASSERT_MSG(conns.size() == 1, "In standalone mode we expect exactly one redis node to connect!");
             // TODO: TAXICOMMON-10376 experiment with providing kClusterDatabaseIndex other than 0 for standalone mode

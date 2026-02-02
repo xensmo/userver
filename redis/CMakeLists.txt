@@ -16,6 +16,7 @@ userver_module(
     DEPENDS core
     GENERATE_DYNAMIC_CONFIGS
     EMBED_FILES src/storages/redis/component.yaml
+    EMBED_FILES src/storages/redis/dynamic_component.yaml
 )
 
 # for libev

@@ -487,6 +487,9 @@ public:
 
     friend class TransactionImpl;
 
+    // For internal usage, don't use it
+    impl::Sentinel& GetNative() const;
+
 private:
     impl::Request MakeRequest(
         impl::CmdArgs&& args,

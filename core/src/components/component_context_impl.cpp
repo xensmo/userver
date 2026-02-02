@@ -650,6 +650,8 @@ std::string_view ComponentContextImpl::ToString(Event event)
         case Event::kFindComponent:
             return "find_component";
     }
+    // suppress error on gcc-10 and gcc-11
+    throw std::runtime_error("Unexpected event");
 }
 
 void ComponentContextImpl::EmitBootEvent(Event event, logging::LogExtra log_extra) const {
