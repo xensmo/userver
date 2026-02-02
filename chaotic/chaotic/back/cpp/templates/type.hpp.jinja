@@ -28,6 +28,16 @@
 
             {# properties #}
             {%- for fname, field in type.fields.items() -%}
+                static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldName{{ field.cpp_field_name() }} = "{{ field.name }}";
+            {%- endfor %}
+
+            {%- for fname, field in type.fields.items() -%}
+                {% if field.get_default() != '' %}
+                    static constexpr auto kFieldDefault{{ field.cpp_field_name() }} = {{ field.get_default_raw() }};
+                {% endif %}
+            {%- endfor %}
+
+            {%- for fname, field in type.fields.items() -%}
                 {{ field.cpp_field_type() }} {{ field.cpp_field_name() }}
                     { {{ field.get_default() }} };
             {%- endfor %}
@@ -224,12 +234,14 @@
     {% endfor %}
 
     {% if type.need_dom_parser() %}
-        {% if type.get_py_type() == 'CppStringEnum' %}
+        {% if type.get_py_type() == 'CppIntEnum' %}
+            {{ shortest_cpp_name(type) }} FromInt(std::int64_t value, {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
+        {% elif type.get_py_type() == 'CppStringEnum' %}
             {{ type.raw_cpp_type.in_scope(get_current_namespace()) }} FromString(std::string_view value,
                             {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
 
             {# backward compatibility #}
-            {{ type.raw_cpp_type.in_scope(get_current_namespace()) }} Parse(std::string_view value,
+            {{shortest_cpp_name(type)}} Parse(std::string_view value,
                             {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
         {% endif %}
     {% endif %}

@@ -107,6 +107,7 @@ function(userver_target_generate_chaotic TARGET)
             "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}.hpp"
             "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}_fwd.hpp"
             "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}_parsers.ipp"
+            "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}_sax_parsers.hpp"
         )
     endforeach()
 

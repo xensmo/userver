@@ -8,33 +8,33 @@ namespace ns {
 bool operator==(const OneOf& lhs, const OneOf& rhs) { return lhs.foo == rhs.foo && true; }
 
 USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const OneOf& value) {
-    return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
+  return lh << ToString(USERVER_NAMESPACE::formats::json::ValueBuilder(value).ExtractValue());
 }
 
 OneOf Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<OneOf> to) {
-    return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
+  return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
 OneOf Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<OneOf> to) {
-    return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
+  return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
 }
 
 OneOf Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<OneOf> to) {
-    return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+  return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
 }
 
-USERVER_NAMESPACE::formats::json::
-    Value
-    Serialize([[maybe_unused]] const OneOf& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
-    USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
+USERVER_NAMESPACE::formats::json::Value Serialize(
+    [[maybe_unused]] const OneOf& value,
+    USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>) {
+  USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
 
-    if (value.foo) {
-        vb["foo"] = USERVER_NAMESPACE::chaotic::Variant<
-            USERVER_NAMESPACE::chaotic::Primitive<int>,
-            USERVER_NAMESPACE::chaotic::Primitive<std::string>>{*value.foo};
-    }
+  if (value.foo) {
+    vb["foo"] = USERVER_NAMESPACE::chaotic::Variant<USERVER_NAMESPACE::chaotic::Primitive<int>,
+                                                    USERVER_NAMESPACE::chaotic::Primitive<std::string>>{*value.foo};
+  }
 
-    return vb.ExtractValue();
+  return vb.ExtractValue();
 }
 
 }  // namespace ns
+

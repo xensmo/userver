@@ -1,21 +1,15 @@
 #pragma once
 
-#include <userver/formats/json/parser/typed_parser.hpp>
-#include <userver/formats/json/value.hpp>
-#include <userver/utils/fast_pimpl.hpp>
+#include <userver/formats/json/parser/base_parser.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace formats::json::parser {
 
-/// SAX-parser for formats::json::Value
-class JsonValueParser final : public TypedParser<Value> {
+class DummyParser final : public BaseParser {
 public:
-    JsonValueParser();
-    ~JsonValueParser() override;
-
-    JsonValueParser(const JsonValueParser&) = delete;
-    JsonValueParser(JsonValueParser&&) = delete;
+    DummyParser();
+    ~DummyParser() override;
 
     void Null() override;
     void Bool(bool) override;
@@ -25,19 +19,22 @@ public:
     void String(std::string_view) override;
     void StartObject() override;
     void Key(std::string_view key) override;
-    void EndObject(size_t) override;
+    void EndObject() override;
     void StartArray() override;
-    void EndArray(size_t) override;
+    void EndArray() override;
 
     std::string Expected() const override;
+
+    void Reset();
+
+    DummyParser& GetParser();
 
 private:
     void MaybePopSelf();
 
     std::string GetPathItem() const override { return {}; }
 
-    struct Impl;
-    utils::FastPimpl<Impl, 127, 8> impl_;
+    size_t level_{0};
 };
 
 }  // namespace formats::json::parser

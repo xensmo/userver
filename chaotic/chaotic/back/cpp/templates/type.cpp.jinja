@@ -38,7 +38,15 @@
 
     {% if type.need_dom_parser() %}
         {% set local_name = shortest_cpp_name(type) %}
-        {% if type.get_py_type() == 'CppStringEnum' %}
+        {% if type.get_py_type() == 'CppIntEnum' %}
+            {{ local_name }} FromInt(std::int64_t value, {{ userver }}::formats::parse::To<{{ local_name }}>) {
+                const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
+                if (result.has_value()) {
+                    return *result;
+                }
+                throw std::runtime_error(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value));
+            }
+        {% elif type.get_py_type() == 'CppStringEnum' %}
             {{ local_name }} FromString(std::string_view value,
                             {{userver}}::formats::parse::To<{{ local_name }}>)
             {

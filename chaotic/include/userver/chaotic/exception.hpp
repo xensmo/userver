@@ -20,6 +20,11 @@ template <typename Value>
     throw Error<Value>(fmt::format("Error at path '{}': {}", value.GetPath(), str));
 }
 
+template <typename Value>
+[[noreturn]] inline void ThrowForPath(std::string_view str, std::string_view path) {
+    throw Error<Value>(fmt::format("Error at path '{}': {}", path, str));
+}
+
 }  // namespace chaotic
 
 USERVER_NAMESPACE_END

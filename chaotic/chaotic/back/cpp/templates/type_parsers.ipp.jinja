@@ -60,9 +60,9 @@
 
     {% if type.get_py_type() == 'CppStruct' %}
         {# parse object #}
-	template<typename Value>
+        template<typename Value, typename = std::enable_if_t<{{ userver }}::formats::common::kIsFormatValue<Value>>>
         {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value value,
-                         {{userver}}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
         {
             value.CheckNotMissing();
             value.CheckObjectOrNull();
@@ -80,9 +80,9 @@
             {% if type.extra_type %}
                 res.extra =
                     {%- if type.extra_type == True %}
-                        {{userver}}::chaotic::ExtractAdditionalPropertiesTrue(
+                        {{ userver }}::chaotic::ExtractAdditionalPropertiesTrue(
                     {%- else %}
-                        {{userver}}::chaotic::ExtractAdditionalProperties<
+                        {{ userver }}::chaotic::ExtractAdditionalProperties<
                             {{ extra_cpp_parser_type(type.extra_type) }},
                             {{ type.extra_container() }}
                         >(
@@ -93,7 +93,7 @@
             {% endif %}
 
             {% if cpp_struct_is_strict_parsing(type) %}
-                {{userver}}::chaotic::ValidateNoAdditionalProperties(
+                {{ userver }}::chaotic::ValidateNoAdditionalProperties(
                     value, k{{type.cpp_global_struct_field_name()}}_PropertiesNames
                 );
             {% endif %}
@@ -102,21 +102,21 @@
     {% elif type.get_py_type() in ('CppPrimitiveType', 'CppStringWithFormat', 'CppArray', 'CppRef', 'CppVariant', 'CppVariant', 'CppVariantWithDiscriminator') %}
         {# No new type #}
     {% elif type.get_py_type() == 'CppIntEnum' %}
-	template<typename Value>
+        template<typename Value, typename = std::enable_if_t<{{ userver }}::formats::common::kIsFormatValue<Value>>>
         {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value val,
-                         {{userver}}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}> to)
         {
             const auto value = val.template As<std::int32_t>();
-            const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
-            if (result.has_value()) {
-                return *result;
+            try {
+              return FromInt(value, to);
+            } catch (const std::exception&) {
+              {{ userver }}::chaotic::ThrowForValue(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value), val);
             }
-            {{ userver }}::chaotic::ThrowForValue(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value), val);
         }
     {% elif type.get_py_type() == 'CppStringEnum' %}
-	template<typename Value>
+        template<typename Value, typename = std::enable_if_t<{{ userver }}::formats::common::kIsFormatValue<Value>>>
         {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value val,
-                         {{userver}}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
         {
             const auto value = val.template As<std::string>();
             const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
@@ -127,9 +127,9 @@
         }
     {% elif type.get_py_type() == 'CppStructAllOf' %}
         {# parse allOf #}
-	template<typename Value>
+        template<typename Value, typename = std::enable_if_t<{{ userver }}::formats::common::kIsFormatValue<Value>>>
         {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value value,
-                         {{userver}}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
         {
             return {{ shortest_cpp_name(type, blacklist=['Value']) }}(
                 {%- for parent in type.parents -%}

@@ -20,6 +20,7 @@
 #include <schemas/object_name.hpp>
 #include <schemas/object_object.hpp>
 #include <schemas/object_single_field.hpp>
+#include <schemas/object_single_field_sax_parsers.hpp>
 #include <schemas/one_of.hpp>
 #include <schemas/oneofdiscriminator.hpp>
 #include <schemas/string64.hpp>
@@ -117,9 +118,26 @@ TEST(Simple, ObjectTypes) {
     );
 }
 
+template <typename T>
+T ParseToType(std::string_view input) {
+    using Parser = decltype(ParserOf(std::declval<T&>()));
+    return formats::json::parser::ParseToType<T, Parser>(input);
+}
+
 TEST(Simple, ObjectWithAdditionalPropertiesInt) {
     auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3);
     auto obj = json.As<ns::ObjectWithAdditionalPropertiesInt>();
+
+    EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, ObjectWithAdditionalPropertiesIntSax) {
+    auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3);
+    auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesInt>(ToString(json));
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
@@ -139,6 +157,14 @@ TEST(Simple, ObjectWithAdditionalPropertiesTrue) {
     EXPECT_EQ(json_back, json) << ToString(json_back);
 }
 
+TEST(Simple, ObjectWithAdditionalPropertiesTrueSax) {
+    auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3, "object", formats::json::MakeObject());
+    auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesTrue>(ToString(json));
+
+    EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
+}
+
 TEST(Simple, ObjectExtraMemberFalse) {
     auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3, "object", formats::json::MakeObject());
     auto obj = json.As<ns::ObjectWithAdditionalPropertiesTrueExtraMemberFalse>();
@@ -149,12 +175,29 @@ TEST(Simple, ObjectExtraMemberFalse) {
     EXPECT_EQ(json_back, formats::json::MakeObject("one", 1)) << ToString(json_back);
 }
 
+TEST(Simple, ObjectExtraMemberFalseSax) {
+    auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3, "object", formats::json::MakeObject());
+    auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesTrueExtraMemberFalse>(ToString(json));
+
+    EXPECT_EQ(obj.one, 1);
+}
+
 TEST(Simple, ObjectWithAdditionalPropertiesFalseStrict) {
     auto json = formats::json::MakeObject("foo", 1, "bar", 2);
     UEXPECT_THROW_MSG(
         json.As<ns::ObjectWithAdditionalPropertiesFalseStrict>(),
         chaotic::Error<formats::json::Value>,
         "Unknown property 'bar'"
+    );
+}
+
+TEST(Simple, ObjectWithAdditionalPropertiesFalseStrictSax) {
+    auto json = formats::json::MakeObject("foo", 1, "bar", 2);
+    UEXPECT_THROW_MSG(
+        ParseToType<ns::ObjectWithAdditionalPropertiesFalseStrict>(ToString(json)),
+        formats::json::parser::ParseError,
+        "Parse error at pos 14, path 'bar': unknown field 'bar' for type "
+        "'ns::ObjectWithAdditionalPropertiesFalseStrict', the latest token was ,\"bar\""
     );
 }
 
