@@ -17,6 +17,8 @@ class Awaiter {
 public:
     enum StaticType : std::uint8_t { kPolymorphic, kTaskContext };
 
+    enum InitialRefCounter : std::size_t { kZero = 0, kOne = 1 };  //  NOLINT(performance-enum-size)
+
     Awaiter(const Awaiter&) = delete;
     Awaiter(Awaiter&&) = delete;
     Awaiter& operator=(const Awaiter&) = delete;
@@ -33,7 +35,7 @@ public:
     StaticType GetStaticType() const noexcept;
 
 protected:
-    explicit Awaiter(StaticType type = StaticType::kPolymorphic);
+    Awaiter(StaticType type, InitialRefCounter initial_ref_counter);
     ~Awaiter() = default;
 
 private:
@@ -46,7 +48,7 @@ private:
     friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
 
     // refcounter for resources and memory deallocation
-    std::atomic<std::size_t> intrusive_refcount_{1};
+    std::atomic<std::size_t> intrusive_refcount_{0};
 
     StaticType type_;
 
@@ -62,6 +64,9 @@ public:
     virtual Epoch DoGetEpoch() const noexcept = 0;
 
 protected:
+    PolymorphicAwaiter();
+    explicit PolymorphicAwaiter(InitialRefCounter initial_ref_counter);
+
     ~PolymorphicAwaiter() = default;
 
 private:

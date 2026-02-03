@@ -23,8 +23,9 @@ const PolymorphicAwaiter* CastToPolymorphic(const Awaiter* awaiter) {
 
 }  // namespace
 
-Awaiter::Awaiter(StaticType type)
-    : type_(type)
+Awaiter::Awaiter(StaticType type, InitialRefCounter initial_ref_counter)
+    : intrusive_refcount_(initial_ref_counter),
+      type_(type)
 {}
 
 void Awaiter::Notify(Epoch epoch) {
@@ -56,7 +57,7 @@ Epoch Awaiter::GetEpoch() const noexcept {
     return CastToPolymorphic(this)->DoGetEpoch();
 }
 
-size_t Awaiter::UseCount() const noexcept {
+std::size_t Awaiter::UseCount() const noexcept {
     // memory order could potentially be less restrictive, but it gets very
     // complicated to reason about
     return intrusive_refcount_.load(std::memory_order_seq_cst);
@@ -89,6 +90,14 @@ void intrusive_ptr_release(Awaiter* awaiter) noexcept {
 
     CastToPolymorphic(awaiter)->Destroy();
 }
+
+PolymorphicAwaiter::PolymorphicAwaiter()
+    : PolymorphicAwaiter(InitialRefCounter::kZero)
+{}
+
+PolymorphicAwaiter::PolymorphicAwaiter(InitialRefCounter initial_ref_counter)
+    : Awaiter(StaticType::kPolymorphic, initial_ref_counter)
+{}
 
 }  // namespace engine::impl
 

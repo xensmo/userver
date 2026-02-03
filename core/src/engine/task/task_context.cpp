@@ -111,7 +111,7 @@ TaskContext::TaskContext(
     Deadline deadline,
     utils::impl::WrappedCallBase& payload
 )
-    : Awaiter(Awaiter::StaticType::kTaskContext),
+    : Awaiter(Awaiter::StaticType::kTaskContext, Awaiter::InitialRefCounter::kOne),
       task_processor_(task_processor),
       task_counter_token_(task_processor_.GetTaskCounter()),
       is_critical_(importance == Task::Importance::kCritical),
