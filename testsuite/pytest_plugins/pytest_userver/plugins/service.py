@@ -369,9 +369,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             # TODO use pytest.HIDDEN_PARAM after it becomes available
             #  https://github.com/pytest-dev/pytest/issues/13228
             ids=['uservice_oneshot'],
-            # TODO use scope='function' after it stops breaking fixture dependencies
-            #  https://github.com/pytest-dev/pytest/issues/13248
-            scope=None,
+            scope='function',
         )
 
 
