@@ -18,21 +18,17 @@ USERVER_NAMESPACE_BEGIN
 namespace engine::impl {
 namespace {
 
-struct alignas(8) AwaiterWithEpoch32 final {
+struct alignas(8) AwaiterWithContext32 final {
     Awaiter* awaiter{nullptr};
-    Epoch epoch{0};
+    std::uintptr_t context{0};
 };
 
-struct alignas(16) AwaiterWithEpoch64 final {
+struct alignas(16) AwaiterWithContext64 final {
     Awaiter* awaiter{nullptr};
-    Epoch epoch{0};
-    std::uint32_t padding_dont_use{0};
+    std::uintptr_t context{0};
 };
 
-// Silence 'unused' warning.
-static_assert(sizeof(AwaiterWithEpoch64::padding_dont_use) != 0);
-
-using AwaiterWithEpoch = std::conditional_t<sizeof(void*) == 8, AwaiterWithEpoch64, AwaiterWithEpoch32>;
+using AwaiterWithContext = std::conditional_t<sizeof(void*) == 8, AwaiterWithContext64, AwaiterWithContext32>;
 
 }  // namespace
 }  // namespace engine::impl
@@ -40,17 +36,12 @@ using AwaiterWithEpoch = std::conditional_t<sizeof(void*) == 8, AwaiterWithEpoch
 USERVER_NAMESPACE_END
 
 template <>
-struct fmt::formatter<USERVER_NAMESPACE::engine::impl::AwaiterWithEpoch> {
+struct fmt::formatter<USERVER_NAMESPACE::engine::impl::AwaiterWithContext> {
     static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
     template <typename FormatContext>
-    auto format(USERVER_NAMESPACE::engine::impl::AwaiterWithEpoch awaiter, FormatContext& ctx) const {
-        return fmt::format_to(
-            ctx.out(),
-            "({}, {})",
-            fmt::ptr(awaiter.awaiter),
-            USERVER_NAMESPACE::utils::UnderlyingValue(awaiter.epoch)
-        );
+    auto format(USERVER_NAMESPACE::engine::impl::AwaiterWithContext awaiter, FormatContext& ctx) const {
+        return fmt::format_to(ctx.out(), "({}, {})", fmt::ptr(awaiter.awaiter), awaiter.context);
     }
 };
 
@@ -61,15 +52,15 @@ namespace {
 
 Awaiter* const kSignaled = reinterpret_cast<Awaiter*>(1);
 
-void DoNotify(AwaiterWithEpoch awaiter) {
+void DoNotify(AwaiterWithContext awaiter) {
     LOG_TRACE() << "NotifyOne awaiter=" << fmt::to_string(awaiter) << " use_count=" << awaiter.awaiter->UseCount();
-    awaiter.awaiter->Notify(awaiter.epoch);
+    awaiter.awaiter->Notify(awaiter.context);
 }
 
 }  // namespace
 
 struct WaitListLight::Impl final {
-    concurrent::impl::FastAtomic<AwaiterWithEpoch> awaiter{AwaiterWithEpoch{}};
+    concurrent::impl::FastAtomic<AwaiterWithContext> awaiter{AwaiterWithContext{}};
 };
 
 WaitListLight::WaitListLight() noexcept = default;
@@ -78,18 +69,18 @@ WaitListLight::~WaitListLight() {
     UASSERT_MSG(IsEmptyRelaxed(), "Someone is awaiting on WaitListLight while it's being destroyed");
 }
 
-void WaitListLight::Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter) noexcept {
-    [[maybe_unused]] const bool was_signaled = GetSignalOrAppend(std::move(awaiter));
+void WaitListLight::Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter, std::uintptr_t context) noexcept {
+    [[maybe_unused]] const bool was_signaled = GetSignalOrAppend(std::move(awaiter), context);
     UASSERT_MSG(!was_signaled, "Signals cannot be used with plain Append");
 }
 
-bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter> awaiter) noexcept {
+bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter> awaiter, std::uintptr_t context) noexcept {
     UASSERT(awaiter);
 
-    const AwaiterWithEpoch new_awaiter{awaiter.get(), awaiter->GetEpoch()};
+    const AwaiterWithContext new_awaiter{awaiter.get(), context};
     LOG_TRACE() << "Append awaiter=" << fmt::to_string(new_awaiter) << " use_count=" << awaiter->UseCount();
 
-    AwaiterWithEpoch expected{};
+    AwaiterWithContext expected{};
     // seq_cst is important for the "Append-Check-Wakeup" sequence.
     const bool success = impl_->awaiter.compare_exchange_strong<
         std::memory_order_seq_cst,
@@ -117,7 +108,7 @@ bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter> awaiter) noe
 
 void WaitListLight::NotifyOne() {
     // seq_cst is important for the "Append-Check-Notify" sequence.
-    const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithEpoch{});
+    const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithContext{});
     if (old_awaiter.awaiter == nullptr) {
         return;
     }
@@ -133,7 +124,7 @@ void WaitListLight::NotifyOne() {
 
 void WaitListLight::SetSignalAndNotifyOne() {
     // seq_cst is important for the "Append-Check-Notify" sequence.
-    const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithEpoch{kSignaled, {}});
+    const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithContext{kSignaled, {}});
     if (old_awaiter.awaiter == nullptr || old_awaiter.awaiter == kSignaled) {
         return;
     }
@@ -145,13 +136,13 @@ void WaitListLight::SetSignalAndNotifyOne() {
     DoNotify(old_awaiter);
 }
 
-void WaitListLight::Remove(Awaiter& awaiter) noexcept {
-    const AwaiterWithEpoch expected{&awaiter, awaiter.GetEpoch()};
+void WaitListLight::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    const AwaiterWithContext expected{&awaiter, context};
 
     auto old_awaiter = expected;
     const bool success = impl_->awaiter.compare_exchange_strong<
         std::memory_order_release,
-        std::memory_order_relaxed>(old_awaiter, AwaiterWithEpoch{});
+        std::memory_order_relaxed>(old_awaiter, AwaiterWithContext{});
 
     if (!success) {
         UASSERT_MSG(
@@ -171,10 +162,10 @@ void WaitListLight::Remove(Awaiter& awaiter) noexcept {
 }
 
 bool WaitListLight::GetAndResetSignal() noexcept {
-    AwaiterWithEpoch expected{kSignaled, {}};
+    AwaiterWithContext expected{kSignaled, {}};
     const bool success = impl_->awaiter.compare_exchange_strong<
         std::memory_order_relaxed,
-        std::memory_order_relaxed>(expected, AwaiterWithEpoch{});
+        std::memory_order_relaxed>(expected, AwaiterWithContext{});
 
     if (!success && expected.awaiter != nullptr) {
         utils::AbortWithStacktrace(

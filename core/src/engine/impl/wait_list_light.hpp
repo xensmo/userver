@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
 #include <userver/utils/fast_pimpl.hpp>
@@ -27,16 +29,16 @@ public:
     /// `Sleep` + `Append`, you have to recheck the condition after `Append`
     /// returns in `SetupWakeups`.
     /// @note Must not be used together with `SetSignalAndNotifyOne`.
-    void Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter) noexcept;
+    void Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter, std::uintptr_t context) noexcept;
 
     /// @brief Get the signal if one was set by SetSignalAndNotifyOne, else
     /// Append.
     /// @returns `true` if already signaled
     /// @see Append
-    [[nodiscard]] bool GetSignalOrAppend(boost::intrusive_ptr<impl::Awaiter> awaiter) noexcept;
+    [[nodiscard]] bool GetSignalOrAppend(boost::intrusive_ptr<impl::Awaiter> awaiter, std::uintptr_t context) noexcept;
 
     /// @brief Remove the task from the `WaitListLight` without notofocation.
-    void Remove(impl::Awaiter& awaiter) noexcept;
+    void Remove(impl::Awaiter& awaiter, std::uintptr_t context) noexcept;
 
     /// @brief Notifies the waiting task; the next awaiter may not `Append` until
     /// `Remove` is called.

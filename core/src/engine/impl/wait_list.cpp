@@ -2,7 +2,6 @@
 
 #include <boost/intrusive/list.hpp>
 
-#include <userver/engine/impl/awaiter.hpp>
 #include <userver/utils/assert.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -44,11 +43,12 @@ bool WaitList::IsEmpty(Lock& lock) const noexcept {
     return awaiters_->empty();
 }
 
-void WaitList::Append(Lock& lock, boost::intrusive_ptr<impl::Awaiter> awaiter) noexcept {
+void WaitList::Append(Lock& lock, boost::intrusive_ptr<impl::Awaiter> awaiter, std::uintptr_t context) noexcept {
     UASSERT(lock);
     UASSERT(awaiter);
-    UASSERT_MSG(!awaiter->wait_list_hook_.is_linked(), "context already in list");
+    UASSERT_MSG(!awaiter->wait_list_data_.is_linked(), "context already in list");
 
+    awaiter->wait_list_data_.context = context;
     awaiters_->push_back(*awaiter.detach());  // referencing, not copying!
 }
 
@@ -58,31 +58,31 @@ void WaitList::NotifyOne(Lock& lock) {
         return;
     }
     const boost::intrusive_ptr<impl::Awaiter> awaiter(&awaiters_->front(), kAdopt);
-    awaiter->wait_list_hook_.unlink();
+    awaiter->wait_list_data_.unlink();
 
-    awaiter->Notify(NoEpoch{});
+    awaiter->Notify(awaiter->wait_list_data_.context);
 }
 
 void WaitList::NotifyAll(Lock& lock) {
     UASSERT(lock);
     while (!awaiters_->empty()) {
         const boost::intrusive_ptr<impl::Awaiter> awaiter(&awaiters_->front(), kAdopt);
-        awaiter->wait_list_hook_.unlink();
+        awaiter->wait_list_data_.unlink();
 
-        awaiter->Notify(NoEpoch{});
+        awaiter->Notify(awaiter->wait_list_data_.context);
     }
 }
 
-void WaitList::Remove(Lock& lock, impl::Awaiter& awaiter) noexcept {
+void WaitList::Remove(Lock& lock, impl::Awaiter& awaiter, std::uintptr_t) noexcept {
     UASSERT(lock);
-    if (!awaiter.wait_list_hook_.is_linked()) {
+    if (!awaiter.wait_list_data_.is_linked()) {
         return;
     }
 
     const boost::intrusive_ptr<impl::Awaiter> holder(&awaiter, kAdopt);
     UASSERT_MSG(IsInIntrusiveContainer(*awaiters_, awaiter), "awaiter belongs to other list");
 
-    awaiter.wait_list_hook_.unlink();
+    awaiter.wait_list_data_.unlink();
 }
 
 }  // namespace engine::impl

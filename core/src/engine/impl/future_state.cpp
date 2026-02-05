@@ -53,11 +53,13 @@ void FutureStateBase::WaitForResult() {
     }
 }
 
-EarlyNotify FutureStateBase::TryAppendAwaiter(Awaiter& awaiter) {
-    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter)};
+EarlyNotify FutureStateBase::TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) {
+    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter, context)};
 }
 
-void FutureStateBase::RemoveAwaiter(Awaiter& awaiter) noexcept { finish_awaiters_->Remove(awaiter); }
+void FutureStateBase::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    finish_awaiters_->Remove(awaiter, context);
+}
 
 void FutureStateBase::AfterWait() noexcept {}
 

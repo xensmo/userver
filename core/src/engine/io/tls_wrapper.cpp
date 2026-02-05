@@ -218,9 +218,9 @@ public:
 
     bool IsReady() const noexcept override;
 
-    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter) override;
+    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) override;
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter) noexcept override;
+    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
 
     void AfterWait() noexcept override;
 
@@ -437,17 +437,20 @@ bool TlsWrapper::ReadContextAccessor::IsReady() const noexcept {
     return GetSocketContextAccessor().IsReady();
 }
 
-engine::impl::EarlyNotify TlsWrapper::ReadContextAccessor::TryAppendAwaiter(engine::impl::Awaiter& awaiter) {
+engine::impl::EarlyNotify TlsWrapper::ReadContextAccessor::TryAppendAwaiter(
+    engine::impl::Awaiter& awaiter,
+    std::uintptr_t context
+) {
     auto* ssl = impl.ssl.get();
     if (!ssl || SSL_has_pending(ssl)) {
         return engine::impl::EarlyNotify{true};
     }
 
-    return GetSocketContextAccessor().TryAppendAwaiter(awaiter);
+    return GetSocketContextAccessor().TryAppendAwaiter(awaiter, context);
 }
 
-void TlsWrapper::ReadContextAccessor::RemoveAwaiter(engine::impl::Awaiter& awaiter) noexcept {
-    GetSocketContextAccessor().RemoveAwaiter(awaiter);
+void TlsWrapper::ReadContextAccessor::RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept {
+    GetSocketContextAccessor().RemoveAwaiter(awaiter, context);
 }
 
 void TlsWrapper::ReadContextAccessor::AfterWait() noexcept { GetSocketContextAccessor().AfterWait(); }

@@ -58,10 +58,10 @@ public:
     bool IsEmpty(Lock&) const noexcept;
 
     /// @brief Append the task to the `WaitList`
-    void Append(Lock& lock, boost::intrusive_ptr<impl::Awaiter> awaiter) noexcept;
+    void Append(Lock& lock, boost::intrusive_ptr<impl::Awaiter> awaiter, std::uintptr_t context) noexcept;
 
     /// @brief Remove the task from the `WaitList` without notifying
-    void Remove(Lock& lock, impl::Awaiter& awaiter) noexcept;
+    void Remove(Lock& lock, impl::Awaiter& awaiter, std::uintptr_t context) noexcept;
 
     void NotifyOne(Lock&);
     void NotifyAll(Lock&);
@@ -75,7 +75,7 @@ private:
     std::mutex mutex_;
 
     using MemberHookConfig =
-        boost::intrusive::member_hook<impl::Awaiter, impl::Awaiter::WaitListHook, &impl::Awaiter::wait_list_hook_>;
+        boost::intrusive::member_hook<impl::Awaiter, impl::Awaiter::WaitListData, &impl::Awaiter::wait_list_data_>;
 
     struct List;
     static constexpr std::size_t kListSize = sizeof(void*) * 2;

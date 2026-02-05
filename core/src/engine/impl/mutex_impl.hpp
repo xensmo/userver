@@ -65,13 +65,13 @@ public:
         }
         // A race is not possible here, because check + Append is performed under
         // WaitList::Lock, and notification also takes WaitList::Lock.
-        mutex_.lock_awaiters_.Append(lock, &current_);
+        mutex_.lock_awaiters_.Append(lock, &current_, current_.GetAwaiterContext());
         return EarlyNotify{false};
     }
 
     void DisableWakeups() noexcept override {
         WaitList::Lock lock(mutex_.lock_awaiters_);
-        mutex_.lock_awaiters_.Remove(lock, current_);
+        mutex_.lock_awaiters_.Remove(lock, current_, current_.GetAwaiterContext());
     }
 
 private:
@@ -92,15 +92,15 @@ public:
         if (TryLock()) {
             return EarlyNotify{true};
         }
-        mutex_.lock_awaiters_.Append(&current_);
+        mutex_.lock_awaiters_.Append(&current_, current_.GetAwaiterContext());
         if (mutex_.owner_.load() == nullptr) {
-            mutex_.lock_awaiters_.Remove(current_);
+            mutex_.lock_awaiters_.Remove(current_, current_.GetAwaiterContext());
             return EarlyNotify{true};
         }
         return EarlyNotify{false};
     }
 
-    void DisableWakeups() noexcept override { mutex_.lock_awaiters_.Remove(current_); }
+    void DisableWakeups() noexcept override { mutex_.lock_awaiters_.Remove(current_, current_.GetAwaiterContext()); }
 
 private:
     bool TryLock() {

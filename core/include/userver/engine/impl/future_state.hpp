@@ -39,8 +39,8 @@ protected:
 private:
     friend class FutureWaitStrategy<FutureStateBase>;
 
-    EarlyNotify TryAppendAwaiter(Awaiter& awaiter) final;
-    void RemoveAwaiter(Awaiter& awaiter) noexcept final;
+    EarlyNotify TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) final;
+    void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept final;
     void AfterWait() noexcept final;
 
     FastPimplWaitListLight finish_awaiters_;

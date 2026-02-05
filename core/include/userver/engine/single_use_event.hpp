@@ -93,8 +93,8 @@ public:
 private:
     friend class impl::FutureWaitStrategy<SingleUseEvent>;
 
-    impl::EarlyNotify TryAppendAwaiter(impl::Awaiter& awaiter) override;
-    void RemoveAwaiter(impl::Awaiter& awaiter) noexcept override;
+    impl::EarlyNotify TryAppendAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) override;
+    void RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
     void RethrowErrorResult() const override;
     void AfterWait() noexcept override;
 

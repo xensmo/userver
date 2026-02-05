@@ -24,11 +24,7 @@ public:
     Awaiter& operator=(const Awaiter&) = delete;
     Awaiter& operator=(Awaiter&&) = delete;
 
-    void Notify(Epoch epoch);
-
-    void Notify(NoEpoch);
-
-    Epoch GetEpoch() const noexcept;
+    void Notify(std::uintptr_t context);
 
     std::size_t UseCount() const noexcept;
 
@@ -42,6 +38,12 @@ private:
     using WaitListHook = typename boost::intrusive::make_list_member_hook<
         boost::intrusive::link_mode<boost::intrusive::auto_unlink>>::type;
 
+    struct WaitListData : public WaitListHook {
+        // WaitList can't store context. But, we can store it here because an awaiter
+        // can't be simultaneouly linked to multiple wait lists.
+        std::uintptr_t context{0};
+    };
+
     friend class WaitList;
 
     friend void intrusive_ptr_add_ref(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
@@ -52,16 +54,12 @@ private:
 
     StaticType type_;
 
-    WaitListHook wait_list_hook_;
+    WaitListData wait_list_data_;
 };
 
 class PolymorphicAwaiter : public Awaiter {
 public:
-    virtual void DoNotify(Epoch epoch) = 0;
-
-    virtual void DoNotify(NoEpoch) = 0;
-
-    virtual Epoch DoGetEpoch() const noexcept = 0;
+    virtual void DoNotify(std::uintptr_t context) = 0;
 
 protected:
     PolymorphicAwaiter();

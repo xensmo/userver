@@ -17,10 +17,10 @@ public:
     {}
 
     impl::EarlyNotify SetupWakeups() override {
-        return impl::EarlyNotify{event_.waiters_->GetSignalOrAppend(&current_)};
+        return impl::EarlyNotify{event_.waiters_->GetSignalOrAppend(&current_, current_.GetAwaiterContext())};
     }
 
-    void DisableWakeups() noexcept override { event_.waiters_->Remove(current_); }
+    void DisableWakeups() noexcept override { event_.waiters_->Remove(current_, current_.GetAwaiterContext()); }
 
 private:
     SingleConsumerEvent& event_;

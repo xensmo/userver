@@ -26,7 +26,7 @@ public:
         UASSERT(current_.IsCurrent());
         {
             WaitList::Lock awaiters_lock{awaiters_};
-            awaiters_.Append(awaiters_lock, &current_);
+            awaiters_.Append(awaiters_lock, &current_, current_.GetAwaiterContext());
         }
 
         mutex_lock_.unlock();
@@ -40,7 +40,7 @@ public:
         UASSERT(current_.IsCurrent());
 
         WaitList::Lock awaiters_lock{awaiters_};
-        awaiters_.Remove(awaiters_lock, current_);
+        awaiters_.Remove(awaiters_lock, current_, current_.GetAwaiterContext());
     }
 
 private:

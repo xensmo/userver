@@ -1,6 +1,7 @@
 #include "task_context.hpp"
 
 #include <exception>
+#include <limits>
 #include <utility>
 
 #include <fmt/format.h>
@@ -439,6 +440,8 @@ bool TaskContext::ShouldSchedule(SleepState::Flags prev_flags, WakeupSource sour
 
 Epoch TaskContext::GetEpoch() const noexcept { return sleep_state_.Load<std::memory_order_acquire>().epoch; }
 
+std::uintptr_t TaskContext::GetAwaiterContext() const noexcept { return static_cast<std::uintptr_t>(GetEpoch()); }
+
 void TaskContext::Wakeup(WakeupSource source, Epoch epoch) {
     if (IsFinished()) {
         return;
@@ -499,6 +502,11 @@ void TaskContext::Wakeup(WakeupSource source, NoEpoch) {
     if (ShouldSchedule(prev_sleep_state.flags, source)) {
         Schedule();
     }
+}
+
+void TaskContext::Wakeup(WakeupSource source, std::uintptr_t context) {
+    UASSERT(context <= std::numeric_limits<std::uint32_t>::max());
+    Wakeup(source, static_cast<Epoch>(context));
 }
 
 class TaskContext::YieldReasonGuard {
@@ -604,14 +612,16 @@ task_local::Storage& TaskContext::GetLocalStorage() noexcept {
 
 bool TaskContext::IsReady() const noexcept { return IsFinished(); }
 
-EarlyNotify TaskContext::TryAppendAwaiter(Awaiter& awaiter) {
+EarlyNotify TaskContext::TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) {
     if (&awaiter == static_cast<Awaiter*>(this)) {
         ReportDeadlock();
     }
-    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter)};
+    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter, context)};
 }
 
-void TaskContext::RemoveAwaiter(Awaiter& awaiter) noexcept { finish_awaiters_->Remove(awaiter); }
+void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    finish_awaiters_->Remove(awaiter, context);
+}
 
 void TaskContext::AfterWait() noexcept {}
 

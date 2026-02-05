@@ -150,11 +150,15 @@ public:
     // sleep epoch increments after each wakeup
     Epoch GetEpoch() const noexcept;
 
+    // Awaiter's context. Effectively returns the same value as GetEpoch()
+    std::uintptr_t GetAwaiterContext() const noexcept;
+
     // causes this to return from the nearest sleep
     // i.e. wakeup is queued if task is running
     // normally non-blocking, except corner cases in TaskProcessor::Schedule()
     void Wakeup(WakeupSource, Epoch epoch);
     void Wakeup(WakeupSource, NoEpoch);
+    void Wakeup(WakeupSource, std::uintptr_t context);
 
     static void CoroFunc(TaskPipe& task_pipe);
 
@@ -174,8 +178,8 @@ public:
 
     // ContextAccessor implementation
     bool IsReady() const noexcept override;
-    EarlyNotify TryAppendAwaiter(Awaiter& awaiter) override;
-    void RemoveAwaiter(Awaiter& awaiter) noexcept override;
+    EarlyNotify TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) override;
+    void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept override;
     void AfterWait() noexcept override;
     void RethrowErrorResult() const override;
 

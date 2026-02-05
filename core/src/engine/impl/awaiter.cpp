@@ -15,12 +15,6 @@ PolymorphicAwaiter* CastToPolymorphic(Awaiter* awaiter) {
     return static_cast<PolymorphicAwaiter*>(awaiter);
 }
 
-const PolymorphicAwaiter* CastToPolymorphic(const Awaiter* awaiter) {
-    UASSERT_MSG(awaiter->GetStaticType() == Awaiter::StaticType::kPolymorphic, "Unexpected awaiter type");
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    return static_cast<const PolymorphicAwaiter*>(awaiter);
-}
-
 }  // namespace
 
 Awaiter::Awaiter(StaticType type, InitialRefCounter initial_ref_counter)
@@ -28,33 +22,14 @@ Awaiter::Awaiter(StaticType type, InitialRefCounter initial_ref_counter)
       type_(type)
 {}
 
-void Awaiter::Notify(Epoch epoch) {
+void Awaiter::Notify(std::uintptr_t context) {
     if (GetStaticType() == StaticType::kTaskContext) {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        static_cast<TaskContext*>(this)->Wakeup(TaskContext::WakeupSource::kNotify, epoch);
+        static_cast<TaskContext*>(this)->Wakeup(TaskContext::WakeupSource::kNotify, static_cast<Epoch>(context));
         return;
     }
 
-    CastToPolymorphic(this)->DoNotify(epoch);
-}
-
-void Awaiter::Notify(NoEpoch) {
-    if (GetStaticType() == StaticType::kTaskContext) {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        static_cast<TaskContext*>(this)->Wakeup(TaskContext::WakeupSource::kNotify, NoEpoch{});
-        return;
-    }
-
-    CastToPolymorphic(this)->DoNotify(NoEpoch{});
-}
-
-Epoch Awaiter::GetEpoch() const noexcept {
-    if (GetStaticType() == StaticType::kTaskContext) {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        return static_cast<const TaskContext*>(this)->GetEpoch();
-    }
-
-    return CastToPolymorphic(this)->DoGetEpoch();
+    CastToPolymorphic(this)->DoNotify(context);
 }
 
 std::size_t Awaiter::UseCount() const noexcept {

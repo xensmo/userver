@@ -1,6 +1,6 @@
 #include "generic_wait_list.hpp"
 
-#include <engine/task/task_context.hpp>
+#include <userver/engine/impl/awaiter.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/overloaded.hpp>
 
@@ -19,11 +19,11 @@ auto GenericWaitList::CreateWaitList(Task::WaitMode wait_mode) noexcept {
 
 GenericWaitList::GenericWaitList(Task::WaitMode wait_mode) noexcept : awaiters_(CreateWaitList(wait_mode)) {}
 
-bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>&& awaiter) noexcept {
+bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>&& awaiter, std::uintptr_t context) noexcept {
     return utils::Visit(
         awaiters_,  //
-        [&awaiter](WaitListLight& ws) { return ws.GetSignalOrAppend(std::move(awaiter)); },
-        [&awaiter](WaitListAndSignal& ws) {
+        [&awaiter, context](WaitListLight& ws) { return ws.GetSignalOrAppend(std::move(awaiter), context); },
+        [&awaiter, context](WaitListAndSignal& ws) {
             if (ws.signal.load()) {
                 return true;
             }
@@ -31,20 +31,20 @@ bool GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>&& awaiter)
             if (ws.signal.load()) {
                 return true;
             }
-            ws.wl.Append(lock, std::move(awaiter));
+            ws.wl.Append(lock, std::move(awaiter), context);
             return false;
         }
     );
 }
 
 // noexcept: awaiters_ are never valueless_by_exception
-void GenericWaitList::Remove(Awaiter& awaiter) noexcept {
+void GenericWaitList::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
     utils::Visit(
         awaiters_,  //
-        [&awaiter](WaitListLight& ws) { ws.Remove(awaiter); },
-        [&awaiter](WaitListAndSignal& ws) {
+        [&awaiter, context](WaitListLight& ws) { ws.Remove(awaiter, context); },
+        [&awaiter, context](WaitListAndSignal& ws) {
             WaitList::Lock lock{ws.wl};
-            ws.wl.Remove(lock, awaiter);
+            ws.wl.Remove(lock, awaiter, context);
         }
     );
 }

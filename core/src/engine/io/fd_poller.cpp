@@ -88,16 +88,16 @@ struct FdPoller::Impl final : public engine::impl::ContextAccessor {
     // ContextAccessor implementation
     bool IsReady() const noexcept override { return awaiters->IsSignaled(); }
 
-    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter) override {
-        if (awaiters->GetSignalOrAppend(&awaiter)) {
+    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) override {
+        if (awaiters->GetSignalOrAppend(&awaiter, context)) {
             return engine::impl::EarlyNotify{true};
         }
         watcher.StartAsync();
         return engine::impl::EarlyNotify{false};
     }
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter) noexcept override {
-        awaiters->Remove(awaiter);
+    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {
+        awaiters->Remove(awaiter, context);
         // we need to stop watcher manually to avoid racy wakeups later
         watcher.StopAsync();
     }

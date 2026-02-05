@@ -32,13 +32,13 @@ public:
         }
         // A race is not possible here, because check + Append is performed under
         // WaitList::Lock, and notification also takes WaitList::Lock.
-        sem_.lock_awaiters_->Append(lock, &current_);
+        sem_.lock_awaiters_->Append(lock, &current_, current_.GetAwaiterContext());
         return impl::EarlyNotify{false};
     }
 
     void DisableWakeups() noexcept override {
         impl::WaitList::Lock lock(*sem_.lock_awaiters_);
-        sem_.lock_awaiters_->Remove(lock, current_);
+        sem_.lock_awaiters_->Remove(lock, current_, current_.GetAwaiterContext());
     }
 
     TryLockStatus GetTryLockStatus() const noexcept { return status_; }
