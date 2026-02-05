@@ -24,7 +24,8 @@ class FutureWaitStrategy;
 ///
 /// @brief A single-producer, single-consumer event.
 ///
-/// Once the producer sends the event, it remains in the signaled state forever.
+/// Once the producer sends the event, it remains in the signaled state forever unless Reset is called by the consumer
+/// task after waking up.
 ///
 /// SingleUseEvent can be used as a faster non-allocating alternative
 /// to engine::Future. However, it is more low-level and error-prone, see below.
