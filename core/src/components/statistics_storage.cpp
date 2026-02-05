@@ -1,5 +1,6 @@
 #include <userver/components/statistics_storage.hpp>
 
+#include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/utils/resource_scopes.hpp>
 
@@ -13,8 +14,10 @@ USERVER_NAMESPACE_BEGIN
 
 namespace components {
 
-StatisticsStorage::StatisticsStorage(const ComponentConfig&, const ComponentContext&)
-    : metrics_storage_(std::make_shared<utils::statistics::MetricsStorage>()),
+StatisticsStorage::StatisticsStorage(const ComponentConfig& config, const ComponentContext&)
+    : metrics_storage_(std::make_shared<utils::statistics::MetricsStorage>(
+          config["captured-metric-tags"].As<std::optional<std::vector<std::string>>>()
+      )),
       metrics_storage_registration_(metrics_storage_->RegisterIn(storage_))
 {}
 

@@ -74,4 +74,20 @@ UTEST(MetricsStorage, SmokeWriter) {
     }
 }
 
+UTEST(MetricsStorage, AllowedMetricPaths) {
+    using utils::statistics::Request;
+
+    {
+        utils::statistics::Storage storage;
+        utils::statistics::MetricsStorage metrics_storage;
+        EXPECT_NO_THROW(metrics_storage.GetMetric(kFooMetric));
+    }
+    {
+        utils::statistics::Storage storage;
+        std::vector<std::string> allowed_metric_paths{kWriterMetric.GetPath()};
+        utils::statistics::MetricsStorage metrics_storage{allowed_metric_paths};
+        EXPECT_THROW(metrics_storage.GetMetric(kFooMetric), std::out_of_range);
+    }
+}
+
 USERVER_NAMESPACE_END
