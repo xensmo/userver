@@ -43,7 +43,8 @@ impl::ClientInternals ClientFactory::MakeClientInternals(
     UINVARIANT(!client_settings.endpoint.empty(), "Client endpoint is empty");
 
     LOG_INFO()
-        << "MakeClient " << client_settings.client_name << ": completion-queue-count=" << completion_queues_.GetSize()
+        << "MakeClient " << client_settings.client_name << ": endpoint=" << client_settings.endpoint
+        << ", completion-queue-count=" << completion_queues_.GetSize()
         << ", retry-config.attempts=" << client_factory_settings_.retry_config.attempts
         << ", channel-count=" << client_factory_settings_.channel_count
         << ", dedicated-channel-counts: " << client_settings.dedicated_methods_config;
