@@ -656,7 +656,10 @@ class CppStructField:
     def cpp_field_parse_type(self) -> str:
         type_ = self.schema.parser_type('TODO', self.name.title())
         if self.required or self._default() is not None:
-            return type_
+            if self.schema.nullable:
+                return f'std::optional<{type_}>'
+            else:
+                return type_
         else:
             return f'std::optional<{type_}>'
 
@@ -664,10 +667,15 @@ class CppStructField:
         ch = 'USERVER_NAMESPACE::chaotic'
         type_ = self.schema.parser_type('TODO', self.name.title())
         name = self.cpp_field_name()
+        nullable = self.schema.nullable
 
         if self.required:
-            mode = f'{ch}::Required<{type_}>'
+            if nullable:
+                mode = f'{ch}::Optional<{type_}>'
+            else:
+                mode = f'{ch}::Required<{type_}>'
         elif self._default() is None:
+            assert not nullable
             mode = f'{ch}::Optional<{type_}>'
         else:
             default_var = f'{object_type}::kFieldDefault{name}'

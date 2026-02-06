@@ -439,7 +439,7 @@ TEST(Simple, Uri) {
     EXPECT_EQ(str, uri);
 }
 
-TEST(SIMPLE, String64) {
+TEST(Simple, String64) {
     auto str64 = crypto::base64::String64{"hello, userver!"};
     auto obj = ns::ObjectString64{str64};
 
@@ -448,6 +448,32 @@ TEST(SIMPLE, String64) {
 
     auto new_obj = formats::json::MakeObject("value", str).As<ns::ObjectString64>();
     EXPECT_EQ(new_obj.value, str64);
+}
+
+TEST(Simple, RequiredNullableType) {
+    ns::ObjectWithNullable obj;
+    static_assert(std::is_same_v<decltype(obj.foo), std::optional<int>>);
+}
+
+TEST(Simple, RequiredNullableExists) {
+    auto json = formats::json::MakeObject("foo", 1);
+    auto obj = json.As<ns::ObjectWithNullable>();
+
+    EXPECT_EQ(obj.foo, 1);
+}
+
+TEST(Simple, RequiredNullableNull) {
+    auto json = formats::json::MakeObject("foo", nullptr);
+    auto obj = json.As<ns::ObjectWithNullable>();
+
+    EXPECT_EQ(obj.foo, std::nullopt);
+}
+
+TEST(Simple, RequiredNullableMissing) {
+    auto json = formats::json::MakeObject();
+    auto obj = json.As<ns::ObjectWithNullable>();
+
+    EXPECT_EQ(obj.foo, std::nullopt);
 }
 
 USERVER_NAMESPACE_END
