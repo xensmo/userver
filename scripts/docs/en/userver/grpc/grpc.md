@@ -23,7 +23,8 @@ See also:
 * Collection of metrics on driver usage;
 * Cancellation support;
 * Automatic authentication using middlewares;
-* @ref scripts/docs/en/userver/deadline_propagation.md .
+* @ref scripts/docs/en/userver/deadline_propagation.md;
+* @ref scripts/docs/en/userver/grpc/rich_status.md .
 
 ## Installation
 

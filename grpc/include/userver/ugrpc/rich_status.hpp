@@ -18,6 +18,8 @@ namespace ugrpc {
 /// @brief A wrapper around `google::rpc::Status` that provides a convenient API
 /// for creating and managing gRPC status responses with rich error details.
 ///
+/// Documentation: @see @ref scripts/docs/en/userver/grpc/rich_status.md
+///
 /// `RichStatus` allows you to create gRPC status responses with structured error
 /// information conforming to the Google RPC error model. It supports adding
 /// multiple error details of various types to provide comprehensive error
@@ -37,7 +39,7 @@ namespace ugrpc {
 /// @see @ref ugrpc::LocalizedMessage
 ///
 /// ## Example usage:
-/// @snippet grpc/tests/rich_status_test.cpp rich_status_usage
+/// @snippet grpc/tests/detailed_error_test.cpp rich_status_usage
 class RichStatus final {
 public:
     /// @brief Constructs an `OK` status with no error details.
@@ -72,7 +74,7 @@ public:
     /// return only the first encountered instance.
     ///
     /// ## Example usage:
-    /// @snippet grpc/tests/rich_status_test.cpp try_get_detail_example
+    /// @snippet grpc/tests/detailed_error_test.cpp try_get_rich_error_detail
     template <typename TRichErrorDetail>
     [[nodiscard]] static std::optional<TRichErrorDetail> TryGetDetail(const google::rpc::Status& status);
 
