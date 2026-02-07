@@ -3,7 +3,6 @@
 #include <userver/rcu/rcu.hpp>
 
 #include <userver/ugrpc/client/impl/stub_any.hpp>
-#include <userver/ugrpc/client/impl/stub_state.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -13,7 +12,7 @@ struct StubState;
 
 class StubHandle final {
 public:
-    StubHandle(rcu::ReadablePtr<StubState>&& state, StubAny& stub);
+    StubHandle(rcu::ReadablePtr<StubState>&& stub_state, StubAny& stub);
 
     StubHandle(StubHandle&&) noexcept = default;
     StubHandle& operator=(StubHandle&&) = delete;
@@ -21,15 +20,10 @@ public:
     StubHandle(const StubHandle&) = delete;
     StubHandle& operator=(const StubHandle&) = delete;
 
-    template <typename Stub>
-    Stub& Get() {
-        return StubCast<Stub>(stub_);
-    }
-
-    const ClientQos& GetClientQos() const;
+    StubAny& Get() { return stub_; }
 
 private:
-    const rcu::ReadablePtr<StubState> state_;
+    const rcu::ReadablePtr<StubState> stub_state_;
     StubAny& stub_;
 };
 

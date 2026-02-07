@@ -51,7 +51,10 @@ public:
     CallContext& GetContext() noexcept { return context_; }
     const CallContext& GetContext() const noexcept { return context_; }
 
-    void Perform() { CallWithRetries(); }
+    void Perform() {
+        const utils::FastScopeGuard span_scope([this]() noexcept { state_.ResetSpan(); });
+        CallWithRetries();
+    }
 
     Response&& ExtractResponse() {
         if (inherited_deadline_reached_) {
@@ -80,10 +83,11 @@ private:
         const int max_attempts = call_options_.GetAttempts();
         state_.GetSpan().AddTag(tracing::kMaxAttempts, max_attempts);
 
-        int attempt = 1;
+        int attempt = 0;
         RetryBackoff retry_backoff;
 
         while (!engine::current_task::ShouldCancel()) {
+            ++attempt;
             state_.GetSpan().AddTag(tracing::kAttempts, attempt);
             impl::SetupClientContext(state_, call_options_);
 
@@ -121,7 +125,6 @@ private:
                 return;
             }
 
-            ++attempt;
             engine::InterruptibleSleepFor(delay);
         }
 
@@ -181,7 +184,6 @@ private:
         done_ = true;
         impl::HandleCallStatistics(state_, status);
         impl::SetStatusForSpan(state_.GetSpan(), status);
-        state_.ResetSpan();
     }
 
     void OnInterrupted() {
@@ -194,7 +196,6 @@ private:
         impl::SetErrorForSpan(state_.GetSpan(), error_message);
         state_.GetStatsScope().OnNetworkError();
         state_.GetStatsScope().Flush();
-        state_.ResetSpan();
     }
 
     void OnCancelled() {
@@ -205,7 +206,6 @@ private:
             state_.GetStatsScope().OnCancelled();
         }
         state_.GetStatsScope().Flush();
-        state_.ResetSpan();
     }
 
     CallOptions call_options_;

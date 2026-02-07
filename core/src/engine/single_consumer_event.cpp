@@ -16,11 +16,11 @@ public:
           current_(current)
     {}
 
-    impl::EarlyWakeup SetupWakeups() override {
-        return impl::EarlyWakeup{event_.waiters_->GetSignalOrAppend(&current_)};
+    impl::EarlyNotify SetupWakeups() override {
+        return impl::EarlyNotify{event_.waiters_->GetSignalOrAppend(&current_, current_.GetAwaiterContext())};
     }
 
-    void DisableWakeups() noexcept override { event_.waiters_->Remove(current_); }
+    void DisableWakeups() noexcept override { event_.waiters_->Remove(current_, current_.GetAwaiterContext()); }
 
 private:
     SingleConsumerEvent& event_;
@@ -64,7 +64,7 @@ bool SingleConsumerEvent::WaitForEventUntil(Deadline deadline) {
 
 void SingleConsumerEvent::Reset() noexcept { waiters_->GetAndResetSignal(); }
 
-void SingleConsumerEvent::Send() { waiters_->SetSignalAndWakeupOne(); }
+void SingleConsumerEvent::Send() { waiters_->SetSignalAndNotifyOne(); }
 
 bool SingleConsumerEvent::IsReady() const noexcept { return waiters_->IsSignaled(); }
 

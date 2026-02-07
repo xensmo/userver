@@ -1,32 +1,36 @@
 #pragma once
 
+#include <cstdint>
+
 USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
+enum class [[nodiscard]] EarlyNotify : bool {};
+
+class Awaiter;
 class TaskContext;
-
-template <typename T>
-class FutureWaitStrategy;
-
-enum class [[nodiscard]] EarlyWakeup : bool {};
 
 class ContextAccessor {
 public:
     virtual bool IsReady() const noexcept = 0;
 
     // Atomically:
-    // 1. if not `IsReady`, then store `waiter` somewhere to notify when
-    //    `IsReady() == true` is reached, and return `EarlyWakeup{false}`;
-    // 2. if `IsReady`, then notify `waiter` immediately via `Wakeup*`,
-    //    and return `EarlyWakeup{true}`.
-    virtual EarlyWakeup TryAppendWaiter(TaskContext& waiter) = 0;
+    // 1. if not `IsReady`, then store `awaiter` and `context` somewhere to notify when
+    //    `IsReady() == true` is reached, and return `EarlyNotify{false}`;
+    // 2. if `IsReady`, then return `EarlyNotify{true}`. Awaiter is not notified.
+    virtual EarlyNotify TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) = 0;
+    // @overload
+    EarlyNotify TryAppendAwaiter(TaskContext& task_context);
 
-    // Remove `waiter` from the internal wait list if it's still there.
-    // You may not sleep in `RemoveWaiter`, unlike in `AfterWait`.
-    virtual void RemoveWaiter(TaskContext& waiter) noexcept = 0;
+    // Remove `awaiter` from the internal wait list if it's still there.
+    // Depending on a wait list implementation `context` match also could be required for the awaiter removal.
+    // You may not sleep in `RemoveAwaiter`, unlike in `AfterWait`.
+    virtual void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept = 0;
+    // @overload
+    void RemoveAwaiter(TaskContext& task_context) noexcept;
 
-    // Wait for some cleanup (e.g. wait for `waiter` to actually remove itself).
+    // Wait for some cleanup (e.g. wait for `awaiter` to actually remove itself).
     // You may sleep in `AfterWait`.
     virtual void AfterWait() noexcept = 0;
 

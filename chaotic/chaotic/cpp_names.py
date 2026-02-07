@@ -35,6 +35,8 @@ def namespace(http_path: str) -> str:
         return 'root_'
 
     path = http_path.strip('/')
+    for char in ('}', '{'):
+        path = path.replace(char, '')
     for char in ('/', '.', '-', ':'):
         path = path.replace(char, '_')
 

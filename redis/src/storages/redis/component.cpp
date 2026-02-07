@@ -34,6 +34,7 @@
 #include "redis_secdist.hpp"
 #include "subscribe_client_impl.hpp"
 #include "userver/storages/redis/base.hpp"
+#include "userver/storages/redis/wait_connected_mode.hpp"
 
 #include <boost/range/adaptor/map.hpp>
 
@@ -70,7 +71,7 @@ namespace components {
 struct RedisGroup {
     std::string db;
     std::string config_name;
-    std::string sharding_strategy;
+    storages::redis::ShardingStrategy sharding_strategy{storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32};
     bool allow_reads_from_master{false};
 };
 
@@ -78,7 +79,8 @@ RedisGroup Parse(const yaml_config::YamlConfig& value, formats::parse::To<RedisG
     RedisGroup config;
     config.db = value["db"].As<std::string>();
     config.config_name = value["config_name"].As<std::string>();
-    config.sharding_strategy = value["sharding_strategy"].As<std::string>("");
+    config.sharding_strategy =
+        storages::redis::ToShardingStrategy(value["sharding_strategy"].As<std::string>("KeyShardTaximeterCrc32"));
     config.allow_reads_from_master = value["allow_reads_from_master"].As<bool>(false);
     return config;
 }
@@ -86,7 +88,7 @@ RedisGroup Parse(const yaml_config::YamlConfig& value, formats::parse::To<RedisG
 struct SubscribeRedisGroup {
     std::string db;
     std::string config_name;
-    std::string sharding_strategy;
+    storages::redis::ShardingStrategy sharding_strategy{storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32};
     bool allow_reads_from_master{false};
 };
 
@@ -94,7 +96,8 @@ SubscribeRedisGroup Parse(const yaml_config::YamlConfig& value, formats::parse::
     SubscribeRedisGroup config;
     config.db = value["db"].As<std::string>();
     config.config_name = value["config_name"].As<std::string>();
-    config.sharding_strategy = value["sharding_strategy"].As<std::string>("");
+    config.sharding_strategy =
+        storages::redis::ToShardingStrategy(value["sharding_strategy"].As<std::string>("KeyShardTaximeterCrc32"));
     config.allow_reads_from_master = value["allow_reads_from_master"].As<bool>(false);
     return config;
 }
@@ -227,7 +230,7 @@ void Redis::Connect(
             redis_group.config_name,
             config_source,
             redis_group.db,
-            storages::redis::impl::KeyShardFactory{redis_group.sharding_strategy},
+            redis_group.sharding_strategy,
             cc,
             testsuite_redis_control
         );

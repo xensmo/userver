@@ -109,7 +109,7 @@ private:
     // Note: do not use impl::TaskConfig as it stores a ref to TaskProcessor, which cannot be nullptr
     engine::TaskProcessor* tp_{nullptr};
     engine::Task::Importance importance_{engine::Task::Importance::kNormal};
-    engine::Task::WaitMode wait_mode_{engine::Task::WaitMode::kSingleWaiter};
+    engine::Task::WaitMode wait_mode_{engine::Task::WaitMode::kSingleAwaiter};
     engine::Deadline deadline_;
     std::optional<std::variant<std::string, NoSpanTag, HideSpanTag>> span_;
     utils::impl::SpanWrapCall::InheritVariables inherit_variables_{utils::impl::SpanWrapCall::InheritVariables::kYes};

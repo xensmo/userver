@@ -36,6 +36,9 @@ migration scripts, etc.
 The limit is promptly changed after service topology change: node
 addition/removal, service instance stop, etc.
 
+@warning If a host fails to determine the value automatically, it will fallback to the `max_pool_size` 
+specified in the static config. Therefore, `max_pool_size` in the static configuration must be kept within reasonable limits.
+
 ## Disabling the feature
 
 The feature can be turned on/off in runtime via the dynamic config variable

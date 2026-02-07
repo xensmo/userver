@@ -1,6 +1,7 @@
 import pytest
 
 from chaotic import error
+from chaotic.back.cpp import translator
 from chaotic.back.cpp import type_name
 from chaotic.back.cpp import types as cpp_types
 from chaotic.front import types as front_types
@@ -21,6 +22,21 @@ def test_empty(simple_gen):
             fields={},
         ),
     }
+
+
+def test_optional_nullable(simple_gen):
+    with pytest.raises(translator.TranslatorError) as exc:
+        simple_gen({
+            'type': 'object',
+            'properties': {
+                'foo': {
+                    'type': 'integer',
+                    'nullable': True,
+                },
+            },
+            'additionalProperties': False,
+        })
+    assert str(exc.value.msg) == 'optional nullable fields are not supported'
 
 
 def test_additional_properties_simple(simple_gen, cpp_primitive_type):

@@ -4,6 +4,7 @@
 
 #include <optional>
 #include <string>
+#include <userver/chaotic/object.hpp>
 #include <userver/chaotic/type_bundle_hpp.hpp>
 
 #include "enum_fwd.hpp"
@@ -11,19 +12,20 @@
 namespace ns {
 
 struct Enum {
-    enum class Foo {
-        kOne,
-        kTwo,
-        kThree,
-    };
+  enum class Foo {
+    kOne,
+    kTwo,
+    kThree,
+  };
 
-    static constexpr Foo kFooValues[] = {
-        Foo::kOne,
-        Foo::kTwo,
-        Foo::kThree,
-    };
+  static constexpr Foo kFooValues[] = {
+      Foo::kOne,
+      Foo::kTwo,
+      Foo::kThree,
+  };
 
-    std::optional<::ns::Enum::Foo> foo{};
+  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
+  std::optional<::ns::Enum::Foo> foo{};
 };
 
 bool operator==(const Enum& lhs, const Enum& rhs);
@@ -48,11 +50,11 @@ Enum::Foo FromString(std::string_view value, USERVER_NAMESPACE::formats::parse::
 
 Enum::Foo Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo>);
 
-USERVER_NAMESPACE::formats::json::Value
-Serialize(const Enum::Foo& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+USERVER_NAMESPACE::formats::json::Value Serialize(
+    const Enum::Foo& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-USERVER_NAMESPACE::formats::json::Value
-Serialize(const Enum& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+USERVER_NAMESPACE::formats::json::Value Serialize(
+    const Enum& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
 std::string ToString(Enum::Foo value);
 
@@ -60,7 +62,8 @@ std::string ToString(Enum::Foo value);
 
 template <>
 struct fmt::formatter<ns::Enum::Foo> {
-    fmt::format_context::iterator format(const ns::Enum::Foo&, fmt::format_context&) const;
+  fmt::format_context::iterator format(const ns::Enum::Foo&, fmt::format_context&) const;
 
-    constexpr fmt::format_parse_context::iterator parse(fmt::format_parse_context& ctx) { return ctx.begin(); }
+  constexpr fmt::format_parse_context::iterator parse(fmt::format_parse_context& ctx) { return ctx.begin(); }
 };
+

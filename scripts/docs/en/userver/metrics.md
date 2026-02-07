@@ -199,13 +199,19 @@ Key scenarios where such metrics are useful:
 
 ## How to test metrics in testsuite and gtest
 
-@ref utils::statistics::MetricsStorage is easy to create in unit tests (gtest). If you need to test classes that use
-@ref utils::statistics::Storage, you can use @ref utils::statistics::Snapshot.
+@ref utils::statistics::MetricsStorage is easy to create in unit tests (gtest):
+
+@snippet core/src/utils/statistics/metrics_storage_test.cpp unit testing metrics
+
+If you need to unit test (gtest) classes that use
+@ref utils::statistics::Storage, you can use @ref utils::statistics::Snapshot:
+
+@snippet core/src/utils/statistics/histogram_test.cpp  sample
 
 Prefer testing metrics in unit tests if possible. Otherwise, metrics could be tested in testsuite, see
 @ref TESTSUITE_METRICS_TESTING "Metrics testing in testsuite".
 
-**Short Examples for the Impatient**:
+### Testuite Metrics Tests Short Examples for the Impatient
 
 - Retrieve specific service metric by path and (optionally) labels:
   @snippet samples/testsuite-support/tests/test_metrics.py metrics single_metric

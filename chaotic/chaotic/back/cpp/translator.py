@@ -520,6 +520,13 @@ class Generator:
 
         name = class_name.joinns(type_name)
         type_ = self._generate_type(name, schema)
+        nullable = type_.nullable
+
+        if nullable and not required:
+            self._raise(
+                schema,
+                msg='optional nullable fields are not supported',
+            )
 
         field = cpp_types.CppStructField(
             name=cpp_name or self._normalize_name(field_name),

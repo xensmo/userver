@@ -10,7 +10,7 @@ StubAny& NextStub(const StubState& stub_state, std::size_t method_id) {
     return stubs.NextStub();
 }
 
-StubAny& NextStub(const StubState& stub_state) { return stub_state.stubs.NextStub(); }
+StubAny& NextGenericStub(const StubState& stub_state) { return stub_state.stubs.NextStub(); }
 
 }  // namespace ugrpc::client::impl
 

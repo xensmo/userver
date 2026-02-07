@@ -11,6 +11,10 @@
   #include <{{ include }}>
 {% endfor %}
 
+{% for include in spec.cpp_sax_parser_includes() %}
+#include <{{ include }}>
+{% endfor %}
+
 
 namespace {{ namespace }} {
 {% for op in operations %}
@@ -43,8 +47,8 @@ namespace {{ namespace }} {
                       if (content_type == USERVER_NAMESPACE::http::ContentType{"{{ content_type }}"}) {
                         {% if content_type == 'application/json' %}
                           try {
-                            auto json = USERVER_NAMESPACE::formats::json::FromString(http_response.body());
-                            r.body = json.As<{{ body.parser_type('TODO', 'TODO') }}>();
+                            using Parser = USERVER_NAMESPACE::chaotic::sax::Parser<{{ body.cpp_global_name() }}>;
+                            r.body = USERVER_NAMESPACE::formats::json::parser::ParseToType<{{ body.cpp_global_name() }}, Parser>(http_response.body_view());
                           } catch (const std::exception& e) {
                             LOG_ERROR() << "Failed to parse JSON response body: " << e;
                             throw ExceptionWithStatusCode({{ response.status }});
@@ -68,7 +72,7 @@ namespace {{ namespace }} {
               static const USERVER_NAMESPACE::http::headers::PredefinedHeader kHeader("{{ header.raw_name }}");
               auto it = http_response.headers().find(kHeader);
               if (it != http_response.headers().end()) {
-                namespace openapi = chaotic::openapi;
+                namespace openapi = USERVER_NAMESPACE::chaotic::openapi;
                 static constexpr openapi::Name k{{ header.cpp_name }} = "{{ header.raw_name }}";
                 using Header = {{ header.parser }};
                 r.{{ header.cpp_name }} = openapi::ParseParameter<Header::Base>::Parse(std::string{it->second});

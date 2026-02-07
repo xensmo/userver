@@ -16,7 +16,7 @@ FutureStateBase::FutureStateBase() noexcept : is_result_store_locked_(false), is
 
 FutureStateBase::~FutureStateBase() = default;
 
-bool FutureStateBase::IsReady() const noexcept { return finish_waiters_->IsSignaled(); }
+bool FutureStateBase::IsReady() const noexcept { return finish_awaiters_->IsSignaled(); }
 
 FutureStatus FutureStateBase::WaitUntil(Deadline deadline) {
     if (IsReady()) {
@@ -44,7 +44,7 @@ void FutureStateBase::LockResultStore() {
     }
 }
 
-void FutureStateBase::ReleaseResultStore() { finish_waiters_->SetSignalAndWakeupOne(); }
+void FutureStateBase::ReleaseResultStore() { finish_awaiters_->SetSignalAndNotifyOne(); }
 
 void FutureStateBase::WaitForResult() {
     const auto wait_result = WaitUntil({});
@@ -53,11 +53,13 @@ void FutureStateBase::WaitForResult() {
     }
 }
 
-EarlyWakeup FutureStateBase::TryAppendWaiter(TaskContext& waiter) {
-    return EarlyWakeup{finish_waiters_->GetSignalOrAppend(&waiter)};
+EarlyNotify FutureStateBase::TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) {
+    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter, context)};
 }
 
-void FutureStateBase::RemoveWaiter(TaskContext& context) noexcept { finish_waiters_->Remove(context); }
+void FutureStateBase::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    finish_awaiters_->Remove(awaiter, context);
+}
 
 void FutureStateBase::AfterWait() noexcept {}
 

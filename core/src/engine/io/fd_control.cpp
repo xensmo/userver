@@ -102,8 +102,8 @@ void FdControl::Close() {
         LOG_ERROR() << "Cannot close fd " << fd << ": " << ec.message();
     }
 
-    read_.WakeupWaiters();
-    write_.WakeupWaiters();
+    read_.WakeupAwaiters();
+    write_.WakeupAwaiters();
 }
 
 void FdControl::Invalidate() {

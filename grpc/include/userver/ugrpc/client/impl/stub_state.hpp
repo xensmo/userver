@@ -19,7 +19,7 @@ struct StubState {
 
 StubAny& NextStub(const StubState& stub_state, std::size_t method_id);
 
-StubAny& NextStub(const StubState& stub_state);
+StubAny& NextGenericStub(const StubState& stub_state);
 
 }  // namespace ugrpc::client::impl
 

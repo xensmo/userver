@@ -232,6 +232,7 @@ class ClientSpec:
 
     def responses_definitions_includes(self) -> list[str]:
         includes: set[str] = set()
+        includes.add('userver/chaotic/sax_parser.hpp')
         for op in self.operations:
             if not op.client_generate:
                 continue
@@ -248,6 +249,19 @@ class ClientSpec:
             filepath = cpp_type.json_schema.source_location().filepath
             includes.append(
                 'clients/{}/{}.hpp'.format(
+                    self.client_name,
+                    filepath.rsplit('.', 1)[0],
+                ),
+            )
+        return includes
+
+    def cpp_sax_parser_includes(self) -> list[str]:
+        includes = []
+        for cpp_type in self.extract_cpp_types().values():
+            assert cpp_type.json_schema
+            filepath = cpp_type.json_schema.source_location().filepath
+            includes.append(
+                'clients/{}/{}_sax_parsers.hpp'.format(
                     self.client_name,
                     filepath.rsplit('.', 1)[0],
                 ),

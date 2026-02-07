@@ -102,6 +102,13 @@ def definition_includes(types: list[cpp_types.CppType]) -> list[str]:
     return sorted(includes)
 
 
+def sax_parser_includes(types: list[cpp_types.CppType]) -> list[str]:
+    includes = set()
+    for type_ in types:
+        includes.update(set(type_.sax_parser_includes()))
+    return sorted(includes)
+
+
 def extra_cpp_type(type_: cpp_types.CppStruct) -> str:
     extra_type = type_.extra_type
     if extra_type is True:
@@ -134,6 +141,7 @@ def make_env() -> jinja2.Environment:
 
     env.globals['declaration_includes'] = declaration_includes
     env.globals['definition_includes'] = definition_includes
+    env.globals['sax_parser_includes'] = sax_parser_includes
 
     env.globals['cpp_namespace'] = cpp_namespace
     env.globals['cpp_type'] = cpp_type
@@ -181,6 +189,22 @@ class OneToOneFileRenderer:
         types_cpp: dict[str, cpp_types.CppType],
         ignore_filepath_wo_ext: str,
     ) -> list[str]:
+        return list(map(self.filepath_to_include, self.extract_external_stems(types_cpp, ignore_filepath_wo_ext)))
+
+    def extract_external_sax_parser_includes(
+        self,
+        types_cpp: dict[str, cpp_types.CppType],
+        ignore_filepath_wo_ext: str,
+    ) -> list[str]:
+        return list(
+            map(self.filepath_to_sax_parser_include, self.extract_external_stems(types_cpp, ignore_filepath_wo_ext))
+        )
+
+    def extract_external_stems(
+        self,
+        types_cpp: dict[str, cpp_types.CppType],
+        ignore_filepath_wo_ext: str,
+    ) -> list[str]:
         result = set()
 
         def visitor(
@@ -196,7 +220,7 @@ class OneToOneFileRenderer:
                 ),
             )
             if filepath != ignore_filepath_wo_ext:
-                result.add(self.filepath_to_include(filepath))
+                result.add(filepath)
 
         for type_ in types_cpp.values():
             assert type_.json_schema
@@ -205,11 +229,17 @@ class OneToOneFileRenderer:
 
         return sorted(result)
 
-    def filepath_to_include(self, filepath_wo_ext: str) -> str:
+    def filepath_to_smth(self, filepath_wo_ext: str, ext: str) -> str:
         if filepath_wo_ext.startswith('/'):
-            return os.path.relpath(filepath_wo_ext, self._relative_to) + '.hpp'
+            return os.path.relpath(filepath_wo_ext, self._relative_to) + ext
         else:
-            return filepath_wo_ext + '.hpp'
+            return filepath_wo_ext + ext
+
+    def filepath_to_include(self, filepath_wo_ext: str) -> str:
+        return self.filepath_to_smth(filepath_wo_ext, '.hpp')
+
+    def filepath_to_sax_parser_include(self, filepath_wo_ext: str) -> str:
+        return self.filepath_to_smth(filepath_wo_ext, '_sax_parsers.hpp')
 
     def render(
         self,
@@ -243,6 +273,10 @@ class OneToOneFileRenderer:
                 types_cpp,
                 filepath_wo_ext,
             )
+            external_sax_parser_includes = self.extract_external_sax_parser_includes(
+                types_cpp,
+                filepath_wo_ext,
+            )
 
             if pair_header:
                 p_header = pair_header
@@ -257,6 +291,7 @@ class OneToOneFileRenderer:
                 'types': types_cpp,
                 'userver': 'USERVER_NAMESPACE',
                 'external_includes': external_includes,
+                'external_sax_parser_includes': external_sax_parser_includes,
                 'parse_formats': parse_formats,
                 'generate_serializer': self._generate_serializer,
             }
@@ -276,6 +311,13 @@ class OneToOneFileRenderer:
             parsers_ipp = tpl.render(**env)
             parsers_ipp = cpp_format.format_pp(
                 parsers_ipp,
+                binary=self._clang_format_bin,
+            )
+
+            tpl = JINJA_ENV.get_template('templates/type_sax_parsers.hpp.jinja')
+            sax_parsers_hpp = tpl.render(**env)
+            sax_parsers_hpp = cpp_format.format_pp(
+                sax_parsers_hpp,
                 binary=self._clang_format_bin,
             )
 
@@ -302,6 +344,11 @@ class OneToOneFileRenderer:
                             ext='_parsers.ipp',
                             subdir='include/',
                         ),
+                        CppOutputFile(
+                            content=sax_parsers_hpp,
+                            ext='_sax_parsers.hpp',
+                            subdir='include/',
+                        ),
                         CppOutputFile(content=cpp, ext='.cpp', subdir='src/'),
                     ],
                 ),
@@ -314,6 +361,7 @@ class OneToOneFileRenderer:
         return [
             f'include/{path}/{stem}_fwd.hpp',
             f'include/{path}/{stem}_parsers.ipp',
+            f'include/{path}/{stem}_sax_parsers.hpp',
             f'include/{path}/{stem}.hpp',
             f'src/{path}/{stem}.cpp',
         ]

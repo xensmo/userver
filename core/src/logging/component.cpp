@@ -9,7 +9,6 @@
 
 #include <userver/alerts/source.hpp>
 #include <userver/components/component.hpp>
-#include <userver/components/scope.hpp>
 #include <userver/components/statistics_storage.hpp>
 #include <userver/engine/async.hpp>
 #include <userver/engine/sleep.hpp>
@@ -19,6 +18,7 @@
 #include <userver/os_signals/component.hpp>
 #include <userver/testsuite/testpoint.hpp>
 #include <userver/utils/algo.hpp>
+#include <userver/utils/resource_scopes.hpp>
 #include <userver/utils/statistics/writer.hpp>
 #include <userver/utils/thread_name.hpp>
 #include <userver/yaml_config/map_to_array.hpp>
@@ -77,7 +77,7 @@ Logging::Logging(const ComponentConfig& config, const ComponentContext& context)
 
         /// [Signals sample - init]
         auto& signals_processor = context.FindComponent<os_signals::ProcessorComponent>().Get();
-        context.RegisterScope(MakeScope([this, &signals_processor] {
+        context.Scopes().Register([this, &signals_processor] {
             auto holder = signals_processor.AddListener(this, kName, os_signals::kSigUsr1, &Logging::OnLogRotate);
 
             // Force logrotate just after signal subscription to be sure we haven't lost signals during the loading.
@@ -85,7 +85,7 @@ Logging::Logging(const ComponentConfig& config, const ComponentContext& context)
             OnLogRotate();
 
             return holder;
-        }));
+        });
         /// [Signals sample - init]
     } catch (const std::exception&) {
         Stop();
@@ -157,9 +157,12 @@ void Logging::Init(const ComponentConfig& config, const ComponentContext& contex
 
     auto* const statistics_storage = context.FindComponentOptional<components::StatisticsStorage>();
     if (statistics_storage) {
-        utils::statistics::RegisterWriterScope(context, "logger", [this](utils::statistics::Writer& writer) {
-            return WriteStatistics(writer);
-        });
+        RegisterWriterScope(
+            context.Scopes(),
+            statistics_storage->GetStorage(),
+            "logger",
+            [this](utils::statistics::Writer& writer) { return WriteStatistics(writer); }
+        );
     }
 }
 

@@ -18,6 +18,10 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace utils {
+class ResourceScopeStorage;
+}
+
 namespace utils::statistics {
 
 /// @brief Used in legacy statistics extenders
@@ -91,6 +95,20 @@ private:
     impl::StorageData metrics_sources_;
     mutable engine::SharedMutex mutex_;
 };
+
+/// @brief Add a writer function to @ref Storage (usually obtained from @ref components::StatisticsStorage).
+/// It automatically calls @ref utils::statistics::Storage::RegisterWriter() just after the component
+/// construction and @ref utils::statistics::Entry::Unregister() just before the component
+/// destructor.
+///
+/// @see @ref Storage::RegisterWriter.
+void RegisterWriterScope(
+    ResourceScopeStorage& scope_storage,
+    Storage& storage,
+    std::string common_prefix,
+    WriterFunc func,
+    std::vector<Label> add_labels = {}
+);
 
 }  // namespace utils::statistics
 

@@ -11,7 +11,6 @@
 #include <userver/server/http/http_request.hpp>
 
 #include <userver/components/component.hpp>
-#include <userver/components/scope.hpp>
 #include <userver/components/statistics_storage.hpp>
 #include <userver/dynamic_config/storage/component.hpp>
 #include <userver/engine/deadline.hpp>
@@ -35,6 +34,7 @@
 #include <userver/utils/graphite.hpp>
 #include <userver/utils/log.hpp>
 #include <userver/utils/overloaded.hpp>
+#include <userver/utils/resource_scopes.hpp>
 #include <userver/utils/scope_guard.hpp>
 #include <userver/utils/text_light.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
@@ -155,7 +155,7 @@ HttpHandlerBase::HttpHandlerBase(
     // Postpone handler registration as a request handling requires
     // HandleRequest() implementation, which is available only after
     // the descendant constructor.
-    context.RegisterScope(components::MakeScope([this, &server, &task_processor] {
+    context.Scopes().Register([this, &server, &task_processor] {
         try {
             server.AddHandler(*this, task_processor);
 
@@ -164,7 +164,7 @@ HttpHandlerBase::HttpHandlerBase(
         } catch (const std::exception& ex) {
             throw std::runtime_error(std::string("can't add handler to server: ") + ex.what());
         }
-    }));
+    });
 
     BuildMiddlewarePipeline(config, context);
 
@@ -184,7 +184,7 @@ HttpHandlerBase::HttpHandlerBase(
             GetConfig().path
         );
 
-        utils::statistics::RegisterWriterScope(
+        RegisterWriterScope(
             context,
             std::move(prefix),
             [this](utils::statistics::Writer& result) {

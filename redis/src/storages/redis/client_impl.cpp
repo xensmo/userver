@@ -1417,6 +1417,8 @@ RequestZscore ClientImpl::Zscore(std::string key, std::string member, const Comm
 
 // end of redis commands
 
+impl::Sentinel& ClientImpl::GetNative() const { return *redis_client_; }
+
 impl::Request ClientImpl::MakeRequest(
     CmdArgs&& args,
     size_t shard,

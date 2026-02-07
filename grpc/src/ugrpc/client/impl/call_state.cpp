@@ -25,20 +25,20 @@ namespace ugrpc::client::impl {
 
 namespace {
 
-void SetupSpan(
-    std::optional<tracing::InPlaceSpan>& span_holder,
+void ConstructSpan(std::optional<tracing::InPlaceSpan>& span_storage, std::string_view call_name) {
+    UASSERT(!span_storage.has_value());
+    span_storage.emplace(std::string{call_name}, utils::impl::SourceLocation::Current());
+    span_storage->Get().DetachFromCoroStack();
+}
+
+void AddServiceMethodTags(
+    tracing::Span& span,
     std::string_view endpoint,
-    std::string_view call_name,
     std::string_view service_name,
     std::string_view method_name
 ) {
-    UASSERT(!span_holder);
-    span_holder.emplace(std::string{call_name}, utils::impl::SourceLocation::Current());
-    auto& span = span_holder->Get();
-    span.DetachFromCoroStack();
-
-    span.AddNonInheritableTag(tracing::kServerAddress, USERVER_NAMESPACE::http::ExtractHostname(endpoint));
     span.AddNonInheritableTag(tracing::kRpcSystem, "grpc");
+    span.AddNonInheritableTag(tracing::kServerAddress, USERVER_NAMESPACE::http::ExtractHostname(endpoint));
     span.AddNonInheritableTag(tracing::kRpcService, std::string{service_name});
     span.AddNonInheritableTag(tracing::kRpcMethod, std::string{method_name});
 }
@@ -80,10 +80,11 @@ CallState::CallState(CallParams&& params)
 {
     UINVARIANT(!client_name_.empty(), "client name should not be empty");
 
-    SetupSpan(span_, params.endpoint, call_name_.Get(), params.service_name, params.method_name);
+    ConstructSpan(span_, call_name_.Get());
+    AddServiceMethodTags(span_->Get(), params.endpoint, params.service_name, params.method_name);
 }
 
-StubHandle& CallState::GetStub() noexcept { return stub_; }
+StubAny& CallState::GetStub() noexcept { return stub_.Get(); }
 
 void CallState::SetClientContext(std::unique_ptr<grpc::ClientContext> client_context) noexcept {
     client_context_ = std::move(client_context);
@@ -99,6 +100,17 @@ grpc::ClientContext& CallState::GetClientContext() noexcept {
     return *client_context_;
 }
 
+std::string_view CallState::GetClientName() const noexcept { return client_name_; }
+
+std::string_view CallState::GetCallName() const noexcept { return call_name_.Get(); }
+
+RpcType CallState::GetRpcType() const noexcept { return rpc_type_; }
+
+tracing::Span& CallState::GetSpan() noexcept {
+    UASSERT(span_);
+    return span_->Get();
+}
+
 grpc::CompletionQueue& CallState::GetQueue() const noexcept { return queue_; }
 
 const RpcConfigValues& CallState::GetConfigValues() const noexcept { return config_values_; }
@@ -107,30 +119,14 @@ const MiddlewarePipeline& CallState::GetMiddlewarePipeline() const noexcept { re
 
 const testsuite::GrpcControl& CallState::GetTestsuiteControl() const noexcept { return testsuite_grpc_; }
 
-std::string_view CallState::GetClientName() const noexcept { return client_name_; }
-
-RpcType CallState::GetRpcType() const noexcept { return rpc_type_; }
-
-std::string_view CallState::GetCallName() const noexcept { return call_name_.Get(); }
-
-tracing::Span& CallState::GetSpan() noexcept {
-    UASSERT(span_);
-    return span_->Get();
-}
-
-void CallState::ResetSpan() noexcept {
-    UASSERT(span_);
-    span_.reset();
-}
-
 ugrpc::impl::RpcStatisticsScope& CallState::GetStatsScope() noexcept { return stats_scope_; }
+
+bool CallState::IsDeadlinePropagated() const noexcept { return is_deadline_propagated_; }
 
 void CallState::SetDeadlinePropagated() noexcept {
     stats_scope_.OnDeadlinePropagated();
     is_deadline_propagated_ = true;
 }
-
-bool CallState::IsDeadlinePropagated() const noexcept { return is_deadline_propagated_; }
 
 grpc::Status& CallState::GetStatus() noexcept { return status_; }
 
@@ -140,6 +136,11 @@ grpc::ClientContext& CallState::GetClientContextCommitted() {
     UINVARIANT(committed_, "Call state should be committed");
     UINVARIANT(client_context_, "GetClientContext should not be called on cancelled RPC");
     return *client_context_;
+}
+
+void CallState::ResetSpan() noexcept {
+    UASSERT(span_);
+    span_.reset();
 }
 
 StreamingCallState::StreamingCallState(CallParams&& params)
