@@ -49,6 +49,8 @@ int GetEvMode(FdPoller::Kind kind) {
 }
 
 FdPoller::Kind GetUserMode(int ev_events) {
+    UASSERT((ev_events & ~(EV_READ | EV_WRITE)) == 0);
+
     if ((ev_events & EV_READ) && (ev_events & EV_WRITE)) {
         return FdPoller::Kind::kReadWrite;
     }
@@ -66,83 +68,109 @@ FdPoller::Kind GetUserMode(int ev_events) {
 
 }  // namespace
 
-struct FdPoller::Impl final : public engine::impl::ContextAccessor {
+class FdPoller::Impl final : public engine::impl::ContextAccessor {
+public:
     Impl(ev::ThreadControl control);
 
     ~Impl();
 
-    engine::impl::TaskContext::WakeupSource DoWait(Deadline deadline);
+    std::optional<FdPoller::Kind> Wait(Deadline deadline);
 
     bool IsValid() const noexcept;
 
+    int GetFd() const noexcept { return watcher_.GetFd(); }
+
     void Invalidate();
+
     void Reset(int fd, Kind kind);
 
-    void StopWatcher() noexcept;
+    void ResetReady() noexcept { awaiters_.GetAndResetSignal(); }
 
-    static void IoWatcherCb(struct ev_loop*, ev_io*, int) noexcept;
-    void WakeupAwaiters();
+    std::optional<FdPoller::Kind> GetReady() noexcept {
+        if (awaiters_.GetAndResetSignal()) {
+            // Cannot read directly from watcher.events, because it's not atomic, and it can potentially
+            // be overwritten by another event.
+            return events_that_happened_.load(std::memory_order_relaxed);
+        } else {
+            return std::nullopt;
+        }
+    }
 
-    void ResetReady() noexcept { awaiters->GetAndResetSignal(); }
+    void SwitchState(State expected_state, State new_state) noexcept {
+        auto old_state = expected_state;
+        const auto res = state_.compare_exchange_strong(old_state, new_state);
+        UASSERT_MSG(
+            res,
+            fmt::format("Socket misuse: expected socket state is '{}', actual state is '{}'", expected_state, old_state)
+        );
+    }
 
     // ContextAccessor implementation
-    bool IsReady() const noexcept override { return awaiters->IsSignaled(); }
+    bool IsReady() const noexcept override { return awaiters_.IsSignaled(); }
 
     engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) override {
-        if (awaiters->GetSignalOrAppend(&awaiter, context)) {
+        if (awaiters_.GetSignalOrAppend(&awaiter, context)) {
             return engine::impl::EarlyNotify{true};
         }
-        watcher.StartAsync();
+        watcher_.StartAsync();
         return engine::impl::EarlyNotify{false};
     }
 
     void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {
-        awaiters->Remove(awaiter, context);
+        awaiters_.Remove(awaiter, context);
         // we need to stop watcher manually to avoid racy wakeups later
-        watcher.StopAsync();
+        watcher_.StopAsync();
     }
 
-    void AfterWait() noexcept override { watcher.Stop(); }
+    void AfterWait() noexcept override { watcher_.Stop(); }
 
     void RethrowErrorResult() const override {}
 
-    std::atomic<FdPoller::State> state{FdPoller::State::kInvalid};
-    engine::impl::FastPimplWaitListLight awaiters;
-    ev::Watcher<ev_io> watcher;
-    std::atomic<FdPoller::Kind> events_that_happened{};
+private:
+    static void IoWatcherCb(struct ev_loop*, ev_io*, int) noexcept;
+
+    engine::impl::WaitListLight awaiters_;
+    std::atomic<FdPoller::State> state_{FdPoller::State::kInvalid};
+    std::atomic<FdPoller::Kind> events_that_happened_{};
+    // `watcher` must be the last field to make sure that it is stopped and destroyed first.
+    ev::Watcher<ev_io> watcher_;
 };
 
-void FdPoller::Impl::WakeupAwaiters() { awaiters->SetSignalAndNotifyOne(); }
-
 FdPoller::Impl::Impl(ev::ThreadControl control)
-    : watcher(control, this)
+    : watcher_(control, this)
 {
-    watcher.Init(&IoWatcherCb);
+    static_assert(decltype(state_)::is_always_lock_free);
+    static_assert(decltype(events_that_happened_)::is_always_lock_free);
+    watcher_.Init(&IoWatcherCb);
 }
 
 FdPoller::Impl::~Impl() = default;
 
-engine::impl::TaskContext::WakeupSource FdPoller::Impl::DoWait(Deadline deadline) {
+std::optional<FdPoller::Kind> FdPoller::Impl::Wait(Deadline deadline) {
     UASSERT(IsValid());
 
     auto& current = current_task::GetCurrentTaskContext();
 
     engine::impl::FutureWaitStrategy wait_strategy{*this, current};
-    auto ret = current.Sleep(wait_strategy, deadline);
+    current.Sleep(wait_strategy, deadline);
 
     /*
      * Manually call Stop() here to be sure that after DoWait() no awaiter_'s
      * callback (IoWatcherCb) is running.
      */
-    watcher.Stop();
-    return ret;
+    watcher_.Stop();
+
+    return GetReady();
 }
 
 void FdPoller::Impl::Invalidate() {
-    StopWatcher();
+    UASSERT(IsValid());
+    // Synchronously stop the watcher to avoid spurious wakeups and to ensure that the fd is not used anymore.
+    watcher_.Stop();
+    awaiters_.GetAndResetSignal();
 
     auto old_state = State::kReadyToUse;
-    const auto res = state.compare_exchange_strong(old_state, State::kInvalid);
+    const auto res = state_.compare_exchange_strong(old_state, State::kInvalid);
 
     UINVARIANT(
         res,
@@ -150,28 +178,29 @@ void FdPoller::Impl::Invalidate() {
     );
 }
 
-void FdPoller::Impl::StopWatcher() noexcept {
-    UASSERT(IsValid());
-    watcher.Stop();
+void FdPoller::Impl::Reset(int fd, Kind kind) {
+    UASSERT(!IsValid());
+    UASSERT(watcher_.GetFd() == fd || watcher_.GetFd() == -1);
+    watcher_.Set(fd, GetEvMode(kind));
+    state_ = State::kReadyToUse;
 }
 
 void FdPoller::Impl::IoWatcherCb(struct ev_loop*, ev_io* watcher, int) noexcept {
     const auto ev_events = watcher->events;
 
     UASSERT(watcher->active);
-    UASSERT((ev_events & ~(EV_READ | EV_WRITE)) == 0);
 
     auto* self = static_cast<FdPoller::Impl*>(watcher->data);
 
     // Cleanup watcher_ first, then awake the coroutine.
     // Otherwise, the coroutine may close watcher_'s fd before watcher_ is stopped.
-    const auto guard = self->watcher.StopWithinEvCallback();
+    const auto guard = self->watcher_.StopWithinEvCallback();
 
-    self->events_that_happened.store(GetUserMode(ev_events), std::memory_order_relaxed);
-    self->WakeupAwaiters();
+    self->events_that_happened_.store(GetUserMode(ev_events), std::memory_order_relaxed);
+    self->awaiters_.SetSignalAndNotifyOne();
 }
 
-bool FdPoller::Impl::IsValid() const noexcept { return state != State::kInvalid; }
+bool FdPoller::Impl::IsValid() const noexcept { return state_ != State::kInvalid; }
 
 FdPoller::FdPoller(const ev::ThreadControl& control)
     : pimpl_(control)
@@ -185,24 +214,13 @@ FdPoller::operator bool() const noexcept { return IsValid(); }
 
 bool FdPoller::IsValid() const noexcept { return pimpl_->IsValid(); }
 
-int FdPoller::GetFd() const noexcept { return pimpl_->watcher.GetFd(); }
+int FdPoller::GetFd() const noexcept { return pimpl_->GetFd(); }
 
-std::optional<FdPoller::Kind> FdPoller::Wait(Deadline deadline) {
-    ResetReady();
-    if (pimpl_->DoWait(deadline) == engine::impl::TaskContext::WakeupSource::kNotify) {
-        return pimpl_->events_that_happened.load(std::memory_order_relaxed);
-    } else {
-        return std::nullopt;
-    }
-}
+std::optional<FdPoller::Kind> FdPoller::Wait(Deadline deadline) { return pimpl_->Wait(deadline); }
 
-std::optional<FdPoller::Kind> FdPoller::GetReady() noexcept {
-    if (pimpl_->awaiters->GetAndResetSignal()) {
-        return pimpl_->events_that_happened.load(std::memory_order_relaxed);
-    } else {
-        return std::nullopt;
-    }
-}
+void FdPoller::ResetReady() noexcept { pimpl_->ResetReady(); }
+
+std::optional<FdPoller::Kind> FdPoller::GetReady() noexcept { return pimpl_->GetReady(); }
 
 engine::impl::ContextAccessor* FdPoller::TryGetContextAccessor() noexcept { return &*pimpl_; }
 
@@ -210,35 +228,9 @@ void FdPoller::Reset(int fd, Kind kind) { pimpl_->Reset(fd, kind); }
 
 void FdPoller::Invalidate() { pimpl_->Invalidate(); }
 
-void FdPoller::WakeupAwaiters() { pimpl_->WakeupAwaiters(); }
+void FdPoller::SwitchStateToInUse() { pimpl_->SwitchState(State::kReadyToUse, State::kInUse); }
 
-void FdPoller::SwitchStateToInUse() {
-    auto old_state = State::kReadyToUse;
-    const auto res = pimpl_->state.compare_exchange_strong(old_state, State::kInUse);
-
-    UASSERT_MSG(
-        res,
-        fmt::format("Socket misuse: expected socket state is '{}', actual state is '{}'", State::kReadyToUse, old_state)
-    );
-}
-
-void FdPoller::SwitchStateToReadyToUse() {
-    auto old_state = State::kInUse;
-    const auto res = pimpl_->state.compare_exchange_strong(old_state, State::kReadyToUse);
-    UASSERT_MSG(
-        res,
-        fmt::format("Socket misuse: expected socket state is '{}', actual state is '{}'", State::kInUse, old_state)
-    );
-}
-
-void FdPoller::Impl::Reset(int fd, Kind kind) {
-    UASSERT(!IsValid());
-    UASSERT(watcher.GetFd() == fd || watcher.GetFd() == -1);
-    watcher.Set(fd, GetEvMode(kind));
-    state = State::kReadyToUse;
-}
-
-void FdPoller::ResetReady() noexcept { pimpl_->ResetReady(); }
+void FdPoller::SwitchStateToReadyToUse() { pimpl_->SwitchState(State::kInUse, State::kReadyToUse); }
 
 }  // namespace engine::io
 

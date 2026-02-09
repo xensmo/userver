@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 #include <fmt/format.h>
 
@@ -18,17 +17,10 @@ USERVER_NAMESPACE_BEGIN
 namespace engine::impl {
 namespace {
 
-struct alignas(8) AwaiterWithContext32 final {
+struct alignas(sizeof(std::uintptr_t) * 2) AwaiterWithContext final {
     Awaiter* awaiter{nullptr};
     std::uintptr_t context{0};
 };
-
-struct alignas(16) AwaiterWithContext64 final {
-    Awaiter* awaiter{nullptr};
-    std::uintptr_t context{0};
-};
-
-using AwaiterWithContext = std::conditional_t<sizeof(void*) == 8, AwaiterWithContext64, AwaiterWithContext32>;
 
 }  // namespace
 }  // namespace engine::impl
