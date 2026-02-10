@@ -186,12 +186,6 @@ void Statistics::AccountPing(std::chrono::milliseconds ping) { last_ping_ms = pi
 InstanceStatistics SentinelStatistics::GetShardGroupTotalStatistics() const { return shard_group_total; }
 
 void DumpMetric(utils::statistics::Writer& writer, const InstanceStatistics& stats, bool real_instance) {
-    // Note about sensor duplication with 'v2' suffix:
-    // We have to duplicate metrics with different sensor name to change
-    // their type to RATE. Unfortunately, we can't change existing metrics
-    // because it will break dashboards/alerts for all current users.
-
-    writer["reconnects"] = stats.reconnects.Load().value;
     writer["reconnects.v2"] = stats.reconnects;
 
     if (stats.settings.IsRequestSizesEnabled()) {
@@ -211,8 +205,6 @@ void DumpMetric(utils::statistics::Writer& writer, const InstanceStatistics& sta
     }
 
     for (size_t i = 0; i < kReplyStatusMap.size(); ++i) {
-        writer["errors"]
-            .ValueWithLabels(stats.error_count[i].Load().value, {"redis_error", ToString(static_cast<ReplyStatus>(i))});
         writer["errors.v2"]
             .ValueWithLabels(stats.error_count[i].Load(), {"redis_error", ToString(static_cast<ReplyStatus>(i))});
     }
@@ -258,14 +250,8 @@ void DumpMetric(utils::statistics::Writer& writer, const ShardStatistics& stats)
 void DumpMetric(utils::statistics::Writer& writer, const SentinelStatistics& stats) {
     const auto& settings = stats.shard_group_total.settings;
     DumpMetric(writer, stats.shard_group_total, false);
-    writer["errors"].ValueWithLabels(stats.internal.redis_not_ready.Load().value, {"redis_error", "redis_not_ready"});
     writer["errors.v2"].ValueWithLabels(stats.internal.redis_not_ready.Load(), {"redis_error", "redis_not_ready"});
     if (stats.internal.is_autotopology.load()) {
-        writer["cluster_topology_checks"] = stats.internal.cluster_topology_checks.Load().value;
-        writer["cluster_topology_updates"] = stats.internal.cluster_topology_updates.Load().value;
-        // We have to duplicate metrics with different sensor name to change
-        // their type to RATE. Unfortunately, we can't change existing metrics
-        // because it will break dashboards/alerts for all current users.
         writer["cluster_topology_checks.v2"] = stats.internal.cluster_topology_checks.Load();
         writer["cluster_topology_updates.v2"] = stats.internal.cluster_topology_updates.Load();
     }
