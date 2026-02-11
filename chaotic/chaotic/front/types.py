@@ -274,6 +274,7 @@ class SchemaObject(Schema):
     @classmethod
     def model_userver_tags(cls) -> list[str]:
         return Schema.model_userver_tags() + [
+            'x-taxi-extra-member',
             'x-taxi-cpp-extra-member',
             'x-usrv-cpp-extra-member',
             'x-taxi-strict-parsing',
