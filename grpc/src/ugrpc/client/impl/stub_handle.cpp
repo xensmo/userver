@@ -4,7 +4,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client::impl {
 
-StubHandle::StubHandle(rcu::ReadablePtr<StubState>&& stub_state, StubAny& stub)
+StubHandle::StubHandle(rcu::ReadablePtr<StubState>&& stub_state, ugrpc::impl::StubAny& stub)
     : stub_state_{std::move(stub_state)},
       stub_{stub}
 {}

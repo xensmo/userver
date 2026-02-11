@@ -17,9 +17,9 @@ struct StubState {
     utils::FixedArray<StubPool> dedicated_stubs;
 };
 
-StubAny& NextStub(const StubState& stub_state, std::size_t method_id);
+ugrpc::impl::StubAny& NextStub(const StubState& stub_state, std::size_t method_id);
 
-StubAny& NextGenericStub(const StubState& stub_state);
+ugrpc::impl::StubAny& NextGenericStub(const StubState& stub_state);
 
 }  // namespace ugrpc::client::impl
 

@@ -44,7 +44,7 @@ public:
     CallState(CallState&&) noexcept = delete;
     CallState& operator=(CallState&&) noexcept = delete;
 
-    StubAny& GetStub() noexcept;
+    ugrpc::impl::StubAny& GetStub() noexcept;
 
     void SetClientContext(std::unique_ptr<grpc::ClientContext> client_context) noexcept;
 

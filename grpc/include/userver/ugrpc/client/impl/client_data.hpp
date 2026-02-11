@@ -20,6 +20,7 @@
 #include <userver/ugrpc/client/impl/compat/channel_arguments_builder.hpp>
 #include <userver/ugrpc/client/impl/stub_state.hpp>
 #include <userver/ugrpc/client/middlewares/fwd.hpp>
+#include <userver/ugrpc/impl/async_service.hpp>
 #include <userver/ugrpc/impl/static_service_metadata.hpp>
 #include <userver/ugrpc/impl/statistics.hpp>
 
@@ -107,7 +108,7 @@ public:
     std::string_view GetEndpoint() const { return internals_.endpoint; }
 
 private:
-    template <typename Stub>
+    template <typename Service>
     static StubPool MakeStubs(
         std::size_t size,
         const ChannelFactory& channel_factory,
@@ -118,12 +119,12 @@ private:
             return channel_factory.CreateChannel(target, channel_args);
         });
         auto stubs = utils::GenerateFixedArray(channels.size(), [&channels](std::size_t index) {
-            return MakeStub<Stub>(channels[index]);
+            return ugrpc::impl::AsyncService<Service>::NewStub(channels[index]);
         });
         return StubPool{std::move(channels), std::move(stubs)};
     }
 
-    template <typename Stub>
+    template <typename Service>
     static utils::FixedArray<StubPool> MakeDedicatedStubs(
         const ugrpc::impl::StaticServiceMetadata& metadata,
         const DedicatedMethodsConfig& dedicated_methods_config,
@@ -134,7 +135,7 @@ private:
         return utils::GenerateFixedArray(GetMethodsCount(metadata), [&](std::size_t method_id) {
             const auto method_channel_count =
                 GetMethodChannelCount(dedicated_methods_config, GetMethodName(metadata, method_id));
-            return MakeStubs<Stub>(method_channel_count, channel_factory, target, channel_args);
+            return MakeStubs<Service>(method_channel_count, channel_factory, target, channel_args);
         });
     }
 
@@ -172,12 +173,11 @@ private:
         {
             SetHttpProxy(target, channel_args, internals_.channel_factory.GetAuthType(), proxy_settings.proxy_address);
         }
-        auto stubs = MakeStubs<
-            typename Service::Stub>(internals_.channel_count, internals_.channel_factory, target, channel_args);
+        auto stubs = MakeStubs<Service>(internals_.channel_count, internals_.channel_factory, target, channel_args);
 
         auto dedicated_stubs =
             metadata_.has_value()
-                ? MakeDedicatedStubs<typename Service::Stub>(
+                ? MakeDedicatedStubs<Service>(
                       *metadata_,
                       internals_.dedicated_methods_config,
                       internals_.channel_factory,

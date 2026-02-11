@@ -7,12 +7,15 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client::impl {
 
-StubPool::StubPool(utils::FixedArray<std::shared_ptr<grpc::Channel>>&& channels, utils::FixedArray<StubAny>&& stubs)
+StubPool::StubPool(
+    utils::FixedArray<std::shared_ptr<grpc::Channel>>&& channels,
+    utils::FixedArray<ugrpc::impl::StubAny>&& stubs
+)
     : channels_{std::move(channels)},
       stubs_{std::move(stubs)}
 {}
 
-StubAny& StubPool::NextStub() const {
+ugrpc::impl::StubAny& StubPool::NextStub() const {
     UINVARIANT(!stubs_.empty(), "stubs should not be empty");
     if (1 == stubs_.size()) {
         return stubs_[0];

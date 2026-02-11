@@ -22,19 +22,20 @@
 #include <userver/utils/lazy_prvalue.hpp>
 #include <userver/utils/statistics/entry.hpp>
 
+#include <userver/ugrpc/impl/async_service.hpp>
 #include <userver/ugrpc/impl/static_service_metadata.hpp>
 #include <userver/ugrpc/impl/statistics.hpp>
 #include <userver/ugrpc/impl/statistics_scope.hpp>
 #include <userver/ugrpc/impl/statistics_storage.hpp>
 #include <userver/ugrpc/server/call_context.hpp>
 #include <userver/ugrpc/server/impl/async_method_invocation.hpp>
-#include <userver/ugrpc/server/impl/async_service.hpp>
 #include <userver/ugrpc/server/impl/call_processor.hpp>
 #include <userver/ugrpc/server/impl/call_state.hpp>
 #include <userver/ugrpc/server/impl/call_traits.hpp>
 #include <userver/ugrpc/server/impl/completion_queue_pool.hpp>
 #include <userver/ugrpc/server/impl/error_code.hpp>
 #include <userver/ugrpc/server/impl/exceptions.hpp>
+#include <userver/ugrpc/server/impl/request_async_call.hpp>
 #include <userver/ugrpc/server/impl/service_internals.hpp>
 #include <userver/ugrpc/server/impl/service_worker.hpp>
 #include <userver/ugrpc/server/middlewares/base.hpp>
@@ -71,7 +72,7 @@ struct ServiceData final {
 
     const ServiceInternals internals;
     const ugrpc::impl::StaticServiceMetadata metadata;
-    AsyncService<GrpcppService> async_service{GetMethodsCount(metadata)};
+    ugrpc::impl::AsyncService<GrpcppService> async_service;
     utils::impl::WaitTokenStorage wait_tokens;
     ugrpc::impl::ServiceStatistics& service_statistics{
         internals.statistics_storage.GetServiceStatistics(metadata, std::nullopt)
@@ -117,7 +118,8 @@ public:
 
         ugrpc::impl::AsyncMethodInvocation request_call_invocation;
         // the request for an incoming RPC must be performed synchronously
-        method_data_.service_data.async_service.template RequestCall<CallTraits>(
+        RequestAsyncCall<CallTraits>(
+            method_data_.service_data.async_service,
             method_data_.method_id,
             server_context_,
             initial_request_,

@@ -84,7 +84,7 @@ CallState::CallState(CallParams&& params)
     AddServiceMethodTags(span_->Get(), params.endpoint, params.service_name, params.method_name);
 }
 
-StubAny& CallState::GetStub() noexcept { return stub_.Get(); }
+ugrpc::impl::StubAny& CallState::GetStub() noexcept { return stub_.Get(); }
 
 void CallState::SetClientContext(std::unique_ptr<grpc::ClientContext> client_context) noexcept {
     client_context_ = std::move(client_context);

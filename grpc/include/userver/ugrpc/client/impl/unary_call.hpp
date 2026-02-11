@@ -17,7 +17,7 @@
 #include <userver/ugrpc/client/impl/call_params.hpp>
 #include <userver/ugrpc/client/impl/call_state.hpp>
 #include <userver/ugrpc/client/impl/middleware_pipeline.hpp>
-#include <userver/ugrpc/client/impl/prepare_call.hpp>
+#include <userver/ugrpc/client/impl/prepare_async_call.hpp>
 #include <userver/ugrpc/client/impl/retry_backoff.hpp>
 #include <userver/ugrpc/client/impl/retry_policy.hpp>
 #include <userver/ugrpc/client/impl/tracing.hpp>

@@ -4,7 +4,7 @@
 
 #include <userver/utils/fixed_array.hpp>
 
-#include <userver/ugrpc/client/impl/stub_any.hpp>
+#include <userver/ugrpc/impl/stub_any.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -14,17 +14,20 @@ class StubPool final {
 public:
     StubPool() = default;
 
-    StubPool(utils::FixedArray<std::shared_ptr<grpc::Channel>>&& channels, utils::FixedArray<StubAny>&& stubs);
+    StubPool(
+        utils::FixedArray<std::shared_ptr<grpc::Channel>>&& channels,
+        utils::FixedArray<ugrpc::impl::StubAny>&& stubs
+    );
 
     std::size_t Size() const { return stubs_.size(); }
 
-    StubAny& NextStub() const;
+    ugrpc::impl::StubAny& NextStub() const;
 
     const utils::FixedArray<std::shared_ptr<grpc::Channel>>& GetChannels() const { return channels_; }
 
 private:
     utils::FixedArray<std::shared_ptr<grpc::Channel>> channels_;
-    mutable utils::FixedArray<StubAny> stubs_;
+    mutable utils::FixedArray<ugrpc::impl::StubAny> stubs_;
 };
 
 }  // namespace ugrpc::client::impl

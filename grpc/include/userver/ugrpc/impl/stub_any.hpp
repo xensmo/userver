@@ -6,7 +6,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
-namespace ugrpc::client::impl {
+namespace ugrpc::impl {
 
 using StubAny = utils::AnyMovable;
 
@@ -20,6 +20,6 @@ Stub& StubCast(StubAny& stub) {
     return utils::AnyCast<Stub&>(stub);
 }
 
-}  // namespace ugrpc::client::impl
+}  // namespace ugrpc::impl
 
 USERVER_NAMESPACE_END
