@@ -425,6 +425,37 @@ properties:
     UEXPECT_NO_THROW(Validate(static_config, schema));
 }
 
+TEST(StaticConfigValidator, ArrayWithEnvPassed) {
+    const std::string static_config = R"(
+component:
+  values:
+    - value#env: ENV_VALUE
+)";
+
+    const std::string schema = R"(
+type: object
+description: test component with nested array
+additionalProperties: false
+properties:
+    values:
+      type: array
+      description: values
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          value:
+            type: string
+            description: value
+)";
+
+    UEXPECT_THROW(Validate(static_config, schema), formats::yaml::MemberMissingException);
+
+    // NOLINTNEXTLINE(concurrency-mt-unsafe)
+    ::setenv("ENV_VALUE", "100", 1);
+    UEXPECT_THROW(Validate(static_config, schema), formats::yaml::MemberMissingException);
+}
+
 TEST(StaticConfigValidator, Enum) {
     const std::string correct_static_config = R"(
 mode: on
