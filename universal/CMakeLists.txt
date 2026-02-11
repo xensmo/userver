@@ -18,10 +18,7 @@ file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp ${CMAKE_CURR
 file(GLOB_RECURSE UNIT_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_test.cpp)
 file(GLOB_RECURSE COMPILEFAIL_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_compilefailtest.cpp)
 file(GLOB_RECURSE BENCH_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_benchmark.cpp)
-file(GLOB_RECURSE INTERNAL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/internal/*.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/internal/*.hpp
-)
-list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${COMPILEFAIL_TEST_SOURCES} ${BENCH_SOURCES} ${INTERNAL_SOURCES})
+list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES} ${COMPILEFAIL_TEST_SOURCES} ${BENCH_SOURCES})
 
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -318,14 +315,6 @@ if(USERVER_FEATURE_UTEST)
 endif()
 
 if(USERVER_BUILD_TESTS)
-    add_library(${PROJECT_NAME}-internal OBJECT ${INTERNAL_SOURCES})
-    target_compile_definitions(${PROJECT_NAME}-internal PUBLIC $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
-    target_include_directories(
-        ${PROJECT_NAME}-internal PUBLIC $<TARGET_PROPERTY:${PROJECT_NAME},INCLUDE_DIRECTORIES>
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/internal/include
-    )
-    target_link_libraries(${PROJECT_NAME}-internal PUBLIC ${PROJECT_NAME})
-
     add_executable(${PROJECT_NAME}-unittest ${UNIT_TEST_SOURCES})
     target_include_directories(
         ${PROJECT_NAME}-unittest SYSTEM PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME},INCLUDE_DIRECTORIES>
@@ -333,7 +322,7 @@ if(USERVER_BUILD_TESTS)
     target_link_libraries(
         ${PROJECT_NAME}-unittest
         PUBLIC ${PROJECT_NAME}
-        PRIVATE Boost::program_options ${PROJECT_NAME}-internal ${PROJECT_NAME}-utest
+        PRIVATE Boost::program_options ${PROJECT_NAME}-utest
     )
     add_google_tests(${PROJECT_NAME}-unittest)
 
@@ -342,7 +331,7 @@ if(USERVER_BUILD_TESTS)
         ${PROJECT_NAME}-benchmark SYSTEM PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME},INCLUDE_DIRECTORIES>
     )
     target_link_libraries(
-        ${PROJECT_NAME}-benchmark PUBLIC ${PROJECT_NAME} ${PROJECT_NAME}-internal ${PROJECT_NAME}-internal-ubench
+        ${PROJECT_NAME}-benchmark PUBLIC ${PROJECT_NAME} ${PROJECT_NAME}-internal-ubench
     )
 
     option(USERVER_HEADER_MAP_AGAINST_OTHERS_BENCHMARK "build HeaderMap benchmarks against abseil and boost" OFF)

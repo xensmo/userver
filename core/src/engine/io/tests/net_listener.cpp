@@ -1,11 +1,11 @@
-#include <userver/internal/net/net_listener.hpp>
+#include <engine/io/tests/net_listener.hpp>
 
 #include <userver/engine/async.hpp>
 #include <userver/utils/assert.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
-namespace internal::net {
+namespace engine::io::tests {
 namespace {
 
 auto IpVersionToDomain(IpVersion ipv) {
@@ -60,6 +60,6 @@ UdpListener::UdpListener(IpVersion ipv)
     ListenerCtor(addr, socket, ipv);
 }
 
-}  // namespace internal::net
+}  // namespace engine::io::tests
 
 USERVER_NAMESPACE_END

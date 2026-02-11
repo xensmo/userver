@@ -12,7 +12,7 @@
 #include <userver/fs/blocking/write.hpp>
 #include <userver/logging/log.hpp>
 
-#include <userver/internal/net/net_listener.hpp>
+#include <engine/io/tests/net_listener.hpp>
 #include <userver/utest/http_client.hpp>
 #include <userver/utest/simple_server.hpp>
 #include <userver/utest/utest.hpp>
@@ -342,7 +342,7 @@ struct TlsServer {
         EXPECT_TRUE(socket.IsValid());
     }
 
-    internal::net::TcpListener tcp_listener;
+    engine::io::tests::TcpListener tcp_listener;
     int port;
 };
 

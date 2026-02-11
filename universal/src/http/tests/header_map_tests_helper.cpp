@@ -1,4 +1,4 @@
-#include <userver/internal/http/header_map_tests_helper.hpp>
+#include <http/tests/header_map_tests_helper.hpp>
 
 USERVER_NAMESPACE_BEGIN
 

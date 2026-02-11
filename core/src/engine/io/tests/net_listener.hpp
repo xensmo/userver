@@ -11,7 +11,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
-namespace internal::net {
+namespace engine::io::tests {
 
 enum class IpVersion {
     kV6,
@@ -42,6 +42,6 @@ struct UdpListener {
     engine::io::Socket socket;
 };
 
-}  // namespace internal::net
+}  // namespace engine::io::tests
 
 USERVER_NAMESPACE_END

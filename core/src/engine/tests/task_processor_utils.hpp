@@ -4,7 +4,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
-namespace engine {
+namespace engine::tests {
 
 class TwoStandaloneTaskProcessors final {
 public:
@@ -32,6 +32,6 @@ private:
     engine::impl::TaskProcessorHolder secondary_task_processor_;
 };
 
-}  // namespace engine
+}  // namespace engine::tests
 
 USERVER_NAMESPACE_END
