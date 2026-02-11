@@ -59,7 +59,7 @@ public:
     void MoveStartedTo(MethodStatistics& other) noexcept;
 
 private:
-    using Percentile = utils::statistics::Percentile<2000, std::uint32_t, 256, 100>;
+    using Percentile = utils::statistics::Percentile<2000, std::uint32_t, 1180, 100>;
     using Timings = utils::statistics::RecentPeriod<Percentile, Percentile>;
     using RateCounter = utils::statistics::RateCounter;
 
