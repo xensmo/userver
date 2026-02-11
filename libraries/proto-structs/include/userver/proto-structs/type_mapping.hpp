@@ -115,7 +115,7 @@ struct GetOneofNthType<0, T, TTail...> {
 
 template <std::size_t Index, typename T>
 struct OneofAlternativeTrait {
-    static_assert(sizeof(T) && false, "Trait should be applied to 'Oneof'");
+    static_assert(!sizeof(T), "Trait should be applied to 'Oneof'");
 };
 
 template <std::size_t Index, typename... TFields>

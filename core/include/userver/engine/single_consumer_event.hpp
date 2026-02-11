@@ -105,7 +105,7 @@ private:
 
     bool GetIsSignaled() noexcept;
 
-    void CheckIsAutoResetForWaitPredicate();
+    void CheckIsAutoResetForWaitPredicate() const;
 
     impl::FastPimplWaitListLight waiters_;
     const bool is_auto_reset_{true};

@@ -410,7 +410,7 @@ void Server::SetRpsRatelimitStatusCode(http::HttpStatus status_code) { pimpl_->S
 
 std::uint64_t Server::GetTotalRequests() const { return pimpl_->GetTotalRequests(); }
 
-void Server::WriteMetrics(utils::statistics::Writer& writer) {
+void Server::WriteMetrics(utils::statistics::Writer& writer) const {
     if (auto server = writer["server"]) {
         WriteMonitorData(server);
     }

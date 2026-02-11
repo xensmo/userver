@@ -223,6 +223,7 @@ void PeriodicTask::Impl::Run() {
     }
 }
 
+// NOLINTNEXTLINE(readability-make-member-function-const)
 bool PeriodicTask::Impl::DoStep() {
     auto settings_ptr = settings.Read();
     const auto span_log_level = settings_ptr->span_level;

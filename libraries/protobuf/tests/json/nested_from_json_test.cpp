@@ -79,7 +79,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NestedFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::NestedMessage message, expected_message, sample_message;
+    proto_json::messages::NestedMessage message;
+    proto_json::messages::NestedMessage expected_message;
+    proto_json::messages::NestedMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 

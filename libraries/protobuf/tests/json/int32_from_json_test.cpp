@@ -172,7 +172,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(Int32FromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::Int32Message message, expected_message, sample_message;
+    proto_json::messages::Int32Message message;
+    proto_json::messages::Int32Message expected_message;
+    proto_json::messages::Int32Message sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 

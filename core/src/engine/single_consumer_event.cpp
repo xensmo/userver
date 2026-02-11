@@ -76,7 +76,7 @@ bool SingleConsumerEvent::GetIsSignaled() noexcept {
     }
 }
 
-void SingleConsumerEvent::CheckIsAutoResetForWaitPredicate() {
+void SingleConsumerEvent::CheckIsAutoResetForWaitPredicate() const {
     UINVARIANT(IsAutoReset(), "Wait with predicate requires auto-reset functionality");
 }
 

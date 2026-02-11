@@ -76,7 +76,6 @@ class GrpcTracing
     : public ugrpc::tests::ServiceWithClientFixture<
           UnitTestServiceWithTracingChecks,
           sample::ugrpc::UnitTestServiceClient> {
-private:
     logging::DefaultLoggerLevelScope log_level_scope_{logging::Level::kInfo};
 };
 

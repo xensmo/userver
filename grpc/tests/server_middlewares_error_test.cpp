@@ -33,14 +33,15 @@ public:
 
     void PostRecvMessage(ugrpc::server::MiddlewareCallContext& context, google::protobuf::Message&) const override {
         if (settings_ == MiddlewareFlag::kErrorInRequestHook) {
-            return context.SetError(::grpc::Status(::grpc::StatusCode::DATA_LOSS, "Data loss error in request hook"));
+            context.SetError(::grpc::Status(::grpc::StatusCode::DATA_LOSS, "Data loss error in request hook"));
+            return;
         }
     }
 
     void PreSendMessage(ugrpc::server::MiddlewareCallContext& context, google::protobuf::Message&) const override {
         if (settings_ == MiddlewareFlag::kErrorInResponseHook) {
-            return context
-                .SetError(::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, "Out of range error in response hook"));
+            context.SetError(::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, "Out of range error in response hook"));
+            return;
         }
     }
 

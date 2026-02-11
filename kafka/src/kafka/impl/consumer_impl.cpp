@@ -389,7 +389,7 @@ void ConsumerImpl::CallUserRebalanceCallback(
 void ConsumerImpl::OffsetCommitCallback(
     rd_kafka_resp_err_t err,
     const rd_kafka_topic_partition_list_t* committed_offsets
-) {
+) const {
     tracing::Span span{"offset_commit_callback"};
     span.AddTag("kafka_callback", "offset_commit_callback");
 

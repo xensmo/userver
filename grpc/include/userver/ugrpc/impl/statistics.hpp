@@ -85,7 +85,7 @@ struct MethodStatisticsSnapshot final {
 
     explicit MethodStatisticsSnapshot(const MethodStatistics& stats);
 
-    explicit MethodStatisticsSnapshot(const StatisticsDomain domain);
+    explicit MethodStatisticsSnapshot(StatisticsDomain domain);
 
     void Add(const MethodStatisticsSnapshot& other);
 

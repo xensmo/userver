@@ -75,7 +75,6 @@ private:
 
     void DumpCurrentConsumed(const std::string& consumer_name);
 
-private:
     using ConsumerByName = std::unordered_map<std::string, kafka::ConsumerScope>;
     using MessagesByConsumer = std::unordered_map<std::string, std::vector<formats::json::Value>>;
 

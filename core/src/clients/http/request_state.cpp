@@ -654,7 +654,8 @@ void RequestState::ParseHeader(char* ptr, size_t size) try
     ++col_pos;
 
     if (IsSetCookie(key)) {
-        return ParseSingleCookie(col_pos, end - col_pos);
+        ParseSingleCookie(col_pos, end - col_pos);
+        return;
     }
 
     // From https://tools.ietf.org/html/rfc7230#page-22 :

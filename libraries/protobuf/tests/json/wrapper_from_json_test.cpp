@@ -160,7 +160,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(WrapperFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::WrapperMessage message, expected_message, sample_message;
+    proto_json::messages::WrapperMessage message;
+    proto_json::messages::WrapperMessage expected_message;
+    proto_json::messages::WrapperMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 
@@ -222,7 +224,8 @@ TYPED_TEST(WrapperFromJsonAdditionalTest, InlinedNonNull) {
     using Message = typename Param::Message;
 
     const auto json = formats::json::FromString(Param::kJson);
-    Message message, sample;
+    Message message;
+    Message sample;
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
     UASSERT_NO_THROW(InitSampleMessage(Param::kJson, sample));
@@ -236,7 +239,8 @@ TYPED_TEST(WrapperFromJsonAdditionalTest, InlinedNull) {
     using Value = std::remove_const_t<decltype(Param::kValue)>;
 
     const auto json = formats::json::FromString("null");
-    Message message, sample;
+    Message message;
+    Message sample;
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
     UASSERT_NO_THROW(InitSampleMessage("null", sample));

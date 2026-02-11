@@ -127,7 +127,6 @@ private:
     void SetOption(const char* option, std::uint32_t value);
     void SetOption(const char* option, const Secret::SecretType& value);
 
-private:
     std::string name_;
 
     ConfHolder conf_;

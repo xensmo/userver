@@ -255,7 +255,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(AnyFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::AnyMessage message, expected_message, sample_message;
+    proto_json::messages::AnyMessage message;
+    proto_json::messages::AnyMessage expected_message;
+    proto_json::messages::AnyMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 
@@ -294,7 +296,8 @@ TEST(AnyFromJsonAdditionalTest, InlinedNonNull) {
           "field1":1,"field2":2,"field3":3
         })";
     const auto json = formats::json::FromString(json_str);
-    Message message, sample;
+    Message message;
+    Message sample;
     proto_json::messages::Int32Message payload;
 
     message.set_type_url("dump");
@@ -323,7 +326,8 @@ TEST(AnyFromJsonAdditionalTest, InlinedNull) {
 
     {
         const auto json = formats::json::FromString("{}");
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_type_url("dump");
 

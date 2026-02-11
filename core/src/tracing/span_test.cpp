@@ -21,7 +21,6 @@ using testing::Not;
 USERVER_NAMESPACE_BEGIN
 
 class Span : public LoggingTest {
-private:
     tracing::TracerCleanupScope tracer_scope_;
 };
 

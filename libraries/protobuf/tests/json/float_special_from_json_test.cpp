@@ -38,7 +38,9 @@ TYPED_TEST(FloatSpecialFromJsonTest, Test) {
     const auto& json = Param::kJson;
     const auto& expected_data = Param::kValue;
 
-    Message message, expected_message, sample_message;
+    Message message;
+    Message expected_message;
+    Message sample_message;
     formats::json::Value input = PrepareJsonTestData(json);
     expected_message = PrepareTestData(expected_data);
 

@@ -10,7 +10,6 @@
 
 #include <storages/redis/impl/command.hpp>
 #include <userver/storages/redis/base.hpp>
-#include <userver/utils/assert.hpp>
 
 #include "command_control_impl.hpp"
 

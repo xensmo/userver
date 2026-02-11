@@ -212,45 +212,33 @@ void Consumer::Seek(
 ) const {
     UINVARIANT(processing_.load(), "Message processing is not currently started");
 
-    return utils::Async(
-               consumer_blocking_task_processor_,
-               "consumer_seek",
-               [this, topic, partition_id, offset, timeout] {
-                   ExtendCurrentSpan();
+    utils::Async(consumer_blocking_task_processor_, "consumer_seek", [this, topic, partition_id, offset, timeout] {
+        ExtendCurrentSpan();
 
-                   return consumer_->Seek(topic, partition_id, offset, timeout);
-               }
-    ).Get();
+        consumer_->Seek(topic, partition_id, offset, timeout);
+    }).Get();
 }
 
 void Consumer::SeekToBeginning(utils::zstring_view topic, std::uint32_t partition_id, std::chrono::milliseconds timeout)
     const {
     UINVARIANT(processing_.load(), "Message processing is not currently started");
 
-    return utils::Async(
-               consumer_blocking_task_processor_,
-               "consumer_seek_to_beginning",
-               [this, topic, partition_id, timeout] {
-                   ExtendCurrentSpan();
+    utils::Async(consumer_blocking_task_processor_, "consumer_seek_to_beginning", [this, topic, partition_id, timeout] {
+        ExtendCurrentSpan();
 
-                   return consumer_->SeekToBeginning(topic, partition_id, timeout);
-               }
-    ).Get();
+        consumer_->SeekToBeginning(topic, partition_id, timeout);
+    }).Get();
 }
 
 void Consumer::SeekToEnd(utils::zstring_view topic, std::uint32_t partition_id, std::chrono::milliseconds timeout)
     const {
     UINVARIANT(processing_.load(), "Message processing is not currently started");
 
-    return utils::Async(
-               consumer_blocking_task_processor_,
-               "consumer_seek_to_end",
-               [this, topic, partition_id, timeout] {
-                   ExtendCurrentSpan();
+    utils::Async(consumer_blocking_task_processor_, "consumer_seek_to_end", [this, topic, partition_id, timeout] {
+        ExtendCurrentSpan();
 
-                   return consumer_->SeekToEnd(topic, partition_id, timeout);
-               }
-    ).Get();
+        consumer_->SeekToEnd(topic, partition_id, timeout);
+    }).Get();
 }
 
 void Consumer::SetRebalanceCallback(ConsumerRebalanceCallback rebalance_callback) {

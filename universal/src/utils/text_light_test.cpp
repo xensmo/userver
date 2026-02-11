@@ -8,8 +8,6 @@
 #include <userver/utest/assert_macros.hpp>
 #include <userver/utils/text_light.hpp>
 
-#include <gtest/gtest.h>
-
 USERVER_NAMESPACE_BEGIN
 
 using utils::text::RemoveQuotes;

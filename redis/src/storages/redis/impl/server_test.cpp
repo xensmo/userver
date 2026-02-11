@@ -84,7 +84,7 @@ struct MockSentinelServers {
         }
     }
 
-    void CreateSentinelClientAndWait(const secdist::RedisSettings& settings) {
+    void CreateSentinelClientAndWait(const secdist::RedisSettings& settings) const {
         auto sentinel_client = storages::redis::impl::Sentinel::CreateSentinel(
             thread_pool,
             settings,

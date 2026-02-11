@@ -34,7 +34,7 @@ namespace clients::http {
 
 namespace {
 
-static constexpr utils::TrivialBiMap kHttpMethodMap([](auto selector) {
+constexpr utils::TrivialBiMap kHttpMethodMap([](auto selector) {
     return selector()
         .Case(HttpMethod::kGet, "GET")
         .Case(HttpMethod::kHead, "HEAD")

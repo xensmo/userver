@@ -34,7 +34,7 @@ public:
 
     template <class T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
     constexpr LabelView(std::string_view, T) {
-        static_assert(sizeof(T) && false, "Labels should not be arithmetic values, only strings!");
+        static_assert(!sizeof(T), "Labels should not be arithmetic values, only strings!");
     }
 
     constexpr explicit operator bool() const { return !name_.empty(); }
@@ -61,7 +61,7 @@ public:
 
     template <class T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
     Label(std::string, T) {
-        static_assert(sizeof(T) && false, "Labels should not be arithmetic values, only strings!");
+        static_assert(!sizeof(T), "Labels should not be arithmetic values, only strings!");
     }
 
     explicit operator bool() const { return !name_.empty(); }

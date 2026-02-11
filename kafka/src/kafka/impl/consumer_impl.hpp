@@ -148,13 +148,12 @@ private:
 
     /// @brief Callback which is called after succeeded/failed commit.
     /// Currently, used for logging purposes.
-    void OffsetCommitCallback(rd_kafka_resp_err_t err, const rd_kafka_topic_partition_list_s* committed_offsets);
+    void OffsetCommitCallback(rd_kafka_resp_err_t err, const rd_kafka_topic_partition_list_s* committed_offsets) const;
 
     std::shared_ptr<TopicStats> GetTopicStats(const std::string& topic);
 
     void AccountPolledMessageStat(const Message& polled_message);
 
-private:
     const std::string& name_;
     const std::vector<std::string> topics_;
     const ConsumerExecutionParams execution_params_;

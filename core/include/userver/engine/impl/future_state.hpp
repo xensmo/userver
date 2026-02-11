@@ -111,7 +111,7 @@ void FutureState<T>::RethrowErrorResult() const {
 
 inline void FutureState<void>::Get() {
     WaitForResult();
-    return result_store_.Retrieve();
+    result_store_.Retrieve();
 }
 
 inline void FutureState<void>::SetValue() {

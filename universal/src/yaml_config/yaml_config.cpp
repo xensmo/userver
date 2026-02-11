@@ -252,9 +252,9 @@ bool YamlConfig::IsArray() const noexcept { return yaml_.IsArray(); }
 
 bool YamlConfig::IsObject() const noexcept { return yaml_.IsObject(); }
 
-void YamlConfig::CheckNotMissing() const { return yaml_.CheckNotMissing(); }
+void YamlConfig::CheckNotMissing() const { yaml_.CheckNotMissing(); }
 
-void YamlConfig::CheckArray() const { return yaml_.CheckArray(); }
+void YamlConfig::CheckArray() const { yaml_.CheckArray(); }
 
 void YamlConfig::CheckArrayOrNull() const { yaml_.CheckArrayOrNull(); }
 

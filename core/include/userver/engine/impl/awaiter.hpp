@@ -67,11 +67,11 @@ protected:
 
     ~PolymorphicAwaiter() = default;
 
-private:
-    friend void intrusive_ptr_release(Awaiter* p) noexcept;  // NOLINT(readability-identifier-naming)
-
     // Called from intrusive_ptr_release. Should delete the instance
     virtual void Destroy() noexcept = 0;
+
+private:
+    friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
 };
 
 }  // namespace engine::impl

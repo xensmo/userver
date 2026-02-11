@@ -164,7 +164,7 @@ void easy::async_perform(handler_type handler) {
     if (multi_) {
         multi_->GetThreadControl()
             .RunInEvLoopAsync([self = shared_from_this(), this, handler = std::move(handler), request_num]() mutable {
-                return do_ev_async_perform(std::move(handler), request_num);
+                do_ev_async_perform(std::move(handler), request_num);
             });
     } else {
         throw std::runtime_error("no multi!");

@@ -4,12 +4,10 @@
 #include <iostream>
 #include <unordered_map>
 
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/program_options.hpp>
-
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 
 #include <userver/clients/dns/component.hpp>
 #include <userver/clients/http/component.hpp>
@@ -172,8 +170,8 @@ void HttpBase::Route(std::string_view path, Callback&& func, std::initializer_li
     AddComponentConfig(component_name, fmt::format(kConfigHandlerTemplate, path, fmt::join(methods, ",")));
 }
 
-void HttpBase::AddComponentConfig(std::string_view component, std::string_view config) {
-    static_config_ += fmt::format("\n        {}:", component);
+void HttpBase::AddComponentConfig(std::string_view name, std::string_view config) {
+    static_config_ += fmt::format("\n        {}:", name);
     if (config.empty()) {
         static_config_ += " {}\n";
     } else {

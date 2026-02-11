@@ -57,7 +57,7 @@ struct WithTag final {
 /// @see Factories
 template <typename T, typename Tag = void>
 struct FactoryTag final {
-    static WithTag<T, Tag> Wrap(T&& value) { return {std::move(value)}; }
+    WithTag<T, Tag> Wrap(T&& value) const { return {std::move(value)}; }
 };
 
 /// @brief Dependencies repository for a specific handler

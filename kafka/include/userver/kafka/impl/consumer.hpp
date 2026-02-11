@@ -123,7 +123,6 @@ private:
     /// @brief Subscribes for configured topics and starts polling loop.
     void RunConsuming(ConsumerScope::Callback callback);
 
-private:
     std::atomic<bool> processing_{false};
     Stats stats_;
     std::optional<ConsumerRebalanceCallback> rebalance_callback_;

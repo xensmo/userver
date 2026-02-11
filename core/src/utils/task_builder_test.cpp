@@ -52,7 +52,7 @@ UTEST(TaskBuilder, Critical) {
 UTEST(TaskBuilder, Deadline) {
     utils::TaskBuilder builder;
     auto task = builder.NoSpan().Deadline(engine::Deadline::FromDuration(std::chrono::milliseconds(100))).Build([] {
-        return engine::InterruptibleSleepFor(std::chrono::seconds(5));
+        engine::InterruptibleSleepFor(std::chrono::seconds(5));
     });
 
     task.WaitFor(std::chrono::seconds(1));

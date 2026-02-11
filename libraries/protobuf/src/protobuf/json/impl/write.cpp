@@ -633,7 +633,8 @@ formats::json::ValueBuilder WriteAnyMessage(const ::google::protobuf::Message& m
 
     using StringType = decltype(reflection.GetString(message, &type_url_desc));
 
-    StringType scratch1, scratch2;
+    StringType scratch1;
+    StringType scratch2;
     const auto& type_url = reflection.GetStringReference(message, &type_url_desc, &scratch1);
     const auto& value = reflection.GetStringReference(message, &value_desc, &scratch2);
 
@@ -739,17 +740,21 @@ formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Mess
     // https://github.com/protocolbuffers/protobuf/blob/v33.2/src/google/protobuf/json/internal/unparser.cc#L612
 
     // NOLINTNEXTLINE(readability-identifier-naming)
-    std::int32_t L = 0, N = 0, I = 0, J = 0, K = 0;
-    L = static_cast<std::int32_t>(seconds / 86400) - 719162 + 68569 + 2440588;
-    N = 4 * L / 146097;
-    L = L - (146097 * N + 3) / 4;
-    I = 4000 * (L + 1) / 1461001;
-    L = L - 1461 * I / 4 + 31;
-    J = 80 * L / 2447;
-    K = L - 2447 * J / 80;
-    L = J / 11;
-    J = J + 2 - 12 * L;
-    I = 100 * (N - 49) + I + L;
+    std::int32_t l = 0;
+    std::int32_t n = 0;
+    std::int32_t i = 0;
+    std::int32_t j = 0;
+    std::int32_t k = 0;
+    l = static_cast<std::int32_t>(seconds / 86400) - 719162 + 68569 + 2440588;
+    n = 4 * l / 146097;
+    l = l - (146097 * n + 3) / 4;
+    i = 4000 * (l + 1) / 1461001;
+    l = l - 1461 * i / 4 + 31;
+    j = 80 * l / 2447;
+    k = l - 2447 * j / 80;
+    l = j / 11;
+    j = j + 2 - 12 * l;
+    i = 100 * (n - 49) + i + l;
 
     const std::int32_t sec = seconds % 60;
     const std::int32_t min = (seconds / 60) % 60;
@@ -758,7 +763,7 @@ formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Mess
     std::string value;
 
     if (nanos == 0) {
-        value = fmt::format("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z", I, J, K, hour, min, sec);
+        value = fmt::format("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z", i, j, k, hour, min, sec);
     } else {
         std::int32_t seconds_fraction = nanos;  // nanos greater than 0
         int digits = 9;
@@ -770,9 +775,9 @@ formats::json::ValueBuilder WriteTimestampMessage(const ::google::protobuf::Mess
 
         value = fmt::format(
             "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.{:0{}}Z",
-            I,
-            J,
-            K,
+            i,
+            j,
+            k,
             hour,
             min,
             sec,

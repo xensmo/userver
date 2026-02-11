@@ -95,7 +95,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(FloatFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::FloatMessage message, expected_message, sample_message;
+    proto_json::messages::FloatMessage message;
+    proto_json::messages::FloatMessage expected_message;
+    proto_json::messages::FloatMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 

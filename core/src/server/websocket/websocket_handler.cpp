@@ -29,7 +29,7 @@ WebsocketHandlerBase::WebsocketHandlerBase(
       config_(config.As<Config>())
 {
     utils::statistics::RegisterWriterScope(context, "ws." + config.Name(), [this](utils::statistics::Writer& writer) {
-        return WriteMetrics(writer);
+        WriteMetrics(writer);
     });
 }
 

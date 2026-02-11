@@ -215,6 +215,11 @@ private:
 
     void TraceStateTransition(Task::State state);
 
+    friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
+
+    // Called from intrusive_ptr_release. Should delete the instance
+    void Destroy() noexcept;
+
     const uint64_t magic_{kMagic};
     TaskProcessor& task_processor_;
     TaskCounter::Token task_counter_token_;
@@ -252,10 +257,6 @@ private:
 
     // refcounter for task abandoning (cancellation) in engine::SharedTask
     std::atomic<std::size_t> shared_task_usages_{1};
-    friend void intrusive_ptr_release(Awaiter* p) noexcept;  // NOLINT(readability-identifier-naming)
-
-    // Called from intrusive_ptr_release. Should delete the instance
-    void Destroy() noexcept;
 
     // for thread pinning task processors
     std::size_t thread_index_{kUnsetThreadIndex};

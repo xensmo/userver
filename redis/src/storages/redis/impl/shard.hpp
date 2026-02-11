@@ -104,7 +104,7 @@ public:
 
     void SetCommandsBufferingSettings(CommandsBufferingSettings commands_buffering_settings);
     void SetReplicationMonitoringSettings(const ReplicationMonitoringSettings& replication_monitoring_settings);
-    void SetRetryBudgetSettings(const utils::RetryBudgetSettings& replication_monitoring_settings);
+    void SetRetryBudgetSettings(const utils::RetryBudgetSettings& retry_budget_settings);
 
 private:
     std::vector<unsigned char> GetAvailableServers(

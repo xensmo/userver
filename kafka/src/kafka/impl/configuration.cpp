@@ -38,9 +38,7 @@ void KafkaLogCallback(const rd_kafka_t*, int level, const char* facility, const 
 
 template <class SupportedList>
 bool IsSupportedOption(const SupportedList& supported_options, const std::string& configured_option) {
-    return utils::ContainsIf(supported_options, [&configured_option](std::string_view supported_option) {
-        return configured_option.compare(supported_option) == 0;
-    });
+    return std::find(std::begin(supported_options), std::end(supported_options), configured_option);
 }
 
 template <class SupportedList>

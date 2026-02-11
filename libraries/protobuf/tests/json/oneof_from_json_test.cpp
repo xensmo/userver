@@ -62,7 +62,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(OneofFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::OneofMessage message, expected_message, sample_message;
+    proto_json::messages::OneofMessage message;
+    proto_json::messages::OneofMessage expected_message;
+    proto_json::messages::OneofMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 

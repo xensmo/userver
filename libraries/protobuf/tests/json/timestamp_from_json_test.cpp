@@ -294,7 +294,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(TimestampFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::TimestampMessage message, expected_message, sample_message;
+    proto_json::messages::TimestampMessage message;
+    proto_json::messages::TimestampMessage expected_message;
+    proto_json::messages::TimestampMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 
@@ -329,7 +331,8 @@ TEST(TimestampFromJsonAdditionalTest, InlinedNonNull) {
 
     const char* json_str = "\"1970-01-01T00:02:03.000000321Z\"";
     const auto json = formats::json::FromString(json_str);
-    Message message, sample;
+    Message message;
+    Message sample;
 
     message.set_seconds(100001);
 
@@ -345,7 +348,8 @@ TEST(TimestampFromJsonAdditionalTest, InlinedNull) {
     using Message = ::google::protobuf::Timestamp;
 
     const auto json = formats::json::FromString("null");
-    Message message, sample;
+    Message message;
+    Message sample;
 
     message.set_seconds(100001);
 
