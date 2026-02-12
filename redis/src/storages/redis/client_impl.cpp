@@ -861,9 +861,11 @@ ScanRequest<TScanTag> ClientImpl::ScanTmpl(
     const CommandControl& command_control
 ) {
     auto shard = ShardByKey(key, command_control);
+    // NOLINTNEXTLINE(google-readability-casting)
+    using RequestData = RequestScanData<TScanTag>;
     return ScanRequest<
-        TScanTag>(std::make_unique<RequestScanData<
-                      TScanTag>>(shared_from_this(), std::move(key), shard, std::move(options), command_control));
+        TScanTag>(std::make_unique<
+                  RequestData>(shared_from_this(), std::move(key), shard, std::move(options), command_control));
 }
 
 RequestScard ClientImpl::Scard(std::string key, const CommandControl& command_control) {

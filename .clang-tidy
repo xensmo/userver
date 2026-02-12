@@ -109,19 +109,9 @@ Checks:
   ,-readability-use-anyofallof\
   ,-hicpp-use-emplace\
   ,-modernize-use-emplace\
-  ,-clang-analyzer-optin.cplusplus.UninitializedObject\
-  ,-google-readability-casting\
-  ,-performance-inefficient-vector-operation\
-  ,-performance-unnecessary-copy-initialization\
   "
 # WARNING: DO NOT PUT COMMENTS BETWEEN CHECKS ABOVE!
-# It will have the effect of silencing all checks below the comment.
-
-# TODO: remove the following check excludes in TAXICOMMON-11134
-#  ,-clang-analyzer-optin.cplusplus.UninitializedObject\
-#  ,-google-readability-casting\
-#  ,-performance-inefficient-vector-operation\
-#  ,-performance-unnecessary-copy-initialization\
+# It will have the effect of silently breaking clang-tidy checks altogether.
 
 WarningsAsErrors: '*'
 HeaderFilterRegex: '/userver/(build|clickhouse|core|grpc|mongo|postgresql|redis|kafka|shared|tools)/'
