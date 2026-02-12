@@ -17,7 +17,7 @@ UTEST_P(GrpcClientMultichannel, ChannelsCount) {
     auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     const auto& data = ugrpc::client::impl::ClientDataAccessor::GetClientData(client);
     const auto stub_state = data.GetStubState();
-    ASSERT_EQ(stub_state->stubs.Size(), GetParam());
+    ASSERT_EQ(stub_state->stubs.stubs.size(), GetParam());
 }
 
 INSTANTIATE_UTEST_SUITE_P(/*no prefix*/, GrpcClientMultichannel, testing::Values(std::size_t{1}, std::size_t{4}));

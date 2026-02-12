@@ -109,7 +109,7 @@ public:
 
 private:
     template <typename Service>
-    static StubPool MakeStubs(
+    static StubArray MakeStubs(
         std::size_t size,
         const ChannelFactory& channel_factory,
         std::string_view target,
@@ -121,11 +121,11 @@ private:
         auto stubs = utils::GenerateFixedArray(channels.size(), [&channels](std::size_t index) {
             return ugrpc::impl::AsyncService<Service>::NewStub(channels[index]);
         });
-        return StubPool{std::move(channels), std::move(stubs)};
+        return StubArray{std::move(channels), std::move(stubs)};
     }
 
     template <typename Service>
-    static utils::FixedArray<StubPool> MakeDedicatedStubs(
+    static utils::FixedArray<StubArray> MakeDedicatedStubs(
         const ugrpc::impl::StaticServiceMetadata& metadata,
         const DedicatedMethodsConfig& dedicated_methods_config,
         const ChannelFactory& channel_factory,
@@ -184,7 +184,7 @@ private:
                       target,
                       channel_args
                   )
-                : utils::FixedArray<StubPool>{};
+                : utils::FixedArray<StubArray>{};
 
         stub_state_.Assign({client_qos, std::move(stubs), std::move(dedicated_stubs)});
     }

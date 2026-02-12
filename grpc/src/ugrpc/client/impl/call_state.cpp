@@ -68,7 +68,7 @@ RpcConfigValues::RpcConfigValues(const dynamic_config::Snapshot& config)
 {}
 
 CallState::CallState(CallParams&& params)
-    : stub_(std::move(params.stub)),
+    : method_stubs_(std::move(params.method_stubs)),
       client_name_(params.client_name),
       call_name_(std::move(params.call_name)),
       rpc_type_(params.rpc_type),
@@ -84,7 +84,7 @@ CallState::CallState(CallParams&& params)
     AddServiceMethodTags(span_->Get(), params.endpoint, params.service_name, params.method_name);
 }
 
-ugrpc::impl::StubAny& CallState::GetStub() noexcept { return stub_.Get(); }
+ugrpc::impl::StubAny& CallState::GetStub() const noexcept { return method_stubs_.GetStub(); }
 
 void CallState::SetClientContext(std::unique_ptr<grpc::ClientContext> client_context) noexcept {
     client_context_ = std::move(client_context);

@@ -106,7 +106,7 @@ CallParams CreateCallParams(const ClientData& client_data, std::size_t method_id
         );
     }
 
-    auto& stub = impl::NextStub(*stub_state, method_id);
+    const auto& stubs = impl::GetMethodStubs(*stub_state, method_id);
 
     return CallParams{
         client_data.GetClientName(),
@@ -118,7 +118,7 @@ CallParams CreateCallParams(const ClientData& client_data, std::size_t method_id
         metadata.service_full_name,
         GetMethodName(metadata, method_id),
         std::move(call_options),
-        StubHandle{std::move(stub_state), stub},
+        MethodStubs{std::move(stub_state), stubs},
         client_data.GetMiddlewares(),
         client_data.GetStatistics(method_id),
         client_data.GetTestsuiteControl(),
@@ -156,7 +156,7 @@ CallParams CreateGenericCallParams(
     }
 
     auto stub_state = client_data.GetStubState();
-    auto& stub = impl::NextGenericStub(*stub_state);
+    const auto& stubs = impl::GetGenericMethodStubs(*stub_state);
 
     return CallParams{
         client_data.GetClientName(),
@@ -168,7 +168,7 @@ CallParams CreateGenericCallParams(
         service_name,
         method_name,
         std::move(call_options),
-        StubHandle{std::move(stub_state), stub},
+        MethodStubs{std::move(stub_state), stubs},
         client_data.GetMiddlewares(),
         client_data.GetGenericStatistics(generic_options.metrics_call_name.value_or(call_name)),
         client_data.GetTestsuiteControl(),
