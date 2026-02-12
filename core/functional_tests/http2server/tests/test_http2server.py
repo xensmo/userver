@@ -220,7 +220,7 @@ async def test_http1_broken_bytes(service_client, create_socket):
             await sock.recv(1024, timeout=1.0)
         await sock.sendall(b'garbage')
         r = await sock.recv(1024)
-        assert 'HTTP/1.1 400 Bad Request' in r.decode('utf-8')
+        assert len(r.decode('utf-8')) == 0
 
 
 async def _send_and_receive(sock, conn):

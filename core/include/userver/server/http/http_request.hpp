@@ -218,7 +218,7 @@ public:
     /// @cond
     void SetRequestBody(std::string body);
     void ParseArgsFromBody();
-    bool IsFinal() const;
+    bool IsFinal() const noexcept;
     /// @endcond
 
     /// @brief Set the response status code.
@@ -231,7 +231,7 @@ public:
     /// was set to `false` and this is a compressed request.
     bool IsBodyCompressed() const;
 
-    HttpResponse& GetHttpResponse() const;
+    HttpResponse& GetHttpResponse() const noexcept;
 
     /// Get approximate time point of request handling start
     std::chrono::steady_clock::time_point GetStartTime() const;
@@ -239,7 +239,7 @@ public:
     /// @cond
     void MarkAsInternalServerError() const;
 
-    void SetStartSendResponseTime();
+    void SetStartSendResponseTime() noexcept;
     void SetFinishSendResponseTime();
 
     void WriteAccessLogs(

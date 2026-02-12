@@ -277,7 +277,7 @@ void HttpRequest::ParseArgsFromBody() {
     );
 }
 
-bool HttpRequest::IsFinal() const { return pimpl_->is_final; }
+bool HttpRequest::IsFinal() const noexcept { return pimpl_->is_final; }
 
 void HttpRequest::SetResponseStatus(HttpStatus status) const { pimpl_->response.SetStatus(status); }
 
@@ -286,7 +286,7 @@ bool HttpRequest::IsBodyCompressed() const {
     return !encoding.empty() && encoding != "identity";
 }
 
-HttpResponse& HttpRequest::GetHttpResponse() const { return pimpl_->response; }
+HttpResponse& HttpRequest::GetHttpResponse() const noexcept { return pimpl_->response; }
 
 std::chrono::steady_clock::time_point HttpRequest::GetStartTime() const { return pimpl_->start_time; }
 
@@ -354,7 +354,9 @@ void HttpRequest::SetResponseNotifyTime(std::chrono::steady_clock::time_point no
     pimpl_->response_notify_time = now;
 }
 
-void HttpRequest::SetStartSendResponseTime() { pimpl_->start_send_response_time = std::chrono::steady_clock::now(); }
+void HttpRequest::SetStartSendResponseTime() noexcept {
+    pimpl_->start_send_response_time = std::chrono::steady_clock::now();
+}
 
 void HttpRequest::SetFinishSendResponseTime() {
     pimpl_->finish_send_response_time = std::chrono::steady_clock::now();
