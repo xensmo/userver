@@ -2892,6 +2892,8 @@
   "libraries/proto-structs/include/userver/proto-structs/duration.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/duration.hpp",
   "libraries/proto-structs/include/userver/proto-structs/exceptions.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/exceptions.hpp",
   "libraries/proto-structs/include/userver/proto-structs/hash_map.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/hash_map.hpp",
+  "libraries/proto-structs/include/userver/proto-structs/impl/bundles/induced_deps_cpp.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/impl/bundles/induced_deps_cpp.hpp",
+  "libraries/proto-structs/include/userver/proto-structs/impl/bundles/induced_deps_hpp.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/impl/bundles/induced_deps_hpp.hpp",
   "libraries/proto-structs/include/userver/proto-structs/impl/bundles/structs_cpp.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/impl/bundles/structs_cpp.hpp",
   "libraries/proto-structs/include/userver/proto-structs/impl/bundles/structs_hpp.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/impl/bundles/structs_hpp.hpp",
   "libraries/proto-structs/include/userver/proto-structs/impl/chrono_utils.hpp":"taxi/uservices/userver/libraries/proto-structs/include/userver/proto-structs/impl/chrono_utils.hpp",
