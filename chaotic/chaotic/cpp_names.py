@@ -14,6 +14,8 @@ def camel_case(string: str, no_lower_casing: bool = False) -> str:
                 char = char.lower()
             result += char
             set_upper = False
+    if not result and set_upper:
+        result += '_'
     return result
 
 
