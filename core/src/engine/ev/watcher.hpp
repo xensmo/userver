@@ -20,6 +20,8 @@ using LibEvDuration = std::chrono::duration<double>;
 template <typename EvType>
 using RawCallback = void (*)(struct ev_loop*, EvType*, int) noexcept;
 
+using WatcherEpoch = std::uint32_t;
+
 /// An ev watcher wrapper. Usable from coroutines and from the bound ev thread.
 template <typename EvType>
 class Watcher final : public MultiShotAsyncPayload<Watcher<EvType>> {
@@ -71,11 +73,14 @@ public:
     // }
     [[nodiscard]] auto StopWithinEvCallback() noexcept;
 
-    // Asynchronously start ev_xxx.
-    void StartAsync() noexcept;
+    // Asynchronously start ev_xxx. epoch will be made available from GetEpochWithinEvCallback.
+    void StartAsync(WatcherEpoch epoch = 0) noexcept;
 
     // Asynchronously stop ev_xxx. Beware of dangling references!
     void StopAsync() noexcept;
+
+    // Returns the epoch stored by the StartAsync call that started the watcher with the current callback.
+    WatcherEpoch GetEpochWithinEvCallback() const noexcept;
 
     template <typename T = EvType>
     std::enable_if_t<std::is_same_v<T, ev_timer>> Again();
@@ -98,9 +103,14 @@ private:
 
     enum class AsyncOpType : std::uint8_t { kNone, kStart, kStop };
 
+    struct alignas(8) AsyncOp {
+        AsyncOpType type{AsyncOpType::kNone};
+        WatcherEpoch epoch{0};  // Used only for kStart.
+    };
+
     auto EvLoopOpsCountingGuard() noexcept;
     void DoPerformAndRelease() noexcept;
-    void PushAsyncOp(AsyncOpType payload) noexcept;
+    void PushAsyncOp(AsyncOp payload) noexcept;
     bool IsActive() const noexcept;
 
     void StartImpl() noexcept;
@@ -112,8 +122,9 @@ private:
     EvType w_;
     ThreadControl thread_control_;
     std::atomic<bool> is_running_{false};
-    std::atomic<AsyncOpType> pending_async_op_{{}};
+    std::atomic<AsyncOp> pending_async_op_{{}};
     std::atomic<std::uint32_t> pending_op_count_{0};
+    WatcherEpoch delivered_epoch_{0};  // Last epoch delivered to ev thread by kStart.
 };
 
 template <typename EvType>
@@ -159,8 +170,8 @@ auto Watcher<EvType>::StopWithinEvCallback() noexcept {
 }
 
 template <typename EvType>
-void Watcher<EvType>::StartAsync() noexcept {
-    PushAsyncOp(AsyncOpType::kStart);
+void Watcher<EvType>::StartAsync(WatcherEpoch epoch) noexcept {
+    PushAsyncOp({AsyncOpType::kStart, epoch});
 }
 
 template <typename EvType>
@@ -168,7 +179,13 @@ void Watcher<EvType>::StopAsync() noexcept {
     if (!IsActive()) {
         return;
     }
-    PushAsyncOp(AsyncOpType::kStop);
+    PushAsyncOp({AsyncOpType::kStop, /*epoch=*/0});
+}
+
+template <typename EvType>
+WatcherEpoch Watcher<EvType>::GetEpochWithinEvCallback() const noexcept {
+    UASSERT(thread_control_.IsInEvThread());
+    return delivered_epoch_;
 }
 
 template <typename EvType>
@@ -218,10 +235,11 @@ void Watcher<EvType>::DoPerformAndRelease() noexcept {
 
     const auto op = pending_async_op_.exchange({}, std::memory_order_relaxed);
 
-    switch (op) {
+    switch (op.type) {
         case AsyncOpType::kNone:
             break;
         case AsyncOpType::kStart:
+            delivered_epoch_ = op.epoch;
             StartImpl();
             break;
         case AsyncOpType::kStop:
@@ -233,7 +251,7 @@ void Watcher<EvType>::DoPerformAndRelease() noexcept {
 }
 
 template <typename EvType>
-void Watcher<EvType>::PushAsyncOp(AsyncOpType payload) noexcept {
+void Watcher<EvType>::PushAsyncOp(AsyncOp payload) noexcept {
     pending_async_op_.store(payload, std::memory_order_relaxed);
     if (this->PrepareEnqueue()) {
         ++pending_op_count_;
@@ -249,7 +267,8 @@ bool Watcher<EvType>::IsActive() const noexcept {
 template <typename EvType>
 void Watcher<EvType>::StartImpl() noexcept {
     if (is_running_) {
-        return;
+        // This may happen due to stop + start operations being merged.
+        StopImpl();
     }
     is_running_ = true;
     thread_control_.Start(w_);

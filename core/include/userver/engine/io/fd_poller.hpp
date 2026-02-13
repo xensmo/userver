@@ -100,7 +100,7 @@ private:
     void SwitchStateToReadyToUse();
 
     class Impl;
-    utils::FastPimpl<Impl, 128, 16> pimpl_;
+    utils::FastPimpl<Impl, 144, 16> pimpl_;
 };
 
 }  // namespace engine::io

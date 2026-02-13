@@ -14,17 +14,6 @@
 
 USERVER_NAMESPACE_BEGIN
 
-namespace engine::impl {
-namespace {
-
-struct alignas(sizeof(std::uintptr_t) * 2) AwaiterWithContext final {
-    Awaiter* awaiter{nullptr};
-    std::uintptr_t context{0};
-};
-
-}  // namespace
-}  // namespace engine::impl
-
 USERVER_NAMESPACE_END
 
 template <>

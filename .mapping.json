@@ -1584,6 +1584,8 @@
   "core/src/engine/impl/wait_list_benchmark.cpp":"taxi/uservices/userver/core/src/engine/impl/wait_list_benchmark.cpp",
   "core/src/engine/impl/wait_list_light.cpp":"taxi/uservices/userver/core/src/engine/impl/wait_list_light.cpp",
   "core/src/engine/impl/wait_list_light.hpp":"taxi/uservices/userver/core/src/engine/impl/wait_list_light.hpp",
+  "core/src/engine/impl/wait_list_light_with_epoch.cpp":"taxi/uservices/userver/core/src/engine/impl/wait_list_light_with_epoch.cpp",
+  "core/src/engine/impl/wait_list_light_with_epoch.hpp":"taxi/uservices/userver/core/src/engine/impl/wait_list_light_with_epoch.hpp",
   "core/src/engine/io/buffered.cpp":"taxi/uservices/userver/core/src/engine/io/buffered.cpp",
   "core/src/engine/io/buffered_test.cpp":"taxi/uservices/userver/core/src/engine/io/buffered_test.cpp",
   "core/src/engine/io/common.cpp":"taxi/uservices/userver/core/src/engine/io/common.cpp",

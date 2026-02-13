@@ -30,9 +30,12 @@ public:
     // @overload
     void RemoveAwaiter(TaskContext& task_context) noexcept;
 
-    // Wait for some cleanup (e.g. wait for `awaiter` to actually remove itself).
-    // You may sleep in `AfterWait`.
-    virtual void AfterWait() noexcept = 0;
+    /// Wait for some cleanup (e.g. wait for `awaiter` to actually remove itself).
+    /// You may sleep in `AfterWait`.
+    ///
+    /// @deprecated `AfterWait` will be dropped soon. Please write the synchronization primitives in a way
+    /// that does not require mixing synchronous waiting and async notifications.
+    virtual void AfterWait() noexcept {}
 
     // Precondition: IsReady
     // This method is required for WaitAllChecked to properly function.

@@ -2,7 +2,7 @@
 
 #include <engine/ev/watcher.hpp>
 #include <engine/impl/future_utils.hpp>
-#include <engine/impl/wait_list_light.hpp>
+#include <engine/impl/wait_list_light_with_epoch.hpp>
 #include <engine/task/task_context.hpp>
 
 template <>
@@ -84,10 +84,17 @@ public:
 
     void Reset(int fd, Kind kind);
 
-    void ResetReady() noexcept { awaiters_.GetAndResetSignal(); }
+    bool DoGetAndResetReady() noexcept {
+        UASSERT(IsValid());
+        // Increment epoch for the new FdPoller usage.
+        // This invalidates any pending notifications from the previous use.
+        return awaiters_.SetEpochThenGetAndResetSignal(static_cast<ev::WatcherEpoch>(awaiters_.GetEpoch() + 1));
+    }
+
+    void ResetReady() noexcept { DoGetAndResetReady(); }
 
     std::optional<FdPoller::Kind> GetReady() noexcept {
-        if (awaiters_.GetAndResetSignal()) {
+        if (DoGetAndResetReady()) {
             // Cannot read directly from watcher.events, because it's not atomic, and it can potentially
             // be overwritten by another event.
             return events_that_happened_.load(std::memory_order_relaxed);
@@ -112,7 +119,7 @@ public:
         if (awaiters_.GetSignalOrAppend(&awaiter, context)) {
             return engine::impl::EarlyNotify{true};
         }
-        watcher_.StartAsync();
+        watcher_.StartAsync(awaiters_.GetEpoch());
         return engine::impl::EarlyNotify{false};
     }
 
@@ -122,14 +129,14 @@ public:
         watcher_.StopAsync();
     }
 
-    void AfterWait() noexcept override { watcher_.Stop(); }
+    void AfterWait() noexcept override {}
 
     void RethrowErrorResult() const override {}
 
 private:
     static void IoWatcherCb(struct ev_loop*, ev_io*, int) noexcept;
 
-    engine::impl::WaitListLight awaiters_;
+    engine::impl::WaitListLightWithEpoch awaiters_;
     std::atomic<FdPoller::State> state_{FdPoller::State::kInvalid};
     std::atomic<FdPoller::Kind> events_that_happened_{};
     // `watcher` must be the last field to make sure that it is stopped and destroyed first.
@@ -137,7 +144,8 @@ private:
 };
 
 FdPoller::Impl::Impl(ev::ThreadControl control)
-    : watcher_(control, this)
+    : awaiters_(0),
+      watcher_(control, this)
 {
     static_assert(decltype(state_)::is_always_lock_free);
     static_assert(decltype(events_that_happened_)::is_always_lock_free);
@@ -154,12 +162,7 @@ std::optional<FdPoller::Kind> FdPoller::Impl::Wait(Deadline deadline) {
     engine::impl::FutureWaitStrategy wait_strategy{*this, current};
     current.Sleep(wait_strategy, deadline);
 
-    /*
-     * Manually call Stop() here to be sure that after DoWait() no awaiter_'s
-     * callback (IoWatcherCb) is running.
-     */
-    watcher_.Stop();
-
+    // Don't call heavy synchronous Stop() here. The epoch system will handle stale notifications.
     return GetReady();
 }
 
@@ -197,7 +200,8 @@ void FdPoller::Impl::IoWatcherCb(struct ev_loop*, ev_io* watcher, int) noexcept 
     const auto guard = self->watcher_.StopWithinEvCallback();
 
     self->events_that_happened_.store(GetUserMode(ev_events), std::memory_order_relaxed);
-    self->awaiters_.SetSignalAndNotifyOne();
+    const auto cb_epoch = self->watcher_.GetEpochWithinEvCallback();
+    self->awaiters_.SetSignalAndNotifyOneIfEpochMatches(cb_epoch);
 }
 
 bool FdPoller::Impl::IsValid() const noexcept { return state_ != State::kInvalid; }
