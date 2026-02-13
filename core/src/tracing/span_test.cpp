@@ -20,9 +20,7 @@ using testing::Not;
 
 USERVER_NAMESPACE_BEGIN
 
-class Span : public LoggingTest {
-    tracing::TracerCleanupScope tracer_scope_;
-};
+class Span : public LoggingTest {};
 
 UTEST_F(Span, Ctr) {
     {

@@ -58,8 +58,6 @@ components_manager:
           level: $log_level
           message_queue_size: 4  # small, to test queue overflows
           overflow_behavior: $overflow_behavior
-    tracer:
-        service-name: config-service
     dynamic-config:
       updates-enabled: true
       fs-cache-path: $dynamic-config-cache-path

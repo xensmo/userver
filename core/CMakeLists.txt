@@ -147,7 +147,6 @@ list(
     src/storages/secdist/component.yaml
     src/storages/secdist/provider_component.yaml
     src/testsuite/testsuite_support.yaml
-    src/tracing/component.yaml
     src/tracing/manager_component.yaml
     src/utils/statistics/system_statistics_collector.yaml
 )
