@@ -88,8 +88,6 @@ void SingleUseEvent::RethrowErrorResult() const {
     // TODO support failure states in SingleUseEvent, for WaitAllChecked?
 }
 
-void SingleUseEvent::AfterWait() noexcept {}
-
 }  // namespace engine
 
 USERVER_NAMESPACE_END

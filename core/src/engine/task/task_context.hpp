@@ -180,7 +180,6 @@ public:
     bool IsReady() const noexcept override;
     EarlyNotify TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) override;
     void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept override;
-    void AfterWait() noexcept override;
     void RethrowErrorResult() const override;
 
     std::size_t DecrementFetchSharedTaskUsages() noexcept;

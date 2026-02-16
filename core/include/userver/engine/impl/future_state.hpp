@@ -41,7 +41,6 @@ private:
 
     EarlyNotify TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) final;
     void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept final;
-    void AfterWait() noexcept final;
 
     FastPimplWaitListLight finish_awaiters_;
     std::atomic<bool> is_result_store_locked_;

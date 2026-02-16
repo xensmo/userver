@@ -95,7 +95,6 @@ private:
     impl::EarlyNotify TryAppendAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) override;
     void RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
     void RethrowErrorResult() const override;
-    void AfterWait() noexcept override;
 
     impl::FastPimplWaitListLight awaiters_;
 };

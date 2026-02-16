@@ -30,12 +30,6 @@ std::optional<std::size_t> DoWaitAny(utils::span<ContextAccessor*> targets, Dead
     WaitAnyWaitStrategy wait_strategy{targets, current};
     current.Sleep(wait_strategy, deadline);
 
-    for (const auto& target : targets) {
-        if (target) {
-            target->AfterWait();
-        }
-    }
-
     for (const auto& [idx, target] : utils::enumerate(targets)) {
         if (target && target->IsReady()) {
             return idx;

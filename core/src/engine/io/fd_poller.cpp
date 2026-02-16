@@ -129,8 +129,6 @@ public:
         watcher_.StopAsync();
     }
 
-    void AfterWait() noexcept override {}
-
     void RethrowErrorResult() const override {}
 
 private:

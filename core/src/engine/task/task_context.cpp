@@ -623,8 +623,6 @@ void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexce
     finish_awaiters_->Remove(awaiter, context);
 }
 
-void TaskContext::AfterWait() noexcept {}
-
 void TaskContext::RethrowErrorResult() const {
     UASSERT(IsFinished());
     if (state_.load(std::memory_order_relaxed) != Task::State::kCompleted) {
