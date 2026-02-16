@@ -1,5 +1,5 @@
 """
-Mocks for the gRPC servers, a.k.a. `pytest_userver.grpc.
+Mocks for the gRPC servers, a.k.a. `pytest_userver.grpc`.
 
 @sa @ref scripts/docs/en/userver/tutorial/grpc_service.md
 @sa @ref pytest_userver.plugins.grpc.mockserver
@@ -22,6 +22,7 @@ import grpc
 
 import testsuite.utils.callinfo
 
+from ._client import PreCallClientInterceptor  # noqa: F401
 from ._mocked_errors import MockedError  # noqa: F401
 from ._mocked_errors import NetworkError  # noqa: F401
 from ._mocked_errors import TimeoutError  # noqa: F401
