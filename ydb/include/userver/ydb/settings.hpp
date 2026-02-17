@@ -13,7 +13,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ydb {
 
-enum class TransactionMode { kSerializableRW, kOnlineRO, kStaleRO };
+enum class TransactionMode { kSerializableRW, kOnlineRO, kStaleRO, kSnapshotRO, kSnapshotRW };
 
 struct OperationSettings final {
     std::optional<std::uint32_t> retries{std::nullopt};
