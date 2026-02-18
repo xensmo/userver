@@ -1,3 +1,5 @@
+#include <userver/engine/single_use_event.hpp>
+#include <userver/engine/wait_all_checked.hpp>
 #include <userver/utest/utest.hpp>
 
 #include <userver/engine/sleep.hpp>
@@ -16,6 +18,32 @@ UTEST(TaskBuilder, Smoke) {
 UTEST(TaskBuilder, SmokeShared) {
     utils::TaskBuilder builder;
     engine::SharedTaskWithResult<int> task = builder.NoSpan().BuildShared([] { return 1; });
+    EXPECT_EQ(task.Get(), 1);
+}
+
+UTEST(TaskBuilder, MultipleAwaitOnShared) {
+    utils::TaskBuilder builder;
+    engine::SingleUseEvent first_ready;
+    engine::SingleUseEvent second_ready;
+
+    engine::SharedTaskWithResult<int> task = builder.NoSpan().BuildShared([&first_ready, &second_ready] {
+        first_ready.Wait();
+        second_ready.Wait();
+        engine::InterruptibleSleepFor(std::chrono::milliseconds(100));
+        return 1;
+    });
+
+    auto first_res = engine::AsyncNoSpan([&first_ready, &task] {
+        first_ready.Send();
+        EXPECT_EQ(task.Get(), 1);
+    });
+    auto second_res = engine::AsyncNoSpan([&second_ready, &task] {
+        second_ready.Send();
+        EXPECT_EQ(task.Get(), 1);
+    });
+
+    engine::WaitAllChecked(first_res, second_res);
+
     EXPECT_EQ(task.Get(), 1);
 }
 
