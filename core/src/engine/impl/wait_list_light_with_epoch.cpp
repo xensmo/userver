@@ -87,16 +87,11 @@ void WaitListLightWithEpoch::Remove(Awaiter& awaiter, std::uintptr_t context) no
         return;
     }
 
-    UASSERT_MSG(
-        expected.awaiter_with_context->awaiter == &awaiter && expected.awaiter_with_context->context == context,
-        "An unexpected awaiter is occupying the WaitListLightWithEpoch"
-    );
-
     // Preserve the epoch when removing the awaiter.
     const AwaiterWithContextPtrAndEpoch new_value{nullptr, current.epoch};
 
     const bool success =
-        state_.compare_exchange_strong<std::memory_order_release, std::memory_order_relaxed>(expected, new_value);
+        state_.compare_exchange_strong<std::memory_order_acq_rel, std::memory_order_relaxed>(expected, new_value);
 
     if (!success) {
         UASSERT_MSG(
@@ -105,6 +100,11 @@ void WaitListLightWithEpoch::Remove(Awaiter& awaiter, std::uintptr_t context) no
         );
         return;
     }
+
+    UASSERT_MSG(
+        expected.awaiter_with_context->awaiter == &awaiter && expected.awaiter_with_context->context == context,
+        "An unexpected awaiter is occupying the WaitListLightWithEpoch"
+    );
 
     if (current.awaiter_with_context != nullptr && current.awaiter_with_context != kSignaled) {
         std::default_delete<AwaiterWithContext>{}(current.awaiter_with_context);
