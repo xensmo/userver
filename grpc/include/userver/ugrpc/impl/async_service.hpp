@@ -1,5 +1,6 @@
 #pragma once
 
+#include <grpcpp/channel.h>
 #include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/generic/generic_stub.h>
 #include <grpcpp/impl/service_type.h>
