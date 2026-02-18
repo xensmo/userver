@@ -33,7 +33,6 @@ class Auth;
 namespace server::handlers {
 
 class HttpHandlerStatistics;
-class HttpRequestStatistics;
 class HttpHandlerMethodStatistics;
 class HttpHandlerStatisticsScope;
 
@@ -75,9 +74,6 @@ public:
     /// @cond
     // For internal use only.
     HttpHandlerStatistics& GetHandlerStatistics() const;
-
-    // For internal use only.
-    HttpRequestStatistics& GetRequestStatistics() const;
     /// @endcond
 
     /// Override it if you need a custom logging level for messages about finish
@@ -217,7 +213,6 @@ private:
     std::unordered_map<int, logging::Level> log_level_for_status_codes_;
 
     std::unique_ptr<HttpHandlerStatistics> handler_statistics_;
-    std::unique_ptr<HttpRequestStatistics> request_statistics_;
 
     bool set_response_server_hostname_;
     bool is_body_streamed_;

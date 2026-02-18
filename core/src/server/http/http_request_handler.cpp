@@ -54,9 +54,6 @@ HttpRequestHandler::HttpRequestHandler(
 engine::TaskWithResult<void> HttpRequestHandler::StartFailsafeTask(std::shared_ptr<http::HttpRequest> http_request
 ) const {
     const auto* handler = http_request->GetHttpHandler();
-    static handlers::HttpRequestStatistics dummy_statistics;
-
-    http_request->SetHttpHandlerStatistics(dummy_statistics);
 
     return engine::AsyncNoSpan([request = std::move(http_request), handler]() {
         request->SetTaskStartTime();

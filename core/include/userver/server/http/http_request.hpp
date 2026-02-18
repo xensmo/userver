@@ -21,7 +21,6 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace server::handlers {
-class HttpRequestStatistics;
 class HttpHandlerBase;
 }  // namespace server::handlers
 
@@ -268,8 +267,6 @@ public:
     /// @endcond
 
 private:
-    void AccountResponseTime();
-
     void SetPathArgs(std::vector<std::pair<std::string, std::string>> args);
 
     void SetHttpHandler(const handlers::HttpHandlerBase& handler);
@@ -277,8 +274,6 @@ private:
 
     void SetTaskProcessor(engine::TaskProcessor& task_processor);
     engine::TaskProcessor* GetTaskProcessor() const;
-
-    void SetHttpHandlerStatistics(handlers::HttpRequestStatistics&);
 
     // HTTP/2.0 only
     void SetResponseStreamId(std::int32_t);

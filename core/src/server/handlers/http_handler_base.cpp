@@ -50,10 +50,6 @@ namespace {
 
 const std::string kHostname = hostinfo::blocking::GetRealHostName();
 
-// "request" is redundant: https://st.yandex-team.ru/TAXICOMMON-1793
-// set to 1 if you need server metrics
-constexpr bool kIncludeServerHttpMetrics = false;
-
 std::vector<http::HttpMethod> InitAllowedMethods(const HandlerConfig& config) {
     std::vector<http::HttpMethod> allowed_methods;
     std::vector<std::string> methods;
@@ -138,7 +134,6 @@ HttpHandlerBase::HttpHandlerBase(
       log_level_for_status_codes_(ParseStatusCodesLogLevel(config["status-codes-log-level"]
                                                                .As<std::unordered_map<std::string, std::string>>({}))),
       handler_statistics_(std::make_unique<HttpHandlerStatistics>()),
-      request_statistics_(std::make_unique<HttpRequestStatistics>()),
       is_body_streamed_(config["response-body-stream"].As<bool>(false))
 {
     if (allowed_methods_.empty()) {
@@ -187,12 +182,7 @@ HttpHandlerBase::HttpHandlerBase(
         RegisterWriterScope(
             context,
             std::move(prefix),
-            [this](utils::statistics::Writer& result) {
-                FormatStatistics(result["handler"], *handler_statistics_);
-                if constexpr (kIncludeServerHttpMetrics) {
-                    FormatStatistics(result["request"], *request_statistics_);
-                }
-            },
+            [this](utils::statistics::Writer& result) { FormatStatistics(result["handler"], *handler_statistics_); },
             std::move(labels)
         );
     }
@@ -298,8 +288,6 @@ const std::string& HttpHandlerBase::HandlerName() const { return handler_name_; 
 const std::vector<http::HttpMethod>& HttpHandlerBase::GetAllowedMethods() const { return allowed_methods_; }
 
 HttpHandlerStatistics& HttpHandlerBase::GetHandlerStatistics() const { return *handler_statistics_; }
-
-HttpRequestStatistics& HttpHandlerBase::GetRequestStatistics() const { return *request_statistics_; }
 
 logging::Level HttpHandlerBase::GetLogLevelForResponseStatus(http::HttpStatus status) const {
     const auto status_code = static_cast<int>(status);
