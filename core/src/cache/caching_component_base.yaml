@@ -21,8 +21,7 @@ properties:
             Default: update_interval / 10
     updates-enabled:
         type: boolean
-        description: if false, cache updates are disabled (except for the first one
-            if !first-update-fail-ok)
+        description: if false, cache updates are disabled (except for the first one if !first-update-fail-ok)
         default: true
     full-update-interval:
         type: string

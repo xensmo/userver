@@ -72,8 +72,7 @@ properties:
         default: false
     ignore_unused_query_params:
         type: boolean
-        description: disable check for not-NULL query params that are not used in
-            query
+        description: disable check for not-NULL query params that are not used in query
         default: false
     max-ttl-sec:
         type: integer
