@@ -1,16 +1,16 @@
 #pragma once
 
-/// @file userver/server/websocket/websocket_handler.hpp
-/// @brief @copybrief server::websocket::WebsocketHandlerBase
+/// @file userver/server/handlers/websocket_handler.hpp
+/// @brief @copybrief server::handlers::WebsocketHandlerBase
 
 #include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
-#include <userver/server/websocket/server.hpp>
+#include <userver/websocket/connection.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
-namespace server::websocket {
+namespace server::handlers {
 
 /// @ingroup userver_components userver_http_handlers userver_base_classes
 ///
@@ -36,7 +36,7 @@ public:
     WebsocketHandlerBase(const components::ComponentConfig&, const components::ComponentContext&);
 
     /// @brief Websocket handler code belongs here.
-    virtual void Handle(WebSocketConnection& websocket, server::request::RequestContext&) const = 0;
+    virtual void Handle(websocket::WebSocketConnection& websocket, server::request::RequestContext&) const = 0;
 
     /// @brief If any code is required for handshake validation,
     /// it goes here.
@@ -67,9 +67,9 @@ private:
         const override;
 
     websocket::Config config_;
-    mutable Statistics stats_;
+    mutable websocket::Statistics stats_;
 };
 
-}  // namespace server::websocket
+}  // namespace server::handlers
 
 USERVER_NAMESPACE_END

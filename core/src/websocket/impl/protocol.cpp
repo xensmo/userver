@@ -1,4 +1,4 @@
-#include <server/websocket/protocol.hpp>
+#include <userver/websocket/impl/protocol.hpp>
 
 #include <cstdlib>
 #include <cstring>
@@ -9,11 +9,12 @@
 #include <userver/crypto/base64.hpp>
 #include <userver/engine/io/exception.hpp>
 #include <userver/engine/task/cancel.hpp>
+#include <userver/utils/rand.hpp>
 #include <userver/utils/span.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
-namespace server::websocket::impl {
+namespace websocket::impl {
 
 namespace {
 
@@ -55,12 +56,7 @@ utils::span<T> MakeSpan(T* ptr, size_t count) {
     return utils::span<T>(ptr, ptr + count);
 }
 
-union Mask32 {
-    uint32_t mask32 = 0;
-    uint8_t mask8[4];
-};
-
-void XorMaskInplace(uint8_t* dest, size_t len, Mask32 mask) {
+void XorMaskInplace(uint8_t* dest, size_t len, frames::Mask32 mask) {
     // Check if the pointer is aligned for uint32_t operations
     const auto alignment = reinterpret_cast<std::uintptr_t>(dest) % sizeof(uint32_t);
 
@@ -94,7 +90,8 @@ boost::container::small_vector<char, impl::kMaxFrameHeaderSize> DataFrameHeader(
     utils::span<const std::byte> data,
     bool is_text,
     Continuation is_continuation,
-    Final is_final
+    Final is_final,
+    Masked is_masked
 ) {
     boost::container::small_vector<char, impl::kMaxFrameHeaderSize> frame;
 
@@ -108,6 +105,7 @@ boost::container::small_vector<char, impl::kMaxFrameHeaderSize> DataFrameHeader(
     if (is_continuation == Continuation::kYes) {
         hdr->bits.opcode = kContinuation;
     }
+    hdr->bits.mask = is_masked == Masked::kYes ? 1 : 0;
 
     if (data.size() <= 125) {
         hdr->bits.payload_len = data.size();
@@ -118,39 +116,36 @@ boost::container::small_vector<char, impl::kMaxFrameHeaderSize> DataFrameHeader(
         hdr->bits.payload_len = 127;
         PushRaw(boost::endian::native_to_big(data.size()), frame);
     }
+
     return frame;
 }
 
-std::string CloseFrame(CloseStatusInt status_code) {
-    std::string frame;
-    frame.resize(sizeof(WSHeader) + sizeof(status_code));
-    auto* hdr = reinterpret_cast<WSHeader*>(frame.data());
-    hdr->bits.fin = 1;
-    hdr->bits.opcode = kClose;
-    hdr->bits.payload_len = sizeof(status_code);
-
-    auto* payload = reinterpret_cast<CloseStatusInt*>(&frame[sizeof(WSHeader)]);
-    *payload = boost::endian::native_to_big(status_code);
-    return frame;
-}
-
-std::array<char, sizeof(WSHeader)> MakeControlFrame(WSOpcodes opcode, utils::span<const std::byte> data) {
+std::array<char, sizeof(WSHeader)> MakeControlFrame(
+    WSOpcodes opcode,
+    utils::span<const std::byte> data,
+    Masked is_masked
+) {
     std::array<char, sizeof(WSHeader)> frame{};
 
     auto* hdr = reinterpret_cast<WSHeader*>(frame.data());
     hdr->bytes = 0;
     hdr->bits.fin = 1;
     hdr->bits.opcode = opcode;
-
     hdr->bits.payload_len = data.size();
+    hdr->bits.mask = is_masked == Masked::kYes ? 1 : 0;
+
     return frame;
 }
 
-const std::array<char, sizeof(WSHeader)> ws_ping_frame = MakeControlFrame(kPing);
-const std::array<char, sizeof(WSHeader)> ws_close_frame = MakeControlFrame(kClose);
+Mask32 Mask32::Generate() {
+    Mask32 mask;
+    mask.mask32 = utils::Rand();
+    return mask;
+}
 
-const std::array<char, sizeof(WSHeader)>& PingFrame() { return ws_ping_frame; }
-const std::array<char, sizeof(WSHeader)>& CloseFrame() { return ws_close_frame; }
+void ApplyMask(utils::span<std::byte> payload, Mask32 mask) {
+    XorMaskInplace(reinterpret_cast<uint8_t*>(payload.data()), payload.size(), mask);
+}
 
 }  // namespace frames
 
@@ -213,7 +208,7 @@ CloseStatus ReadWSFrameImpl(
         return CloseStatus::kTooBigData;
     }
 
-    Mask32 mask;
+    frames::Mask32 mask;
     if (hdr.bits.mask) {
         RecvExactly(io, AsWritableBytes(MakeSpan(&mask, 1)), {});
     }
@@ -297,6 +292,6 @@ std::optional<CloseStatus> ReadWSFrameDontWaitForHeader(
     return ReadWSFrameImpl(hdr, frame, io, max_payload_size, payload_len);
 }
 
-}  // namespace server::websocket::impl
+}  // namespace websocket::impl
 
 USERVER_NAMESPACE_END

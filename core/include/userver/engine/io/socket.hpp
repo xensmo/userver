@@ -17,6 +17,10 @@ struct iovec;
 
 USERVER_NAMESPACE_BEGIN
 
+namespace engine::ev {
+class ThreadControl;
+}  // namespace engine::ev
+
 namespace engine::io {
 
 /// Socket type

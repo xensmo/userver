@@ -1,4 +1,4 @@
-#include <userver/server/websocket/websocket_handler.hpp>
+#include <userver/server/handlers/websocket_handler.hpp>
 
 #include <cryptopp/sha.h>
 
@@ -8,25 +8,25 @@
 #include <userver/http/common_headers.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/str_icase.hpp>
+#include <userver/websocket/connection.hpp>
+#include <userver/websocket/impl/protocol.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
-
-#include <userver/server/websocket/server.hpp>
-#include "protocol.hpp"
+#include <userver/yaml_config/yaml_config.hpp>
 
 #ifndef ARCADIA_ROOT
-#include "generated/src/server/websocket/websocket_handler.yaml.hpp"  // Y_IGNORE
+#include "generated/src/server/handlers/websocket_handler.yaml.hpp"  // Y_IGNORE
 #endif
 
 USERVER_NAMESPACE_BEGIN
 
-namespace server::websocket {
+namespace server::handlers {
 
 WebsocketHandlerBase::WebsocketHandlerBase(
     const components::ComponentConfig& config,
     const components::ComponentContext& context
 )
     : server::handlers::HttpHandlerBase(config, context),
-      config_(config.As<Config>())
+      config_(config.As<websocket::Config>())
 {
     utils::statistics::RegisterWriterScope(context, "ws." + config.Name(), [this](utils::statistics::Writer& writer) {
         WriteMetrics(writer);
@@ -84,7 +84,7 @@ std::string WebsocketHandlerBase::HandleRequestThrow(
     request.SetUpgradeWebsocket([context = std::make_shared<server::request::RequestContext>(std::move(context)),
                                  this](std::unique_ptr<engine::io::RwBase> socket, engine::io::Sockaddr&& peer_name) {
         tracing::Span span("ws/" + HandlerName());
-        auto ws = websocket::MakeWebSocket(std::move(socket), std::move(peer_name), config_);
+        auto ws = websocket::MakeServerWebSocketConnection(std::move(socket), std::move(peer_name), config_);
         try {
             Handle(*ws, *context);
         } catch (const std::exception& e) {
@@ -107,9 +107,9 @@ void WebsocketHandlerBase::WriteMetrics(utils::statistics::Writer& writer) const
 
 yaml_config::Schema WebsocketHandlerBase::GetStaticConfigSchema() {
     return yaml_config::MergeSchemasFromResource<
-        server::handlers::HttpHandlerBase>("src/server/websocket/websocket_handler.yaml");
+        server::handlers::HttpHandlerBase>("src/server/handlers/websocket_handler.yaml");
 }
 
-}  // namespace server::websocket
+}  // namespace server::handlers
 
 USERVER_NAMESPACE_END

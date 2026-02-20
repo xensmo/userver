@@ -1,29 +1,27 @@
-#include <userver/server/websocket/server.hpp>
+#include <userver/websocket/connection.hpp>
 
 #include <atomic>
+
+#include <boost/endian/conversion.hpp>
 
 #include <userver/components/component.hpp>
 #include <userver/engine/mutex.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utils/async.hpp>
-#include <userver/utils/fast_scope_guard.hpp>
 #include <userver/yaml_config/yaml_config.hpp>
 
-#include "protocol.hpp"
+#include <userver/websocket/impl/protocol.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
-namespace server::websocket {
+namespace websocket {
 
 namespace {
-inline void SendExactly(
-    engine::io::WritableBase& writable,
-    utils::span<const char> data1,
-    utils::span<const std::byte> data2
-) {
-    if (writable.WriteAll({{data1.data(), data1.size()}, {data2.data(), data2.size()}}, {}) !=
-        data1.size() + data2.size())
-    {
+
+template <typename... Spans>
+void SendExactly(engine::io::WritableBase& writable, Spans... spans) {
+    const size_t total_size = (spans.size() + ...);
+    if (writable.WriteAll({engine::io::IoData{spans.data(), spans.size()}...}, {}) != total_size) {
         throw(engine::io::IoException() << "Socket closed during transfer");
     }
 }
@@ -31,6 +29,25 @@ inline void SendExactly(
 Message CloseMessage(CloseStatus status) { return {{}, status, false}; }
 
 utils::span<const std::byte> MakeBinarySpan(utils::span<const char> span) { return utils::as_bytes(span); }
+
+void SendFrame(
+    engine::io::WritableBase& writable,
+    utils::span<const char> header,
+    utils::span<const std::byte> payload,
+    impl::frames::Masked need_mask
+) {
+    if (need_mask == impl::frames::Masked::kNo) {
+        SendExactly(writable, header, payload);
+        return;
+    }
+
+    // Need masking: copy payload, apply mask, send
+    std::vector<std::byte> payload_copy(payload.begin(), payload.end());
+
+    const auto mask = impl::frames::Mask32::Generate();
+    impl::frames::ApplyMask(payload_copy, mask);
+    SendExactly(writable, header, utils::span{reinterpret_cast<const char*>(mask.mask8), 4}, utils::span{payload_copy});
+}
 
 }  // namespace
 
@@ -68,15 +85,19 @@ private:
 
     std::atomic<std::size_t> ping_pending_count_{0};
 
+    const impl::frames::Masked need_data_masking_;
+
 public:
     WebSocketConnectionImpl(
         std::unique_ptr<engine::io::RwBase> io,
         const engine::io::Sockaddr& remote_addr,
-        const Config& server_config
+        const Config& config,
+        impl::frames::Masked need_data_masking
     )
         : io_(std::move(io)),
           remote_addr_(remote_addr),
-          config_(server_config)
+          config_(config),
+          need_data_masking_(need_data_masking)
     {}
 
     ~WebSocketConnectionImpl() override { LOG_TRACE() << "Websocket connection closed"; }
@@ -89,34 +110,50 @@ public:
 
         LOG_TRACE() << "Write message " << message.data.size() << " bytes";
         if (message.opcode == impl::WSOpcodes::kPing) {
-            SendExactly(*io_, impl::frames::PingFrame(), {});
+            const auto frame = impl::frames::MakeControlFrame(impl::WSOpcodes::kPing, {}, need_data_masking_);
+
+            SendFrame(*io_, frame, {}, need_data_masking_);
         } else if (message.opcode == impl::WSOpcodes::kPong) {
-            const auto control_frame = impl::frames::MakeControlFrame(impl::WSOpcodes::kPong, message.data);
-            SendExactly(*io_, control_frame, message.data);
+            const auto frame = impl::frames::MakeControlFrame(impl::WSOpcodes::kPong, message.data, need_data_masking_);
+
+            SendFrame(*io_, frame, message.data, need_data_masking_);
         } else if (message.close_status.has_value()) {
-            const auto close_frame = impl::frames::CloseFrame(static_cast<int>(message.close_status.value()));
-            SendExactly(*io_, close_frame, {});
+            // Prepare payload (status code in big endian)
+            auto status_be = boost::endian::native_to_big(static_cast<CloseStatusInt>(message.close_status.value()));
+            auto payload = utils::span{reinterpret_cast<const std::byte*>(&status_be), sizeof(status_be)};
+
+            const auto frame = impl::frames::MakeControlFrame(impl::WSOpcodes::kClose, payload, need_data_masking_);
+
+            SendFrame(*io_, frame, payload, need_data_masking_);
         } else if (!message.data.empty()) {
-            utils::span<const std::byte> data_to_send{message.data};
             auto continuation = impl::frames::Continuation::kNo;
+            utils::span<const std::byte> data_to_send{message.data};
+
+            // Send fragments
             while (data_to_send.size() > config_.fragment_size && config_.fragment_size > 0) {
-                const auto data_frame_header = impl::frames::DataFrameHeader(
-                    data_to_send.first(config_.fragment_size),
+                const auto fragment = data_to_send.first(config_.fragment_size);
+                const auto frame = impl::frames::DataFrameHeader(
+                    fragment,
                     message.opcode == impl::WSOpcodes::kText,
                     continuation,
-                    impl::frames::Final::kNo
+                    impl::frames::Final::kNo,
+                    need_data_masking_
                 );
-                SendExactly(*io_, data_frame_header, data_to_send.first(config_.fragment_size));
+
+                SendFrame(*io_, frame, fragment, need_data_masking_);
                 continuation = impl::frames::Continuation::kYes;
                 data_to_send = data_to_send.last(data_to_send.size() - config_.fragment_size);
             }
-            const auto data_frame_header = impl::frames::DataFrameHeader(
+
+            // Send final fragment
+            const auto frame = impl::frames::DataFrameHeader(
                 data_to_send,
                 message.opcode == impl::WSOpcodes::kText,
                 continuation,
-                impl::frames::Final::kYes
+                impl::frames::Final::kYes,
+                need_data_masking_
             );
-            SendExactly(*io_, data_frame_header, data_to_send);
+            SendFrame(*io_, frame, data_to_send, need_data_masking_);
         }
     }
 
@@ -247,14 +284,24 @@ WebSocketConnection::WebSocketConnection() = default;
 
 WebSocketConnection::~WebSocketConnection() = default;
 
-std::shared_ptr<WebSocketConnection> MakeWebSocket(
+std::shared_ptr<WebSocketConnection> MakeServerWebSocketConnection(
     std::unique_ptr<engine::io::RwBase>&& socket,
     engine::io::Sockaddr&& peer_name,
     const Config& config
 ) {
-    return std::make_shared<WebSocketConnectionImpl>(std::move(socket), std::move(peer_name), config);
+    return std::make_shared<
+        WebSocketConnectionImpl>(std::move(socket), std::move(peer_name), config, impl::frames::Masked::kNo);
 }
 
-}  // namespace server::websocket
+std::shared_ptr<WebSocketConnection> MakeClientWebSocketConnection(
+    std::unique_ptr<engine::io::RwBase>&& socket,
+    engine::io::Sockaddr&& peer_name,
+    const Config& config
+) {
+    return std::make_shared<
+        WebSocketConnectionImpl>(std::move(socket), std::move(peer_name), config, impl::frames::Masked::kYes);
+}
+
+}  // namespace websocket
 
 USERVER_NAMESPACE_END

@@ -4,44 +4,17 @@
 /// @brief @copybrief server::websocket::WebSocketConnection
 
 #include <memory>
-#include <optional>
 
 #include <userver/engine/io/socket.hpp>
 #include <userver/server/http/http_request.hpp>
 #include <userver/tracing/span.hpp>
 #include <userver/utils/span.hpp>
+#include <userver/websocket/message.hpp>
 #include <userver/yaml_config/fwd.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
-namespace server::websocket {
-
-using CloseStatusInt = int16_t;
-
-/// @brief Close statuses
-enum class CloseStatus : CloseStatusInt {
-    kNone = 0,
-
-    kNormal = 1000,
-    kGoingAway = 1001,
-    kProtocolError = 1002,
-    kUnsupportedData = 1003,
-    kFrameTooLarge = 1004,
-    kNoStatusRcvd = 1005,
-    kAbnormalClosure = 1006,
-    kBadMessageData = 1007,
-    kPolicyViolation = 1008,
-    kTooBigData = 1009,
-    kExtensionMismatch = 1010,
-    kServerError = 1011
-};
-
-/// @brief WebSocket message
-struct Message {
-    std::string data;                              ///< payload
-    std::optional<CloseStatus> close_status = {};  ///< close status
-    bool is_text = false;                          ///< is it text or binary?
-};
+namespace websocket {
 
 class WebSocketConnectionImpl;
 
@@ -128,12 +101,18 @@ protected:
     virtual void DoSendBinary(utils::span<const std::byte> message) = 0;
 };
 
-std::shared_ptr<WebSocketConnection> MakeWebSocket(
+std::shared_ptr<WebSocketConnection> MakeServerWebSocketConnection(
     std::unique_ptr<engine::io::RwBase>&& socket,
     engine::io::Sockaddr&& peer_name,
     const Config& config
 );
 
-}  // namespace server::websocket
+std::shared_ptr<WebSocketConnection> MakeClientWebSocketConnection(
+    std::unique_ptr<engine::io::RwBase>&& socket,
+    engine::io::Sockaddr&& peer_name,
+    const Config& config
+);
+
+}  // namespace websocket
 
 USERVER_NAMESPACE_END

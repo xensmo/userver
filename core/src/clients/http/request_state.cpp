@@ -17,6 +17,7 @@
 #include <userver/baggage/baggage.hpp>
 #include <userver/clients/dns/resolver.hpp>
 #include <userver/clients/http/connect_to.hpp>
+#include <userver/clients/http/websocket_response.hpp>
 #include <userver/http/common_headers.hpp>
 #include <userver/http/url.hpp>
 #include <userver/server/request/task_inherited_data.hpp>
@@ -562,7 +563,15 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
                 auto producer = std::move(stream_data.queue_producer);
                 // The task will wake up and may reuse RequestState.
                 std::move(producer).Reset();
-            }
+            },
+            [&holder, &err](WebSocketHandshakeData& data) {
+                {
+                    [[maybe_unused]] const auto cleanup = holder->response_move();
+                }
+                auto promise = std::move(data.promise);
+                // The task will wake up and may reuse RequestState.
+                promise.set_exception(holder->PrepareException(err));
+            },
         };
         std::visit(visitor, holder->data_);
     } else {
@@ -588,6 +597,11 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
                 auto producer = std::move(stream_data.queue_producer);
                 // The task will wake up and may reuse RequestState.
                 std::move(producer).Reset();
+            },
+            [&holder, &easy](WebSocketHandshakeData& data) {
+                auto promise = std::move(data.promise);
+                // The task will wake up and may reuse RequestState.
+                promise.set_value(WebSocketResponse(holder->response_move(), std::move(easy.extracted_socket())));
             }
         };
         std::visit(visitor, holder->data_);
@@ -769,7 +783,7 @@ std::string_view RequestState::GetLoggedEffectiveUrl() noexcept {
 
 engine::Future<std::shared_ptr<Response>> RequestState::async_perform(utils::impl::SourceLocation location) {
     WaitForRequestCompletion();
-    data_.emplace<FullBufferedData>();
+    auto& data = data_.emplace<FullBufferedData>();
 
     StartNewSpan(location);
     ResetDataForNewRequest();
@@ -780,7 +794,7 @@ engine::Future<std::shared_ptr<Response>> RequestState::async_perform(utils::imp
     // set place for response body
     easy().set_sink(&response_->sink_string());
 
-    auto future = std::get_if<FullBufferedData>(&data_)->promise.get_future();
+    auto future = data.promise.get_future();
 
     if (UpdateTimeoutFromDeadlineAndCheck()) {
         PerformRequest([holder = shared_from_this()](std::error_code err) mutable {
@@ -796,7 +810,7 @@ engine::Future<void> RequestState::async_perform_stream(
     utils::impl::SourceLocation location
 ) {
     WaitForRequestCompletion();
-    data_.emplace<StreamData>(queue->GetProducer());
+    auto& data = data_.emplace<StreamData>(queue->GetProducer());
 
     StartNewSpan(location);
     ResetDataForNewRequest();
@@ -809,11 +823,38 @@ engine::Future<void> RequestState::async_perform_stream(
     // Force no retries
     retry_.retries = 1;
 
-    auto future = std::get_if<StreamData>(&data_)->headers_promise.get_future();
+    auto future = data.headers_promise.get_future();
 
     if (UpdateTimeoutFromDeadlineAndCheck()) {
         PerformRequest([holder = shared_from_this()](std::error_code err) mutable {
             RequestState::OnCompleted(std::move(holder), err);
+        });
+    }
+
+    return future;
+}
+
+engine::Future<WebSocketResponse> RequestState::async_perform_websocket_handshake(utils::impl::SourceLocation location
+) {
+    WaitForRequestCompletion();
+    auto& data = data_.emplace<WebSocketHandshakeData>();
+
+    StartNewSpan(location);
+    ResetDataForNewRequest();
+
+    auto& span = span_storage_->Get();
+    span.AddTag("stream_api", 0);
+
+    // set place for response body
+    easy().set_sink(&response_->sink_string());
+    easy().set_connect_only(2L /** websocket handshake */);
+    easy().enable_socket_extraction();
+
+    auto future = data.promise.get_future();
+
+    if (UpdateTimeoutFromDeadlineAndCheck()) {
+        PerformRequest([holder = shared_from_this()](std::error_code err) mutable {
+            RequestState::OnRetry(std::move(holder), err);
         });
     }
 
@@ -834,21 +875,21 @@ void RequestState::PerformRequest(curl::easy::handler_type handler) {
     if (resolver_ && retry_.current == 1) {
         engine::DetachUnscopedUnsafe(
             engine::AsyncNoSpan([this, holder = shared_from_this(), handler = std::move(handler)]() mutable {
+                auto exception_handler = utils::Overloaded{
+                    [](FullBufferedData& data) { data.promise.set_exception(std::current_exception()); },
+                    [](WebSocketHandshakeData& data) { data.promise.set_exception(std::current_exception()); },
+                    [](StreamData&) {},
+                };
+
                 try {
                     ResolveTargetAddress(*resolver_);
                     easy().async_perform(std::move(handler));
                     return;
                 } catch (const clients::dns::ResolverException& ex) {
                     // TODO: should retry - TAXICOMMON-4932
-                    auto* buffered_data = std::get_if<FullBufferedData>(&data_);
-                    if (buffered_data) {
-                        buffered_data->promise.set_exception(std::current_exception());
-                    }
+                    std::visit(exception_handler, data_);
                 } catch (const BaseException& ex) {
-                    auto* buffered_data = std::get_if<FullBufferedData>(&data_);
-                    if (buffered_data) {
-                        buffered_data->promise.set_exception(std::current_exception());
-                    }
+                    std::visit(exception_handler, data_);
                 }
                 span_storage_.reset();
                 RequestCompleted();
@@ -938,6 +979,10 @@ void RequestState::HandleDeadlineAlreadyPassed() {
                 // The task will wake up and may reuse RequestState.
                 promise.set_exception(std::move(exc));
             }
+        },
+        [&exc](WebSocketHandshakeData& data) {
+            auto promise = std::move(data.promise);
+            promise.set_exception(std::move(exc));
         }
     };
     std::visit(visitor, data_);

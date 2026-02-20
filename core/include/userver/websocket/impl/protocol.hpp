@@ -1,7 +1,5 @@
 #pragma once
 
-#include <userver/server/websocket/server.hpp>
-
 #include <optional>
 #include <string>
 
@@ -10,10 +8,11 @@
 #include <userver/engine/io/common.hpp>
 #include <userver/tracing/span.hpp>
 #include <userver/utils/span.hpp>
+#include <userver/websocket/message.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
-namespace server::websocket::impl {
+namespace websocket::impl {
 
 enum WSOpcodes {
     kContinuation = 0,
@@ -75,17 +74,38 @@ enum class Final {
     kNo,
 };
 
+enum class Masked {
+    kYes,
+    kNo,
+};
+
+union Mask32 {
+    uint32_t mask32 = 0;
+    uint8_t mask8[4];
+
+    /// @brief Generate random 4-byte masking key
+    static Mask32 Generate();
+};
+
+/// @brief Apply WebSocket masking to payload
+/// @param payload Data to mask (modified in-place)
+/// @param mask 4-byte masking key
+void ApplyMask(utils::span<std::byte> payload, Mask32 mask);
+
 boost::container::small_vector<char, impl::kMaxFrameHeaderSize> DataFrameHeader(
     utils::span<const std::byte> data,
     bool is_text,
     Continuation is_continuation,
-    Final is_final
+    Final is_final,
+    Masked is_masked
 );
-std::array<char, sizeof(WSHeader)> MakeControlFrame(WSOpcodes opcode, utils::span<const std::byte> data = {});
-std::string CloseFrame(CloseStatusInt status_code);
 
-const std::array<char, sizeof(WSHeader)>& PingFrame();
-const std::array<char, sizeof(WSHeader)>& CloseFrame();
+std::array<char, sizeof(WSHeader)> MakeControlFrame(
+    WSOpcodes opcode,
+    utils::span<const std::byte> data,
+    Masked is_masked
+);
+
 }  // namespace frames
 
 std::string WebsocketSecAnswer(std::string_view sec_key);
@@ -116,6 +136,6 @@ std::optional<CloseStatus> ReadWSFrameDontWaitForHeader(
     std::size_t& payload_len
 );
 
-}  // namespace server::websocket::impl
+}  // namespace websocket::impl
 
 USERVER_NAMESPACE_END
