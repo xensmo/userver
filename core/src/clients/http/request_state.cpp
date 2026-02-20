@@ -17,12 +17,14 @@
 #include <userver/baggage/baggage.hpp>
 #include <userver/clients/dns/resolver.hpp>
 #include <userver/clients/http/connect_to.hpp>
+#include <userver/http/common_headers.hpp>
 #include <userver/http/url.hpp>
 #include <userver/server/request/task_inherited_data.hpp>
 #include <userver/utils/algo.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/encoding/hex.hpp>
+#include <userver/utils/from_string.hpp>
 #include <userver/utils/overloaded.hpp>
 #include <userver/utils/rand.hpp>
 #include <userver/utils/text_light.hpp>
@@ -211,6 +213,24 @@ void ModernClientKeyCertImpl(Easy& easy, crypto::PrivateKey&& pkey, crypto::Cert
     easy.set_ssl_key_blob_copy(*key_pem);
     easy.set_ssl_key_passwd(GetPkeyPassword());
     easy.set_ssl_key_type("PEM");
+}
+
+bool IsHttp11WithCompleteBody(const std::shared_ptr<Response> response) {
+    constexpr auto kConnectionTokenClose = "close";
+
+    if (response->status_code() == Status::kInvalid) {
+        return false;
+    }
+
+    const auto& headers = response->headers();
+
+    const auto connection_token = utils::FindOrDefault(headers, USERVER_NAMESPACE::http::headers::kConnection, "");
+    if (connection_token != kConnectionTokenClose) {
+        return false;
+    }
+
+    const auto content_length = utils::FindOrDefault(headers, USERVER_NAMESPACE::http::headers::kContentLength, "-1");
+    return utils::FromString<ssize_t>(content_length) == static_cast<ssize_t>(response->body_view().size());
 }
 
 }  // namespace
@@ -465,11 +485,26 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
     auto& span = holder->span_storage_->Get();
     auto& easy = holder->easy();
 
+    LOG_TRACE() << "OnCompleted status_code=" << static_cast<int>(holder->response()->status_code()) << " err=" << err;
+
+    if (holder->response()->status_code() == Status::kInvalid && !err) {
+        // We haven't received the full set of headers, the response is truncated
+        err = std::error_code(curl::errc::EasyErrorCode::kRecvError);
+
+        holder->response()->SetStatusCode(Status::kInternalServerError);
+    }
+
     // TODO don't swallow errors, report them to StreamedResponse
     auto* stream_data = std::get_if<StreamData>(&holder->data_);
     if (stream_data && !stream_data->headers_promise_set.exchange(true)) {
-        stream_data->headers_promise.set_value();
         LOG_DEBUG() << "Stream API, status code is set (with body)";
+        if (!err) {
+            stream_data->headers_promise.set_value();
+        } else {
+            // The task will wake up and may reuse RequestState.
+            auto promise = std::move(stream_data->headers_promise);
+            promise.set_exception(holder->PrepareException(err));
+        }
     }
 
     const auto status_code = static_cast<Status>(easy.get_response_code());
@@ -479,6 +514,12 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
     if (holder->testsuite_config_ && !err) {
         const auto& headers = holder->response()->headers();
         err = TestsuiteResponseHook(status_code, headers, span);
+    }
+
+    if (!stream_data && IsHttp11WithCompleteBody(holder->response())) {
+        // The response says "HTTP/1.1", the full body is read.
+        // It's a transport error, but not a HTTP request/respose error.
+        err = {};
     }
 
     holder->AccountResponse(err);
@@ -986,7 +1027,7 @@ void RequestState::ResetDataForNewRequest() {
     SetBaggageHeader(easy());
 
     response_ = std::make_shared<Response>();
-    response_->SetStatusCode(Status::kInternalServerError);
+    response_->SetStatusCode(Status::kInvalid);
 
     is_cancelled_ = false;
     retry_.current = 1;

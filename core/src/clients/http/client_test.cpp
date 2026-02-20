@@ -1657,4 +1657,100 @@ UTEST(HttpClient, DigestAuth) {
     }
 }
 
+UTEST(HttpClient, NoContentLengthNoBody) {
+    auto http_client_ptr = utest::CreateHttpClient();
+
+    const utest::SimpleServer http_server{[](const HttpRequest&) {
+        // No "Content-Length" header, a cunning HTTP 1.0 server!
+        return HttpResponse{
+            "HTTP/1.1 222 OK\r\nConnection: close\r\n\r\n",
+            HttpResponse::kWriteAndClose,
+        };
+    }};
+    const auto url = http_server.GetBaseUrl();
+    const std::string data{};
+
+    const auto response = http_client_ptr->CreateRequest().post(url, data).timeout(kTimeout).perform();
+
+    EXPECT_EQ(response->status_code(), 222);
+}
+
+UTEST(HttpClient, NoContentLengthWithBody) {
+    auto http_client_ptr = utest::CreateHttpClient();
+
+    const utest::SimpleServer http_server{[](const HttpRequest&) {
+        // No "Content-Length" header, a cunning HTTP 1.0 server!
+        return HttpResponse{
+            "HTTP/1.1 222 OK\r\nConnection: close\r\n\r\nBody length controlled by server side",
+            HttpResponse::kWriteAndClose,
+        };
+    }};
+    const auto url = http_server.GetBaseUrl();
+    const std::string data{};
+
+    const auto response = http_client_ptr->CreateRequest().post(url, data).timeout(kTimeout).perform();
+
+    EXPECT_EQ(response->status_code(), 222);
+    EXPECT_EQ(response->body(), "Body length controlled by server side");
+}
+
+UTEST(HttpClient, TruncatedHeaders) {
+    auto http_client_ptr = utest::CreateHttpClient();
+
+    const utest::SimpleServer http_server{[](const HttpRequest&) {
+        // No "Content-Length" header, but headers are not over
+        return HttpResponse{
+            //"HTTP/1.1 222 OK\r\nConnection: close\r\n",
+            "HTTP/1.1 222 OK\r\nConnection: ",
+            HttpResponse::kWriteAndClose,
+        };
+    }};
+    const auto url = http_server.GetBaseUrl();
+    const std::string data{};
+
+    UEXPECT_THROW(
+        (void)http_client_ptr->CreateRequest().post(url, data).timeout(kTimeout).perform(),
+        clients::http::NetworkProblemException
+    );
+}
+
+UTEST(HttpClient, EmptyResponse) {
+    auto http_client_ptr = utest::CreateHttpClient();
+
+    const utest::SimpleServer http_server{[](const HttpRequest&) {
+        // No "Content-Length" header, but headers are not over
+        return HttpResponse{
+            "",
+            HttpResponse::kWriteAndClose,
+        };
+    }};
+    const auto url = http_server.GetBaseUrl();
+    const std::string data{};
+
+    UEXPECT_THROW(
+        (void)http_client_ptr->CreateRequest().post(url, data).timeout(kTimeout).perform(),
+        clients::http::TechnicalError
+    );
+}
+
+UTEST(HttpClient, TruncatedBody) {
+    auto http_client_ptr = utest::CreateHttpClient();
+
+    const utest::SimpleServer http_server{[](const HttpRequest&) {
+        // No "Content-Length" header, but headers are not over
+        return HttpResponse{
+            //"HTTP/1.1 222 OK\r\nConnection: close\r\n",
+            "HTTP/1.1 222 OK\r\nContent-Length: 1000\r\n\r\nTruncated body",
+            HttpResponse::kWriteAndClose,
+        };
+    }};
+    const auto url = http_server.GetBaseUrl();
+    const std::string data{};
+
+    UEXPECT_THROW(
+        (void)http_client_ptr->CreateRequest().post(url, data).timeout(kTimeout).perform(),
+        clients::http::TechnicalError
+    );
+}
+
 USERVER_NAMESPACE_END
