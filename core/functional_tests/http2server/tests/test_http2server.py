@@ -390,7 +390,6 @@ async def do_max_streams(sock, conn):
     _assert_responses(events)
 
 
-@pytest.mark.skip(reason='TAXICOMMON-10258')
 async def test_many_in_flight(
     create_connection,
     monitor_client,
@@ -410,7 +409,6 @@ async def test_many_in_flight(
         await do_max_streams(sock, conn)
 
 
-@pytest.mark.skip(reason='TAXICOMMON-10258')
 async def test_limit_concurrent_streams(
     service_client,
     create_connection,
@@ -455,7 +453,6 @@ async def test_limit_concurrent_streams(
         assert 'request HEADERS: max concurrent streams exceeded' in str(receive)
 
 
-@pytest.mark.skip(reason='TAXICOMMON-10232: broken in nghttp2 1.65.0')
 async def test_stream_already_closed(create_connection, service_client):
     async with create_connection() as (sock, conn):
 
