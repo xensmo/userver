@@ -110,30 +110,6 @@ const std::string_view kCommandTypes[] = {
     "zscore",
 };
 
-struct ConnStateStatistic {
-    std::array<size_t, static_cast<size_t>(Redis::State::kDisconnectError) + 1> statistic{};
-
-    void Add(const ShardStatistics& shard_stats) {
-        for (const auto& [_, stats] : shard_stats.instances) {
-            UASSERT(stats.state <= Redis::State::kDisconnectError);
-            statistic.at(static_cast<size_t>(stats.state))++;
-        }
-    }
-
-    size_t Get(Redis::State state) const {
-        UASSERT(state <= Redis::State::kDisconnectError);
-        return statistic.at(static_cast<size_t>(state));
-    }
-};
-
-void DumpMetric(utils::statistics::Writer& writer, const ConnStateStatistic& stats) {
-    for (size_t i = 0; i <= static_cast<int>(Redis::State::kDisconnectError); ++i) {
-        const auto state = static_cast<Redis::State>(i);
-        writer["cluster_states"]
-            .ValueWithLabels(stats.Get(state), {"redis_instance_state", impl::StateToString(state)});
-    }
-}
-
 }  // namespace
 
 std::chrono::milliseconds MillisecondsSinceEpoch() {
@@ -231,24 +207,16 @@ void DumpMetric(utils::statistics::Writer& writer, const InstanceStatistics& sta
 }
 
 void DumpMetric(utils::statistics::Writer& writer, const ShardStatistics& stats) {
-    const auto& settings = stats.shard_total.settings;
     const auto not_ready =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - stats.last_ready_time)
             .count();
     writer["is_ready"] = stats.is_ready;
     writer["not_ready_ms"] = stats.is_ready ? 0 : not_ready;
-    // writer["shard-total"] = stats.shard_total;
-    writer["instances_count"] = stats.instances.size();
+    writer["instances_count"] = stats.instances_count;
     DumpMetric(writer, stats.shard_total, false);
-    if (settings.GetMetricsLevel() >= MetricsSettings::Level::kInstance) {
-        for (const auto& [inst_name, inst_stats] : stats.instances) {
-            writer.ValueWithLabels(inst_stats, {"redis_instance", inst_name});
-        }
-    }
 }
 
 void DumpMetric(utils::statistics::Writer& writer, const SentinelStatistics& stats) {
-    const auto& settings = stats.shard_group_total.settings;
     DumpMetric(writer, stats.shard_group_total, false);
     writer["errors.v2"].ValueWithLabels(stats.internal.redis_not_ready.Load(), {"redis_error", "redis_not_ready"});
     if (stats.internal.is_autotopology.load()) {
@@ -256,29 +224,20 @@ void DumpMetric(utils::statistics::Writer& writer, const SentinelStatistics& sta
         writer["cluster_topology_updates.v2"] = stats.internal.cluster_topology_updates.Load();
     }
 
-    ConnStateStatistic conn_stat_masters;
-    for (const auto& [shard_name, shard_stats] : stats.masters) {
-        if (settings.GetMetricsLevel() >= MetricsSettings::Level::kShard) {
-            writer.ValueWithLabels(shard_stats, {{"redis_instance_type", "masters"}, {"redis_shard", shard_name}});
-        }
-        conn_stat_masters.Add(shard_stats);
-    }
-    writer.ValueWithLabels(conn_stat_masters, {{"redis_instance_type", "masters"}});
-
-    ConnStateStatistic conn_stat_slaves;
-    for (const auto& [shard_name, shard_stats] : stats.slaves) {
-        if (settings.GetMetricsLevel() >= MetricsSettings::Level::kShard) {
-            writer.ValueWithLabels(shard_stats, {{"redis_instance_type", "slaves"}, {"redis_shard", shard_name}});
-        }
-        conn_stat_slaves.Add(shard_stats);
-    }
-    writer.ValueWithLabels(conn_stat_slaves, {{"redis_instance_type", "slaves"}});
+    writer.ValueWithLabels(stats.masters_conn_stats, {{"redis_instance_type", "masters"}});
+    writer.ValueWithLabels(stats.replicas_conn_stats, {{"redis_instance_type", "slaves"}});
 
     if (stats.sentinel) {
         writer.ValueWithLabels(*stats.sentinel, {"redis_instance_type", "sentinels"});
-        ConnStateStatistic conn_stat;
-        conn_stat.Add(stats.sentinel.value());
-        writer.ValueWithLabels(conn_stat, {{"redis_instance_type", "sentinels"}});
+        writer.ValueWithLabels(stats.sentinel->conn_stat, {{"redis_instance_type", "sentinels"}});
+    }
+}
+
+void DumpMetric(utils::statistics::Writer& writer, const ConnStateStatistic& stats) {
+    for (size_t i = 0; i <= static_cast<int>(RedisState::kDisconnectError); ++i) {
+        const auto state = static_cast<RedisState>(i);
+        writer["cluster_states"]
+            .ValueWithLabels(stats.Get(state), {"redis_instance_state", impl::StateToString(state)});
     }
 }
 

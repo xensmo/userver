@@ -6,6 +6,7 @@
 #include <storages/redis/impl/redis_creation_settings.hpp>
 #include <storages/redis/impl/sentinel.hpp>
 #include <storages/redis/impl/sentinel_impl.hpp>
+#include <storages/redis/impl/statistics_holder.hpp>
 #include <userver/concurrent/variable.hpp>
 #include <userver/rcu/rcu.hpp>
 
@@ -42,7 +43,8 @@ public:
         CommandsBufferingSettings buffering_settings,
         ReplicationMonitoringSettings replication_monitoring_settings,
         utils::RetryBudgetSettings retry_budget_settings,
-        redis::RedisCreationSettings redis_creation_settings
+        redis::RedisCreationSettings redis_creation_settings,
+        StatisticsHolder::Stats& stats
     );
     ~RedisConnectionHolder();
     RedisConnectionHolder(const RedisConnectionHolder&) = delete;
@@ -59,6 +61,7 @@ public:
         CommandsBufferingSettings buffering_settings,
         ReplicationMonitoringSettings replication_monitoring_settings,
         utils::RetryBudgetSettings retry_budget_settings,
+        StatisticsHolder::Stats& stats,
         redis::RedisCreationSettings redis_creation_settings = makeClusterNodeRedisCreationSettings()
     );
 
@@ -69,6 +72,7 @@ public:
     void SetRetryBudgetSettings(utils::RetryBudgetSettings settings);
 
     Redis::State GetState() const;
+    size_t GetCommandsCounter() const;
 
     // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
     boost::signals2::signal<void(Redis::State)> signal_state_change;
@@ -88,7 +92,7 @@ private:
     const uint16_t port_;
     const Password password_;
     const std::size_t database_index_;
-    Statistics statistics_;
+    Statistics& statistics_;
     rcu::Variable<std::shared_ptr<Redis>, rcu::BlockingRcuTraits> redis_;
     engine::ev::PeriodicWatcher connection_check_timer_;
     const RedisCreationSettings redis_creation_settings_;

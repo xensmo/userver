@@ -6,6 +6,7 @@
 #include <userver/logging/log.hpp>
 #include <userver/utils/datetime/steady_coarse_clock.hpp>
 
+#include <storages/redis/impl/statistics_holder.hpp>
 #include <storages/redis/impl/topology_holder_base.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -64,6 +65,8 @@ private:
     std::shared_ptr<const std::vector<std::string>> shards_names_;
     const std::vector<ConnectionInfo> conns_;
     std::shared_ptr<Shard> sentinels_;
+
+    StatisticsHolder statistics_holder_;
 
     std::atomic_size_t current_topology_version_{0};
     rcu::Variable<ClusterTopology, rcu::BlockingRcuTraits> topology_;

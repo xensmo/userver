@@ -59,6 +59,7 @@ bool operator<(const ConnectionInfoInt& lhs, const ConnectionInfoInt& rhs) { ret
 Shard::Shard(Options options)
     : shard_name_(std::move(options.shard_name)),
       shard_group_name_(std::move(options.shard_group_name)),
+      shared_statistics_(std::make_unique<Statistics>()),
       ready_change_callback_(std::move(options.ready_change_callback)),
       cluster_mode_(options.cluster_mode)
 {
@@ -310,10 +311,7 @@ bool Shard::ProcessCreation(const std::shared_ptr<engine::ev::ThreadPool>& redis
     // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
     for (const auto& id : need_to_create) {
         const auto redis_settings = RedisCreationSettings{id.GetConnectionSecurity(), cluster_mode_ && id.IsReadOnly()};
-        auto statistics_ptr = std::make_unique<Statistics>();
-        auto& statistics_ref = *statistics_ptr;
         ConnectionStatus entry{
-            std::move(statistics_ptr),
             id,
             std::make_shared<Redis>(
                 redis_thread_pool,
@@ -321,7 +319,7 @@ bool Shard::ProcessCreation(const std::shared_ptr<engine::ev::ThreadPool>& redis
                 // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
                 redis_settings,
                 shard_group_name_,
-                statistics_ref
+                StatisticsForInstance()
             )
         };
         if (auto commands_buffering_settings = commands_buffering_settings_.Get()) {
@@ -419,19 +417,19 @@ bool Shard::SetConnectionInfo(std::vector<ConnectionInfoInt> info_array) {
     return true;
 }
 
-void Shard::GetStatistics(bool master, const MetricsSettings& settings, ShardStatistics& stats) const {
+void Shard::GetStatistics(bool master, ShardStatistics& stats) const {
     const std::shared_lock lock(mutex_);
 
+    UASSERT(shared_statistics_);
+    stats.shard_total.Fill(*shared_statistics_);
+    stats.instances_count = instances_.size();
     for (const auto& instance : instances_) {
-        if (!instance.instance || instance.info.IsReadOnly() == master) {
+        const bool is_master = !instance.info.IsReadOnly();
+        if (!instance.instance || is_master != master) {
             continue;
         }
 
-        auto it = stats.instances.emplace(instance.info.Fulltext(), impl::InstanceStatistics(settings));
-        auto& inst_stats = it.first->second;
-        inst_stats.Fill(instance.instance->GetStatistics());
-        stats.shard_total.Add(inst_stats);
-
+        stats.conn_stat.Add(instance.instance->GetState());
         if (instance.instance->GetState() == Redis::State::kConnected) {
             stats.is_ready = true;
         }
@@ -535,6 +533,8 @@ bool Shard::UpdateCleanWaitQueue(std::vector<ConnectionStatus>&& add_clean_wait)
     }
     return instances_changed;
 }
+
+Statistics& Shard::StatisticsForInstance() { return *shared_statistics_; }
 
 }  // namespace storages::redis::impl
 

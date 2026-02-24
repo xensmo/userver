@@ -114,22 +114,6 @@ RedisPools Parse(const yaml_config::YamlConfig& value, formats::parse::To<RedisP
     return pools;
 }
 
-storages::redis::MetricsSettings::Level
-Parse(const yaml_config::YamlConfig& value, formats::parse::To<storages::redis::MetricsSettings::Level>) {
-    constexpr utils::TrivialBiMap converter = [](auto selector) {
-        return selector()
-            .Case("instance", storages::redis::MetricsSettings::Level::kInstance)
-            .Case("shard", storages::redis::MetricsSettings::Level::kShard)
-            .Case("cluster", storages::redis::MetricsSettings::Level::kCluster);
-    };
-    const auto level_str = value.As<std::string>("instance");
-    const auto ret = converter.TryFindByFirst(level_str);
-    if (!ret) {
-        throw std::runtime_error("Invalid metrics_level value: " + level_str);
-    }
-    return *ret;
-}
-
 Redis::Redis(const ComponentConfig& config, const ComponentContext& component_context)
     : ComponentBase(config, component_context),
       config_(component_context.FindComponent<DynamicConfig>().GetSource())
@@ -209,9 +193,7 @@ void Redis::Connect(
 
     auto config_source = component_context.FindComponent<DynamicConfig>().GetSource();
 
-    static_metrics_settings_
-        .level = Parse(config["metrics_level"], formats::parse::To<storages::redis::MetricsSettings::Level>());
-    metrics_settings_.Assign(storages::redis::MetricsSettings({}, static_metrics_settings_));
+    metrics_settings_.Assign(storages::redis::MetricsSettings());
     const auto redis_pools = config["thread_pools"].As<RedisPools>();
 
     thread_pools_ = std::make_shared<
@@ -333,8 +315,7 @@ void Redis::OnConfigUpdate(const dynamic_config::Snapshot& cfg) {
 
     auto metrics_settings = metrics_settings_.Read();
     if (metrics_settings->dynamic_settings != redis_config.metrics_settings) {
-        metrics_settings_
-            .Assign(storages::redis::MetricsSettings(redis_config.metrics_settings, static_metrics_settings_));
+        metrics_settings_.Assign(storages::redis::MetricsSettings(redis_config.metrics_settings));
     }
 
     auto pubsub_metrics_settings = pubsub_metrics_settings_.Read();

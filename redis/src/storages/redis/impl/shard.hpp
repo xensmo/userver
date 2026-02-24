@@ -1,6 +1,5 @@
 #pragma once
 
-#include <set>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
@@ -55,7 +54,6 @@ bool operator<(const ConnectionInfoInt&, const ConnectionInfoInt&);
 using ConnInfoMap = std::map<std::string, std::vector<ConnectionInfoInt>>;
 
 struct ConnectionStatus {
-    std::unique_ptr<Statistics> statistics;
     ConnectionInfoInt info;
     std::shared_ptr<Redis> instance;
 };
@@ -96,7 +94,7 @@ public:
     bool ProcessStateUpdate();
     bool SetConnectionInfo(std::vector<ConnectionInfoInt> info_array);
     bool IsConnectedToAllServersDebug(bool allow_empty) const;
-    void GetStatistics(bool master, const MetricsSettings& settings, ShardStatistics& stats) const;
+    void GetStatistics(bool master, ShardStatistics& stats) const;
     size_t InstancesSize() const;
     const std::string& ShardName() const;
     boost::signals2::signal<void(ServerId, Redis::State)>& SignalInstanceStateChange();
@@ -121,9 +119,16 @@ private:
     std::vector<ConnectionInfoInt> GetConnectionInfosToCreate() const;
     bool UpdateCleanWaitQueue(std::vector<ConnectionStatus>&& add_clean_wait);
 
+    struct InstanceStatistics {
+        std::unique_ptr<Statistics> ptr_to_store;
+        Statistics& ref;
+    };
+    Statistics& StatisticsForInstance();
+
     const std::string shard_name_;
     const std::string shard_group_name_;
     std::atomic_size_t current_{0};
+    std::unique_ptr<Statistics> shared_statistics_;
 
     mutable std::shared_mutex mutex_;
     std::vector<ConnectionInfoInt> connection_infos_;
