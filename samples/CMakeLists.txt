@@ -67,6 +67,12 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-netcat)
 add_subdirectory(websocket_service)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-websocket_service)
 
+# WebSocket client requires curl >= 7.86 with WebSocket support
+if(CURL_VERSION_STRING VERSION_GREATER_EQUAL "7.86")
+    add_subdirectory(websocket_client)
+    add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-websocket_client)
+endif()
+
 add_subdirectory(https_service)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-https_service)
 
