@@ -91,7 +91,7 @@ private:
 
 template <typename Client>
 Client ClientFactory::MakeClient(ClientSettings&& client_settings) {
-    return Client(MakeClientInternals(std::move(client_settings), Client::GetMetadata()));
+    return Client(MakeClientInternals(std::move(client_settings), Client::GetMetadata(utils::impl::InternalTag{})));
 }
 
 template <typename Client>

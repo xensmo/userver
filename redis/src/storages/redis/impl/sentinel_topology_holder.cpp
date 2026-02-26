@@ -54,6 +54,7 @@ SentinelTopologyHolder::SentinelTopologyHolder(
       database_index_(database_index),
       name_by_shard_(shard_names),
       conns_(conns),
+      statistics_holder_(),
       update_topology_timer_(ev_thread_, [this] { UpdateClusterTopology(); }, kSentinelGetHostsCheckInterval),
       update_topology_watch_(
           ev_thread_,
@@ -200,7 +201,7 @@ std::shared_ptr<Redis> SentinelTopologyHolder::GetRedisInstance(const HostPort& 
 void SentinelTopologyHolder::GetStatistics(SentinelStatistics& stats, const MetricsSettings& settings) const {
     if (sentinels_) {
         stats.sentinel.emplace(ShardStatistics(settings));
-        sentinels_->GetStatistics(true, settings, *stats.sentinel);
+        sentinels_->GetStatistics(true, *stats.sentinel);
     }
     stats.internal.is_autotopology = true;
     stats.internal.cluster_topology_checks = utils::statistics::Rate{
@@ -211,7 +212,7 @@ void SentinelTopologyHolder::GetStatistics(SentinelStatistics& stats, const Metr
     };
 
     auto topology = GetTopology();
-    topology->GetStatistics(settings, stats);
+    statistics_holder_.GetStatistics(stats, *topology);
 }
 
 void SentinelTopologyHolder::SetCommandsBufferingSettings(CommandsBufferingSettings settings) {
@@ -297,6 +298,7 @@ std::shared_ptr<RedisConnectionHolder> SentinelTopologyHolder::CreateRedisInstan
         buffering_settings_ptr->value_or(CommandsBufferingSettings{}),
         *replication_monitoring_settings_ptr,
         *retry_budget_settings_ptr,
+        statistics_holder_.MakeInstanceStats(),
         creation_settings
     );
 }

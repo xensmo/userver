@@ -29,6 +29,12 @@ NYdb::NTable::TTxSettings PrepareTxSettings(const OperationSettings& settings) {
         case TransactionMode::kStaleRO: {
             return NYdb::NTable::TTxSettings::StaleRO();
         }
+        case TransactionMode::kSnapshotRO: {
+            return NYdb::NTable::TTxSettings::SnapshotRO();
+        }
+        case TransactionMode::kSnapshotRW: {
+            return NYdb::NTable::TTxSettings::SnapshotRW();
+        }
     }
 }
 
@@ -42,6 +48,12 @@ NYdb::NQuery::TTxSettings PrepareQueryTxSettings(const OperationSettings& settin
         }
         case TransactionMode::kStaleRO: {
             return NYdb::NQuery::TTxSettings::StaleRO();
+        }
+        case TransactionMode::kSnapshotRO: {
+            return NYdb::NQuery::TTxSettings::SnapshotRO();
+        }
+        case TransactionMode::kSnapshotRW: {
+            return NYdb::NQuery::TTxSettings::SnapshotRW();
         }
     }
 }

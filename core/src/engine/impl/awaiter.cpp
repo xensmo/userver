@@ -7,29 +7,19 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
-namespace {
-
-PolymorphicAwaiter* CastToPolymorphic(Awaiter* awaiter) {
-    UASSERT_MSG(awaiter->GetStaticType() == Awaiter::StaticType::kPolymorphic, "Unexpected awaiter type");
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    return static_cast<PolymorphicAwaiter*>(awaiter);
-}
-
-}  // namespace
-
 Awaiter::Awaiter(StaticType type, InitialRefCounter initial_ref_counter)
     : intrusive_refcount_(initial_ref_counter),
       type_(type)
 {}
 
-void Awaiter::Notify(std::uintptr_t context) {
-    if (GetStaticType() == StaticType::kTaskContext) {
+void Awaiter::Notify(std::uintptr_t context) noexcept {
+    if (type_ == StaticType::kTaskContext) {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
         static_cast<TaskContext*>(this)->Wakeup(TaskContext::WakeupSource::kNotify, static_cast<Epoch>(context));
         return;
     }
 
-    CastToPolymorphic(this)->DoNotify(context);
+    CastToPolymorphic().DoNotify(context);
 }
 
 std::size_t Awaiter::UseCount() const noexcept {
@@ -38,7 +28,11 @@ std::size_t Awaiter::UseCount() const noexcept {
     return intrusive_refcount_.load(std::memory_order_seq_cst);
 }
 
-Awaiter::StaticType Awaiter::GetStaticType() const noexcept { return type_; }
+PolymorphicAwaiter& Awaiter::CastToPolymorphic() noexcept {
+    UASSERT_MSG(type_ == StaticType::kPolymorphic, "Unexpected awaiter type");
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    return static_cast<PolymorphicAwaiter&>(*this);
+}
 
 void intrusive_ptr_add_ref(Awaiter* awaiter) noexcept {
     UASSERT(awaiter);
@@ -57,13 +51,13 @@ void intrusive_ptr_release(Awaiter* awaiter) noexcept {
         return;
     }
 
-    if (awaiter->GetStaticType() == Awaiter::StaticType::kTaskContext) {
+    if (awaiter->type_ == Awaiter::StaticType::kTaskContext) {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
         static_cast<TaskContext*>(awaiter)->Destroy();
         return;
     }
 
-    CastToPolymorphic(awaiter)->Destroy();
+    awaiter->CastToPolymorphic().Destroy();
 }
 
 PolymorphicAwaiter::PolymorphicAwaiter()

@@ -13,27 +13,27 @@ ValidatorError::ValidatorError(std::string_view call_name)
 MessageError::MessageError(
     std::string_view call_name,
     std::string_view additional_info,
-    buf::validate::ValidationResult error_info
+    buf::validate::ValidationResult result
 )
     : BaseError(call_name, additional_info),
-      error_info_(std::move(error_info))
+      error_info_(std::move(result))
 {}
 
 const buf::validate::ValidationResult& MessageError::GetErrorInfo() const { return error_info_; }
 
-ResponseError::ResponseError(std::string_view call_name, buf::validate::ValidationResult error_info)
+ResponseError::ResponseError(std::string_view call_name, buf::validate::ValidationResult result)
     : MessageError(
           call_name,
-          fmt::format("response violates constraints (count={})", error_info.violations_size()),
-          std::move(error_info)
+          fmt::format("response violates constraints (count={})", result.violations_size()),
+          std::move(result)
       )
 {}
 
-RequestError::RequestError(std::string_view call_name, buf::validate::ValidationResult error_info)
+RequestError::RequestError(std::string_view call_name, buf::validate::ValidationResult result)
     : MessageError(
           call_name,
-          fmt::format("request violates constraints (count={})", error_info.violations_size()),
-          std::move(error_info)
+          fmt::format("request violates constraints (count={})", result.violations_size()),
+          std::move(result)
       )
 {}
 

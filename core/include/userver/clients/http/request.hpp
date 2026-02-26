@@ -34,6 +34,7 @@ namespace clients::http {
 
 class RequestState;
 class StreamedResponse;
+class WebSocketResponse;
 class ConnectTo;
 class Form;
 struct DeadlinePropagationConfig;
@@ -410,6 +411,10 @@ public:
     /// previous request either timed out or was canceled.
     /// Future versions might entirely forbid Request objects reuse.
     [[nodiscard]] std::shared_ptr<Response> perform(
+        utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
+    );
+
+    [[nodiscard]] WebSocketResponse PerformWebSocketHandshake(
         utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
     );
 

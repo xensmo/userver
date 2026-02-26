@@ -12,6 +12,11 @@ namespace engine::impl {
 
 class Awaiter;
 
+struct alignas(sizeof(std::uintptr_t) * 2) AwaiterWithContext final {
+    Awaiter* awaiter{nullptr};
+    std::uintptr_t context{0};
+};
+
 /// Wait list for a single entry. All functions are thread-safe.
 class WaitListLight final {
 public:

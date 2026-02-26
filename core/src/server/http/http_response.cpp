@@ -196,7 +196,7 @@ void HttpResponse::SetContentEncoding(std::string encoding) {
     SetHeader(USERVER_NAMESPACE::http::headers::kContentEncoding, std::move(encoding));
 }
 
-bool HttpResponse::SetStatus(HttpStatus status) {
+bool HttpResponse::SetStatus(HttpStatus status) noexcept {
     if (headers_end_.IsReady()) {
         // Attempt to set headers for Stream'ed response after it is already set
         return false;
@@ -451,6 +451,7 @@ void SetThrottleReason(http::HttpResponse& http_response, std::string log_reason
 void HttpResponse::SetStreamBody() {
     UASSERT(body_stream_producer_.index() == 0);
     if (GetStreamId().has_value()) {
+        UINVARIANT(false, "Streaming in HTTP/2.0 is not supported currently.");
         body_stream_producer_.emplace<impl::Http2StreamEventProducer>(GetStreamProducer());
     } else {
         UASSERT(!body_stream_);

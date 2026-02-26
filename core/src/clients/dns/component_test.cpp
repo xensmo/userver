@@ -6,7 +6,6 @@
 #include <userver/components/statistics_storage.hpp>
 #include <userver/logging/component.hpp>
 #include <userver/os_signals/component.hpp>
-#include <userver/tracing/component.hpp>
 
 #include <components/component_list_test.hpp>
 
@@ -50,7 +49,6 @@ TEST_F(DnsClient, InvalidComponentConfig) {
         components::ComponentList()
             .Append<clients::dns::Component>()
             .Append<components::Logging>()
-            .Append<components::Tracer>()
             .Append<components::StatisticsStorage>()
             .Append<os_signals::ProcessorComponent>();
     UEXPECT_THROW_MSG(

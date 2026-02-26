@@ -100,7 +100,9 @@ TEST_P(DurationToJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
     auto input = PrepareTestData(param.input);
-    formats::json::Value json, expected_json, sample_json;
+    formats::json::Value json;
+    formats::json::Value expected_json;
+    formats::json::Value sample_json;
 
     UASSERT_NO_THROW((json = MessageToJson(input, param.options)));
     UASSERT_NO_THROW((expected_json = PrepareJsonTestData(param.expected_json)));
@@ -121,7 +123,8 @@ TEST_P(DurationToJsonFailureTest, Test) {
 TEST(DurationToJsonAdditionalTest, InlinedNonNull) {
     DurationMessageData data{123, 321};
     auto message = PrepareTestData(data);
-    formats::json::Value json, sample;
+    formats::json::Value json;
+    formats::json::Value sample;
 
     UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -132,7 +135,8 @@ TEST(DurationToJsonAdditionalTest, InlinedNonNull) {
 
 TEST(DurationToJsonAdditionalTest, InlinedNull) {
     proto_json::messages::DurationMessage message;
-    formats::json::Value json, sample;
+    formats::json::Value json;
+    formats::json::Value sample;
 
     UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));

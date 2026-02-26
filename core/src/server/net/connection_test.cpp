@@ -1,4 +1,4 @@
-#include <server/net/connection.hpp>
+#include <server/net/http1_connection.hpp>
 #include <server/net/http2_connection.hpp>
 
 #include <type_traits>
@@ -113,7 +113,7 @@ USERVER_NAMESPACE::http::HttpVersion HttpVersion() {
 template <typename T>
 class ServerNetConnection : public ::testing::Test {};
 
-using ConnectionTypes = ::testing::Types<net::Connection, net::Http2Connection>;
+using ConnectionTypes = ::testing::Types<net::Http1Connection, net::Http2Connection>;
 
 }  // namespace
 
@@ -130,7 +130,7 @@ TYPED_UTEST(ServerNetConnection, EarlyCancel) {
 
     auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
-    auto stats = std::make_shared<net::Stats>();
+    net::Stats stats{};
     server::request::ResponseDataAccounter data_accounter;
     TestHttprequestHandler handler;
 
@@ -170,7 +170,7 @@ TYPED_UTEST(ServerNetConnection, EarlyTimeout) {
 
     engine::io::Socket peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
-    auto stats = std::make_shared<net::Stats>();
+    net::Stats stats{};
     server::request::ResponseDataAccounter data_accounter;
     TestHttprequestHandler handler;
 
@@ -204,7 +204,7 @@ TYPED_UTEST(ServerNetConnection, TimeoutWithTaskCancellation) {
 
     engine::io::Socket peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
-    auto stats = std::make_shared<net::Stats>();
+    net::Stats stats{};
     server::request::ResponseDataAccounter data_accounter;
     TestHttprequestHandler handler{TestHttprequestHandler::Behaviors::kHang};
 
@@ -258,7 +258,7 @@ TYPED_UTEST(ServerNetConnection, RemoteClosed) {
 
     auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
-    auto stats = std::make_shared<net::Stats>();
+    net::Stats stats{};
     server::request::ResponseDataAccounter data_accounter;
     TestHttprequestHandler handler;
 
@@ -295,7 +295,7 @@ TYPED_UTEST(ServerNetConnection, KeepAlive) {
 
     auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
-    auto stats = std::make_shared<net::Stats>();
+    net::Stats stats{};
     server::request::ResponseDataAccounter data_accounter;
     TestHttprequestHandler handler;
 
@@ -336,7 +336,7 @@ TYPED_UTEST(ServerNetConnection, CancelMultipleInFlight) {
 
         auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
         ASSERT_TRUE(peer.IsValid());
-        auto stats = std::make_shared<net::Stats>();
+        net::Stats stats{};
         server::request::ResponseDataAccounter data_accounter;
         TestHttprequestHandler handler;
 
@@ -374,6 +374,44 @@ TYPED_UTEST(ServerNetConnection, CancelMultipleInFlight) {
 
     // Note: comment out the next line in case of flaps
     FAIL() << "Failed to simulate cancellation of multiple requests";
+}
+
+UTEST(HTTP2Connection, ThrowHttp1IsNotSupported) {
+    using ConnectionType = server::net::Http2Connection;
+    const auto http_ver = USERVER_NAMESPACE::http::HttpVersion::k2;
+    net::ListenerConfig config = CreateConfig(http_ver);
+    auto request_socket = net::CreateSocket(config, config.ports[0]);
+
+    auto http_client_ptr = utest::impl::CreateHttpClientCore();
+    http_client_ptr->SetMaxHostConnections(1);
+
+    [[maybe_unused]] auto request = CreateRequest(
+        *http_client_ptr,
+        request_socket,
+        USERVER_NAMESPACE::http::HttpVersion::k11,
+        ConnectionHeader::kKeepAlive
+    );
+
+    auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
+    ASSERT_TRUE(peer.IsValid());
+    net::Stats stats{};
+    server::request::ResponseDataAccounter data_accounter;
+    TestHttprequestHandler handler;
+
+    auto task = engine::AsyncNoSpan([&] {
+        ConnectionType connection(
+            config.connection_config,
+            config.handler_defaults,
+            std::make_unique<engine::io::Socket>(std::move(peer)),
+            {},
+            handler,
+            stats,
+            data_accounter
+        );
+
+        UASSERT_THROW(connection.Process(), server::net::Http1IsNotSupported);
+    });
+    task.Get();
 }
 
 USERVER_NAMESPACE_END

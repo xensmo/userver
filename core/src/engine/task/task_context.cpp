@@ -403,7 +403,7 @@ void TaskContext::ArmCancellationTimer() {
     }
 }
 
-bool TaskContext::ShouldSchedule(SleepState::Flags prev_flags, WakeupSource source) {
+bool TaskContext::ShouldSchedule(SleepState::Flags prev_flags, WakeupSource source) noexcept {
     /* ShouldSchedule() returns true only for the first Wakeup().  All Wakeup()s
      * are serialized due to seq_cst in FetchOr().
      */
@@ -442,7 +442,7 @@ Epoch TaskContext::GetEpoch() const noexcept { return sleep_state_.Load<std::mem
 
 std::uintptr_t TaskContext::GetAwaiterContext() const noexcept { return static_cast<std::uintptr_t>(GetEpoch()); }
 
-void TaskContext::Wakeup(WakeupSource source, Epoch epoch) {
+void TaskContext::Wakeup(WakeupSource source, Epoch epoch) noexcept {
     if (IsFinished()) {
         return;
     }
@@ -486,7 +486,7 @@ void TaskContext::Wakeup(WakeupSource source, Epoch epoch) {
     }
 }
 
-void TaskContext::Wakeup(WakeupSource source, NoEpoch) {
+void TaskContext::Wakeup(WakeupSource source, NoEpoch) noexcept {
     UASSERT(source != WakeupSource::kDeadlineTimer);
     UASSERT(source != WakeupSource::kBootstrap);
     UASSERT(source != WakeupSource::kCancelRequest);
@@ -504,7 +504,7 @@ void TaskContext::Wakeup(WakeupSource source, NoEpoch) {
     }
 }
 
-void TaskContext::Wakeup(WakeupSource source, std::uintptr_t context) {
+void TaskContext::Wakeup(WakeupSource source, std::uintptr_t context) noexcept {
     UASSERT(context <= std::numeric_limits<std::uint32_t>::max());
     Wakeup(source, static_cast<Epoch>(context));
 }
@@ -623,8 +623,6 @@ void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexce
     finish_awaiters_->Remove(awaiter, context);
 }
 
-void TaskContext::AfterWait() noexcept {}
-
 void TaskContext::RethrowErrorResult() const {
     UASSERT(IsFinished());
     if (state_.load(std::memory_order_relaxed) != Task::State::kCompleted) {
@@ -658,17 +656,24 @@ TaskContext::WakeupSource TaskContext::GetPrimaryWakeupSource(SleepState::Flags 
 
 bool TaskContext::WasStartedAsCritical() const { return is_critical_; }
 
-void TaskContext::SetState(Task::State new_state) {
+void TaskContext::SetState(Task::State new_state) noexcept {
     // 'release', because if someone detects kCompleted or kCancelled by running
     // in a loop, they should acquire the task's results.
     state_.store(new_state, std::memory_order_release);
 }
 
-void TaskContext::Schedule() {
+void TaskContext::Schedule() noexcept {
     UASSERT(state_ != Task::State::kQueued);
     SetState(Task::State::kQueued);
     TraceStateTransition(Task::State::kQueued);
-    task_processor_.Schedule(this);
+    try {
+        task_processor_.Schedule(this);
+    } catch (...) {
+        // We cannot just refuse to run the task because of the lifetime guarantees for tasks and their data.
+        utils::AbortWithStacktrace(
+            "Unexpected exception from Schedule: " + boost::current_exception_diagnostic_information()
+        );
+    }
     // NOTE: may be executed at this point
 }
 
@@ -708,7 +713,7 @@ void TaskContext::ProfilerStopExecution() noexcept {
     }
 }
 
-void TaskContext::TraceStateTransition(Task::State state) {
+void TaskContext::TraceStateTransition(Task::State state) noexcept {
     if (trace_csw_left_ == 0) {
         return;
     }

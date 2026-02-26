@@ -12,8 +12,8 @@
 #include <userver/tracing/in_place_span.hpp>
 
 #include <userver/ugrpc/client/fwd.hpp>
+#include <userver/ugrpc/client/impl/method_stubs.hpp>
 #include <userver/ugrpc/client/impl/middleware_pipeline.hpp>
-#include <userver/ugrpc/client/impl/stub_handle.hpp>
 #include <userver/ugrpc/impl/async_method_invocation.hpp>
 #include <userver/ugrpc/impl/maybe_owned_string.hpp>
 #include <userver/ugrpc/impl/statistics_scope.hpp>
@@ -44,7 +44,7 @@ public:
     CallState(CallState&&) noexcept = delete;
     CallState& operator=(CallState&&) noexcept = delete;
 
-    StubAny& GetStub() noexcept;
+    ugrpc::impl::StubAny& GetStub() const noexcept;
 
     void SetClientContext(std::unique_ptr<grpc::ClientContext> client_context) noexcept;
 
@@ -83,7 +83,7 @@ public:
     void ResetSpan() noexcept;
 
 private:
-    StubHandle stub_;
+    MethodStubs method_stubs_;
 
     std::unique_ptr<grpc::ClientContext> client_context_;
 

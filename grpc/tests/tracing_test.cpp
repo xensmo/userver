@@ -16,7 +16,7 @@ USERVER_NAMESPACE_BEGIN
 namespace {
 
 template <typename MetadataMap>
-grpc::string GetMetadata(const MetadataMap& metadata, const grpc::string& key) {
+grpc::string GetMetadataValue(const MetadataMap& metadata, const grpc::string& key) {
     return ugrpc::impl::ToGrpcString(utils::FindOrDefault(metadata, key));
 }
 
@@ -66,9 +66,9 @@ private:
         context.AddInitialMetadata(kServerParentSpanId, ugrpc::impl::ToGrpcString(span.GetParentId()));
         context.AddInitialMetadata(kServerParentLink, ugrpc::impl::ToGrpcString(span.GetParentLink()));
 
-        context.AddInitialMetadata(kClientTraceIdEcho, GetMetadata(client_meta, ugrpc::impl::kXYaTraceId));
-        context.AddInitialMetadata(kClientSpanIdEcho, GetMetadata(client_meta, ugrpc::impl::kXYaSpanId));
-        context.AddInitialMetadata(kClientLinkEcho, GetMetadata(client_meta, ugrpc::impl::kXYaRequestId));
+        context.AddInitialMetadata(kClientTraceIdEcho, GetMetadataValue(client_meta, ugrpc::impl::kXYaTraceId));
+        context.AddInitialMetadata(kClientSpanIdEcho, GetMetadataValue(client_meta, ugrpc::impl::kXYaSpanId));
+        context.AddInitialMetadata(kClientLinkEcho, GetMetadataValue(client_meta, ugrpc::impl::kXYaRequestId));
     }
 };
 
@@ -76,7 +76,6 @@ class GrpcTracing
     : public ugrpc::tests::ServiceWithClientFixture<
           UnitTestServiceWithTracingChecks,
           sample::ugrpc::UnitTestServiceClient> {
-private:
     logging::DefaultLoggerLevelScope log_level_scope_{logging::Level::kInfo};
 };
 
@@ -93,16 +92,16 @@ void CheckMetadata(const grpc::ClientContext& client_context) {
     // - client uses a detached sub-Span for the RPC
 
     // the checks below follow EXPECT_EQ(cause, effect) order
-    EXPECT_EQ(span.GetTraceId(), GetMetadata(metadata, kClientTraceIdEcho));
-    EXPECT_EQ(GetMetadata(metadata, kClientTraceIdEcho), GetMetadata(metadata, kServerTraceId));
+    EXPECT_EQ(span.GetTraceId(), GetMetadataValue(metadata, kClientTraceIdEcho));
+    EXPECT_EQ(GetMetadataValue(metadata, kClientTraceIdEcho), GetMetadataValue(metadata, kServerTraceId));
 
-    EXPECT_NE(span.GetSpanId(), GetMetadata(metadata, kClientSpanIdEcho));
-    EXPECT_EQ(GetMetadata(metadata, kClientSpanIdEcho), GetMetadata(metadata, kServerParentSpanId));
-    EXPECT_NE(GetMetadata(metadata, kServerParentSpanId), GetMetadata(metadata, kServerSpanId));
+    EXPECT_NE(span.GetSpanId(), GetMetadataValue(metadata, kClientSpanIdEcho));
+    EXPECT_EQ(GetMetadataValue(metadata, kClientSpanIdEcho), GetMetadataValue(metadata, kServerParentSpanId));
+    EXPECT_NE(GetMetadataValue(metadata, kServerParentSpanId), GetMetadataValue(metadata, kServerSpanId));
 
-    EXPECT_EQ(span.GetLink(), GetMetadata(metadata, kClientLinkEcho));
-    EXPECT_EQ(GetMetadata(metadata, kClientLinkEcho), GetMetadata(metadata, kServerParentLink));
-    EXPECT_NE(GetMetadata(metadata, kServerParentLink), GetMetadata(metadata, kServerLink));
+    EXPECT_EQ(span.GetLink(), GetMetadataValue(metadata, kClientLinkEcho));
+    EXPECT_EQ(GetMetadataValue(metadata, kClientLinkEcho), GetMetadataValue(metadata, kServerParentLink));
+    EXPECT_NE(GetMetadataValue(metadata, kServerParentLink), GetMetadataValue(metadata, kServerLink));
 }
 
 }  // namespace
@@ -150,11 +149,11 @@ UTEST_F(GrpcTracing, SpansInDifferentRPCs) {
     future2.Get();
     const auto& metadata2 = future2.GetContext().GetClientContext().GetServerInitialMetadata();
 
-    EXPECT_EQ(GetMetadata(metadata1, kServerTraceId), GetMetadata(metadata2, kServerTraceId));
-    EXPECT_NE(GetMetadata(metadata1, kServerSpanId), GetMetadata(metadata2, kServerSpanId));
-    EXPECT_NE(GetMetadata(metadata1, kServerParentSpanId), GetMetadata(metadata2, kServerParentSpanId));
-    EXPECT_NE(GetMetadata(metadata1, kServerLink), GetMetadata(metadata2, kServerLink));
-    EXPECT_EQ(GetMetadata(metadata1, kServerParentLink), GetMetadata(metadata2, kServerParentLink));
+    EXPECT_EQ(GetMetadataValue(metadata1, kServerTraceId), GetMetadataValue(metadata2, kServerTraceId));
+    EXPECT_NE(GetMetadataValue(metadata1, kServerSpanId), GetMetadataValue(metadata2, kServerSpanId));
+    EXPECT_NE(GetMetadataValue(metadata1, kServerParentSpanId), GetMetadataValue(metadata2, kServerParentSpanId));
+    EXPECT_NE(GetMetadataValue(metadata1, kServerLink), GetMetadataValue(metadata2, kServerLink));
+    EXPECT_EQ(GetMetadataValue(metadata1, kServerParentLink), GetMetadataValue(metadata2, kServerParentLink));
 }
 
 USERVER_NAMESPACE_END

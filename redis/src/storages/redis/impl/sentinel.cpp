@@ -299,7 +299,7 @@ std::unique_ptr<SentinelStatistics> Sentinel::GetStatistics(const MetricsSetting
 }
 
 void Sentinel::SetCommandsBufferingSettings(CommandsBufferingSettings commands_buffering_settings) {
-    return impl_->SetCommandsBufferingSettings(commands_buffering_settings);
+    impl_->SetCommandsBufferingSettings(commands_buffering_settings);
 }
 
 void Sentinel::SetReplicationMonitoringSettings(const ReplicationMonitoringSettings& replication_monitoring_settings) {

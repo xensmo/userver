@@ -49,7 +49,8 @@ public:
     ClusterShard& operator=(ClusterShard&& other) noexcept;
     bool IsReady(WaitConnectedMode mode) const;
     bool AsyncCommand(CommandPtr command) const;
-    void GetStatistics(bool master, const MetricsSettings& settings, ShardStatistics& stats) const;
+    void GetConnStats(bool master, ConnStateStatistic& stats) const;
+    void GetCommandsCounter(bool master, size_t& stats) const;
     const std::optional<std::string>& GetName() const { return shard_name_; }
 
     ServersWeighted GetAvailableServersWeighted(bool with_master, const CommandControl& command_control) const;

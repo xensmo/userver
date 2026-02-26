@@ -189,7 +189,9 @@ TEST_P(AnyToJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
     auto input = PrepareTestData(param.input);
-    formats::json::Value json, expected_json, sample_json;
+    formats::json::Value json;
+    formats::json::Value expected_json;
+    formats::json::Value sample_json;
 
     UASSERT_NO_THROW((json = MessageToJson(input, param.options)));
     UASSERT_NO_THROW((expected_json = PrepareJsonTestData(param.expected_json)));
@@ -216,7 +218,8 @@ TEST_P(AnyToJsonFailureTest, Test) {
 TEST(AnyToJsonAdditionalTest, InlinedNonNull) {
     AnyMessageData data{Int32MessageData{1, 2, 3}};
     auto message = PrepareTestData(data);
-    formats::json::Value json, sample;
+    formats::json::Value json;
+    formats::json::Value sample;
 
     UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -230,7 +233,8 @@ TEST(AnyToJsonAdditionalTest, InlinedNonNull) {
 
 TEST(AnyToJsonAdditionalTest, InlinedNull) {
     proto_json::messages::AnyMessage message;
-    formats::json::Value json, sample;
+    formats::json::Value json;
+    formats::json::Value sample;
 
     UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
     UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));

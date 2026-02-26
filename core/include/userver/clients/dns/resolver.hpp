@@ -64,7 +64,7 @@ public:
     /// Removes the specified domain name from the network results cache.
     void FlushNetworkCache(const std::string& name);
 
-    void WriteMetrics(utils::statistics::Writer& writer);
+    void WriteMetrics(utils::statistics::Writer& writer) const;
 
 private:
     class Impl;

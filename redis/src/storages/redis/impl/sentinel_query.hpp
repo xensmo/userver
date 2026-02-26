@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <set>
 
 #include <userver/storages/redis/base.hpp>
 #include <userver/utils/assert.hpp>

@@ -102,7 +102,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(DurationFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::DurationMessage message, expected_message, sample_message;
+    proto_json::messages::DurationMessage message;
+    proto_json::messages::DurationMessage expected_message;
+    proto_json::messages::DurationMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 
@@ -137,7 +139,8 @@ TEST(DurationFromJsonAdditionalTest, InlinedNonNull) {
 
     const char* json_str = "\"123.987654321s\"";
     const auto json = formats::json::FromString(json_str);
-    Message message, sample;
+    Message message;
+    Message sample;
 
     message.set_seconds(100001);
 
@@ -153,7 +156,8 @@ TEST(DurationFromJsonAdditionalTest, InlinedNull) {
     using Message = ::google::protobuf::Duration;
 
     const auto json = formats::json::FromString("null");
-    Message message, sample;
+    Message message;
+    Message sample;
 
     message.set_seconds(100001);
 

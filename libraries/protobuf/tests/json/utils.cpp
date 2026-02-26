@@ -87,7 +87,7 @@ void InitSampleMessage(const std::string& json, ::google::protobuf::Message& mes
     struct Visitor {
         ::google::protobuf::Value result;
 
-        ::google::protobuf::Value operator()(std::monostate) { return result; }
+        ::google::protobuf::Value operator()(std::monostate) const { return result; }
 
         ::google::protobuf::Value operator()(ProtoNullValue) {
             result.set_null_value(::google::protobuf::NULL_VALUE);
@@ -356,7 +356,8 @@ proto_json::messages::FieldMaskMessage PrepareTestData(const FieldMaskMessageDat
 }
 
 void CheckMessageEqual(const ::google::protobuf::FieldMask& lhs, const ::google::protobuf::FieldMask& rhs) {
-    std::vector<std::string> mask_lhs, mask_rhs;
+    std::vector<std::string> mask_lhs;
+    std::vector<std::string> mask_rhs;
 
     for (const auto& path : lhs.paths()) {
         mask_lhs.push_back(path);
@@ -510,7 +511,8 @@ void CheckAnyPayloadEqual(const ::google::protobuf::Any& lhs, const ::google::pr
     ASSERT_TRUE(lhs.Is<T>());
     ASSERT_TRUE(rhs.Is<T>());
 
-    T lhs_payload, rhs_payload;
+    T lhs_payload;
+    T rhs_payload;
 
     ASSERT_TRUE(lhs.UnpackTo(&lhs_payload));
     ASSERT_TRUE(rhs.UnpackTo(&rhs_payload));

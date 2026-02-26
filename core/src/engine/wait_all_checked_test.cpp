@@ -41,7 +41,11 @@ engine::TaskWithResult<int> FastSuccessfulTask(int i) {
 }  // namespace
 
 UTEST(WaitAllChecked, JustWorksVectorTasks) {
+    static constexpr std::size_t kTaskCount = 4;
+
     std::vector<engine::TaskWithResult<void>> tasks;
+    tasks.reserve(kTaskCount);
+
     for (std::size_t i = 0; i < 4; ++i) {
         tasks.push_back(FastSuccessfulTask());
     }
@@ -55,8 +59,12 @@ UTEST(WaitAllChecked, JustWorksVectorTasks) {
 }
 
 UTEST(WaitAllChecked, JustWorksVariadicTasks) {
+    static constexpr std::size_t kTaskCount = 3;
+
     std::vector<engine::TaskWithResult<void>> tasks;
-    for (std::size_t i = 0; i < 3; ++i) {
+    tasks.reserve(kTaskCount);
+
+    for (std::size_t i = 0; i < kTaskCount; ++i) {
         tasks.push_back(FastSuccessfulTask());
     }
 
@@ -70,7 +78,9 @@ UTEST(WaitAllChecked, JustWorksVariadicTasks) {
 
 UTEST_MT(WaitAllChecked, EarlyThrow, 4) {
     std::vector<engine::TaskWithResult<void>> tasks;
-    for (std::size_t i = 0; i < 4; ++i) {
+    tasks.reserve(GetThreadCount() + 1);
+
+    for (std::size_t i = 0; i < GetThreadCount(); ++i) {
         tasks.push_back(SlowSuccessfulTask());
     }
     tasks.push_back(FastFailingTask());

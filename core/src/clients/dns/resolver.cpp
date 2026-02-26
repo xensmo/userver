@@ -465,8 +465,7 @@ void Resolver::FlushNetworkCache() { impl_->FlushNetworkCache(); }
 
 void Resolver::FlushNetworkCache(const std::string& name) { impl_->FlushNetworkCache(name); }
 
-void Resolver::WriteMetrics(utils::statistics::Writer& writer)
-{
+void Resolver::WriteMetrics(utils::statistics::Writer& writer) const {
     const auto& counters = GetLookupSourceCounters();
     writer.ValueWithLabels(counters.file, {kDnsReplySource, "file"});
     writer.ValueWithLabels(counters.cached, {kDnsReplySource, "cached"});

@@ -6,6 +6,8 @@ import pathlib
 import re
 from typing import NoReturn
 
+import transliterate
+
 from chaotic import cpp_names
 from chaotic import error
 from chaotic.back.cpp import type_name
@@ -492,7 +494,12 @@ class Generator:
 
     @staticmethod
     def _normalize_name(name: str) -> str:
-        return re.sub(NON_NAME_SYMBOL_RE, '_', name)
+        if re.search(NON_NAME_SYMBOL_RE, name):
+            lang = transliterate.detect_language(name, heavy_check=True)
+            if lang:
+                name = transliterate.translit(name, lang, reversed=True)
+            name = re.sub(NON_NAME_SYMBOL_RE, '_', name)
+        return name
 
     def _gen_field(
         self,

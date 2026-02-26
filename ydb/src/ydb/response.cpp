@@ -96,6 +96,13 @@ Row Cursor::GetFirstRow() {
     return *b;
 }
 
+Row Cursor::GetSingleRow() && {
+    if (size() > 1) {
+        throw IgnoreResultsError(fmt::format("There are {} results, but expected single", size()));
+    }
+    return GetFirstRow();
+}
+
 bool Cursor::empty() const { return size() == 0; }
 
 std::size_t Cursor::size() const { return RowsCount(); }

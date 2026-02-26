@@ -49,7 +49,9 @@ TEST_P(NullValueFromJsonSuccessTest, Test) {
     using Message = proto_json::messages::NullValueMessage;
     const auto& param = GetParam();
 
-    Message message, expected_message, sample_message;
+    Message message;
+    Message expected_message;
+    Message sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 

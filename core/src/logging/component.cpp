@@ -161,7 +161,7 @@ void Logging::Init(const ComponentConfig& config, const ComponentContext& contex
             context.Scopes(),
             statistics_storage->GetStorage(),
             "logger",
-            [this](utils::statistics::Writer& writer) { return WriteStatistics(writer); }
+            [this](utils::statistics::Writer& writer) { WriteStatistics(writer); }
         );
     }
 }

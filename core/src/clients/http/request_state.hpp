@@ -43,6 +43,7 @@ namespace clients::http {
 constexpr std::string_view kHeaderExpect = "Expect";
 
 class StreamedResponse;
+class WebSocketResponse;
 class ConnectTo;
 
 class RequestState : public std::enable_shared_from_this<RequestState> {
@@ -66,6 +67,10 @@ public:
     /// Perform streaming http request, returns headers future
     engine::Future<void> async_perform_stream(
         const std::shared_ptr<Queue>& queue,
+        utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
+    );
+
+    engine::Future<WebSocketResponse> async_perform_websocket_handshake(
         utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
     );
 
@@ -275,7 +280,11 @@ private:
         engine::Promise<std::shared_ptr<Response>> promise;
     };
 
-    std::variant<FullBufferedData, StreamData> data_;
+    struct WebSocketHandshakeData {
+        engine::Promise<WebSocketResponse> promise;
+    };
+
+    std::variant<FullBufferedData, StreamData, WebSocketHandshakeData> data_;
 
     engine::SingleConsumerEvent request_completed_{engine::SingleConsumerEvent::NoAutoReset{}};
 };

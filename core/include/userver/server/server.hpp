@@ -69,7 +69,7 @@ public:
 
     std::uint64_t GetTotalRequests() const override;
 
-    void WriteMetrics(utils::statistics::Writer& writer);
+    void WriteMetrics(utils::statistics::Writer& writer) const;
 
 private:
     std::unique_ptr<ServerImpl> pimpl_;

@@ -6,7 +6,7 @@
 
 #include <userver/components/component_context.hpp>
 #include <userver/logging/log.hpp>
-#include <userver/tracing/tracer.hpp>
+#include <userver/tracing/span.hpp>
 #include <userver/utils/string_literal.hpp>
 
 USERVER_NAMESPACE_BEGIN

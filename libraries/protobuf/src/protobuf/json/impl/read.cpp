@@ -535,7 +535,7 @@ template <typename T, typename TString>
 template <typename T>
 [[nodiscard]] T ReadNumber(const formats::json::Value& value) {
     ParseErrorCode error_code = ParseErrorCode::kInvalidType;
-    std::string_view error_description = "";
+    std::string_view error_description{};
 
     if (value.IsNumber()) {
         error_code = ParseErrorCode::kInvalidValue;
@@ -937,7 +937,7 @@ void ReadGeneralMessage(
     ::google::protobuf::Message& message,
     const ParseOptions& options
 ) {
-    return ReadGeneralMessageImpl(json, message, options);
+    ReadGeneralMessageImpl(json, message, options);
 }
 
 void ReadAnyMessage(

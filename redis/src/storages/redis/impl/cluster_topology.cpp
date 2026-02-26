@@ -135,23 +135,6 @@ bool ClusterTopology::HasSameInfos(const ClusterShardHostInfos& infos) const {
     return true;
 }
 
-void ClusterTopology::GetStatistics(const MetricsSettings& settings, SentinelStatistics& stats) const {
-    size_t shard_index = 0;
-    for (const auto& shard : cluster_shards_) {
-        auto shard_name = shard.GetName().value_or(GetShardName(shard_index++));
-        auto master_it = stats.masters.emplace(shard_name, ShardStatistics(settings));
-        auto& master_stats = master_it.first->second;
-        shard.GetStatistics(true, settings, master_stats);
-
-        auto replica_it = stats.slaves.emplace(std::move(shard_name), ShardStatistics(settings));
-        auto& replica_stats = replica_it.first->second;
-        shard.GetStatistics(false, settings, replica_stats);
-
-        stats.shard_group_total.Add(master_stats.shard_total);
-        stats.shard_group_total.Add(replica_stats.shard_total);
-    }
-}
-
 std::unordered_map<ServerId, size_t, ServerIdHasher> ClusterTopology::GetAvailableServersWeighted(
     size_t shard_idx,
     bool with_master,

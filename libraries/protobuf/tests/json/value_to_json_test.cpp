@@ -176,7 +176,9 @@ TEST_P(ValueToJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
     auto input = PrepareTestData(param.input);
-    formats::json::Value json, expected_json, sample_json;
+    formats::json::Value json;
+    formats::json::Value expected_json;
+    formats::json::Value sample_json;
 
     UASSERT_NO_THROW((json = MessageToJson(input, param.options)));
     UASSERT_NO_THROW((expected_json = PrepareJsonTestData(param.expected_json)));
@@ -201,7 +203,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{kProtoNullValue};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -212,7 +215,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{1.5};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -224,7 +228,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{"hello"};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -236,7 +241,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{true};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -248,7 +254,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{std::vector<double>{}};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -260,7 +267,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{std::vector<double>{1.5, 0}};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -274,7 +282,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{std::map<std::string, std::string>{}};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));
@@ -286,7 +295,8 @@ TEST(ValueToJsonAdditionalTest, InlinedNonNull) {
     {
         ValueMessageData data{std::map<std::string, std::string>{{"aaa", "hello"}, {"bbb", "world"}}};
         auto message = PrepareTestData(data);
-        formats::json::Value json, sample;
+        formats::json::Value json;
+        formats::json::Value sample;
 
         UASSERT_NO_THROW((json = MessageToJson(message.field1(), {})));
         UASSERT_NO_THROW((sample = CreateSampleJson(message.field1())));

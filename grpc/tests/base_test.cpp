@@ -318,8 +318,9 @@ using GrpcClientMultichannelTest = tests::ServiceFixtureMultichannel<UnitTestSer
 UTEST_P_MT(GrpcClientMultichannelTest, MultiThreadedClientTest, 4) {
     auto client = MakeClient<sample::ugrpc::UnitTestServiceClient>();
     engine::SingleConsumerEvent request_finished;
-    std::vector<engine::TaskWithResult<void>> tasks;
     std::atomic<bool> keep_running{true};
+    std::vector<engine::TaskWithResult<void>> tasks;
+    tasks.reserve(GetThreadCount());
 
     for (std::size_t i = 0; i < GetThreadCount(); ++i) {
         tasks.push_back(engine::AsyncNoSpan([&] {

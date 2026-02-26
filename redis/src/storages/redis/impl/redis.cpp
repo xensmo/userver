@@ -121,10 +121,11 @@ public:
 
     static logging::Level StateChangeToLogLevel(State old_state, State new_state);
     State GetState() const;
+    const NonSharedInstanceStatistics& GetStatistics() const;
+
     const std::string& GetServer() const { return server_; }
     const std::string& GetHost() const { return host_; }
     uint16_t GetPort() const { return port_; }
-    const Statistics& GetStatistics() const { return statistics_; }
     ServerId GetServerId() const { return server_id_; }
     size_t GetRunningCommands() const;
     bool IsDestroying() const { return destroying_; }
@@ -257,6 +258,7 @@ private:
     logging::LogExtra log_extra_;
     bool watch_command_timer_started_ = false;
     Statistics& statistics_;
+    NonSharedInstanceStatistics non_shared_statistics_;
     ServerId server_id_;
     bool attached_ = false;
     std::shared_ptr<RedisImpl> self_;
@@ -310,8 +312,7 @@ void Redis::Connect(
 bool Redis::AsyncCommand(const CommandPtr& command) { return impl_->AsyncCommand(command); }
 
 Redis::State Redis::GetState() const { return impl_->GetState(); }
-
-const Statistics& Redis::GetStatistics() const { return impl_->GetStatistics(); }
+const NonSharedInstanceStatistics& Redis::GetStatistics() const { return impl_->GetStatistics(); }
 
 ServerId Redis::GetServerId() const { return impl_->GetServerId(); }
 
@@ -787,6 +788,8 @@ void Redis::RedisImpl::OnConnectTimeoutImpl() {
 
 Redis::State Redis::RedisImpl::GetState() const { return state_; }
 
+const NonSharedInstanceStatistics& Redis::RedisImpl::GetStatistics() const { return non_shared_statistics_; }
+
 size_t Redis::RedisImpl::GetRunningCommands() const { return sent_count_; }
 
 logging::Level Redis::RedisImpl::StateChangeToLogLevel(State /*old_state*/, State new_state) {
@@ -1209,6 +1212,7 @@ void Redis::RedisImpl::ProcessCommand(const CommandPtr& command) {
 
     bool multi = false;
     for (const auto& args : command->args) {
+        non_shared_statistics_.commands_count++;
         if (args.IsMultiCommand()) {
             multi = true;
         }

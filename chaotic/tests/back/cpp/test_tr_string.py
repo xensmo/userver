@@ -16,7 +16,7 @@ def test_simple(simple_gen, cpp_primitive_type):
 
 
 def test_enum(simple_gen):
-    types = simple_gen({'type': 'string', 'enum': ['foo', 'bar']})
+    types = simple_gen({'type': 'string', 'enum': ['foo', 'bar', 'Русский']})
     assert types == {
         '::type': cpp_types.CppStringEnum(
             raw_cpp_type=type_name.TypeName('::type'),
@@ -28,6 +28,7 @@ def test_enum(simple_gen):
             enums=[
                 cpp_types.CppStringEnumItem(raw_name='foo', cpp_name='kFoo'),
                 cpp_types.CppStringEnumItem(raw_name='bar', cpp_name='kBar'),
+                cpp_types.CppStringEnumItem(raw_name='Русский', cpp_name='kRusskij'),
             ],
         ),
     }

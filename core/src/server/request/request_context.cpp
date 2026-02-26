@@ -98,7 +98,7 @@ utils::AnyMovable& RequestContext::GetUserAnyData() { return impl_->GetUserAnyDa
 
 utils::AnyMovable* RequestContext::GetUserAnyDataOptional() { return impl_->GetUserAnyDataOptional(); }
 
-void RequestContext::EraseUserAnyData() { return impl_->EraseUserAnyData(); }
+void RequestContext::EraseUserAnyData() { impl_->EraseUserAnyData(); }
 
 utils::AnyMovable& RequestContext::SetAnyData(std::string&& name, utils::AnyMovable&& data) {
     return impl_->SetAnyData(std::move(name), std::move(data));
@@ -108,7 +108,7 @@ utils::AnyMovable& RequestContext::GetAnyData(std::string_view name) { return im
 
 utils::AnyMovable* RequestContext::GetAnyDataOptional(std::string_view name) { return impl_->GetAnyDataOptional(name); }
 
-void RequestContext::EraseAnyData(std::string_view name) { return impl_->EraseAnyData(name); }
+void RequestContext::EraseAnyData(std::string_view name) { impl_->EraseAnyData(name); }
 
 impl::InternalRequestContext& RequestContext::GetInternalContext() { return impl_->GetInternalContext(); }
 

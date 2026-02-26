@@ -92,7 +92,6 @@ using TimePoint = Clock::time_point;
 enum class Action { kStartTry, kStop };
 
 struct PlanEntry {
-public:
     PlanEntry(TimePoint timepoint, std::size_t request_index, std::size_t attempt_id, Action action)
         : timepoint(timepoint),
           request_index(request_index),
@@ -107,15 +106,14 @@ public:
     bool operator>=(const PlanEntry& other) const noexcept { return Tie() >= other.Tie(); }
     bool operator!=(const PlanEntry& other) const noexcept { return Tie() != other.Tie(); }
 
+    std::tuple<const TimePoint&, const size_t&, const size_t&, const Action&> Tie() const noexcept {
+        return std::tie(timepoint, request_index, attempt_id, action);
+    }
+
     TimePoint timepoint;
     std::size_t request_index{0};
     std::size_t attempt_id{0};
     Action action;
-
-private:
-    std::tuple<const TimePoint&, const size_t&, const size_t&, const Action&> Tie() const noexcept {
-        return std::tie(timepoint, request_index, attempt_id, action);
-    }
 };
 
 /// This wrapper allows us to cancel subrequests without removing elements

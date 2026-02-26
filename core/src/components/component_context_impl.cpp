@@ -228,7 +228,7 @@ void ComponentContextImpl::CancelComponentsLoad() {
     if (components_load_cancelled_.test_and_set()) {
         return;
     }
-    for (auto& component_info : components_) {
+    for (const auto& component_info : components_) {
         LOG_DEBUG() << "Call OnLoadingCancelled() for component '" << component_info->GetName() << "'";
         component_info->OnLoadingCancelled();
     }

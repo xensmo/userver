@@ -110,31 +110,13 @@ RedisPools Parse(const yaml_config::YamlConfig& value, formats::parse::To<RedisP
     return pools;
 }
 
-storages::redis::MetricsSettings::Level
-Parse(const yaml_config::YamlConfig& value, formats::parse::To<storages::redis::MetricsSettings::Level>) {
-    constexpr utils::TrivialBiMap converter = [](auto selector) {
-        return selector()
-            .Case("instance", storages::redis::MetricsSettings::Level::kInstance)
-            .Case("shard", storages::redis::MetricsSettings::Level::kShard)
-            .Case("cluster", storages::redis::MetricsSettings::Level::kCluster);
-    };
-    const auto level_str = value.As<std::string>("instance");
-    const auto ret = converter.TryFindByFirst(level_str);
-    if (!ret) {
-        throw std::runtime_error("Invalid metrics_level value: " + level_str);
-    }
-    return *ret;
-}
-
 DynamicRedis::DynamicRedis(const ComponentConfig& config, const ComponentContext& component_context)
     : ComponentBase(config, component_context),
       testsuite_redis_control_(component_context.FindComponent<components::TestsuiteSupport>().GetRedisControl()),
       config_(component_context.FindComponent<DynamicConfig>().GetSource())
 {
     const auto redis_pools = config["thread_pools"].As<RedisPools>();
-    static_metrics_settings_
-        .level = Parse(config["metrics_level"], formats::parse::To<storages::redis::MetricsSettings::Level>());
-    metrics_settings_.Assign(storages::redis::MetricsSettings({}, static_metrics_settings_));
+    metrics_settings_.Assign(storages::redis::MetricsSettings());
     thread_pools_ = std::make_shared<
         storages::redis::impl::ThreadPools>(redis_pools.sentinel_thread_pool_size, redis_pools.redis_thread_pool_size);
     dynamic_redis_.Init(thread_pools_, testsuite_redis_control_);

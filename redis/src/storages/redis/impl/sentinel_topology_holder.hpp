@@ -81,6 +81,7 @@ private:
     std::unordered_map<std::string, size_t> shard_by_name_;
     std::vector<std::string> name_by_shard_;
     rcu::Variable<std::vector<ConnectionInfo>> conns_;
+    StatisticsHolder statistics_holder_;
 
     /// Update cluster topology
     /// @{

@@ -61,8 +61,6 @@ void FutureStateBase::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) no
     finish_awaiters_->Remove(awaiter, context);
 }
 
-void FutureStateBase::AfterWait() noexcept {}
-
 }  // namespace engine::impl
 
 USERVER_NAMESPACE_END

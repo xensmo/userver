@@ -60,7 +60,6 @@ SubscribeSentinel::SubscribeSentinel(
           command_control,
           testsuite_redis_control,
           kSubscriptionDatabaseIndex
-
       ),
       storage_(CreateSubscriptionStorage(thread_pools, shards, is_cluster_mode))
 {

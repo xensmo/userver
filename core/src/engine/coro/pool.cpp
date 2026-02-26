@@ -110,6 +110,7 @@ PoolStats Pool::GetStats() const {
     return stats;
 }
 
+// NOLINTNEXTLINE(readability-make-member-function-const)
 void Pool::PrepareLocalCache() { local_coro_buffer.reserve(config_.local_cache_size); }
 
 void Pool::ClearLocalCache() {

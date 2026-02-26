@@ -74,7 +74,10 @@ public:
     // For internal use only.
     explicit GenericClient(impl::ClientInternals&&);
 
-    static std::optional<ugrpc::impl::StaticServiceMetadata> GetMetadata() { return std::nullopt; }
+    // For internal use only.
+    static std::optional<ugrpc::impl::StaticServiceMetadata> GetMetadata(utils::impl::InternalTag) {
+        return std::nullopt;
+    }
     /// @endcond
 
 private:

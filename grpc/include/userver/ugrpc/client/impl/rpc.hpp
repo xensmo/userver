@@ -12,7 +12,7 @@
 #include <userver/ugrpc/client/impl/async_stream_methods.hpp>
 #include <userver/ugrpc/client/impl/call_state.hpp>
 #include <userver/ugrpc/client/impl/middleware_pipeline.hpp>
-#include <userver/ugrpc/client/impl/prepare_call.hpp>
+#include <userver/ugrpc/client/impl/prepare_async_call.hpp>
 #include <userver/ugrpc/client/stream_read_future.hpp>
 #include <userver/ugrpc/time_utils.hpp>
 
@@ -181,7 +181,7 @@ InputStream<Response>::InputStream(
     RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks(ToBaseMessage(&request)));
 
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
-    stream_ = impl::PrepareCall(
+    stream_ = impl::PrepareAsyncCall(
         prepare_async_method,
         state_.GetStub(),
         &state_.GetClientContext(),
@@ -230,7 +230,7 @@ OutputStream<Request, Response>::OutputStream(
 
     // 'response_' will be filled upon successful 'Finish' async call
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
-    stream_ = impl::PrepareCall(
+    stream_ = impl::PrepareAsyncCall(
         prepare_async_method,
         state_.GetStub(),
         &state_.GetClientContext(),
@@ -305,7 +305,8 @@ BidirectionalStream<Request, Response>::BidirectionalStream(
     RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks());
 
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
-    stream_ = impl::PrepareCall(prepare_async_method, state_.GetStub(), &state_.GetClientContext(), &state_.GetQueue());
+    stream_ =
+        impl::PrepareAsyncCall(prepare_async_method, state_.GetStub(), &state_.GetClientContext(), &state_.GetQueue());
     impl::StartCall(*stream_, state_);
 }
 

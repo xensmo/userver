@@ -19,7 +19,7 @@ namespace ugrpc::server::middlewares::log {
 namespace {
 
 std::string GetMessageForLogging(const google::protobuf::Message& message, const Settings& settings) {
-    if (!logging::ShouldLog(settings.msg_log_level)) {
+    if (settings.msg_log_level < settings.log_level || !logging::ShouldLog(settings.msg_log_level)) {
         return "";
     }
     return ugrpc::ToLimitedDebugString(message, settings.max_msg_size);

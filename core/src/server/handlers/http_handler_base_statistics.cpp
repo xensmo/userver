@@ -75,10 +75,6 @@ void DumpMetric(utils::statistics::Writer& writer, const HttpHandlerStatisticsSn
     writer.ValueWithLabels(HttpHandlerStatisticsHelper{stats}, {"version", "2"});
 }
 
-void HttpRequestMethodStatistics::Account(const HttpRequestStatisticsEntry& stats) noexcept {
-    timings_.GetCurrentCounter().Account(stats.timing.count());
-}
-
 bool IsOkMethod(http::HttpMethod method) noexcept {
     return static_cast<std::size_t>(method) <= http::kHandlerMethodsMax;
 }

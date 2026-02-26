@@ -16,8 +16,7 @@ properties:
         default: 0 for caches with defined GetLastKnownUpdated
     chunk-size:
         type: integer
-        description: number of rows to request from PostgreSQL, 0 to fetch all rows
-            in one request
+        description: number of rows to request from PostgreSQL, 0 to fetch all rows in one request
         default: 1000
     sleep-between-chunks:
         type: string

@@ -143,7 +143,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(ValueFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::ValueMessage message, expected_message, sample_message;
+    proto_json::messages::ValueMessage message;
+    proto_json::messages::ValueMessage expected_message;
+    proto_json::messages::ValueMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 
@@ -187,7 +189,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     {
         const char* json_str = "1.5";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_number_value(100001);
 
@@ -200,7 +203,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     {
         const char* json_str = R"("hello")";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_number_value(100001);
 
@@ -213,7 +217,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     {
         const char* json_str = "true";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_number_value(100001);
 
@@ -227,7 +232,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     {
         const char* json_str = "[]";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_number_value(100001);
 
@@ -241,7 +247,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     {
         const char* json_str = "[true, false]";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_number_value(100001);
 
@@ -259,7 +266,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     {
         const char* json_str = "{}";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_number_value(100001);
 
@@ -273,7 +281,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullValue) {
     {
         const char* json_str = R"({"aaa":true,"bbb":false})";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.set_number_value(100001);
 
@@ -306,7 +315,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullListValue) {
     {
         const char* json_str = "[]";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
         UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
@@ -317,7 +327,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullListValue) {
     {
         const char* json_str = R"([null, 1.5, "hello", true])";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
         UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
@@ -348,7 +359,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullStruct) {
     {
         const char* json_str = "{}";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
         UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
@@ -359,7 +371,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNonNullStruct) {
     {
         const char* json_str = R"({"aaa":1.5,"":false})";
         const auto json = formats::json::FromString(json_str);
-        Message message, sample;
+        Message message;
+        Message sample;
 
         UASSERT_NO_THROW((message = JsonToMessage<Message>(json)));
         UASSERT_NO_THROW(InitSampleMessage(json_str, sample));
@@ -379,7 +392,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNullValue) {
 
     const char* json_str = "null";
     const auto json = formats::json::FromString(json_str);
-    Message message, sample;
+    Message message;
+    Message sample;
 
     message.set_number_value(100001);
 
@@ -394,7 +408,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNullListValue) {
 
     const char* json_str = "null";
     const auto json = formats::json::FromString(json_str);
-    Message message, sample;
+    Message message;
+    Message sample;
 
     message.add_values()->set_number_value(100001);
 
@@ -409,7 +424,8 @@ TEST(ValueFromJsonAdditionalTest, InlinedNullStruct) {
 
     const char* json_str = "null";
     const auto json = formats::json::FromString(json_str);
-    Message message, sample;
+    Message message;
+    Message sample;
 
     (*message.mutable_fields())["aaa"].set_number_value(100001);
 

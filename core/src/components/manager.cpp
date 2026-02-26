@@ -43,15 +43,15 @@ auto RunInCoro(engine::TaskProcessor& task_processor, Func&& func) {
 }
 
 std::optional<size_t> GuessCpuLimit(const std::string& tp_name) {
-    auto cpu_f = hostinfo::CpuLimit();
-    if (!cpu_f) {
+    auto cpu_opt = hostinfo::CpuLimit();
+    if (!cpu_opt) {
         return {};
     }
 
     const auto hw_concurrency = std::thread::hardware_concurrency();
     const auto hw_threads_estimate = hw_concurrency ? hw_concurrency : kDefaultHwThreadsEstimate;
 
-    auto cpu = std::lround(*cpu_f);
+    auto cpu = std::lround(*cpu_opt);
     if (cpu > 0 && static_cast<unsigned int>(cpu) < hw_threads_estimate * 2) {
         // TODO: hack for https://st.yandex-team.ru/TAXICOMMON-2132
         if (cpu < 3) {
@@ -65,7 +65,7 @@ std::optional<size_t> GuessCpuLimit(const std::string& tp_name) {
     }
 
     LOG_WARNING()
-        << "CPU limit from env CPU_LIMIT (" << cpu_f
+        << "CPU limit from env CPU_LIMIT (" << cpu
         << ") looks very different from the estimated number of "
            "hardware threads ("
         << hw_threads_estimate << "), worker_threads from the static config will be used";

@@ -32,6 +32,8 @@ guaranteed to execute immediately:
 
 ```cpp
 #include <userver/easy.hpp>
+
+// schemas::KeyRequest and parsers+serializers generated from JSON schema
 #include "schemas/key_value.hpp"
 
 int main(int argc, char* argv[]) {
@@ -39,10 +41,7 @@ int main(int argc, char* argv[]) {
 
     easy::HttpWith<easy::PgDep>(argc, argv)
         // Handles multiple HTTP requests to `/kv` URL concurrently
-        .Get("/kv", [](formats::json::Value request_json, const easy::PgDep& dep) {
-            // JSON parser and serializer are generated from JSON schema by userver
-            auto key = request_json.As<schemas::KeyRequest>().key;
-
+        .Get("/kv", [](schemas::KeyRequest&& request, const easy::PgDep& dep) {
             // Asynchronous execution of the SQL query in transaction. Current thread
             // handles other requests while the response from the DB is being received:
             auto res = dep.pg().Execute(
@@ -50,11 +49,13 @@ int main(int argc, char* argv[]) {
                 // Query is converted into a prepared statement. Subsequent requests
                 // send only parameters in a binary form and meta information is
                 // discarded on the DB side, significantly saving network bandwidth.
-                "SELECT value FROM key_value_table WHERE key=$1", key
+                "SELECT value FROM key_value_table WHERE key=$1", request.key
             );
 
-            schemas::KeyValue response{key, res[0][0].As<std::string>()};
-            return formats::json::ValueBuilder{response}.ExtractValue();
+            return schemas::KeyValue{
+                .key=std::move(request.key),
+                .value=res[0][0].As<std::string>(),
+            };
         });
 }
 ```

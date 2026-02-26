@@ -71,7 +71,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(BoolFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::BoolMessage message, expected_message, sample_message;
+    proto_json::messages::BoolMessage message;
+    proto_json::messages::BoolMessage expected_message;
+    proto_json::messages::BoolMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 

@@ -162,7 +162,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(Int64FromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::Int64Message message, expected_message, sample_message;
+    proto_json::messages::Int64Message message;
+    proto_json::messages::Int64Message expected_message;
+    proto_json::messages::Int64Message sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 

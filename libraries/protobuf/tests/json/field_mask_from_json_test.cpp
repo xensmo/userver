@@ -99,7 +99,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(FieldMaskFromJsonSuccessTest, Test) {
     const auto& param = GetParam();
 
-    proto_json::messages::FieldMaskMessage message, expected_message, sample_message;
+    proto_json::messages::FieldMaskMessage message;
+    proto_json::messages::FieldMaskMessage expected_message;
+    proto_json::messages::FieldMaskMessage sample_message;
     formats::json::Value input = PrepareJsonTestData(param.input);
     expected_message = PrepareTestData(param.expected_message);
 
@@ -134,7 +136,8 @@ TEST(FieldMaskFromJsonAdditionalTest, InlinedNonNull) {
 
     const char* json_str = "\"someField.anotherField,oneMore\"";
     const auto json = formats::json::FromString(json_str);
-    Message message, sample;
+    Message message;
+    Message sample;
 
     message.add_paths("dump");
 
@@ -157,7 +160,8 @@ TEST(FieldMaskFromJsonAdditionalTest, InlinedNull) {
 
     {
         const auto json = formats::json::FromString("\"\"");
-        Message message, sample;
+        Message message;
+        Message sample;
 
         message.add_paths("dump");
 

@@ -105,7 +105,6 @@ private:
     concurrent::AsyncEventSubscriberScope config_subscription_;
 
     utils::statistics::Entry statistics_holder_;
-    storages::redis::MetricsSettings::StaticSettings static_metrics_settings_;
     rcu::Variable<storages::redis::MetricsSettings> metrics_settings_;
 };
 

@@ -12,7 +12,6 @@ from typing import Any
 
 import pytest
 
-from testsuite.daemons.pytest_plugin import DaemonInstance
 from testsuite.utils import url_util
 
 from pytest_userver.utils import net
@@ -278,7 +277,7 @@ async def service_daemon_instance(
     # User defined client deps must be last in order to use
     # fixtures defined above.
     extra_client_deps,
-) -> DaemonInstance:
+):
     """
     Calls `ensure_daemon_started` on
     @ref pytest_userver.plugins.service.service_daemon_scope "service_daemon_scope"

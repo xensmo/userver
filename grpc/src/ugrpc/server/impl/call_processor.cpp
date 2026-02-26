@@ -23,7 +23,7 @@ logging::Level AdjustLogLevelForCancellations(logging::Level level) {
 }  // namespace
 
 void SetupSpan(
-    std::optional<tracing::InPlaceSpan>& span_holder,
+    std::optional<tracing::InPlaceSpan>& span_storage,
     grpc::ServerContext& context,
     std::string_view call_name,
     std::string_view service_name,
@@ -42,25 +42,25 @@ void SetupSpan(
                 "headers",
                 extraction_result.error()
             );
-            span_holder.emplace(std::string{span_name}, utils::impl::SourceLocation::Current());
+            span_storage.emplace(std::string{span_name}, utils::impl::SourceLocation::Current());
         } else {
             auto data = std::move(extraction_result).value();
-            span_holder
+            span_storage
                 .emplace(std::string{span_name}, data.trace_id, data.span_id, utils::impl::SourceLocation::Current());
         }
     } else if (const auto* const trace_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaTraceId)) {
         const auto* const parent_span_id = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaSpanId);
-        span_holder.emplace(
+        span_storage.emplace(
             std::string{span_name},
             ugrpc::impl::ToStringView(*trace_id),
             parent_span_id ? ugrpc::impl::ToStringView(*parent_span_id) : std::string_view{},
             utils::impl::SourceLocation::Current()
         );
     } else {
-        span_holder.emplace(std::string{span_name}, utils::impl::SourceLocation::Current());
+        span_storage.emplace(std::string{span_name}, utils::impl::SourceLocation::Current());
     }
 
-    auto& span = span_holder->Get();
+    auto& span = span_storage->Get();
     const auto* const parent_link = utils::FindOrNullptr(client_metadata, ugrpc::impl::kXYaRequestId);
     if (parent_link) {
         span.SetParentLink(ugrpc::impl::ToStringView(*parent_link));

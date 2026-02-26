@@ -9,6 +9,7 @@ from typing import Any
 
 import yaml
 
+from chaotic import error
 from chaotic.back.cpp import renderer
 from chaotic.back.cpp import translator
 from chaotic.front import parser as front_parser
@@ -240,25 +241,29 @@ def write_file(filepath: str, content: str) -> None:
 def main() -> None:
     args = parse_args()
 
-    schemas = read_schemas(
-        args.erase_path_prefix,
-        args.file,
-        args.name_map,
-        [NameMapItem('(.*)={0}')],
-    )
-    cpp_name_func = generate_cpp_name_func(
-        args.name_map,
-        args.erase_path_prefix,
-    )
+    try:
+        schemas = read_schemas(
+            args.erase_path_prefix,
+            args.file,
+            args.name_map,
+            [NameMapItem('(.*)={0}')],
+        )
+        cpp_name_func = generate_cpp_name_func(
+            args.name_map,
+            args.erase_path_prefix,
+        )
 
-    gen = translator.Generator(
-        config=translator.GeneratorConfig(
-            include_dirs=args.include_dir or [],
-            namespaces={file: '' for file in args.file},
-            infile_to_name_func=cpp_name_func,
-        ),
-    )
-    types = gen.generate_types(schemas, external_schemas={})
+        gen = translator.Generator(
+            config=translator.GeneratorConfig(
+                include_dirs=args.include_dir or [],
+                namespaces={file: '' for file in args.file},
+                infile_to_name_func=cpp_name_func,
+            ),
+        )
+        types = gen.generate_types(schemas, external_schemas={})
+    except error.BaseError as exc:
+        print(exc, file=sys.stderr)
+        sys.exit(1)
 
     outputs = renderer.OneToOneFileRenderer(
         relative_to=args.relative_to,

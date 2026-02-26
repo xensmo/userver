@@ -31,7 +31,7 @@ public:
             });
 
             // SetupWakeups might throw.
-            const auto early_wakeup = target->TryAppendAwaiter(awaiter_);
+            const auto early_wakeup = target->TryAppendAwaiter(awaiter_, awaiter_.GetAwaiterContext());
 
             if (static_cast<bool>(early_wakeup)) {
                 return EarlyNotify{true};
@@ -51,7 +51,7 @@ private:
             if (!target) {
                 continue;
             }
-            target->RemoveAwaiter(awaiter_);
+            target->RemoveAwaiter(awaiter_, awaiter_.GetAwaiterContext());
         }
     }
 

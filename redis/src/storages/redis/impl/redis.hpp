@@ -15,6 +15,7 @@
 #include <userver/storages/redis/redis_state.hpp>
 
 #include "redis_creation_settings.hpp"
+#include "storages/redis/impl/redis_stats.hpp"
 
 USERVER_NAMESPACE_BEGIN
 
@@ -54,7 +55,7 @@ public:
     bool CanRetry() const;
 
     State GetState() const;
-    const Statistics& GetStatistics() const;
+    const NonSharedInstanceStatistics& GetStatistics() const;
     ServerId GetServerId() const;
 
     void SetCommandsBufferingSettings(CommandsBufferingSettings commands_buffering_settings);

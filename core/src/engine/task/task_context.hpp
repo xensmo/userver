@@ -156,9 +156,9 @@ public:
     // causes this to return from the nearest sleep
     // i.e. wakeup is queued if task is running
     // normally non-blocking, except corner cases in TaskProcessor::Schedule()
-    void Wakeup(WakeupSource, Epoch epoch);
-    void Wakeup(WakeupSource, NoEpoch);
-    void Wakeup(WakeupSource, std::uintptr_t context);
+    void Wakeup(WakeupSource, Epoch epoch) noexcept;
+    void Wakeup(WakeupSource, NoEpoch) noexcept;
+    void Wakeup(WakeupSource, std::uintptr_t context) noexcept;
 
     static void CoroFunc(TaskPipe& task_pipe);
 
@@ -180,7 +180,6 @@ public:
     bool IsReady() const noexcept override;
     EarlyNotify TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) override;
     void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept override;
-    void AfterWait() noexcept override;
     void RethrowErrorResult() const override;
 
     std::size_t DecrementFetchSharedTaskUsages() noexcept;
@@ -205,15 +204,20 @@ private:
 
     static WakeupSource GetPrimaryWakeupSource(SleepState::Flags sleep_flags);
 
-    void SetState(Task::State);
+    void SetState(Task::State) noexcept;
 
-    void Schedule();
-    static bool ShouldSchedule(SleepState::Flags flags, WakeupSource source);
+    void Schedule() noexcept;
+    static bool ShouldSchedule(SleepState::Flags flags, WakeupSource source) noexcept;
 
     void ProfilerStartExecution() noexcept;
     void ProfilerStopExecution() noexcept;
 
-    void TraceStateTransition(Task::State state);
+    void TraceStateTransition(Task::State state) noexcept;
+
+    friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
+
+    // Called from intrusive_ptr_release. Should delete the instance
+    void Destroy() noexcept;
 
     const uint64_t magic_{kMagic};
     TaskProcessor& task_processor_;
@@ -252,10 +256,6 @@ private:
 
     // refcounter for task abandoning (cancellation) in engine::SharedTask
     std::atomic<std::size_t> shared_task_usages_{1};
-    friend void intrusive_ptr_release(Awaiter* p) noexcept;  // NOLINT(readability-identifier-naming)
-
-    // Called from intrusive_ptr_release. Should delete the instance
-    void Destroy() noexcept;
 
     // for thread pinning task processors
     std::size_t thread_index_{kUnsetThreadIndex};

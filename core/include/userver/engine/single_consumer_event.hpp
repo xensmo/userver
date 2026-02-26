@@ -81,7 +81,7 @@ public:
     template <typename Predicate>
     [[nodiscard]] bool WaitUntil(Deadline, Predicate stop_waiting);
 
-    /// Resets the signal flag. Guarantees at least 'acquire' and 'release'
+    /// Resets the signal flag, if there is any existing event. Guarantees at least 'acquire' and 'release'
     /// memory ordering. Must only be called by the waiting task.
     void Reset() noexcept;
 
@@ -105,7 +105,7 @@ private:
 
     bool GetIsSignaled() noexcept;
 
-    void CheckIsAutoResetForWaitPredicate();
+    void CheckIsAutoResetForWaitPredicate() const;
 
     impl::FastPimplWaitListLight waiters_;
     const bool is_auto_reset_{true};

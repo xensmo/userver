@@ -24,8 +24,7 @@ class FutureWaitStrategy;
 ///
 /// @brief A single-producer, single-consumer event.
 ///
-/// Once the producer sends the event, it remains in the signaled state forever unless Reset is called by the consumer
-/// task after waking up.
+/// Once the producer sends the event, it remains in the signaled state forever.
 ///
 /// SingleUseEvent can be used as a faster non-allocating alternative
 /// to engine::Future. However, it is more low-level and error-prone, see below.
@@ -96,7 +95,6 @@ private:
     impl::EarlyNotify TryAppendAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) override;
     void RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
     void RethrowErrorResult() const override;
-    void AfterWait() noexcept override;
 
     impl::FastPimplWaitListLight awaiters_;
 };

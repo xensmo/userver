@@ -70,7 +70,9 @@ TEST_P(CustomNameToJsonTest, Test) {
     input.set_one_more_field("hello");
     input.set_last_field(true);
 
-    formats::json::Value json, expected_json, sample_json;
+    formats::json::Value json;
+    formats::json::Value expected_json;
+    formats::json::Value sample_json;
     expected_json = formats::json::FromString(param.expected_json);
 
     UASSERT_NO_THROW((json = MessageToJson(input, param.options)));
@@ -84,7 +86,8 @@ TEST_P(CustomNameFromJsonTest, Test) {
     using Message = proto_json::messages::CustomNameMessage;
     const auto& param = GetParam();
 
-    Message message, sample;
+    Message message;
+    Message sample;
     formats::json::Value input = formats::json::FromString(param.input);
 
     UASSERT_NO_THROW((message = JsonToMessage<Message>(input)));

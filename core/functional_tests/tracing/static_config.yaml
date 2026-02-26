@@ -32,9 +32,6 @@ components_manager:
                     level: debug
                     overflow_behavior: discard
 
-        tracer:
-            service-name: http-tracing-test
-
         tracing-manager-locator:
             incoming-format: ['taxi', 'yandex', 'b3-alternative', 'opentelemetry']
             new-requests-format: ['taxi', 'yandex', 'b3-alternative', 'opentelemetry']

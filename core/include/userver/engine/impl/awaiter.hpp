@@ -13,24 +13,27 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
+class PolymorphicAwaiter;
+
 class Awaiter {
 public:
-    enum StaticType : std::uint8_t { kPolymorphic, kTaskContext };
-
-    enum InitialRefCounter : std::size_t { kZero = 0, kOne = 1 };  //  NOLINT(performance-enum-size)
+    enum InitialRefCounter : std::size_t { kZero = 0, kOne = 1 };  // NOLINT(performance-enum-size)
 
     Awaiter(const Awaiter&) = delete;
     Awaiter(Awaiter&&) = delete;
     Awaiter& operator=(const Awaiter&) = delete;
     Awaiter& operator=(Awaiter&&) = delete;
 
-    void Notify(std::uintptr_t context);
+    void Notify(std::uintptr_t context) noexcept;
 
     std::size_t UseCount() const noexcept;
 
-    StaticType GetStaticType() const noexcept;
+    friend void intrusive_ptr_add_ref(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
+    friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
 
 protected:
+    enum StaticType : std::uint8_t { kPolymorphic, kTaskContext };
+
     Awaiter(StaticType type, InitialRefCounter initial_ref_counter);
     ~Awaiter() = default;
 
@@ -46,8 +49,7 @@ private:
 
     friend class WaitList;
 
-    friend void intrusive_ptr_add_ref(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
-    friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
+    PolymorphicAwaiter& CastToPolymorphic() noexcept;
 
     // refcounter for resources and memory deallocation
     std::atomic<std::size_t> intrusive_refcount_{0};
@@ -59,7 +61,7 @@ private:
 
 class PolymorphicAwaiter : public Awaiter {
 public:
-    virtual void DoNotify(std::uintptr_t context) = 0;
+    virtual void DoNotify(std::uintptr_t context) noexcept = 0;
 
 protected:
     PolymorphicAwaiter();
@@ -67,11 +69,11 @@ protected:
 
     ~PolymorphicAwaiter() = default;
 
-private:
-    friend void intrusive_ptr_release(Awaiter* p) noexcept;  // NOLINT(readability-identifier-naming)
-
     // Called from intrusive_ptr_release. Should delete the instance
     virtual void Destroy() noexcept = 0;
+
+private:
+    friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
 };
 
 }  // namespace engine::impl
