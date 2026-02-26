@@ -1,10 +1,12 @@
 #include <userver/multi-index-lru/container.hpp>
+#include <userver/utest/utest.hpp>
 
 #include <string>
 
-#include <gtest/gtest.h>
 #include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -42,7 +44,7 @@ protected:
                 boost::multi_index::member<User, std::string, &User::name>>>>;
 };
 
-TEST_F(LRUUsersTest, BasicOperations) {
+UTEST_F(LRUUsersTest, BasicOperations) {
     UserCache cache(3);  // capacity == 3
 
     // Test insertion
@@ -54,25 +56,24 @@ TEST_F(LRUUsersTest, BasicOperations) {
 
     // Test find by id
     auto by_id = cache.find<IdTag, int>(1);
-    ASSERT_NE(by_id, cache.end<IdTag>());
+    EXPECT_NE(by_id, cache.end<IdTag>());
     EXPECT_EQ(by_id->name, "Alice");
 
     // Test find by email
     auto by_email = cache.find<EmailTag, std::string>("bob@test.com");
-    ASSERT_NE(by_email, cache.end<EmailTag>());
+    EXPECT_NE(by_email, cache.end<EmailTag>());
     EXPECT_EQ(by_email->id, 2);
 
     // Test find by name
     auto by_name = cache.find<NameTag, std::string>("Charlie");
-    ASSERT_NE(by_name, cache.end<NameTag>());
+    EXPECT_NE(by_name, cache.end<NameTag>());
     EXPECT_EQ(by_name->email, "charlie@test.com");
 
-    // Test template find method
     auto it = cache.find<EmailTag, std::string>("alice@test.com");
     EXPECT_NE(it, cache.end<EmailTag>());
 }
 
-TEST_F(LRUUsersTest, LRUEviction) {
+UTEST_F(LRUUsersTest, LRUEviction) {
     UserCache cache(3);
 
     cache.emplace(User{1, "alice@test.com", "Alice"});
@@ -90,6 +91,89 @@ TEST_F(LRUUsersTest, LRUEviction) {
     EXPECT_TRUE((cache.contains<IdTag>(1)));   // Alice remains
     EXPECT_TRUE((cache.contains<IdTag>(3)));   // Charlie remains
     EXPECT_TRUE((cache.contains<IdTag>(4)));   // David added
+}
+
+UTEST_F(LRUUsersTest, GetNoUpdateDoesNotChangeLru) {
+    UserCache cache(3);
+
+    cache.emplace(User{1, "alice@test.com", "Alice"});
+    cache.emplace(User{2, "bob@test.com", "Bob"});
+    cache.emplace(User{3, "charlie@test.com", "Charlie"});
+
+    auto it = cache.find_no_update<IdTag>(1);  // without updating
+    EXPECT_NE(it, cache.end<IdTag>());
+    EXPECT_EQ(it->name, "Alice");
+
+    cache.emplace(User{4, "david@test.com", "David"});
+
+    EXPECT_FALSE((cache.contains<IdTag>(1)));  // evicted
+    EXPECT_TRUE((cache.contains<IdTag>(2)));   // remains
+    EXPECT_TRUE((cache.contains<IdTag>(3)));   // remains
+    EXPECT_TRUE((cache.contains<IdTag>(4)));   // added
+}
+
+UTEST_F(LRUUsersTest, EqualRangeUpdatesLruForAllMatches) {
+    UserCache cache(4);
+
+    cache.emplace(User{1, "john1@test.com", "John"});
+    cache.emplace(User{2, "john2@test.com", "John"});
+    cache.emplace(User{3, "alice@test.com", "Alice"});
+    cache.emplace(User{4, "bob@test.com", "Bob"});
+
+    auto [begin, end] = cache.equal_range<NameTag, std::string>("John");
+    int count = 0;
+    for (auto it = begin; it != end; ++it) {
+        ++count;
+    }
+    EXPECT_EQ(count, 2);
+
+    cache.emplace(User{5, "eve@test.com", "Eve"});
+
+    EXPECT_TRUE((cache.contains<IdTag>(1)));   // remains
+    EXPECT_TRUE((cache.contains<IdTag>(2)));   // remains
+    EXPECT_FALSE((cache.contains<IdTag>(3)));  // evicted
+    EXPECT_TRUE((cache.contains<IdTag>(4)));   // remains
+    EXPECT_TRUE((cache.contains<IdTag>(5)));   // added
+}
+
+UTEST_F(LRUUsersTest, EqualRangeNoUpdateDoesNotChangeLru) {
+    UserCache cache(4);
+
+    cache.emplace(User{1, "john1@test.com", "John"});
+    cache.emplace(User{2, "john2@test.com", "John"});
+    cache.emplace(User{3, "alice@test.com", "Alice"});
+    cache.emplace(User{4, "bob@test.com", "Bob"});
+
+    auto [begin, end] = cache.equal_range_no_update<NameTag, std::string>("John");
+    int count = 0;
+    for (auto it = begin; it != end; ++it) {
+        ++count;
+    }
+    EXPECT_EQ(count, 2);
+
+    cache.emplace(User{5, "eve@test.com", "Eve"});
+
+    EXPECT_FALSE((cache.contains<IdTag>(1)));  // evicted
+    EXPECT_TRUE((cache.contains<IdTag>(2)));   // remains
+    EXPECT_TRUE((cache.contains<IdTag>(3)));   // remains
+    EXPECT_TRUE((cache.contains<IdTag>(4)));   // remains
+    EXPECT_TRUE((cache.contains<IdTag>(5)));   // added
+}
+
+UTEST_F(LRUUsersTest, EqualRangeWorksWithEmptyRange) {
+    UserCache cache(3);
+    cache.emplace(User{1, "alice@test.com", "Alice"});
+
+    auto [begin, end] = cache.equal_range<NameTag, std::string>("Nonexistent");
+    EXPECT_EQ(begin, end);
+}
+
+UTEST_F(LRUUsersTest, EqualRangeNoUpdateWorksWithEmptyRange) {
+    UserCache cache(3);
+    cache.emplace(User{1, "alice@test.com", "Alice"});
+
+    auto [begin, end] = cache.equal_range_no_update<NameTag, std::string>("Nonexistent");
+    EXPECT_EQ(begin, end);
 }
 
 class ProductsTest : public ::testing::Test {
@@ -118,18 +202,18 @@ protected:
                 boost::multi_index::member<Product, std::string, &Product::name>>>>;
 };
 
-TEST_F(ProductsTest, BasicProductOperations) {
+UTEST_F(ProductsTest, BasicProductOperations) {
     ProductCache cache(2);
 
     cache.emplace(Product{"A1", "Laptop", 999.99});
     cache.emplace(Product{"A2", "Mouse", 29.99});
 
     auto laptop = cache.find<SkuTag, std::string>("A1");
-    ASSERT_NE(laptop, cache.end<SkuTag>());
+    EXPECT_NE(laptop, cache.end<SkuTag>());
     EXPECT_EQ(laptop->name, "Laptop");
 }
 
-TEST_F(ProductsTest, ProductEviction) {
+UTEST_F(ProductsTest, ProductEviction) {
     ProductCache cache(2);
 
     cache.emplace(Product{"A1", "Laptop", 999.99});
