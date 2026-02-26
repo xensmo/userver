@@ -89,6 +89,18 @@ public:
         std::vector<std::string> args,
         const CommandControl& command_control
     ) override;
+    RequestEvalCommon EvalReadOnlyCommon(
+        std::string script,
+        std::vector<std::string> keys,
+        std::vector<std::string> args,
+        const CommandControl& command_control
+    ) override;
+    RequestEvalShaCommon EvalShaReadOnlyCommon(
+        std::string script_hash,
+        std::vector<std::string> keys,
+        std::vector<std::string> args,
+        const CommandControl& command_control
+    ) override;
     RequestGenericCommon GenericCommon(
         std::string command,
         std::vector<std::string> args,
