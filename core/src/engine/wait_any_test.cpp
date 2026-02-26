@@ -460,9 +460,10 @@ UTEST(WaitAnyContext, WaitAnyContextSingleVector) {
     completed.fill(false);
     engine::WaitAnyContext wait_any;
     wait_any.Append(tasks);
-    ASSERT_EQ(wait_any.GetCount(), kTaskCount);
+    ASSERT_EQ(wait_any.GetNextIndex(), kTaskCount);
 
     for (std::size_t i = 0; i < kTaskCount; i++) {
+        ASSERT_EQ(wait_any.GetSize(), kTaskCount - i);
         const auto task_idx_opt = wait_any.Wait();
         ASSERT_TRUE(task_idx_opt.has_value());
 
@@ -474,6 +475,7 @@ UTEST(WaitAnyContext, WaitAnyContextSingleVector) {
     for (std::size_t i = 0; i < kTaskCount; i++) {
         EXPECT_TRUE(completed[i]);
     }
+    ASSERT_EQ(wait_any.GetSize(), 0);
     EXPECT_EQ(wait_any.Wait(), std::nullopt);
 }
 
@@ -481,16 +483,18 @@ UTEST(WaitAnyContext, WaitAnyContextPlainAwaitables) {
     std::vector<TestAwaitable> awaitables(3);
 
     auto wait_any = engine::MakeWaitAny(awaitables[0], awaitables[1], awaitables[2]);
-    ASSERT_EQ(wait_any.GetCount(), awaitables.size());
+    ASSERT_EQ(wait_any.GetNextIndex(), awaitables.size());
 
     EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
     for (std::size_t i = 0; i < awaitables.size(); ++i) {
+        ASSERT_EQ(wait_any.GetSize(), awaitables.size() - i);
         awaitables[(i + 1) % awaitables.size()].SetReady();
         auto index = wait_any.Wait();
         ASSERT_TRUE(index.has_value());
         EXPECT_EQ(*index, (i + 1) % awaitables.size());
     }
+    ASSERT_EQ(wait_any.GetSize(), 0);
     EXPECT_EQ(wait_any.Wait(), std::nullopt);
 }
 
@@ -505,16 +509,18 @@ UTEST(WaitAnyContext, WaitAnyContextMixed) {
     std::vector<TestAwaitable*> all = {&awaitable1, &v1[0], &v1[1], &awaitable2, &awaitable3, &v2[0], &v2[1]};
 
     auto wait_any = engine::MakeWaitAny(awaitable1, v1, awaitable2, awaitable3, v2);
-    ASSERT_EQ(wait_any.GetCount(), all.size());
+    ASSERT_EQ(wait_any.GetNextIndex(), all.size());
 
     EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
     for (std::size_t i = 0; i < all.size(); ++i) {
+        ASSERT_EQ(wait_any.GetSize(), all.size() - i);
         all[(i + 3) % all.size()]->SetReady();
         auto index = wait_any.Wait();
         ASSERT_TRUE(index.has_value());
         EXPECT_EQ(*index, (i + 3) % all.size());
     }
+    ASSERT_EQ(wait_any.GetSize(), 0);
     EXPECT_EQ(wait_any.Wait(), std::nullopt);
 }
 
@@ -522,11 +528,13 @@ UTEST(WaitAnyContext, WaitAnyContextDynamicAppend) {
     std::vector<TestAwaitable> awaitables(10);
 
     engine::WaitAnyContext wait_any;
+    ASSERT_EQ(wait_any.GetNextIndex(), 0);
 
     for (std::size_t i = 0; i < awaitables.size() / 2; ++i) {
         wait_any.Append(awaitables[i * 2]);
         wait_any.Append(awaitables[i * 2 + 1]);
-        ASSERT_EQ(wait_any.GetCount(), i * 2 + 2);
+        ASSERT_EQ(wait_any.GetSize(), i + 2);
+        ASSERT_EQ(wait_any.GetNextIndex(), (i + 1) * 2);
         EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
         awaitables[i * 2].SetReady();
@@ -536,6 +544,7 @@ UTEST(WaitAnyContext, WaitAnyContextDynamicAppend) {
     }
 
     for (std::size_t i = 0; i < awaitables.size() / 2; ++i) {
+        ASSERT_EQ(wait_any.GetSize(), awaitables.size() / 2 - i);
         EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
         awaitables[i * 2 + 1].SetReady();
@@ -543,7 +552,7 @@ UTEST(WaitAnyContext, WaitAnyContextDynamicAppend) {
         ASSERT_TRUE(index.has_value());
         EXPECT_EQ(*index, i * 2 + 1);
     }
-
+    ASSERT_EQ(wait_any.GetSize(), 0);
     EXPECT_EQ(wait_any.Wait(), std::nullopt);
 }
 

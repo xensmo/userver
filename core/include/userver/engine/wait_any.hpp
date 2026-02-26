@@ -4,6 +4,7 @@
 /// @brief Provides engine::WaitAny, engine::WaitAnyFor, engine::WaitAnyUntil and engine::MakeWaitAny
 
 #include <chrono>
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -101,14 +102,6 @@ std::optional<std::size_t> WaitAnyFromTasks(Deadline deadline, Tasks&... tasks) 
 
 inline std::optional<std::size_t> WaitAnyFromTasks(Deadline) { return {}; }
 
-template <typename Awaitable>
-constexpr std::size_t GetSize(Awaitable& awaitable) {
-    if constexpr (meta::impl::IsSingleRange<Awaitable>()) {
-        return std::size(awaitable);
-    }
-    return 1;
-}
-
 }  // namespace impl
 
 template <typename... Tasks>
@@ -141,37 +134,42 @@ public:
     ///
     /// Each passed awaitable could be either a single awaitable or a container of awaitables.
     /// In the latter case all awaitables from the container are appended to the context.
-    /// The appended awaitables will have indexes [GetCount() befor the call, GetCount() after the call - 1].
+    /// The appended awaitables will have indexes [GetNextIndex() befor the call, GetNextIndex() after the call - 1].
     template <typename... Awaitables>
     void Append(Awaitables&... awaitables);
 
-    /// @brief Reserve space for the given total number of awaitables.
-    void Reserve(std::size_t count);
-
-    /// @brief Waits either for the completion of any of the awaiatables stored in the context
+    /// @brief Waits either for the completion of any of the awaitables stored in the context
     /// or for the cancellation of the caller.
     ///
     /// @returns the index of the completed awaitable, or `std::nullopt` if there are no
     /// completed awaitables (possible if current task was cancelled).
-    std::optional<std::size_t> Wait();
+    std::optional<std::uint64_t> Wait();
 
     /// @overload std::optional<std::size_t> Wait()
-    std::optional<std::size_t> WaitUntil(Deadline deadline);
+    std::optional<std::uint64_t> WaitUntil(Deadline deadline);
 
     /// @overload std::optional<std::size_t> Wait()
     template <typename Rep, typename Period>
-    std::optional<std::size_t> WaitFor(const std::chrono::duration<Rep, Period>& duration) {
+    std::optional<std::uint64_t> WaitFor(const std::chrono::duration<Rep, Period>& duration) {
         return WaitUntil(Deadline::FromDuration(duration));
     }
 
     /// @overload std::optional<std::size_t> Wait()
     template <typename Clock, typename Duration>
-    std::optional<std::size_t> WaitUntil(const std::chrono::time_point<Clock, Duration>& until) {
+    std::optional<std::uint64_t> WaitUntil(const std::chrono::time_point<Clock, Duration>& until) {
         return WaitUntil(Deadline::FromTimePoint(until));
     }
 
-    /// @brief Returns the number of awaitables stored in the context.
-    std::size_t GetCount() const noexcept;
+    /// @brief Returns the number of awaitables actually stored in the context.
+    ///
+    /// It consists of actively awaited and pending subscription awaitables.
+    /// Already notified awaitables are dropped out.
+    std::size_t GetSize() const noexcept;
+
+    /// @brief Returns the next awaitable index.
+    ///
+    /// It could be used to calculate indexes of awaitables appended via Append call.
+    std::uint64_t GetNextIndex() const noexcept;
 
 private:
     class Impl;
@@ -205,7 +203,6 @@ void WaitAnyContext::AppendSingle(Awaitable& awaitable) {
 
 template <typename... Awaitables>
 void WaitAnyContext::Append(Awaitables&... awaitables) {
-    Reserve((GetCount() + ... + impl::GetSize(awaitables)));
     (AppendSingle(awaitables), ...);
 }
 
@@ -215,12 +212,7 @@ void WaitAnyContext::Append(Awaitables&... awaitables) {
 ///
 /// Each passed awaitable could be either a single awaitable or a container of awaitables.
 /// In the latter case all awaitables from the container are appended to the context.
-/// The stored awaitables will have indexes [0, GetCount() - 1].
-///
-/// @warning Current implementation allocates an internal structure for each stored awaitable.
-/// These allocations are freed only upon the context destruction.
-/// Thus continuous addition of new awaitables may lead to OOM.
-/// We are going to optimize the memory usage in the future.
+/// The stored awaitables will have indexes [0, GetNextIndex() - 1].
 template <typename... Awaitables>
 WaitAnyContext MakeWaitAny(Awaitables&... awaitables) {
     auto context = WaitAnyContext();
