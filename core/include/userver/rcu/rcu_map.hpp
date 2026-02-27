@@ -100,12 +100,11 @@ private:
 ///
 /// @brief Map-like structure allowing RCU keyset updates.
 ///
-/// Only keyset changes are thread-safe in scope of this class.
-/// Values are stored in `shared_ptr`s and are not copied during keyset change.
-/// The map itself is implemented as rcu::Variable, so every keyset change
-/// (e.g. insert or erase) triggers the whole map copying.
-/// @note No synchronization is provided for value access, it must be
-/// implemented by Value when necessary.
+/// Only keyset changes are thread-safe in scope of this class. Values are stored in `std::shared_ptr`s and are not
+/// copied during keyset change. The map itself is implemented as @ref rcu::Variable, so every keyset change (e.g.
+/// insert or erase) triggers the whole map copying.
+///
+/// @note No synchronization is provided for value access, it must be implemented by Value when necessary.
 ///
 /// ## Example usage:
 ///
@@ -143,7 +142,7 @@ public:
     RcuMap& operator=(RcuMap&&) = delete;
 
     /// Returns an estimated size of the map at some point in time
-    size_t SizeApprox() const;
+    std::size_t SizeApprox() const;
 
     /// @name Iteration support
     /// @details Keyset is fixed at the start of the iteration and is not affected
@@ -159,37 +158,30 @@ public:
     /// @throws MissingKeyException if the key is not present
     const utils::NotNull<ConstValuePtr> operator[](const Key&) const;
 
-    /// @brief Returns a modifiable value pointer by key if exists or
-    /// default-creates one
+    /// @brief Returns a modifiable value pointer by key if exists or default-creates one
     /// @note Copies the whole map if the key doesn't exist.
     const utils::NotNull<ValuePtr> operator[](const Key&);
 
-    /// @brief Inserts a new element into the container if there is no element
-    /// with the key in the container.
+    /// @brief Inserts a new element into the container if there is no element with the key in the container.
     /// Returns a pair consisting of a pointer to the inserted element, or the
-    /// already-existing element if no insertion happened, and a bool denoting
-    /// whether the insertion took place.
+    /// already-existing element if no insertion happened, and a bool denoting whether the insertion took place.
     /// @note Copies the whole map if the key doesn't exist.
     InsertReturnType Insert(const Key& key, ValuePtr value);
 
     /// @brief Inserts a new element into the container constructed in-place with
     /// the given args if there is no element with the key in the container.
     /// Returns a pair consisting of a pointer to the inserted element, or the
-    /// already-existing element if no insertion happened, and a bool denoting
-    /// whether the insertion took place.
+    /// already-existing element if no insertion happened, and a bool denoting whether the insertion took place.
     /// @note Copies the whole map if the key doesn't exist.
     template <typename... Args>
     InsertReturnType Emplace(const Key& key, Args&&... args);
 
-    /// @brief If a key equivalent to `key` already exists in the container, does
-    /// nothing.
+    /// @brief If a key equivalent to `key` already exists in the container, does nothing.
     /// Otherwise, behaves like `Emplace` except that the element is constructed
     /// as `std::make_shared<Value>(std::piecewise_construct,
-    /// std::forward_as_tuple(key),
-    /// std::forward_as_tuple(std::forward<Args>(args)...))`.
+    /// std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...))`.
     /// Returns a pair consisting of a pointer to the inserted element, or the
-    /// already-existing element if no insertion happened, and a bool denoting
-    /// whether the insertion took place.
+    /// already-existing element if no insertion happened, and a bool denoting whether the insertion took place.
     template <typename... Args>
     InsertReturnType TryEmplace(const Key& key, Args&&... args);
 
@@ -198,11 +190,11 @@ public:
     template <typename RawKey>
     void InsertOrAssign(RawKey&& key, ValuePtr value);
 
-    /// @brief Returns a readonly value pointer by its key or an empty pointer
-    const ConstValuePtr Get(const Key&) const;
+    /// @brief Returns a readonly value pointer by its key; nullptr (a default contructed ConstValuePtr) if no such key
+    const ConstValuePtr Get(const Key& key) const;
 
-    /// @brief Returns a modifiable value pointer by key or an empty pointer
-    const ValuePtr Get(const Key&);
+    /// @brief Returns a modifiable value pointer by key; nullptr (a default contructed ValuePtr) if no such key
+    const ValuePtr Get(const Key& key);
 
     /// @brief Removes a key from the map
     /// @returns whether the key was present
@@ -272,7 +264,7 @@ typename RcuMap<K, V, RcuMapTraits>::Iterator RcuMap<K, V, RcuMapTraits>::end() 
 }
 
 template <typename K, typename V, typename RcuMapTraits>
-size_t RcuMap<K, V, RcuMapTraits>::SizeApprox() const {
+std::size_t RcuMap<K, V, RcuMapTraits>::SizeApprox() const {
     auto ptr = rcu_.Read();
     return ptr->size();
 }
@@ -305,8 +297,9 @@ const utils::NotNull<typename RcuMap<K, V, RcuMapTraits>::ValuePtr> RcuMap<K, V,
 ) {
     auto value = Get(key);
     if (!value) {
+        auto ptr = std::make_shared<V>();
         auto txn = rcu_.StartWrite();
-        auto insertion_result = txn->emplace(key, std::make_shared<V>());
+        auto insertion_result = txn->emplace(key, std::move(ptr));
         value = insertion_result.first->second;
         if (insertion_result.second) {
             txn.Commit();

@@ -412,12 +412,12 @@ Alternatively see @ref userver_install "userver install"
 
 
 @anchor prebuilt_deb_package
-### Using a prebuilt Debian package for Ubuntu 22.04
+### Using a prebuilt Debian package for Ubuntu
 
 You can download and install a `.deb` package that is attached to each
 [userver release](https://github.com/userver-framework/userver/releases).
 
-The package currently targets Ubuntu 22.04, for other Ubuntu versions your mileage may vary.
+The package currently targets latest Ubuntus, for other Ubuntu versions your mileage may vary.
 
 
 @anchor userver_conan

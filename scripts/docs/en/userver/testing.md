@@ -152,8 +152,9 @@ the debug logs for all the `*Log*` tests for the CMake built binary:
 
 ### Ignoring signals in debugger
 
-Userver uses signals for internal matters to identify coroutine stack usage @ref scripts/docs/en/userver/stack.md.
-If you see too much "caught signal X" in debugger, you may disable stack usage monitor via environment variable:
+🐙 userver uses signals for internal matters to identify coroutine stack usage @ref scripts/docs/en/userver/stack.md.
+In debugger presence the functionality is automatically disabled. However, if you are using an exotic OS or debugger,
+you may force-disable stack usage monitor via environment variable:
 
 ```
 USERVER_ENABLE_STACK_USAGE_MONITOR=0
