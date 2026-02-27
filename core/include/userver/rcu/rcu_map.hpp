@@ -11,6 +11,7 @@
 #include <utility>
 
 #include <userver/rcu/rcu.hpp>
+#include <userver/utils/not_null.hpp>
 #include <userver/utils/traceful_exception.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -156,12 +157,12 @@ public:
 
     /// @brief Returns a readonly value pointer by its key if exists
     /// @throws MissingKeyException if the key is not present
-    const ConstValuePtr operator[](const Key&) const;
+    const utils::NotNull<ConstValuePtr> operator[](const Key&) const;
 
     /// @brief Returns a modifiable value pointer by key if exists or
     /// default-creates one
     /// @note Copies the whole map if the key doesn't exist.
-    const ValuePtr operator[](const Key&);
+    const utils::NotNull<ValuePtr> operator[](const Key&);
 
     /// @brief Inserts a new element into the container if there is no element
     /// with the key in the container.
@@ -279,9 +280,12 @@ size_t RcuMap<K, V, RcuMapTraits>::SizeApprox() const {
 template <typename K, typename V, typename RcuMapTraits>
 // Protects from assignment to map[key]
 // NOLINTNEXTLINE(readability-const-return-type)
-const typename RcuMap<K, V, RcuMapTraits>::ConstValuePtr RcuMap<K, V, RcuMapTraits>::operator[](const K& key) const {
+const utils::NotNull<typename RcuMap<K, V, RcuMapTraits>::ConstValuePtr> RcuMap<
+    K,
+    V,
+    RcuMapTraits>::operator[](const K& key) const {
     if (auto value = Get(key)) {
-        return value;
+        return utils::NotNull{value};
     }
     throw MissingKeyException("Key ") << key << " is missing";
 }
@@ -297,7 +301,8 @@ const typename RcuMap<K, V, RcuMapTraits>::ConstValuePtr RcuMap<K, V, RcuMapTrai
 template <typename K, typename V, typename RcuMapTraits>
 // Protects from assignment to map[key]
 // NOLINTNEXTLINE(readability-const-return-type)
-const typename RcuMap<K, V, RcuMapTraits>::ValuePtr RcuMap<K, V, RcuMapTraits>::operator[](const K& key) {
+const utils::NotNull<typename RcuMap<K, V, RcuMapTraits>::ValuePtr> RcuMap<K, V, RcuMapTraits>::operator[](const K& key
+) {
     auto value = Get(key);
     if (!value) {
         auto txn = rcu_.StartWrite();
@@ -307,7 +312,7 @@ const typename RcuMap<K, V, RcuMapTraits>::ValuePtr RcuMap<K, V, RcuMapTraits>::
             txn.Commit();
         }
     }
-    return value;
+    return utils::NotNull{value};
 }
 
 template <typename K, typename V, typename RcuMapTraits>
