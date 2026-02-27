@@ -625,7 +625,7 @@ void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexce
 
 void TaskContext::RethrowErrorResult() const {
     UASSERT(IsFinished());
-    if (state_.load(std::memory_order_relaxed) != Task::State::kCompleted) {
+    if (state_.load(std::memory_order_acquire) != Task::State::kCompleted) {
         throw TaskCancelledException(CancellationReason());
     }
     payload_->RethrowErrorResult();
