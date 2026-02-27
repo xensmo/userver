@@ -146,7 +146,8 @@ engine::TaskWithResult<void> HttpRequestHandler::StartRequestTask(std::shared_pt
         return StartFailsafeTask(std::move(http_request));
     }
 
-    if (handler->GetConfig().response_body_stream) {
+    request::RequestContext context;
+    if (handler->IsStreamed(*std::move(http_request), context)) {
         http_response.SetStreamBody();
     }
 
