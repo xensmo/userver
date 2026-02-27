@@ -128,8 +128,6 @@ void CallState::SetDeadlinePropagated() noexcept {
     is_deadline_propagated_ = true;
 }
 
-grpc::Status& CallState::GetStatus() noexcept { return status_; }
-
 void CallState::Commit() noexcept { committed_.store(true, std::memory_order_release); }
 
 grpc::ClientContext& CallState::GetClientContextCommitted() {

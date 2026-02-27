@@ -70,11 +70,10 @@ public:
 
     ugrpc::impl::RpcStatisticsScope& GetStatsScope() noexcept;
 
+    /// Returns true if the Deadline Propagation deadline was used as the deadline for the attempt
     bool IsDeadlinePropagated() const noexcept;
 
     void SetDeadlinePropagated() noexcept;
-
-    grpc::Status& GetStatus() noexcept;
 
     void Commit() noexcept;
 
@@ -106,8 +105,6 @@ private:
     MiddlewarePipeline middleware_pipeline_;
 
     const testsuite::GrpcControl& testsuite_grpc_;
-
-    grpc::Status status_;
 
     std::atomic<bool> committed_{false};
 };

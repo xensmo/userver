@@ -5,6 +5,10 @@
 #include <google/protobuf/message.h>
 #include <grpcpp/support/status.h>
 
+#include <userver/utils/expected.hpp>
+
+#include <userver/ugrpc/client/completion_status.hpp>
+
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client {
@@ -22,8 +26,10 @@ public:
 
     static MiddlewareHooks RecvMessageHooks(const google::protobuf::Message& recv_message) noexcept;
 
-    static MiddlewareHooks FinishHooks(const grpc::Status& status, const google::protobuf::Message* response = nullptr)
-        noexcept;
+    static MiddlewareHooks FinishHooks(
+        const CompletionStatus& result,
+        const google::protobuf::Message* response = nullptr
+    ) noexcept;
 
     void Run(const MiddlewareBase& middleware, MiddlewareCallContext& context) const;
 
@@ -36,7 +42,7 @@ private:
     };
 
     struct Outbound {
-        const grpc::Status* status{};
+        const CompletionStatus* result{};
         const google::protobuf::Message* recv_message{};
     };
 
