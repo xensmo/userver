@@ -9,6 +9,7 @@
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future_status.hpp>
 #include <userver/utils/meta.hpp>
+#include <userver/utils/span.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -33,7 +34,7 @@ namespace engine {
 /// @throws std::exception one of specified tasks exception, if any, in no
 /// particular order.
 ///
-/// @note Has overall computational complexity of O(N),
+/// @note Has overall computational complexity of O(N^2),
 /// where N is the number of tasks.
 /// @note Keeping the tasks valid may have a small extra memory impact. Make
 /// sure to drop the tasks after reading the results.
@@ -64,7 +65,7 @@ namespace impl {
 
 class ContextAccessor;
 
-FutureStatus DoWaitAllChecked(std::vector<ContextAccessor*>&& targets, Deadline deadline);
+FutureStatus DoWaitAllChecked(utils::span<ContextAccessor*> targets, Deadline deadline);
 
 template <typename Container>
 FutureStatus WaitAllCheckedFromContainer(Deadline deadline, Container& tasks) {
@@ -75,12 +76,13 @@ FutureStatus WaitAllCheckedFromContainer(Deadline deadline, Container& tasks) {
         targets.push_back(task.TryGetContextAccessor());
     }
 
-    return impl::DoWaitAllChecked(std::move(targets), deadline);
+    return impl::DoWaitAllChecked(targets, deadline);
 }
 
 template <typename... Tasks>
 FutureStatus WaitAllCheckedFromTasks(Deadline deadline, Tasks&... tasks) {
-    return impl::DoWaitAllChecked({tasks.TryGetContextAccessor()...}, deadline);
+    ContextAccessor* targets[]{tasks.TryGetContextAccessor()...};
+    return impl::DoWaitAllChecked(targets, deadline);
 }
 
 inline FutureStatus WaitAllCheckedFromTasks(Deadline /*deadline*/) { return FutureStatus::kReady; }
