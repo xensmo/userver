@@ -4,7 +4,7 @@
 
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
-#include <userver/utils/fast_pimpl.hpp>
+#include <concurrent/impl/fast_atomic.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -66,8 +66,7 @@ public:
 private:
     bool IsEmptyRelaxed() noexcept;
 
-    struct Impl;
-    utils::FastPimpl<Impl, 16, 16> impl_;
+    concurrent::impl::FastAtomic<AwaiterWithContext> state_{AwaiterWithContext{}};
 };
 
 }  // namespace engine::impl

@@ -5,7 +5,6 @@
 
 #include <fmt/format.h>
 
-#include <concurrent/impl/fast_atomic.hpp>
 #include <engine/task/sleep_state.hpp>
 #include <userver/engine/impl/awaiter.hpp>
 #include <userver/logging/log.hpp>
@@ -40,10 +39,6 @@ void DoNotify(AwaiterWithContext awaiter) {
 
 }  // namespace
 
-struct WaitListLight::Impl final {
-    concurrent::impl::FastAtomic<AwaiterWithContext> awaiter{AwaiterWithContext{}};
-};
-
 WaitListLight::WaitListLight() noexcept = default;
 
 WaitListLight::~WaitListLight() {
@@ -63,9 +58,8 @@ bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter> awaiter, std
 
     AwaiterWithContext expected{};
     // seq_cst is important for the "Append-Check-Wakeup" sequence.
-    const bool success = impl_->awaiter.compare_exchange_strong<
-        std::memory_order_seq_cst,
-        std::memory_order_relaxed>(expected, new_awaiter);
+    const bool success =
+        state_.compare_exchange_strong<std::memory_order_seq_cst, std::memory_order_relaxed>(expected, new_awaiter);
     if (!success) {
         UASSERT_MSG(
             expected.awaiter == kSignaled,
@@ -89,7 +83,7 @@ bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter> awaiter, std
 
 void WaitListLight::NotifyOne() {
     // seq_cst is important for the "Append-Check-Notify" sequence.
-    const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithContext{});
+    const auto old_awaiter = state_.exchange<std::memory_order_seq_cst>(AwaiterWithContext{});
     if (old_awaiter.awaiter == nullptr) {
         return;
     }
@@ -105,7 +99,7 @@ void WaitListLight::NotifyOne() {
 
 void WaitListLight::SetSignalAndNotifyOne() {
     // seq_cst is important for the "Append-Check-Notify" sequence.
-    const auto old_awaiter = impl_->awaiter.exchange<std::memory_order_seq_cst>(AwaiterWithContext{kSignaled, {}});
+    const auto old_awaiter = state_.exchange<std::memory_order_seq_cst>(AwaiterWithContext{kSignaled, {}});
     if (old_awaiter.awaiter == nullptr || old_awaiter.awaiter == kSignaled) {
         return;
     }
@@ -121,7 +115,7 @@ void WaitListLight::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
     const AwaiterWithContext expected{&awaiter, context};
 
     auto old_awaiter = expected;
-    const bool success = impl_->awaiter.compare_exchange_strong<
+    const bool success = state_.compare_exchange_strong<
         std::memory_order_release,
         std::memory_order_relaxed>(old_awaiter, AwaiterWithContext{});
 
@@ -144,7 +138,7 @@ void WaitListLight::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
 
 bool WaitListLight::GetAndResetSignal() noexcept {
     AwaiterWithContext expected{kSignaled, {}};
-    const bool success = impl_->awaiter.compare_exchange_strong<
+    const bool success = state_.compare_exchange_strong<
         std::memory_order_relaxed,
         std::memory_order_relaxed>(expected, AwaiterWithContext{});
 
@@ -158,13 +152,13 @@ bool WaitListLight::GetAndResetSignal() noexcept {
 }
 
 bool WaitListLight::IsSignaled() const noexcept {
-    const auto torn_awaiter = impl_->awaiter.LoadWithTearing();
+    const auto torn_awaiter = state_.LoadWithTearing();
     std::atomic_thread_fence(std::memory_order_acquire);
     return torn_awaiter.awaiter == kSignaled;
 }
 
 bool WaitListLight::IsEmptyRelaxed() noexcept {
-    const auto awaiter = impl_->awaiter.load<std::memory_order_relaxed>();
+    const auto awaiter = state_.load<std::memory_order_relaxed>();
     return awaiter.awaiter == nullptr || awaiter.awaiter == kSignaled;
 }
 
