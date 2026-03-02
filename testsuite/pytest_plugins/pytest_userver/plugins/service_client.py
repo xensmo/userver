@@ -9,7 +9,7 @@ import contextlib
 
 import aiohttp.client_exceptions
 import pytest
-import websockets
+import websockets.legacy.client as websockets
 
 from testsuite.daemons import service_client as base_service_client
 

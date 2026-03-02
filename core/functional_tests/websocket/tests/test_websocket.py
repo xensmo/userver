@@ -83,7 +83,7 @@ async def test_too_big(websocket_client):
 
 
 async def test_origin(service_client, service_port):
-    async with websockets.connect(
+    async with websockets.legacy.client.connect(
         f'ws://localhost:{service_port}/chat',
         extra_headers={'Origin': 'localhost'},
     ) as chat:
@@ -176,7 +176,7 @@ async def test_upgrade_header_with_tab_then_reconnect(service_port):
     await writer.wait_closed()
 
     # 2. Check new connection can be established
-    async with websockets.connect(f'ws://localhost:{service_port}/chat') as chat:
+    async with websockets.legacy.client.connect(f'ws://localhost:{service_port}/chat') as chat:
         await chat.send('ping')
         resp = await chat.recv()
         assert resp == 'ping'
