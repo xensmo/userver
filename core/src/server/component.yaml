@@ -31,6 +31,9 @@ properties:
                 type: integer
                 description: port to listen on
                 default: 0
+            listen-socket-fd:
+                type: integer
+                description: listen socket file descriptor opened, bind, and passed by the parent process
             unix-socket: &ports-unix-socket
                 type: string
                 description: unix socket to listen on instead of listening on a port

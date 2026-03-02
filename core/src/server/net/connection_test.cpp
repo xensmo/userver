@@ -97,7 +97,10 @@ net::ListenerConfig CreateConfig(
     net::ListenerConfig config;
     config.handler_defaults = server::request::HttpRequestConfig{};
     config.connection_config.http_version = http_ver;
-    config.ports.emplace_back(net::PortConfig{});
+
+    net::PortConfig port_config;
+    port_config.port = 32000;
+    config.ports.emplace_back(std::move(port_config));
     return config;
 }
 
