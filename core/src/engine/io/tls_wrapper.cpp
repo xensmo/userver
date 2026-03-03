@@ -222,7 +222,7 @@ public:
 
     void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
 
-    void RethrowErrorResult() const override;
+    std::exception_ptr GetErrorResult() const noexcept override;
 
     engine::impl::ContextAccessor& GetSocketContextAccessor() const noexcept;
 
@@ -451,7 +451,9 @@ void TlsWrapper::ReadContextAccessor::RemoveAwaiter(engine::impl::Awaiter& await
     GetSocketContextAccessor().RemoveAwaiter(awaiter, context);
 }
 
-void TlsWrapper::ReadContextAccessor::RethrowErrorResult() const { GetSocketContextAccessor().RethrowErrorResult(); }
+std::exception_ptr TlsWrapper::ReadContextAccessor::GetErrorResult() const noexcept {
+    return GetSocketContextAccessor().GetErrorResult();
+}
 
 engine::impl::ContextAccessor& TlsWrapper::ReadContextAccessor::GetSocketContextAccessor() const noexcept {
     auto* ca = impl.bio_data.socket.GetReadableBase().TryGetContextAccessor();

@@ -62,8 +62,6 @@ public:
         awaiter_ = nullptr;
     }
 
-    void RethrowErrorResult() const override {}
-
 private:
     bool ready_{false};
     boost::intrusive_ptr<engine::impl::Awaiter> awaiter_;

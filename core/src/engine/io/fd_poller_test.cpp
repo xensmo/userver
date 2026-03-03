@@ -43,8 +43,6 @@ public:
 
     void RemoveAwaiter(engine::impl::Awaiter&, std::uintptr_t) noexcept override {}
 
-    void RethrowErrorResult() const override {}
-
 private:
     bool is_ready_{false};
 };

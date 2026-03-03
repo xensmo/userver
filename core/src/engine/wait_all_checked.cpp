@@ -24,7 +24,10 @@ FutureStatus DoWaitAllChecked(utils::span<ContextAccessor*> targets, Deadline de
 
             const bool is_ready = target->IsReady();
             if (is_ready) {
-                target->RethrowErrorResult();
+                auto exception_ptr = target->GetErrorResult();
+                if (exception_ptr) {
+                    std::rethrow_exception(exception_ptr);
+                }
                 target = nullptr;
             }
             all_completed &= is_ready;

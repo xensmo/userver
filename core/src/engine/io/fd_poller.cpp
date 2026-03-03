@@ -129,8 +129,6 @@ public:
         watcher_.StopAsync();
     }
 
-    void RethrowErrorResult() const override {}
-
 private:
     static void IoWatcherCb(struct ev_loop*, ev_io*, int) noexcept;
 

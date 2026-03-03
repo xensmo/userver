@@ -36,6 +36,9 @@ public:
     /// Stores an exception
     void SetException(std::exception_ptr&&) noexcept;
 
+    // Returns the stored exception if present
+    std::exception_ptr GetException() const noexcept;
+
 private:
     // variant here would require a specialization for exception_ptr
     std::optional<T> value_;
@@ -59,6 +62,9 @@ public:
 
     /// Stores an exception
     void SetException(std::exception_ptr&&) noexcept;
+
+    // Returns the stored exception if present
+    std::exception_ptr GetException() const noexcept;
 
 private:
     bool has_value_{false};
@@ -102,6 +108,11 @@ void ResultStore<T>::SetException(std::exception_ptr&& exception) noexcept {
     exception_ = std::move(exception);
 }
 
+template <typename T>
+std::exception_ptr ResultStore<T>::GetException() const noexcept {
+    return exception_;
+}
+
 // NOLINTNEXTLINE(readability-make-member-function-const)
 inline void ResultStore<void>::Retrieve() { Get(); }
 
@@ -120,6 +131,8 @@ inline void ResultStore<void>::SetValue() noexcept { has_value_ = true; }
 inline void ResultStore<void>::SetException(std::exception_ptr&& exception) noexcept {
     exception_ = std::move(exception);
 }
+
+inline std::exception_ptr ResultStore<void>::GetException() const noexcept { return exception_; }
 
 }  // namespace utils
 

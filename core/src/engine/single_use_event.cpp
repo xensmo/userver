@@ -84,10 +84,6 @@ void SingleUseEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t contex
     awaiters_->Remove(awaiter, context);
 }
 
-void SingleUseEvent::RethrowErrorResult() const {
-    // TODO support failure states in SingleUseEvent, for WaitAllChecked?
-}
-
 }  // namespace engine
 
 USERVER_NAMESPACE_END

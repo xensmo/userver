@@ -578,6 +578,10 @@ void TaskContext::CoroFunc(TaskPipe& task_pipe) {
                 try {
                     context->TraceStateTransition(Task::State::kRunning);
                     context->payload_->Perform();
+                    // We store an exception in the context to be able to handle
+                    // ContextAccessor::GetErrorResult() even when the owning
+                    // task is destroyed (and payload_ is reset to nullptr).
+                    context->exception_ = context->payload_->GetException();
                     yield_reason_guard.SetYieldReason(YieldReason::kTaskComplete);
                 } catch (const CoroUnwinder&) {
                     yield_reason_guard.SetYieldReason(YieldReason::kTaskCancelled);
@@ -623,12 +627,15 @@ void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexce
     finish_awaiters_->Remove(awaiter, context);
 }
 
-void TaskContext::RethrowErrorResult() const {
+std::exception_ptr TaskContext::GetErrorResult() const noexcept {
     UASSERT(IsFinished());
     if (state_.load(std::memory_order_acquire) != Task::State::kCompleted) {
-        throw TaskCancelledException(CancellationReason());
+        return std::make_exception_ptr(TaskCancelledException(CancellationReason()));
     }
-    payload_->RethrowErrorResult();
+    if (exception_) {
+        return exception_;
+    }
+    return {};
 }
 
 std::size_t TaskContext::DecrementFetchSharedTaskUsages() noexcept { return --shared_task_usages_; }

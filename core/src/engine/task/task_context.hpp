@@ -180,7 +180,7 @@ public:
     bool IsReady() const noexcept override;
     EarlyNotify TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) override;
     void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept override;
-    void RethrowErrorResult() const override;
+    std::exception_ptr GetErrorResult() const noexcept override;
 
     std::size_t DecrementFetchSharedTaskUsages() noexcept;
     std::size_t IncrementFetchSharedTaskUsages() noexcept;
@@ -229,6 +229,7 @@ private:
     EhGlobals eh_globals_;
 
     utils::impl::WrappedCallBase* payload_;
+    std::exception_ptr exception_;
 
     std::atomic<Task::State> state_{Task::State::kNew};
     std::atomic<DetachedTasksSyncBlock::Token*> detached_token_{nullptr};

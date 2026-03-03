@@ -57,7 +57,7 @@ public:
     void SetException(std::exception_ptr&& ex);
 
 private:
-    void RethrowErrorResult() const override;
+    std::exception_ptr GetErrorResult() const noexcept override;
 
     utils::ResultStore<T> result_store_;
 };
@@ -71,7 +71,7 @@ public:
     void SetException(std::exception_ptr&& ex);
 
 private:
-    void RethrowErrorResult() const override;
+    std::exception_ptr GetErrorResult() const noexcept override;
 
     utils::ResultStore<void> result_store_;
 };
@@ -104,8 +104,8 @@ void FutureState<T>::SetException(std::exception_ptr&& ex) {
 }
 
 template <typename T>
-void FutureState<T>::RethrowErrorResult() const {
-    (void)result_store_.Get();
+std::exception_ptr FutureState<T>::GetErrorResult() const noexcept {
+    return result_store_.GetException();
 }
 
 inline void FutureState<void>::Get() {
@@ -125,7 +125,7 @@ inline void FutureState<void>::SetException(std::exception_ptr&& ex) {
     ReleaseResultStore();
 }
 
-inline void FutureState<void>::RethrowErrorResult() const { (void)result_store_.Get(); }
+inline std::exception_ptr FutureState<void>::GetErrorResult() const noexcept { return result_store_.GetException(); }
 
 }  // namespace engine::impl
 
