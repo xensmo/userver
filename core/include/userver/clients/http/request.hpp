@@ -337,6 +337,18 @@ public:
     /// Override list of middlewares from @ref components::HttpClient for specific request
     Request& SetMiddlewaresList(const std::vector<utils::NotNull<MiddlewareBase*>>& middlewares) &;
 
+    /// Set flag to ignore tls receive error for responses
+    /// with `Connection: close` header.
+    ///
+    /// The behaviour of handling TLS errors has been changed
+    /// in libcurl>=8.15.0 and reproducible for connections
+    /// with incomplete TLS close procedure.
+    ///
+    /// @see https://github.com/curl/curl/pull/17531/changes
+    Request& SetIncompleteTlsConnectionCloseExpected(bool expect) &;
+    /// @overload
+    Request SetIncompleteTlsConnectionCloseExpected(bool expect) &&;
+
     /// Override log URL. Useful for "there's a secret in the query".
     /// @warning The query might be logged by other intermediate HTTP agents (nginx, L7 balancer, etc.).
     Request& SetLoggedUrl(std::string url) &;

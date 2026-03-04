@@ -265,6 +265,7 @@ std::string ToString(pg::IsolationLevel lvl) {
         case pg::IsolationLevel::kReadUncommitted:
             return "read uncommitted";
     }
+    return "unreachable";  // ommit warning of return-type
 }
 
 void CheckTransactionIsolationLevel(

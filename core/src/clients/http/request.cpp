@@ -524,6 +524,15 @@ Request& Request::SetMiddlewaresList(const std::vector<utils::NotNull<Middleware
     return *this;
 }
 
+Request& Request::SetIncompleteTlsConnectionCloseExpected(bool expect) & {
+    pimpl_->SetIncompleteTlsConnectionCloseExpected(expect);
+    return *this;
+}
+
+Request Request::SetIncompleteTlsConnectionCloseExpected(bool expect) && {
+    return std::move(this->SetIncompleteTlsConnectionCloseExpected(expect));
+}
+
 Request& Request::SetLoggedUrl(std::string url) & {
     pimpl_->SetLoggedUrl(std::move(url));
     return *this;

@@ -144,6 +144,7 @@ public:
     std::shared_ptr<Response> response_move() { return std::move(response_); }
 
     void SetMiddlewaresList(const std::vector<utils::NotNull<MiddlewareBase*>>& middlewares);
+    void SetIncompleteTlsConnectionCloseExpected(bool expect);
     void SetLoggedUrl(std::string url);
     void SetUrlTemplate(std::string url_template);
     void SetMethod(clients::http::HttpMethod method);
@@ -260,6 +261,7 @@ private:
     HttpMethod method_{HttpMethod::kGet};
 
     std::atomic<bool> is_cancelled_{false};
+    std::atomic<bool> is_incomplete_tls_connection_close_expected_{false};
     std::array<char, CURL_ERROR_SIZE> errorbuffer_{};
 
     clients::dns::Resolver* resolver_{nullptr};

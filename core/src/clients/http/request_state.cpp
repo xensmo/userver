@@ -230,8 +230,9 @@ bool IsHttp11WithCompleteBody(const std::shared_ptr<Response> response) {
         return false;
     }
 
-    const auto content_length = utils::FindOrDefault(headers, USERVER_NAMESPACE::http::headers::kContentLength, "-1");
-    return utils::FromString<ssize_t>(content_length) == static_cast<ssize_t>(response->body_view().size());
+    const auto* content_length = utils::FindOrNullptr(headers, USERVER_NAMESPACE::http::headers::kContentLength);
+    // complete body check needs only in case of receiving `Content-Length` in a pair of `Connection: close`
+    return !content_length || utils::FromString<size_t>(*content_length) == response->body_view().size();
 }
 
 }  // namespace
@@ -517,7 +518,9 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
         err = TestsuiteResponseHook(status_code, headers, span);
     }
 
-    if (!stream_data && IsHttp11WithCompleteBody(holder->response())) {
+    if (holder->is_incomplete_tls_connection_close_expected_.load(std::memory_order_acquire) && !stream_data &&
+        IsHttp11WithCompleteBody(holder->response()))
+    {
         // The response says "HTTP/1.1", the full body is read.
         // It's a transport error, but not a HTTP request/respose error.
         err = {};
@@ -729,6 +732,10 @@ void RequestState::ParseHeader(char* ptr, size_t size) try
 
 void RequestState::SetMiddlewaresList(const std::vector<utils::NotNull<MiddlewareBase*>>& middlewares) {
     middlewares_pipeline_ = MiddlewaresPipeline(middlewares);
+}
+
+void RequestState::SetIncompleteTlsConnectionCloseExpected(bool expect) {
+    is_incomplete_tls_connection_close_expected_.store(expect, std::memory_order_release);
 }
 
 void RequestState::SetLoggedUrl(std::string url) { log_url_ = std::move(url); }
