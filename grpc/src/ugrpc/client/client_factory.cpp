@@ -86,6 +86,7 @@ impl::ClientInternals ClientFactory::MakeClientInternals(
         std::move(client_settings.dedicated_methods_config),
         std::move(channel_factory),
         client_factory_settings_.retry_config,
+        client_factory_settings_.retry_limiter_factory,
         client_factory_settings_.channel_args,
         client_factory_settings_.default_service_config,
         client_factory_settings_.proxy_settings

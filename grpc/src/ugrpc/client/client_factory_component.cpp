@@ -94,6 +94,7 @@ ClientFactoryComponent::ClientFactoryComponent(
         std::move(credentials),
         std::move(client_credentials),
         std::move(client_factory_config.retry_config),
+        client_common_component.retry_limiter_factory_,
         std::move(client_factory_config.channel_args),
         std::move(client_factory_config.default_service_config),
         client_factory_config.channel_count,

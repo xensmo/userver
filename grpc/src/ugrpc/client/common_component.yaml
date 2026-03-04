@@ -42,3 +42,10 @@ properties:
                                 address that should be accessed directly.
                                 Example: some.grpc.service.net:11080
                             type: string
+    retry-limiter:
+        type: string
+        description: Component that tracks success/failure rates and decides whether retries should be allowed
+    retry-limiter-enabled:
+        type: boolean
+        description: Temporary feature flag for the retry limiter feature. Used for gradual rollout across services
+        default: false

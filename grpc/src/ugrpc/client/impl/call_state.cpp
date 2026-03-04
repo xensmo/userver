@@ -76,7 +76,8 @@ CallState::CallState(CallParams&& params)
       queue_(params.queue),
       config_values_(params.config),
       middleware_pipeline_(params.middlewares),
-      testsuite_grpc_(params.testsuite_grpc)
+      testsuite_grpc_(params.testsuite_grpc),
+      retry_limiter_(params.retry_limiter)
 {
     UINVARIANT(!client_name_.empty(), "client name should not be empty");
 
@@ -118,6 +119,8 @@ const RpcConfigValues& CallState::GetConfigValues() const noexcept { return conf
 const MiddlewarePipeline& CallState::GetMiddlewarePipeline() const noexcept { return middleware_pipeline_; }
 
 const testsuite::GrpcControl& CallState::GetTestsuiteControl() const noexcept { return testsuite_grpc_; }
+
+RetryLimiter* CallState::GetRetryLimiter() const noexcept { return retry_limiter_; }
 
 ugrpc::impl::RpcStatisticsScope& CallState::GetStatsScope() noexcept { return stats_scope_; }
 

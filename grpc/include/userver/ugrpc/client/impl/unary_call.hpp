@@ -21,7 +21,6 @@
 #include <userver/ugrpc/client/impl/middleware_pipeline.hpp>
 #include <userver/ugrpc/client/impl/prepare_async_call.hpp>
 #include <userver/ugrpc/client/impl/retry_backoff.hpp>
-#include <userver/ugrpc/client/impl/retry_policy.hpp>
 #include <userver/ugrpc/client/impl/tracing.hpp>
 #include <userver/ugrpc/impl/async_method_invocation.hpp>
 #include <userver/ugrpc/impl/status_utils.hpp>
@@ -102,6 +101,8 @@ private:
         int attempt = 0;
         RetryBackoff retry_backoff;
 
+        auto* retry_limiter = state_.GetRetryLimiter();
+
         while (!engine::current_task::ShouldCancel()) {
             ++attempt;
             state_.GetSpan().AddTag(tracing::kAttempts, attempt);
@@ -134,7 +135,9 @@ private:
                 return;
             }
 
-            if (max_attempts <= attempt || !IsRetryable(status.error_code())) {
+            const bool limiter_allows = !retry_limiter || retry_limiter->CanRetry();
+
+            if (!limiter_allows || attempt >= max_attempts || !ugrpc::IsRetryable(status.error_code())) {
                 OnDone(status);
                 return;
             }
@@ -192,6 +195,11 @@ private:
                 completion_status_.has_value() && completion_status_.value().ok() ? ToBaseMessage(&response_) : nullptr
             )
         );
+
+        auto retry_limiter = state_.GetRetryLimiter();
+        if (retry_limiter) {
+            retry_limiter->AccountCompletion(completion_status_);
+        }
     }
 
     void RunStartCallHooks() {
