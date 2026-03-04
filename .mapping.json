@@ -2868,7 +2868,6 @@
   "libraries/multi-index-lru/src/container.cpp":"taxi/uservices/userver/libraries/multi-index-lru/src/container.cpp",
   "libraries/multi-index-lru/src/container_benchmark.cpp":"taxi/uservices/userver/libraries/multi-index-lru/src/container_benchmark.cpp",
   "libraries/multi-index-lru/src/container_test.cpp":"taxi/uservices/userver/libraries/multi-index-lru/src/container_test.cpp",
-  "libraries/multi-index-lru/src/expirable_container_benchmark.cpp":"taxi/uservices/userver/libraries/multi-index-lru/src/expirable_container_benchmark.cpp",
   "libraries/multi-index-lru/src/expirable_container_test.cpp":"taxi/uservices/userver/libraries/multi-index-lru/src/expirable_container_test.cpp",
   "libraries/proto-structs/codegen-tests/proto/box/autobox/cycles.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/box/autobox/cycles.proto",
   "libraries/proto-structs/codegen-tests/proto/box/autobox/dependency_on_nested.proto":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/proto/box/autobox/dependency_on_nested.proto",
