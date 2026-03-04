@@ -33,7 +33,7 @@ enum class IsolationLevel : std::uint16_t {
 };
 /*! [Isolation levels] */
 
-std::ostream& operator<<(std::ostream&, IsolationLevel);
+std::string_view ToStringView(IsolationLevel lvl);
 
 /// @brief PostgreSQL transaction options
 ///

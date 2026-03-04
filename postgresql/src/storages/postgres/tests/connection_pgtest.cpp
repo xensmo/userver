@@ -254,20 +254,6 @@ UTEST_P(PostgreConnection, RAIITransaction) {
     }
 }
 
-std::string ToString(pg::IsolationLevel lvl) {
-    switch (lvl) {
-        case pg::IsolationLevel::kReadCommitted:
-            return "read committed";
-        case pg::IsolationLevel::kRepeatableRead:
-            return "repeatable read";
-        case pg::IsolationLevel::kSerializable:
-            return "serializable";
-        case pg::IsolationLevel::kReadUncommitted:
-            return "read uncommitted";
-    }
-    return "unreachable";  // ommit warning of return-type
-}
-
 void CheckTransactionIsolationLevel(
     pg::detail::ConnectionPtr& conn,
     pg::TransactionOptions options,
@@ -278,7 +264,7 @@ void CheckTransactionIsolationLevel(
     pg::ResultSet res{nullptr};
     UEXPECT_NO_THROW(res = trx.Execute("SELECT current_setting('transaction_isolation')"));
     EXPECT_FALSE(res.IsEmpty()) << "Result set is obtained";
-    EXPECT_EQ(ToString(lvl), res.AsSingleRow<std::string>());
+    EXPECT_EQ(ToStringView(lvl), res.AsSingleRow<std::string>());
 }
 
 UTEST_P(PostgreConnection, TransactionRepeatableReadIsolationLevel) {
