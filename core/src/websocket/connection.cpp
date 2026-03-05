@@ -278,6 +278,10 @@ public:
         stats.bytes_sent += stats_.bytes_sent;
         stats.bytes_recv += stats_.bytes_recv;
     }
+
+    engine::io::ReadAwaiter& ReadAwaiter() override { return io_->GetReadableBase(); }
+
+    engine::io::WriteAwaiter& WriteAwaiter() override { return io_->GetWritableBase(); }
 };
 
 WebSocketConnection::WebSocketConnection() = default;

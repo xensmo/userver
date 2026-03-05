@@ -97,6 +97,9 @@ public:
     virtual void AddFinalTags(tracing::Span& span) const = 0;
     virtual void AddStatistics(Statistics& stats) const = 0;
 
+    virtual engine::io::ReadAwaiter& ReadAwaiter() = 0;
+    virtual engine::io::WriteAwaiter& WriteAwaiter() = 0;
+
 protected:
     virtual void DoSendBinary(utils::span<const std::byte> message) = 0;
 };

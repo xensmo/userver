@@ -5,6 +5,7 @@
 #include <userver/clients/http/component_list.hpp>
 #include <userver/clients/http/websocket_response.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
+#include <userver/engine/wait_any.hpp>
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/server/handlers/websocket_handler.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
@@ -53,18 +54,18 @@ public:
         try {
             if (test_name == "echo") {
                 return TestEcho(request);
-            }
-            if (test_name == "large") {
+            } else if (test_name == "large") {
                 return TestLarge(request);
-            }
-            if (test_name == "multiple") {
+            } else if (test_name == "multiple") {
                 return TestMultiple(request);
-            }
-            if (test_name == "binary") {
+            } else if (test_name == "binary") {
                 return TestBinary(request);
-            }
-            if (test_name == "concurrent") {
+            } else if (test_name == "concurrent") {
                 return TestConcurrent(request);
+            } else if (test_name == "nonblocking_read") {
+                return TestNonblockingRead(request);
+            } else if (test_name == "nonblocking_write") {
+                return TestNonblockingWrite(request);
             }
             return "Unknown test";
         } catch (const std::exception& e) {
@@ -149,6 +150,55 @@ private:
         auto task2 = utils::Async("task2", func, std::ref(*conn2), std::string("msg2"));
 
         return (task1.Get() && task2.Get()) ? "OK" : "FAIL";
+    }
+
+    std::string TestNonblockingRead(const server::http::HttpRequest& request) const {
+        auto conn0 = MakeWebSocketConnection(request);
+        auto conn1 = MakeWebSocketConnection(request);
+
+        conn0->SendText("msg0");
+        conn1->SendText("msg1");
+
+        auto wait_ctx = engine::MakeWaitAny(conn0->ReadAwaiter(), conn1->ReadAwaiter());
+
+        websocket::Message msg;
+        std::set<std::string> recv_messages{};
+        while (!engine::current_task::ShouldCancel() && recv_messages.size() < 2) {
+            auto result = wait_ctx.Wait();
+            if (!result.has_value()) {
+                return "WAIT CANCELED";
+            }
+
+            auto& conn = *result == 0 ? conn0 : conn1;
+
+            conn->Recv(msg);
+            recv_messages.insert(msg.data);
+        }
+
+        if (recv_messages != std::set<std::string>{"msg0", "msg1"}) {
+            return "FAIL";
+        }
+
+        return "OK";
+    }
+
+    std::string TestNonblockingWrite(const server::http::HttpRequest& request) const {
+        auto conn0 = MakeWebSocketConnection(request);
+        auto conn1 = MakeWebSocketConnection(request);
+
+        std::vector<std::string> messages{};
+        for (int i = 0; i < 10; ++i) {
+            auto wait_ctx = engine::MakeWaitAny(conn0->WriteAwaiter(), conn1->WriteAwaiter());
+            auto result = wait_ctx.Wait();
+            if (!result.has_value()) {
+                return "WAIT CANCELED";
+            }
+
+            auto& conn = *result == 0 ? conn0 : conn1;
+            conn->SendText(fmt::format("msg{}", i));
+        }
+
+        return "OK";
     }
 
     clients::http::Client& client_;
