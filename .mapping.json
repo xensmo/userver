@@ -5647,6 +5647,7 @@
   "universal/src/formats/yaml/exttypes.cpp":"taxi/uservices/userver/universal/src/formats/yaml/exttypes.cpp",
   "universal/src/formats/yaml/exttypes.hpp":"taxi/uservices/userver/universal/src/formats/yaml/exttypes.hpp",
   "universal/src/formats/yaml/iterator.cpp":"taxi/uservices/userver/universal/src/formats/yaml/iterator.cpp",
+  "universal/src/formats/yaml/json_conversion_test.cpp":"taxi/uservices/userver/universal/src/formats/yaml/json_conversion_test.cpp",
   "universal/src/formats/yaml/member_access_test.cpp":"taxi/uservices/userver/universal/src/formats/yaml/member_access_test.cpp",
   "universal/src/formats/yaml/member_modify_test.cpp":"taxi/uservices/userver/universal/src/formats/yaml/member_modify_test.cpp",
   "universal/src/formats/yaml/merge_test.cpp":"taxi/uservices/userver/universal/src/formats/yaml/merge_test.cpp",

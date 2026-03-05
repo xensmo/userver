@@ -87,7 +87,7 @@
                             {{ type.extra_container() }}
                         >(
                     {%- endif -%}
-                        value, k{{type.cpp_global_struct_field_name()}}_PropertiesNames
+                        Parse(std::move(value), {{ userver }}::formats::parse::To<{{ userver }}::formats::json::Value>()), k{{type.cpp_global_struct_field_name()}}_PropertiesNames
                         );
 
             {% endif %}

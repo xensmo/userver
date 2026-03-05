@@ -11,6 +11,9 @@
 #include <userver/formats/json/value_builder.hpp>
 #include <userver/formats/parse/to.hpp>
 #include <userver/formats/serialize/variant.hpp>
+#include <userver/formats/yaml/serialize.hpp>
+#include <userver/formats/yaml/value.hpp>
+#include <userver/formats/yaml/value_builder.hpp>
 
 #include <schemas/all_of.hpp>
 #include <schemas/date.hpp>
@@ -135,6 +138,18 @@ TEST(Simple, ObjectWithAdditionalPropertiesInt) {
     EXPECT_EQ(json_back, json) << ToString(json_back);
 }
 
+TEST(Simple, ParseObjectWithAdditionalPropertiesIntFromYaml) {
+    auto yaml = formats::yaml::FromString(R"(
+one: 1
+two: 2
+three: 3
+    )");
+    auto obj = yaml.As<ns::ObjectWithAdditionalPropertiesInt>();
+
+    EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
+}
+
 TEST(Simple, ObjectWithAdditionalPropertiesIntSax) {
     auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3);
     auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesInt>(ToString(json));
@@ -155,6 +170,19 @@ TEST(Simple, ObjectWithAdditionalPropertiesTrue) {
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, ParseObjectWithAdditionalPropertiesTrueFromYaml) {
+    auto yaml = formats::yaml::FromString(R"(
+one: 1
+two: 2
+three: 3
+object: {}
+        )");
+    auto obj = yaml.As<ns::ObjectWithAdditionalPropertiesTrue>();
+
+    EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesTrueSax) {
