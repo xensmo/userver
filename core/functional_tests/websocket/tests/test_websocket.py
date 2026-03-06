@@ -30,6 +30,27 @@ async def test_echo_with_continuation(websocket_client):
         assert response == 'First second third'
 
 
+async def test_echo_bin(websocket_client):
+    async with websocket_client.get('chat') as chat:
+        await chat.send(b'\x00\x01\x02\xff')
+        response = await chat.recv()
+        assert response == b'\x00\x01\x02\xff'
+
+
+async def test_echo_bin_with_text(websocket_client):
+    async with websocket_client.get('chat') as chat:
+        await chat.send('msg1')
+        await chat.send(b'\x00\x01\x02\xff')
+        await chat.send('msg2')
+
+        response = await chat.recv()
+        assert response == 'msg1'
+        response = await chat.recv()
+        assert response == b'\x00\x01\x02\xff'
+        response = await chat.recv()
+        assert response == 'msg2'
+
+
 async def test_close_by_server(websocket_client):
     async with websocket_client.get('chat') as chat:
         await chat.send('close')
