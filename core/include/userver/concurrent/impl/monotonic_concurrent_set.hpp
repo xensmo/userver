@@ -13,6 +13,7 @@
 
 #include <boost/atomic/atomic.hpp>
 
+#include <userver/compiler/impl/constexpr.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/impl/fused_allocations.hpp>
 #include <userver/utils/not_null.hpp>
@@ -92,12 +93,19 @@ struct Bucket {
 };
 
 template <typename T>
+inline USERVER_IMPL_CONSTINIT Bucket<T> kNullBucket{};
+
+template <typename T>
 struct Table {
     utils::span<Bucket<T>> buckets;
     utils::span<ItemNode<T>> nodes;
     utils::span<ItemWrapper<T>> items;
     Table* next{nullptr};
     std::atomic<std::size_t> item_counter{0};
+
+    constexpr Table()
+        : buckets(&kNullBucket<T>, &kNullBucket<T> + 1)
+    {}
 
     explicit Table(utils::span<Bucket<T>> buckets, utils::span<ItemNode<T>> nodes, utils::span<ItemWrapper<T>> items)
         : buckets(buckets),
@@ -151,6 +159,9 @@ struct Table {
         return buckets[hash & (buckets.size() - 1)];
     }
 };
+
+template <typename T>
+inline USERVER_IMPL_CONSTINIT Table<T> kNullTable{};
 
 }  // namespace monotonic_concurrent_set
 
@@ -223,7 +234,8 @@ private:
 
     Hash hasher_;
     KeyEqual key_equal_;
-    std::atomic<Table*> head_{nullptr};
+    std::size_t initial_capacity_;
+    std::atomic<utils::NotNull<Table*>> head_{monotonic_concurrent_set::kNullTable<T>};
     std::mutex grow_mutex_;
 };
 
@@ -231,16 +243,18 @@ template <typename T, typename Hash, typename KeyEqual>
 MonotonicConcurrentSet<T, Hash, KeyEqual>::MonotonicConcurrentSet(std::size_t initial_capacity)
     : hasher_(),
       key_equal_(),
-      head_(Table::AllocateFused(initial_capacity, initial_capacity).GetBase())
-{}
+      initial_capacity_(initial_capacity)
+{
+    UINVARIANT(monotonic_concurrent_set::IsPowerOf2(initial_capacity), "Capacity must be a power of 2");
+}
 
 template <typename T, typename Hash, typename KeyEqual>
 MonotonicConcurrentSet<T, Hash, KeyEqual>::~MonotonicConcurrentSet() {
-    Table* current = head_.load(std::memory_order_relaxed);
-    while (current) {
+    utils::NotNull<Table*> current = head_.load(std::memory_order_relaxed);
+    while (&*current != &monotonic_concurrent_set::kNullTable<T>) {
         Table* next_table = current->next;
-        Table::DeallocateFused(utils::NotNull{current});
-        current = next_table;
+        Table::DeallocateFused(current);
+        current = utils::NotNull{next_table};
     }
 }
 
@@ -262,11 +276,8 @@ template <typename T, typename Hash, typename KeyEqual>
 template <typename Key>
 T* MonotonicConcurrentSet<T, Hash, KeyEqual>::DoFind(const Key& key) const {
     const std::size_t hash = hasher_(key);
-
-    Table* const table = head_.load(std::memory_order_acquire);
-    UASSERT(table != nullptr);
-
-    const auto& bucket = table->GetBucket(hash);
+    Table& table = *head_.load(std::memory_order_acquire);
+    const auto& bucket = table.GetBucket(hash);
     return FindInBucket(bucket.LoadHead(boost::memory_order_acquire), key);
 }
 
@@ -322,7 +333,9 @@ template <typename T, typename Hash, typename KeyEqual>
 void MonotonicConcurrentSet<T, Hash, KeyEqual>::FillNewTable(Table& old_table, Table& new_table) noexcept {
     ItemNode* next_new_node = new_table.nodes.data();
 
-    for (Table* src_table = &old_table; src_table != nullptr; src_table = src_table->next) {
+    for (Table* src_table = &old_table; src_table != &monotonic_concurrent_set::kNullTable<T>;
+         src_table = src_table->next)
+    {
         UASSERT(src_table != &new_table);
         UASSERT(src_table->item_counter.load(std::memory_order_relaxed) >= src_table->items.size());
 
@@ -342,10 +355,23 @@ void MonotonicConcurrentSet<T, Hash, KeyEqual>::FillNewTable(Table& old_table, T
 }
 
 template <typename T, typename Hash, typename KeyEqual>
+void MonotonicConcurrentSet<T, Hash, KeyEqual>::GrowInitial() {
+    std::lock_guard grow_lock(grow_mutex_);
+
+    if (&*head_.load(std::memory_order_relaxed) != &monotonic_concurrent_set::kNullTable<T>) {
+        return;
+    }
+
+    const auto table = Table::AllocateFused(initial_capacity_, initial_capacity_);
+    table->next = &monotonic_concurrent_set::kNullTable<T>;
+    head_.store(table, std::memory_order_release);
+}
+
+template <typename T, typename Hash, typename KeyEqual>
 void MonotonicConcurrentSet<T, Hash, KeyEqual>::Grow(Table& old_table) {
     std::lock_guard grow_lock(grow_mutex_);
 
-    if (head_.load(std::memory_order_acquire) != &old_table) {
+    if (&*head_.load(std::memory_order_acquire) != &old_table) {
         return;
     }
 
@@ -355,7 +381,8 @@ void MonotonicConcurrentSet<T, Hash, KeyEqual>::Grow(Table& old_table) {
 
     // Item count grows as: x, x, 2x, 4x, ... - so that total item limit per bucket table has a growth factor of 2.
     const std::size_t old_item_capacity = old_table.items.size();
-    const std::size_t new_item_capacity = (old_table.next == nullptr) ? old_item_capacity : old_item_capacity * 2;
+    const std::size_t new_item_capacity =
+        (old_table.next == &monotonic_concurrent_set::kNullTable<T>) ? old_item_capacity : old_item_capacity * 2;
 
     auto new_table = Table::AllocateFused(new_node_capacity, new_item_capacity);
 
@@ -366,7 +393,7 @@ void MonotonicConcurrentSet<T, Hash, KeyEqual>::Grow(Table& old_table) {
     FillNewTable(old_table, *new_table);
 
     new_table->next = &old_table;
-    head_.store(new_table.GetBase(), std::memory_order_release);
+    head_.store(new_table, std::memory_order_release);
 
     for (auto& bucket : old_table.buckets) {
         bucket.unlock();
@@ -379,28 +406,32 @@ std::pair<T&, bool> MonotonicConcurrentSet<T, Hash, KeyEqual>::TryEmplace(const 
     const std::size_t hash = hasher_(key);
 
     while (true) {
-        Table* const current = head_.load(std::memory_order_acquire);
-        UASSERT(current != nullptr);
+        Table& current = *head_.load(std::memory_order_acquire);
 
-        auto& bucket = current->GetBucket(hash);
+        if (&current == &monotonic_concurrent_set::kNullTable<T>) {
+            GrowInitial();
+            continue;
+        }
+
+        auto& bucket = current.GetBucket(hash);
 
         {
             std::lock_guard lock(bucket);
 
             // Table is only changed under all locks of the previous table. Because of acquire-release semantics
             // of locks, if the table has already changed, we are guaranteed to see it here.
-            if (head_.load(std::memory_order_relaxed) != current) {
+            if (&*head_.load(std::memory_order_relaxed) != &current) {
                 continue;
             }
 
-            auto [item, inserted] = TryEmplaceLocked(*current, bucket, key, std::forward<Args>(args)...);
+            auto [item, inserted] = TryEmplaceLocked(current, bucket, key, std::forward<Args>(args)...);
 
             if (item) {
                 return {*item, inserted};
             }
         }
 
-        Grow(*current);
+        Grow(current);
     }
 }
 
