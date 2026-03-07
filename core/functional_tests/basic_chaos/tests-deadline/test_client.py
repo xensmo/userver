@@ -247,13 +247,13 @@ async def test_deadline_expired_with_reuse(
             assert response.status == 504
             assert response.text == 'Deadline expired'
 
-            # With the given test parameters all subsequent "reuse" requests are immidiately exprired.
+            # With the given test parameters all subsequent "reuse" requests are immediately exprired.
             # So, we do not need to wait for the last "reuse" request completion
 
     assert client_metrics.value_at('cancelled-by-deadline', VERSION) == reuse_attempts
     assert client_metrics.value_at('errors', {'http_error': 'ok', **VERSION}) == 0
     # With the given test parameters timeout happens only on the first request.
-    # All subsequent "reuse" requests are immidiately exprired
+    # All subsequent "reuse" requests are immediately exprired
     assert client_metrics.value_at('errors', {'http_error': 'timeout', **VERSION}) == 1
 
     logs = capture.select(stopwatch_name='GET localhost')
@@ -265,7 +265,7 @@ async def test_deadline_expired_with_reuse(
         assert log['cancelled_by_deadline'] == '1'
         if i == 0:
             # With the given test parameters timeout happens only on the first request.
-            # All subsequent requests are immidiately exprired
+            # All subsequent requests are immediately exprired
             assert log['error_msg'] == 'Timeout was reached'
         else:
             assert log.get('error_msg') is None

@@ -43,7 +43,7 @@ private:
 
     struct WaitListData : public WaitListHook {
         // WaitList can't store context. But, we can store it here because an awaiter
-        // can't be simultaneouly linked to multiple wait lists.
+        // can't be simultaneously linked to multiple wait lists.
         std::uintptr_t context{0};
     };
 

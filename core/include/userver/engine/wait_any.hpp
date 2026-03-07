@@ -134,7 +134,7 @@ public:
     ///
     /// Each passed awaitable could be either a single awaitable or a container of awaitables.
     /// In the latter case all awaitables from the container are appended to the context.
-    /// The appended awaitables will have indexes [GetNextIndex() befor the call, GetNextIndex() after the call - 1].
+    /// The appended awaitables will have indexes [GetNextIndex() before the call, GetNextIndex() after the call - 1].
     template <typename... Awaitables>
     void Append(Awaitables&... awaitables);
 

@@ -375,7 +375,7 @@ void MonotonicConcurrentSet<T, Hash, KeyEqual>::Grow(Table& old_table) {
         return;
     }
 
-    // Node count grows as: x, 2x, 4x, 8x, ... - because each table accomodates all previous items.
+    // Node count grows as: x, 2x, 4x, 8x, ... - because each table accommodates all previous items.
     const std::size_t old_node_capacity = old_table.nodes.size();
     const std::size_t new_node_capacity = old_node_capacity * 2;
 

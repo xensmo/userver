@@ -4,7 +4,7 @@ components_manager:
             worker_threads: 4     # Process tasks in 4 threads.
         fs-task-processor:        # Make a separate task processor for filesystem bound tasks.
             worker_threads: 4
-        consumer-task-processor:  # Task processor for listenting messages from topics
+        consumer-task-processor:  # Task processor for listening messages from topics
             thread_name: consumer
             worker_threads: 1
         consumer-blocking-task-processor: # Task processor for blocking consumer operations

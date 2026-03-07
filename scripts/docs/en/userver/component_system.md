@@ -150,7 +150,7 @@ To validate static configs you only need to define member function of your compo
 All schemas and sub-schemas must have `description` field and can have 
 `defaultDescription` field if they have a default value.
 
-Scope of static config validatoin can be specified by `validate_all_components` section of 
+Scope of static config validation can be specified by `validate_all_components` section of 
 `components_manager` config. To disable it use:
 
 ```

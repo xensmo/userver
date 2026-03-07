@@ -42,7 +42,7 @@ public:
     /// @see Append
     [[nodiscard]] bool GetSignalOrAppend(boost::intrusive_ptr<impl::Awaiter> awaiter, std::uintptr_t context) noexcept;
 
-    /// @brief Remove the task from the `WaitListLight` without notofocation.
+    /// @brief Remove the task from the `WaitListLight` without notification.
     void Remove(impl::Awaiter& awaiter, std::uintptr_t context) noexcept;
 
     /// @brief Notifies the waiting task; the next awaiter may not `Append` until

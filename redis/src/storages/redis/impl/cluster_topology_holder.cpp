@@ -94,12 +94,12 @@ ClusterNodesResponseStatus ParseClusterNodesResponse(const ReplyPtr& reply, Node
     const auto& host_lines = utils::text::SplitIntoStringViewVector(reply->data.GetString(), "\n");
 
     for (const auto& host_line : host_lines) {
-        const auto& splitted = utils::text::SplitIntoStringViewVector(host_line, " ");
-        if (splitted.size() < 2) {
+        const auto& split = utils::text::SplitIntoStringViewVector(host_line, " ");
+        if (split.size() < 2) {
             continue;
         }
 
-        const auto& host_port_communication_port = splitted[1];
+        const auto& host_port_communication_port = split[1];
         if (host_port_communication_port == ":0@0" || host_port_communication_port == ":0") {
             continue;
         }

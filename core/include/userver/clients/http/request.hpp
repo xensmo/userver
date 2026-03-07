@@ -85,7 +85,7 @@ enum class ProxyAuthType {
 
 ProxyAuthType ProxyAuthTypeFromString(std::string_view auth_name);
 
-/// @brief Class for creating and performing new http requests, usually retieved from @ref clients::http::Client.
+/// @brief Class for creating and performing new http requests, usually retrieved from @ref clients::http::Client.
 class Request final {
 public:
     /// Request cookies container type

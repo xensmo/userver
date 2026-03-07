@@ -27,7 +27,7 @@ client_max_connections = server_max_connections/instances - reserved
 * maximum number of concurrent connections to the database server
 * and the current user connection limit.
 
-The service identifies `instanses` based on the following algorithm.
+The service identifies `instances` based on the following algorithm.
 The service creates `u_clients` table and regularly writes down information about
 itself. After that the service reads the table and identifies alive instances.
 `reserved` is set to be 5 to reflect administrative scripts connections,

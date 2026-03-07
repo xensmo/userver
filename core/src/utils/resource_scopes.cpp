@@ -19,7 +19,7 @@ void ResourceScopeStorage::AfterConstruction()
 {
     scope_registration_finished_ = true;
 
-    // A tweak to be sure in case of parial initialization only
+    // A tweak to be sure in case of partial initialization only
     // already initialized scopes' before_dtr() are called
     for (auto& resource_scope : registered_scopes_) {
         resource_scope->AfterConstruction();

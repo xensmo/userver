@@ -22,7 +22,7 @@ namespace utils {
 /// The array allows initializing each of the array elements with the same parameters:
 /// @snippet src/utils/fixed_array_test.cpp  Sample FixedArray
 ///
-/// The array also allows initializing each of the array elements with the output of a generator funtion:
+/// The array also allows initializing each of the array elements with the output of a generator function:
 /// @snippet src/utils/fixed_array_test.cpp  Sample GenerateFixedArray
 template <class T>
 class FixedArray final {

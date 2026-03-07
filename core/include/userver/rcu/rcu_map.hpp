@@ -190,10 +190,10 @@ public:
     template <typename RawKey>
     void InsertOrAssign(RawKey&& key, ValuePtr value);
 
-    /// @brief Returns a readonly value pointer by its key; nullptr (a default contructed ConstValuePtr) if no such key
+    /// @brief Returns a readonly value pointer by its key; nullptr (a default constructed ConstValuePtr) if no such key
     const ConstValuePtr Get(const Key& key) const;
 
-    /// @brief Returns a modifiable value pointer by key; nullptr (a default contructed ValuePtr) if no such key
+    /// @brief Returns a modifiable value pointer by key; nullptr (a default constructed ValuePtr) if no such key
     const ValuePtr Get(const Key& key);
 
     /// @brief Removes a key from the map

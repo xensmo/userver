@@ -192,7 +192,7 @@ T ForHandler<ForHandlerTag>::operator[](FactoryTag<T, Tag>&&)
     static_assert(
         !sizeof(T),
         "Seems you're trying to call 'handler[FactoryTag<T>()]' with a temporary value of 'FactoryTag'. Define a "
-        "global variable of type 'FactoryTag<T>' (or 'FactoryTag<T, Tag>') and use it insead."
+        "global variable of type 'FactoryTag<T>' (or 'FactoryTag<T, Tag>') and use it instead."
     );
 }
 

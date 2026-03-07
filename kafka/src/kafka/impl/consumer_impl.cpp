@@ -784,7 +784,7 @@ void ConsumerImpl::SeekToOffset(
     const auto* err =
         rd_kafka_seek_partitions(consumer_.GetHandle(), topic_partitions_list.GetHandle(), ToRdKafkaTimeout(deadline));
     if (err == nullptr) {
-        LOG_INFO("Seeked to offset: {} for partition: {} topic: {} successfully", offset, partition_id, topic);
+        LOG_INFO("Sought to offset: {} for partition: {} topic: {} successfully", offset, partition_id, topic);
         return;
     }
 
@@ -831,7 +831,7 @@ void ConsumerImpl::SeekToOffsets(utils::span<const SeekParams> params, std::chro
     const auto* err =
         rd_kafka_seek_partitions(consumer_.GetHandle(), topic_partitions_list.GetHandle(), ToRdKafkaTimeout(deadline));
     if (err == nullptr) {
-        LOG_INFO("MultiSeek: seeked {} partition(s) successfully", params.size());
+        LOG_INFO("MultiSeek: sought {} partition(s) successfully", params.size());
         return;
     }
 

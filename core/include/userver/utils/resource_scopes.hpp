@@ -68,7 +68,7 @@ using ScopePtr = std::unique_ptr<impl::ScopeBase>;
 class ResourceScopeStorage final {
 public:
     /// @brief Registers a functor to register some resource that will be
-    /// called after the component is succesfully created (including all
+    /// called after the component is successfully created (including all
     /// class descendants) or after the component creation is emulated in
     /// unit tests. The functor must return a RAII-style handle object
     /// that unregisters the previously registered resource. The returned handle's

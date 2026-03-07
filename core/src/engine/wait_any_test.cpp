@@ -399,7 +399,7 @@ UTEST(WaitAnyContext, WaitAnyContextMoveAssignemt) {
     auto wait_any1 = engine::MakeWaitAny(awaitable1);
     auto wait_any2 = engine::MakeWaitAny(awaitable2);
 
-    // Force subcription to awaitable 1.
+    // Force subscription to awaitable 1.
     ASSERT_EQ(wait_any1.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
     // This should remove the subscription from awaitable 1.
@@ -424,7 +424,7 @@ UTEST(WaitAnyContext, WaitAnyContextMoveConstruction) {
     TestAwaitable awaitable;
     auto wait_any1 = engine::MakeWaitAny(awaitable);
 
-    // Force subcription to awaitable.
+    // Force subscription to awaitable.
     ASSERT_EQ(wait_any1.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
     engine::WaitAnyContext wait_any2{std::move(wait_any1)};

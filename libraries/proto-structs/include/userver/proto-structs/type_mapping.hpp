@@ -1,7 +1,7 @@
 #pragma once
 
 /// @file userver/proto-structs/type_mapping.hpp
-/// @brief Concepts and traits for checking proto struct and protobuf message compatability.
+/// @brief Concepts and traits for checking proto struct and protobuf message compatibility.
 
 #include <cstdint>
 #include <iosfwd>
