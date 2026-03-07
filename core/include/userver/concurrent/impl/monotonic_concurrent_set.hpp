@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>  // for std::lock_guard
+#include <type_traits>
 #include <utility>
 
 #include <boost/atomic/atomic.hpp>
@@ -205,6 +206,16 @@ public:
     template <typename Key>
     utils::OptionalRef<T> Find(const Key& key);
 
+    /// @brief Call the passed `visitor` on all contained items.
+    /// @param visitor A callable that accepts `const T&`
+    template <typename Visitor, typename = std::enable_if_t<std::is_invocable_v<Visitor&, const T&>>>
+    void Visit(Visitor visitor) const;
+
+    /// @brief Call the passed `visitor` on all contained items.
+    /// @param visitor A callable that accepts `T&`
+    template <typename Visitor, typename = std::enable_if_t<std::is_invocable_v<Visitor&, T&>>>
+    void Visit(Visitor visitor);
+
 private:
     using ItemWrapper = monotonic_concurrent_set::ItemWrapper<T>;
     using ItemNode = monotonic_concurrent_set::ItemNode<T>;
@@ -222,6 +233,9 @@ private:
 
     template <typename Key>
     T* DoFind(const Key& key) const;
+
+    template <typename ItemReference, typename Visitor>
+    void DoVisit(Visitor visitor) const;
 
     template <typename Key, typename... Args>
     std::pair<T*, bool> TryEmplaceLocked(Table& table, Bucket& bucket, const Key& key, Args&&... args);
@@ -297,6 +311,31 @@ utils::OptionalRef<T> MonotonicConcurrentSet<T, Hash, KeyEqual>::Find(const Key&
         return utils::OptionalRef<T>(*found);
     }
     return std::nullopt;
+}
+
+template <typename T, typename Hash, typename KeyEqual>
+template <typename ItemReference, typename Visitor>
+void MonotonicConcurrentSet<T, Hash, KeyEqual>::DoVisit(Visitor visitor) const {
+    auto table = head_.load(std::memory_order_relaxed);
+    for (const auto& bucket : table->buckets) {
+        for (const ItemNode* node = bucket.LoadHead(boost::memory_order_acquire); node != nullptr; node = node->next) {
+            T* item = node->item;
+            UASSERT(item);
+            visitor(static_cast<ItemReference>(*item));
+        }
+    }
+}
+
+template <typename T, typename Hash, typename KeyEqual>
+template <typename Visitor, typename>
+void MonotonicConcurrentSet<T, Hash, KeyEqual>::Visit(Visitor visitor) const {
+    DoVisit<const T&>(visitor);
+}
+
+template <typename T, typename Hash, typename KeyEqual>
+template <typename Visitor, typename>
+void MonotonicConcurrentSet<T, Hash, KeyEqual>::Visit(Visitor visitor) {
+    DoVisit<T&>(visitor);
 }
 
 template <typename T, typename Hash, typename KeyEqual>
