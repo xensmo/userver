@@ -215,7 +215,7 @@ UTEST(MonotonicConcurrentSet, StressTest) {
     }
 }
 
-UTEST(MonotonicConcurrentSet, DISABLED_ConstVisitWithConcurrentEmplace) {
+UTEST(MonotonicConcurrentSet, ConstVisitWithConcurrentEmplace) {
     constexpr std::size_t kNumReaderThreads = 3;
     constexpr std::size_t kNumWriterThreads = 1;
     constexpr std::size_t kItemsPerWriter = 200;

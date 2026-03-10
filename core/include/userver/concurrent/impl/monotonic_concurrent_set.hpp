@@ -316,7 +316,7 @@ utils::OptionalRef<T> MonotonicConcurrentSet<T, Hash, KeyEqual>::Find(const Key&
 template <typename T, typename Hash, typename KeyEqual>
 template <typename ItemReference, typename Visitor>
 void MonotonicConcurrentSet<T, Hash, KeyEqual>::DoVisit(Visitor visitor) const {
-    auto table = head_.load(std::memory_order_relaxed);
+    auto table = head_.load(std::memory_order_acquire);
     for (const auto& bucket : table->buckets) {
         for (const ItemNode* node = bucket.LoadHead(boost::memory_order_acquire); node != nullptr; node = node->next) {
             T* item = node->item;
@@ -363,7 +363,7 @@ std::pair<T*, bool> MonotonicConcurrentSet<
     ItemNode& new_node = GetNodeForItemIndex(table, item_index);
     new_node.item = &new_item;
     new_node.next = bucket_head;
-    bucket.value.store(monotonic_concurrent_set::MakeBucketValue(&new_node, true), boost::memory_order_relaxed);
+    bucket.value.store(monotonic_concurrent_set::MakeBucketValue(&new_node, true), boost::memory_order_release);
 
     return {&new_item, true};
 }
