@@ -783,7 +783,11 @@ ResultSet PGConnectionWrapper::MakeResult(ResultHandle&& handle) {
             break;
 #endif
     }
-    LOG_DEBUG() << "Result checked";
+
+    logging::LogExtra log_extra;
+    log_extra.Extend("db.row_count", wrapper->RowCount());
+    PGCW_LOG_DEBUG() << "Result checked" << log_extra;
+
     return ResultSet{wrapper};
 }
 
