@@ -513,6 +513,14 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
 
     holder->CheckResponseDeadline(err, status_code);
 
+    if (err && std::get_if<WebSocketHandshakeData>(&holder->data_) &&
+        err == std::error_code(curl::errc::EasyErrorCode::kHttpReturnedError) && status_code != Status::kInvalid)
+    {
+        // curl expects 101 for WebSocket, treats other statuses as error.
+        // Ignore error if got complete HTTP response (e.g. 401, 403).
+        err = {};
+    }
+
     if (holder->testsuite_config_ && !err) {
         const auto& headers = holder->response()->headers();
         err = TestsuiteResponseHook(status_code, headers, span);
