@@ -43,7 +43,8 @@ std::string ToString(const formats::yaml::Value& doc);
 /// Blocking operations that should not be used on main task processor after
 /// startup
 namespace blocking {
-/// Read YAML from file
+/// @brief Read YAML from file
+/// @see formats::yaml::FromFile
 formats::yaml::Value FromFile(const std::string& path);
 }  // namespace blocking
 
