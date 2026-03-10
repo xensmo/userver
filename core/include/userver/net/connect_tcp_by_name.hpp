@@ -29,9 +29,9 @@ namespace net {
 /// @param deadline Maximum time allowed for the whole operation (resolution +
 /// connection). Same deadline is used for both resolve and connect steps.
 /// @return A connected TCP socket.
-/// @throws @ref clients::dns::ResolverException or @ref clients::dns::NotResolvedException
+/// @throws clients::dns::ResolverException or @ref clients::dns::NotResolvedException
 /// if the host name cannot be resolved.
-/// @throws @ref engine::io::IoException if connection to all resolved addresses
+/// @throws engine::io::IoException if connection to all resolved addresses
 /// fails (e.g. connection refused, timeout).
 ///
 /// @note Without a Resolver (e.g. in non-component code) use

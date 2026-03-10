@@ -28,7 +28,7 @@ namespace net::blocking {
 /// connection).
 /// @return A connected TCP socket.
 /// @throws std::runtime_error if getaddrinfo fails (e.g. unknown host).
-/// @throws @ref engine::io::IoException if connection to all resolved
+/// @throws engine::io::IoException if connection to all resolved
 /// addresses fails (e.g. connection refused, timeout).
 ///
 /// @note For async/cached DNS resolution use @ref net::ConnectTcpByName with

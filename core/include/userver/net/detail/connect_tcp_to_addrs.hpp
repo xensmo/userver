@@ -15,7 +15,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace net::detail {
 
-/// @throws @ref engine::io::IoException if connection to all addresses fails
+/// @throws engine::io::IoException "engine::io::IoException" if connection to all addresses fails
 engine::io::Socket ConnectTcpToAddrs(
     std::string_view host,
     std::uint16_t port,
