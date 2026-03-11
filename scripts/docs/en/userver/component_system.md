@@ -167,7 +167,7 @@ You also can force static config validation of your component by adding `compone
 
 Supported types:
 * Scalars: `boolean`, `string`, `integer`, `double`
-* `object` must have options `additionalProperties` and `properties`
+* `object` must have options `additionalProperties` and `properties`, may have `required`
 * `array` must have option `items`
 
 @anchor select-config-file-mode
