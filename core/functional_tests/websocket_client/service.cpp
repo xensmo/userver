@@ -43,9 +43,8 @@ public:
 
     using WebsocketHandlerBase::WebsocketHandlerBase;
 
-    bool
-    HandleHandshake(const server::http::HttpRequest&, server::http::HttpResponse& response, server::request::RequestContext&) const override {
-        response.SetStatus(server::http::HttpStatus::kUnauthorized);
+    bool HandleHandshake(server::http::HttpRequest& request, server::request::RequestContext&) const override {
+        request.GetHttpResponse().SetStatus(server::http::HttpStatus::kUnauthorized);
         return false;
     }
 
