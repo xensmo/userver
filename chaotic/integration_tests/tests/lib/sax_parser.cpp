@@ -256,10 +256,7 @@ using SelfRefDescriptor = chaotic::Object<
 
 using SelfRefParser = sax::Parser<SelfRefDescriptor>;
 
-auto ParserOf(SelfRef&)
-{
-    return SelfRefParser{};
-}
+[[maybe_unused]] auto ParserOf(chaotic::sax::Type<SelfRef>) -> SelfRefParser;
 
 TEST(SaxParser, ObjectSelfRef)
 {

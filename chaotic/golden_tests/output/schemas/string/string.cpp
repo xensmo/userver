@@ -2,8 +2,14 @@
 
 #include "string.hpp"
 #include "string_parsers.ipp"
+#include "string_sax_parsers.hpp"
 
 namespace ns {
+
+String FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<String>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<String,
+                                                               USERVER_NAMESPACE::chaotic::sax::Parser<String> >(json);
+}
 
 bool operator==(const String& lhs, const String& rhs) { return lhs.foo == rhs.foo && true; }
 

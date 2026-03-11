@@ -215,6 +215,13 @@
     {% endif %}
 {% endmacro %}
 
+{% macro generate_from_json_string_declaration(type) %}    
+    {% if type.get_py_type() == 'CppStruct' %}
+        {{ type.cpp_local_name() }} FromJsonString(std::string_view json,
+            {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
+    {% endif %}
+{% endmacro %}
+
 {% macro _generate_parser_declaration(type, format) %}
     {# handle subtypes #}
     {%- for schema in type.subtypes() -%}
@@ -309,6 +316,10 @@
     {% for parse_format in parse_formats %}
         {{ generate_parser_declaration(type, userver + parse_format) }}
     {% endfor %}
+
+    {% if has_json_parse(parse_formats) %}
+        {{ generate_from_json_string_declaration(type) }}
+    {% endif %}
 
     {{ generate_string_parser_declaration(type) }}
 

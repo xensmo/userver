@@ -16,16 +16,20 @@
 #include <userver/formats/yaml/value_builder.hpp>
 
 #include <schemas/all_of.hpp>
+#include <schemas/all_of_sax_parsers.hpp>
 #include <schemas/date.hpp>
 #include <schemas/extra_container.hpp>
 #include <schemas/indirect.hpp>
+#include <schemas/indirect_sax_parsers.hpp>
 #include <schemas/object_empty.hpp>
 #include <schemas/object_name.hpp>
 #include <schemas/object_object.hpp>
 #include <schemas/object_single_field.hpp>
 #include <schemas/object_single_field_sax_parsers.hpp>
 #include <schemas/one_of.hpp>
+#include <schemas/one_of_sax_parsers.hpp>
 #include <schemas/oneofdiscriminator.hpp>
+#include <schemas/oneofdiscriminator_sax_parsers.hpp>
 #include <schemas/string64.hpp>
 #include <schemas/uri.hpp>
 #include <schemas/uuid.hpp>
@@ -123,7 +127,7 @@ TEST(Simple, ObjectTypes) {
 
 template <typename T>
 T ParseToType(std::string_view input) {
-    using Parser = decltype(ParserOf(std::declval<T&>()));
+    using Parser = chaotic::sax::Parser<T>;
     return formats::json::parser::ParseToType<T, Parser>(input);
 }
 
@@ -254,6 +258,21 @@ TEST(Simple, IntegerEnum) {
     }
 }
 
+TEST(Simple, IntegerEnumSax) {
+    auto obj = ParseToType<ns::IntegerEnum>("1");
+    EXPECT_EQ(obj, ns::IntegerEnum::k1);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back.As<int>(), 1) << ToString(json_back);
+
+    auto json2 = formats::json::MakeObject("one", 5);
+    UEXPECT_THROW_MSG(
+        ParseToType<ns::IntegerEnum>("5"),
+        formats::json::parser::ParseError,  // TODO: chaotic::Error<formats::json::Value> ?
+        "Parse error at pos 1, path '': Invalid enum value (5) for type ::ns::IntegerEnum, the latest token was 5"
+    );
+}
+
 TEST(Simple, StringEnum) {
     auto json = formats::json::MakeObject("one", "foo");
     auto obj = json["one"].As<ns::StringEnum>();
@@ -297,6 +316,21 @@ TEST(Simple, StringEnum) {
     }
 }
 
+TEST(Simple, StringEnumSax) {
+    auto obj = ParseToType<ns::StringEnum>("\"foo\"");
+    EXPECT_EQ(obj, ns::StringEnum::kFoo);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back.As<std::string>(), "foo") << ToString(json_back);
+
+    UEXPECT_THROW_MSG(
+        ParseToType<ns::StringEnum>("\"zoo\""),
+        formats::json::parser::ParseError,  // TODO: chaotic::Error<formats::json::Value> ?
+        "Parse error at pos 5, path '': Invalid enum value (zoo) for type ::ns::StringEnum, the "
+        "latest token was \"zoo\""
+    );
+}
+
 TEST(Simple, StringEnumPgInteraction) {
     auto str = ToString(ns::StringEnum::kFoo);
     static_assert(
@@ -324,6 +358,17 @@ TEST(Simple, AllOf) {
     EXPECT_EQ(json_back, json) << ToString(json_back);
 }
 
+TEST(Simple, AllOfSax) {
+    auto json = formats::json::MakeObject("foo", 1, "bar", 2);
+    auto obj = ParseToType<ns::AllOf>(ToString(json));
+
+    EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(obj.bar, 2);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
 TEST(Simple, OneOf) {
     auto json = formats::json::MakeObject();
     auto obj = json.As<ns::OneOf>();
@@ -334,9 +379,29 @@ TEST(Simple, OneOf) {
     EXPECT_EQ(json_back, json) << ToString(json_back);
 }
 
+TEST(Simple, OneOfSax) {
+    auto json = formats::json::MakeObject();
+    auto obj = ParseToType<ns::OneOf>(ToString(json));
+
+    EXPECT_EQ(std::get<ns::OneOf__O2>(obj), ns::OneOf__O2());
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
 TEST(Simple, OneOfWithDiscriminator) {
     auto json = formats::json::MakeObject("oneof", formats::json::MakeObject("type", "ObjectFoo", "foo", 42));
     auto obj = json.As<ns::ObjectOneOfWithDiscriminator>();
+    EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
+    EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, OneOfWithDiscriminatorSax) {
+    auto json = formats::json::MakeObject("oneof", formats::json::MakeObject("type", "ObjectFoo", "foo", 42));
+    auto obj = ParseToType<ns::ObjectOneOfWithDiscriminator>(ToString(json));
     EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
     EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
 
@@ -360,6 +425,22 @@ TEST(Simple, Indirect) {
     );
 
     auto obj = json.As<ns::TreeNode>();
+    EXPECT_EQ(obj.data, "smth");
+    EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
+    EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));
+}
+
+TEST(Simple, IndirectSax) {
+    auto json = formats::json::MakeObject(
+        "data",
+        "smth",
+        "left",
+        formats::json::MakeObject("data", "left"),
+        "right",
+        formats::json::MakeObject("data", "right", "left", formats::json::MakeObject("data", "rightleft"))
+    );
+
+    auto obj = ParseToType<ns::TreeNode>(ToString(json));
     EXPECT_EQ(obj.data, "smth");
     EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
     EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));

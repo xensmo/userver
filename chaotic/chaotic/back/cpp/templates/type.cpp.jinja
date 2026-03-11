@@ -4,6 +4,9 @@
 
 #include "{{ pair_header }}_parsers.ipp"
 
+{% if generate_sax_parser %}
+#include "{{ pair_header }}_sax_parsers.hpp"
+{% endif %}
 
 {% macro generate_parser_definition_call(type, format) %}
     {% if not type.may_generate_for_format(format) %}
@@ -26,6 +29,24 @@
     {
         return Parse<{{ format }}::Value>(json, to);
     }
+    {% endif %}
+{% endmacro %}
+
+
+{% macro generate_from_json_string_definition(type) %}
+    {% if type.get_py_type() == 'CppStruct' %}
+        {{ shortest_cpp_name(type) }} FromJsonString(std::string_view json,
+            {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>)
+        {
+          {% if generate_sax_parser %}
+              return {{ userver }}::formats::json::parser::ParseToType<
+                               {{ shortest_cpp_name(type) }},
+                               {{ userver }}::chaotic::sax::Parser<{{ shortest_cpp_name(type) }}>
+              >(json);
+          {% else %}
+              return {{ userver }}::formats::json::FromString(json).As<{{ shortest_cpp_name(type) }}>();
+          {% endif %}
+        }
     {% endif %}
 {% endmacro %}
 
@@ -271,6 +292,10 @@
 
 {% for name, type in types.items() %}
     {{ common.switch_namespace(cpp_namespace(name)) }}
+
+    {% if has_json_parse(parse_formats) %}
+        {{ generate_from_json_string_definition(type) }}
+    {% endif %}
 
     {{ generate_operator_eq_definition(type) }}
 

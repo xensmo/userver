@@ -2,8 +2,14 @@
 
 #include "enum.hpp"
 #include "enum_parsers.ipp"
+#include "enum_sax_parsers.hpp"
 
 namespace ns {
+
+Enum FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Enum>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<Enum, USERVER_NAMESPACE::chaotic::sax::Parser<Enum>>(
+      json);
+}
 
 bool operator==(const Enum& lhs, const Enum& rhs) { return lhs.foo == rhs.foo && true; }
 

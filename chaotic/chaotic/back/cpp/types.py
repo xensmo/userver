@@ -613,6 +613,9 @@ class CppStructField:
         default = self._get_default()
         if isinstance(default, int):
             return f'std::int64_t{{{default}}}'
+        elif isinstance(default, str) and default.startswith('"'):
+            # TODO: return f'USERVER_NAMESPACE::utils::StringLiteral{{{default}}}'
+            return f'std::string_view{{{default}}}'
         else:
             return f'{default}'
 

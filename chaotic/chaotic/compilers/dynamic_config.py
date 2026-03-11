@@ -293,6 +293,7 @@ class CompilerBase:
             clang_format_bin=get_clang_format_bin(),
             parse_extra_formats=parse_extra_formats,
             generate_serializer=parse_extra_formats,
+            generate_sax_parser=False,
         )
 
     def variable_type(self, name: str) -> str:

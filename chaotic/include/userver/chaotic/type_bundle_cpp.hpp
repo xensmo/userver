@@ -1,6 +1,7 @@
 #pragma once
 
-#include <userver/formats/json/serialize.hpp>
+#include <userver/formats/json/parser/typed_parser.hpp>  // formats::json::parser::ParseToType for T::FromJsonString
+#include <userver/formats/json/serialize.hpp>            // formats::json::FromString for T::FromJsonString
 #include <userver/formats/json/value.hpp>
 #include <userver/formats/json/value_builder.hpp>
 #include <userver/formats/yaml/serialize.hpp>

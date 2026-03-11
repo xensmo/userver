@@ -2,8 +2,14 @@
 
 #include "oneof.hpp"
 #include "oneof_parsers.ipp"
+#include "oneof_sax_parsers.hpp"
 
 namespace ns {
+
+OneOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<OneOf>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<OneOf, USERVER_NAMESPACE::chaotic::sax::Parser<OneOf>>(
+      json);
+}
 
 bool operator==(const OneOf& lhs, const OneOf& rhs) { return lhs.foo == rhs.foo && true; }
 

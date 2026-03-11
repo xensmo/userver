@@ -11,10 +11,6 @@
   #include <{{ include }}>
 {% endfor %}
 
-{% for include in spec.cpp_sax_parser_includes() %}
-#include <{{ include }}>
-{% endfor %}
-
 
 namespace {{ namespace }} {
 {% for op in operations %}
@@ -47,8 +43,7 @@ namespace {{ namespace }} {
                       if (content_type == USERVER_NAMESPACE::http::ContentType{"{{ content_type }}"}) {
                         {% if content_type == 'application/json' %}
                           try {
-                            using Parser = USERVER_NAMESPACE::chaotic::sax::Parser<{{ body.cpp_global_name() }}>;
-                            r.body = USERVER_NAMESPACE::formats::json::parser::ParseToType<{{ body.cpp_global_name() }}, Parser>(http_response.body_view());
+                            r.body = FromJsonString(http_response.body_view(), USERVER_NAMESPACE::formats::parse::To<{{ body.cpp_global_name() }}>{});
                           } catch (const std::exception& e) {
                             LOG_ERROR() << "Failed to parse JSON response body: " << e;
                             throw ExceptionWithStatusCode({{ response.status }});

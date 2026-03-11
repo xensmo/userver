@@ -61,8 +61,9 @@ _userver_prepare_chaotic()
 # @multiparam SCHEMAS - JSONSchema source files
 # @param INSTALL_INCLUDES_COMPONENT - component to install generated includes
 # @multiparam LINK_TARGETS - targets to link (used by x-usrv-cpp-type)
+# @option NO_SAX_PARSE - Do not generate SAX parser and efficient FromJsonString() member factory function
 function(userver_target_generate_chaotic TARGET)
-    set(OPTIONS GENERATE_SERIALIZERS PARSE_EXTRA_FORMATS)
+    set(OPTIONS GENERATE_SERIALIZERS PARSE_EXTRA_FORMATS NO_SAX_PARSE)
     set(ONE_VALUE_ARGS OUTPUT_DIR RELATIVE_TO FORMAT INSTALL_INCLUDES_COMPONENT OUTPUT_PREFIX ERASE_PATH_PREFIX)
     set(MULTI_VALUE_ARGS SCHEMAS LAYOUT INCLUDE_DIRS LINK_TARGETS)
     cmake_parse_arguments(PARSE "${OPTIONS}" "${ONE_VALUE_ARGS}" "${MULTI_VALUE_ARGS}" ${ARGN})
@@ -107,8 +108,15 @@ function(userver_target_generate_chaotic TARGET)
             "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}.hpp"
             "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}_fwd.hpp"
             "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}_parsers.ipp"
-            "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}_sax_parsers.hpp"
         )
+
+        if(NOT PARSE_NO_SAX_PARSE)
+            list(
+                APPEND
+                SCHEMAS
+                "${PARSE_OUTPUT_DIR}/${PARSE_OUTPUT_PREFIX}/${SCHEMA}_sax_parsers.hpp"
+            )
+        endif()
     endforeach()
 
     set(CHAOTIC_ARGS)
@@ -127,6 +135,10 @@ function(userver_target_generate_chaotic TARGET)
 
     if(PARSE_PARSE_EXTRA_FORMATS)
         list(APPEND CHAOTIC_ARGS "--parse-extra-formats")
+    endif()
+    
+    if(PARSE_NO_SAX_PARSE)
+        list(APPEND CHAOTIC_ARGS "--no-sax-parse")
     endif()
 
     if(PARSE_ERASE_PATH_PREFIX)

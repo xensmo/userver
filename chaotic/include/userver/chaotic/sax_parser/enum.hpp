@@ -1,5 +1,6 @@
 #pragma once
 
+#include <userver/chaotic/sax_parser/primitive.hpp>
 #include <userver/formats/json/parser/int_parser.hpp>
 #include <userver/formats/json/parser/string_parser.hpp>
 #include <userver/formats/parse/to.hpp>
@@ -67,15 +68,11 @@ struct IsStringEnum<Enum, utils::void_t<decltype(FromString(std::string_view{}, 
 
 }  // namespace impl
 
-template <typename Enum, typename = std::is_enum<Enum>, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-auto ParserOf(Enum&)
-{
-    if constexpr (impl::IsStringEnum<Enum>::value) {
-        return impl::StringEnumParser<Enum>{};
-    } else {
-        return impl::IntEnumParser<Enum>{};
-    }
-}
+template <typename Enum>
+std::enable_if_t<
+    std::is_enum_v<Enum>,
+    std::conditional_t<impl::IsStringEnum<Enum>::value, impl::StringEnumParser<Enum>, impl::IntEnumParser<Enum>>>
+    ParserOf(Type<Enum>);
 
 }  // namespace chaotic::sax
 

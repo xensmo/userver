@@ -255,19 +255,6 @@ class ClientSpec:
             )
         return includes
 
-    def cpp_sax_parser_includes(self) -> list[str]:
-        includes = []
-        for cpp_type in self.extract_cpp_types().values():
-            assert cpp_type.json_schema
-            filepath = cpp_type.json_schema.source_location().filepath
-            includes.append(
-                'clients/{}/{}_sax_parsers.hpp'.format(
-                    self.client_name,
-                    filepath.rsplit('.', 1)[0],
-                ),
-            )
-        return includes
-
     def extract_cpp_types(self) -> dict[str, cpp_types.CppType]:
         types = self.schemas.copy()
         types.update(self.internal_schemas)

@@ -30,6 +30,8 @@ OneOf Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::for
 
 OneOf Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<OneOf>);
 
+OneOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<OneOf>);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const OneOf& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 

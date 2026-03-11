@@ -266,6 +266,7 @@ def get_includes(client_name: str, schemas_dir: str) -> dict[str, list[str]]:
         output[f'src/clients/{client_name}/{stem}.cpp'] = [
             f'clients/{client_name}/{stem}.hpp',
             f'clients/{client_name}/{stem}_parsers.ipp',
+            f'clients/{client_name}/{stem}_sax_parsers.hpp',
             'userver/chaotic/type_bundle_cpp.hpp',
             *TYPES_INCLUDES,
             *graph[file],
