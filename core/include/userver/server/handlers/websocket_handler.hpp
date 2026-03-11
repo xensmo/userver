@@ -40,11 +40,9 @@ public:
 
     /// @brief If any code is required for handshake validation,
     /// it goes here.
-    virtual bool
-    HandleHandshake(const server::http::HttpRequest&, server::http::HttpResponse&, server::request::RequestContext&)
-        const {
-        return true;
-    }
+    /// @return \a true to accept the WebSocket connection, \a false to reject
+    /// it (handshake will be aborted and connection will not be established).
+    virtual bool HandleHandshake(server::http::HttpRequest&, server::request::RequestContext&) const { return true; }
 
     /// @cond
     void WriteMetrics(utils::statistics::Writer& writer) const;
@@ -63,7 +61,7 @@ public:
     }
 
 private:
-    std::string HandleRequestThrow(const server::http::HttpRequest& request, server::request::RequestContext& context)
+    std::string HandleRequest(server::http::HttpRequest& request, server::request::RequestContext& context)
         const override;
 
     websocket::Config config_;

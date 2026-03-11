@@ -22,11 +22,7 @@ public:
 
     using WebsocketHandlerBase::WebsocketHandlerBase;
 
-    bool HandleHandshake(
-        const server::http::HttpRequest& request,
-        server::http::HttpResponse&,
-        server::request::RequestContext& context
-    ) const override {
+    bool HandleHandshake(server::http::HttpRequest& request, server::request::RequestContext& context) const override {
         context.SetUserData(HandshakeData{request.GetHeader("Origin")});
         return true;
     }

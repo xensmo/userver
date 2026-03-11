@@ -33,8 +33,8 @@ WebsocketHandlerBase::WebsocketHandlerBase(
     });
 }
 
-std::string WebsocketHandlerBase::HandleRequestThrow(
-    const server::http::HttpRequest& request,
+std::string WebsocketHandlerBase::HandleRequest(
+    server::http::HttpRequest& request,
     server::request::RequestContext& context
 ) const {
     if (request.GetMethod() != server::http::HttpMethod::kGet ||
@@ -69,7 +69,7 @@ std::string WebsocketHandlerBase::HandleRequestThrow(
         return "";
     }
 
-    if (!HandleHandshake(request, response, context)) {
+    if (!HandleHandshake(request, context)) {
         return "";
     }
 
