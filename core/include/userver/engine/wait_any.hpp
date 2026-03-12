@@ -21,6 +21,7 @@ namespace engine {
 
 /// @ingroup userver_concurrency
 ///
+/// @deprecated `WaitAny` is deprecated. Please, prefer @ref MakeWaitAny + @ref WaitAnyContext::Wait.
 /// @brief Waits for the completion of any of the specified tasks or the
 /// cancellation of the caller.
 ///
@@ -34,31 +35,28 @@ namespace engine {
 /// @returns the index of the completed task, or `std::nullopt` if there are no
 /// completed tasks (possible if current task was cancelled).
 template <typename... Tasks>
-[[deprecated("Use MakeWaitAny")]] std::optional<std::size_t> WaitAny(Tasks&... tasks);
+std::optional<std::size_t> WaitAny(Tasks&... tasks);
 
 /// @ingroup userver_concurrency
 ///
+/// @deprecated `WaitAnyFor` is deprecated. Please, prefer @ref MakeWaitAny + @ref WaitAnyContext::WaitFor().
 /// @overload std::optional<std::size_t> WaitAny(Tasks&... tasks)
 template <typename... Tasks, typename Rep, typename Period>
-[[deprecated("Use MakeWaitAny")]] std::optional<std::size_t> WaitAnyFor(
-    const std::chrono::duration<Rep, Period>& duration,
-    Tasks&... tasks
-);
+std::optional<std::size_t> WaitAnyFor(const std::chrono::duration<Rep, Period>& duration, Tasks&... tasks);
 
 /// @ingroup userver_concurrency
 ///
+/// @deprecated `WaitAnyUntil` is deprecated. Please, prefer @ref MakeWaitAny + @ref WaitAnyContext::WaitUntil.
 /// @overload std::optional<std::size_t> WaitAny(Tasks&... tasks)
 template <typename... Tasks, typename Clock, typename Duration>
-[[deprecated("Use MakeWaitAny")]] std::optional<std::size_t> WaitAnyUntil(
-    const std::chrono::time_point<Clock, Duration>& until,
-    Tasks&... tasks
-);
+std::optional<std::size_t> WaitAnyUntil(const std::chrono::time_point<Clock, Duration>& until, Tasks&... tasks);
 
 /// @ingroup userver_concurrency
 ///
+/// @deprecated `WaitAnyUntil` is deprecated. Please, prefer @ref MakeWaitAny + @ref WaitAnyContext::WaitUntil.
 /// @overload std::optional<std::size_t> WaitAny(Tasks&... tasks)
 template <typename... Tasks>
-[[deprecated("Use MakeWaitAny")]] std::optional<std::size_t> WaitAnyUntil(Deadline, Tasks&... tasks);
+std::optional<std::size_t> WaitAnyUntil(Deadline, Tasks&... tasks);
 
 template <typename... Tasks>
 std::optional<std::size_t> WaitAny(Tasks&... tasks) {
