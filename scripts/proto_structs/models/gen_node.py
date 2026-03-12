@@ -244,6 +244,7 @@ class StructNode(TypeNode, names.HasVanillaName):
 
 COMMON_STRUCT_INCLUDES: Sequence[includes.Include] = [
     includes.Include(path='userver/proto-structs/io/fwd.hpp', kind=includes.IncludeKind.FOR_HPP),
+    includes.Include(path='userver/proto-structs/impl/struct_codegen.hpp', kind=includes.IncludeKind.FOR_HPP),
     includes.Include(path='utility', kind=includes.IncludeKind.FOR_CPP),
     includes.Include(path='userver/proto-structs/io/impl/field_accessor.hpp', kind=includes.IncludeKind.FOR_CPP),
     includes.Include(path='userver/proto-structs/io/impl/read.hpp', kind=includes.IncludeKind.FOR_CPP),
