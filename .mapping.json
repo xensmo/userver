@@ -639,6 +639,7 @@
   "core/dynamic_configs/BAGGAGE_SETTINGS.yaml":"taxi/uservices/userver/core/dynamic_configs/BAGGAGE_SETTINGS.yaml",
   "core/dynamic_configs/EGRESS_HTTP_PROXY_ENABLED.yaml":"taxi/uservices/userver/core/dynamic_configs/EGRESS_HTTP_PROXY_ENABLED.yaml",
   "core/dynamic_configs/EGRESS_NO_PROXY_TARGETS.yaml":"taxi/uservices/userver/core/dynamic_configs/EGRESS_NO_PROXY_TARGETS.yaml",
+  "core/dynamic_configs/GRACEFUL_SHUTDOWN_HEADERS.yaml":"taxi/uservices/userver/core/dynamic_configs/GRACEFUL_SHUTDOWN_HEADERS.yaml",
   "core/dynamic_configs/HTTP_CLIENT_CONNECTION_POOL_SIZE.yaml":"taxi/uservices/userver/core/dynamic_configs/HTTP_CLIENT_CONNECTION_POOL_SIZE.yaml",
   "core/dynamic_configs/HTTP_CLIENT_CONNECT_THROTTLE.yaml":"taxi/uservices/userver/core/dynamic_configs/HTTP_CLIENT_CONNECT_THROTTLE.yaml",
   "core/dynamic_configs/USERVER_BAGGAGE_ENABLED.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_BAGGAGE_ENABLED.yaml",
