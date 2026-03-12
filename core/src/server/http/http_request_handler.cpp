@@ -17,6 +17,7 @@
 #include <userver/server/request/task_inherited_request.hpp>
 #include <userver/utils/assert.hpp>
 
+#include <dynamic_config/variables/GRACEFUL_SHUTDOWN_HEADERS.hpp>
 #include <dynamic_config/variables/USERVER_RPS_CCONTROL_CUSTOM_STATUS.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -30,7 +31,8 @@ HttpRequestHandler::HttpRequestHandler(
     bool is_monitor,
     std::string server_name
 )
-    : is_monitor_(is_monitor),
+    : components_state_(component_context),
+      is_monitor_(is_monitor),
       server_name_(std::move(server_name)),
       rate_limit_(utils::TokenBucket::MakeUnbounded()),
       metrics_(component_context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()),
@@ -77,6 +79,15 @@ engine::TaskWithResult<void> HttpRequestHandler::StartRequestTask(std::shared_pt
 ) const {
     auto& http_response = http_request->GetHttpResponse();
     http_response.SetHeader(USERVER_NAMESPACE::http::headers::kServer, server_name_);
+    if (components_state_.GetServiceLifetimeStage() == components::ServiceLifetimeStage::kGracefulShutdown) {
+        const auto config = config_source_.GetSnapshot();
+        auto config_var = config[::dynamic_config::GRACEFUL_SHUTDOWN_HEADERS];
+        if (config_var.enabled) {
+            for (const auto& [name, values] : config_var.headers.extra) {
+                http_response.SetHeader(name, fmt::to_string(fmt::join(values, ", ")));
+            }
+        }
+    }
     if (http_response.IsReady()) {
         // Request is broken somehow, user handler must not be called
         http_request->SetTaskCreateTime();
