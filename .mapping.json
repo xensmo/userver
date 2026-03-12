@@ -172,6 +172,7 @@
   "chaotic-openapi/tests/front/test_swagger.py":"taxi/uservices/userver/chaotic-openapi/tests/front/test_swagger.py",
   "chaotic-openapi/ya.make.ext":"taxi/uservices/userver/chaotic-openapi/ya.make.ext",
   "chaotic/CMakeLists.txt":"taxi/uservices/userver/chaotic/CMakeLists.txt",
+  "chaotic/README.md":"taxi/uservices/userver/chaotic/README.md",
   "chaotic/bin-dynamic-configs/chaotic-gen-dynamic-configs":"taxi/uservices/userver/chaotic/bin-dynamic-configs/chaotic-gen-dynamic-configs",
   "chaotic/bin-dynamic-configs/main.py":"taxi/uservices/userver/chaotic/bin-dynamic-configs/main.py",
   "chaotic/bin/chaotic-gen":"taxi/uservices/userver/chaotic/bin/chaotic-gen",
