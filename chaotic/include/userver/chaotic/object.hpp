@@ -35,7 +35,7 @@ void ValidateNoAdditionalProperties(const Value& json, const utils::TrivialSet<B
             continue;
         }
 
-        throw Error<Value>(fmt::format("Unknown property '{}'", name));
+        chaotic::ThrowForValue<Value>(fmt::format("Unknown property '{}'", name), value);
     }
 }
 

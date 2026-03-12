@@ -1,6 +1,7 @@
 #include <userver/utest/assert_macros.hpp>
 
 #include <userver/chaotic/sax_parser.hpp>
+#include <userver/chaotic/validators_pattern.hpp>
 #include <userver/formats/json/inline.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -55,6 +56,19 @@ TEST(SaxParser, String)
     auto input = "\"foo bar baz\"";
     auto result = formats::json::parser::ParseToType<std::string, Parser>(input);
     EXPECT_EQ(result, "foo bar baz");
+}
+
+TEST(SaxParser, StringPattern) {
+    static constexpr std::string_view kPatternFooStar = "foo.*";
+
+    using Parser = sax::Parser<chaotic::Primitive<std::string, chaotic::Pattern<kPatternFooStar>>>;
+    auto input = "\"not matching\"";
+
+    UEXPECT_THROW_MSG(
+        (formats::json::parser::ParseToType<std::string, Parser>(input)),
+        formats::json::parser::ParseError,
+        "doesn't match regex"
+    );
 }
 
 TEST(SaxParser, PrimitiveValidator)

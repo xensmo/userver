@@ -36,6 +36,10 @@
 
 USERVER_NAMESPACE_BEGIN
 
+// Make sure that chaotic and SAX parser exceptions have common base
+static_assert(std::is_base_of_v<formats::json::Exception, chaotic::Error<formats::json::Value>>);
+static_assert(std::is_base_of_v<formats::json::Exception, formats::json::parser::ParseError>);
+
 TEST(Simple, Empty) {
     auto json = formats::json::MakeObject();
     auto obj = json.As<ns::ObjectEmpty>();
@@ -268,7 +272,7 @@ TEST(Simple, IntegerEnumSax) {
     auto json2 = formats::json::MakeObject("one", 5);
     UEXPECT_THROW_MSG(
         ParseToType<ns::IntegerEnum>("5"),
-        formats::json::parser::ParseError,  // TODO: chaotic::Error<formats::json::Value> ?
+        formats::json::parser::ParseError,
         "Parse error at pos 1, path '': Invalid enum value (5) for type ::ns::IntegerEnum, the latest token was 5"
     );
 }
@@ -325,7 +329,7 @@ TEST(Simple, StringEnumSax) {
 
     UEXPECT_THROW_MSG(
         ParseToType<ns::StringEnum>("\"zoo\""),
-        formats::json::parser::ParseError,  // TODO: chaotic::Error<formats::json::Value> ?
+        formats::json::parser::ParseError,
         "Parse error at pos 5, path '': Invalid enum value (zoo) for type ::ns::StringEnum, the "
         "latest token was \"zoo\""
     );
