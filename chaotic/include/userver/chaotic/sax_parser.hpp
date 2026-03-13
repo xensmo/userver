@@ -66,12 +66,12 @@ public:
 
 private:
     void OnSend(ResultType&& value) override {
-        try {
-            (Validator::Validate(value), ...);
-        } catch (const std::exception& e) {
+        [[maybe_unused]] const auto error_reporter = [this](std::string_view error) {
             formats::json::parser::BaseParser& base = parser_;
-            chaotic::ThrowForPath<formats::json::Value>(e.what(), base.GetCurrentPath());
-        }
+            chaotic::ThrowForPath<formats::json::Value>(error, base.GetCurrentPath());
+        };
+        (Validator::Validate(value, error_reporter), ...);
+
         subscriber_->OnSend(std::move(value));
     }
 
