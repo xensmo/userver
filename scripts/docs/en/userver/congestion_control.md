@@ -11,7 +11,7 @@ by dynamic config options @ref USERVER_RPS_CCONTROL and @ref USERVER_RPS_CCONTRO
 CC can run in `fake-mode` with no RPS limit (but FSM works). CC goes into `fake-mode` in the following cases:
 
 * there are no reliable guarantees on CPU, in this case RPS-limit would be triggered too often,
-* service has no HTTP-handles others than @ref server::handlers::Ping.
+* service has no handlers others than @ref server::handlers::Ping, which has throttling disabled.
 
 `fake-mode` can be useful for more flexible traffic restriction settings, according to it's more complex logic, which
 can be implemented in a middleware.
@@ -21,14 +21,14 @@ can be implemented in a middleware.
 @ref congestion_control::Component can be useful if your service stops handling requests when overloaded, significantly
 increasing response time, responding with HTTP 500 codes to requests, eating memory.
 
-Including CC in your service will help you handle some reasonable request flow returning HTTP error codes to the rest. 
+Including CC in your service will help you handle some reasonable request flow returning HTTP error codes to the rest.
 
 ### Usage restrictions
 
 @ref congestion_control::Component cannot be useful if:
 
 1. Your service has an exact RPS limit requirement. The heuristic algorithm depends on how much and in what mode the
-   CPU is used in the current container. 
+   CPU is used in the current container.
 
 2. CPU is not a limiting resource.
 
@@ -68,7 +68,7 @@ In some situations default settings are ineffective. For example:
 
 * if request processing is done without context switch more than 10 ms,
 
-in those situations congestion_control::Component settings need adjusting. 
+in those situations congestion_control::Component settings need adjusting.
 
 Basic dynamic configuration options:
 
@@ -77,13 +77,13 @@ Basic dynamic configuration options:
 * @ref USERVER_RPS_CCONTROL - basic CC settings
 
 * @ref USERVER_TASK_PROCESSOR_QOS - note
-  `default-service.default-task-processor.wait_queue_overload.sensor_time_limit_us`. 
-  This setting defines wait in queue time after which the overload events for RPS congestion control are generated. 
+  `default-service.default-task-processor.wait_queue_overload.sensor_time_limit_us`.
+  This setting defines wait in queue time after which the overload events for RPS congestion control are generated.
   It is recommended to set this setting >= 2000 (2 ms) because system scheduler (CFS) time unit by default equals 2 ms.
 
 ## Diagnostics
 
-In case RPS mechanism is triggered it is recommended to ensure that there is no mistake. If RPS triggering coincided 
+In case RPS mechanism is triggered it is recommended to ensure that there is no mistake. If RPS triggering coincided
 with peak CPU consumption than there is no mistake and the lack of resources situation needs to be resolved:
 
 1. You need to locate slow code and optimise it for the workload.
