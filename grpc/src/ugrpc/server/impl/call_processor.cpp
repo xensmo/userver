@@ -131,7 +131,11 @@ void ReportInterrupted(CallState& state) noexcept {
         state.statistics_scope.OnNetworkError();
         auto& span = state.GetSpan();
         span.AddNonInheritableTag(tracing::kErrorFlag, true);
-        span.AddNonInheritableTag(tracing::kErrorMessage, "RPC interrupted");
+        span.AddNonInheritableTag(
+            tracing::kErrorMessage,
+            "Call is interrupted before it was finished and response with status code was sent (it is not a server "
+            "error, most likely client cancelled the call because the result is not needed anymore)"
+        );
         span.SetLogLevel(logging::Level::kWarning);
     } catch (const std::exception& ex) {
         LOG_ERROR() << "Error in ReportInterrupted: " << ex;

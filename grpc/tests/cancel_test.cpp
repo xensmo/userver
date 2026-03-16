@@ -324,7 +324,7 @@ UTEST_F(GrpcCancelSleep, CancelByTimeoutLogging) {
     // Make sure server logs are written.
     GetServer().StopServing();
 
-    EXPECT_THAT(GetLogCapture().Filter("", {{"error_msg", "RPC interrupted"}}), testing::SizeIs(1))
+    EXPECT_THAT(GetLogCapture().Filter("", {{"error_msg", "Call is interrupted"}}), testing::SizeIs(1))
         << GetLogCapture().GetAll();
 }
 
@@ -389,7 +389,7 @@ UTEST_F(GrpcCancelError, CancelByError) {
         testing::SizeIs(1)
     ) << GetLogCapture().GetAll();
 
-    ASSERT_THAT(GetLogCapture().Filter("", {{"error_msg", "RPC interrupted"}}), testing::SizeIs(1))
+    ASSERT_THAT(GetLogCapture().Filter("", {{"error_msg", "Call is interrupted"}}), testing::SizeIs(1))
         << GetLogCapture().GetAll();
 }
 
