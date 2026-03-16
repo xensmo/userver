@@ -127,7 +127,10 @@ public:
         parser_.Subscribe(*this);
     }
 
-    void Key(std::string_view key, std::string_view) { key_ = key; }
+    void Key(std::string_view key, std::string_view) {
+        key_ = key;
+        parser_.Reset();
+    }
 
     formats::json::parser::BaseParser& GetParser() { return parser_.GetParser(); }
 

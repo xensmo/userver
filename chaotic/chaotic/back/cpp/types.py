@@ -750,7 +750,7 @@ class CppStruct(CppType):
             case False:
                 unknown_fields = f'{ch}::UnknownFields::Forbid'
             case _:
-                unknown_fields = f'{ch}::UnknownFields::StoreTyped<{self.extra_type.cpp_user_name()}>'
+                unknown_fields = f'{ch}::UnknownFields::StoreTyped<{self.extra_type.parser_type(ch, name)}>'
 
         fields = [
             self.fields[field].descriptor_type(

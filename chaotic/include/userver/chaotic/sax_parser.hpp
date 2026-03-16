@@ -36,15 +36,19 @@ public:
 
 private:
     void OnSend(typename RawParser::ResultType&& value) override {
-        auto user_value = [this, &value] {
-            try {
-                return Convert(value, convert::To<UserType>{});
-            } catch (const std::exception& e) {
-                formats::json::parser::BaseParser& base = parser_.GetParser();
-                chaotic::ThrowForPath<formats::json::Value>(e.what(), base.GetCurrentPath());
-            }
-        }();
-        subscriber_->OnSend(std::move(user_value));
+        if constexpr (std::is_same_v<typename RawParser::ResultType, UserType>) {
+            subscriber_->OnSend(std::move(value));
+        } else {
+            auto user_value = [this, &value] {
+                try {
+                    return Convert(std::move(value), convert::To<UserType>{});
+                } catch (const std::exception& e) {
+                    formats::json::parser::BaseParser& base = parser_.GetParser();
+                    chaotic::ThrowForPath<formats::json::Value>(e.what(), base.GetCurrentPath());
+                }
+            }();
+            subscriber_->OnSend(std::move(user_value));
+        }
     }
 
     RawParser parser_;
