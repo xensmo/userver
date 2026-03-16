@@ -1,5 +1,7 @@
 #include <ugrpc/client/middlewares/log/middleware.hpp>
 
+#include <fmt/format.h>
+
 #include <userver/logging/level.hpp>
 #include <userver/logging/log_extra.hpp>
 #include <userver/tracing/tags.hpp>
@@ -116,8 +118,15 @@ void Middleware::PostFinish(MiddlewareCallContext& context, const CompletionStat
     } else {
         // Special case completion
         const auto completion_type = result.error();
-        logging::LogExtra
-            extra{{ugrpc::impl::kTypeTag, "special_case_completion"}, {"completion_type", ToString(completion_type)}};
+        logging::LogExtra extra{
+            {ugrpc::impl::kTypeTag, "special_case_completion"},
+            {"completion_type", ToString(completion_type)},
+            {tracing::kErrorMessage,
+             fmt::format(
+                 "Call is interrupted before it was finished and response with status code was received, reason='{}'",
+                 GetSpecialCaseCompletionTypeDescription(completion_type)
+             )}
+        };
         logger.Log(logging::Level::kWarning, "gRPC error", std::move(extra));
     }
 }

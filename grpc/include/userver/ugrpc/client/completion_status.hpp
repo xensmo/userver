@@ -53,6 +53,9 @@ enum class SpecialCaseCompletionType : std::uint8_t {
 /// @brief Convert SpecialCaseCompletionType to string representation.
 std::string_view ToString(SpecialCaseCompletionType type);
 
+/// @brief Convert SpecialCaseCompletionType to human-readable description.
+std::string_view GetSpecialCaseCompletionTypeDescription(SpecialCaseCompletionType type);
+
 /// @ingroup userver_ugrpc
 ///
 /// @brief Result type for gRPC client call completion.
