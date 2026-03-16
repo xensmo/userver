@@ -63,21 +63,7 @@ public:
         }
 
         if (!completion_status_.has_value()) {
-            switch (completion_status_.error()) {
-                case SpecialCaseCompletionType::kNetworkError:
-                    throw RpcInterruptedError(state_.GetCallName(), "UnaryCall");
-                case SpecialCaseCompletionType::kCancelled:
-                case SpecialCaseCompletionType::kAbandoned:
-                    throw RpcCancelledError{state_.GetCallName(), "UnaryCall"};
-                case SpecialCaseCompletionType::kTimeoutDeadlinePropagated:
-                    throw DeadlineExceededError(
-                        state_.GetCallName(),
-                        grpc::Status{grpc::StatusCode::DEADLINE_EXCEEDED, "Propagated deadline exceeded"}
-                    );
-                default:
-                    UINVARIANT(false, "Unknown SpecialCaseCompletionType");
-                    break;
-            }
+            ThrowSpecialCaseCompletionError(completion_status_.error());
         }
 
         if (!completion_status_.value().ok()) {
@@ -154,6 +140,8 @@ private:
             engine::InterruptibleSleepFor(delay);
         }
 
+        completion_status_ = DetermineCancellationCompletionStatus();
+
         OnCancelled();
     }
 
@@ -224,13 +212,7 @@ private:
                 completion_status_ = utils::unexpected{SpecialCaseCompletionType::kNetworkError};
                 break;
             case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kCancelled:
-                if (abandoned_) {
-                    completion_status_ = utils::unexpected{SpecialCaseCompletionType::kAbandoned};
-                } else if (engine::current_task::CancellationReason() == engine::TaskCancellationReason::kDeadline) {
-                    completion_status_ = utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
-                } else {
-                    completion_status_ = utils::unexpected{SpecialCaseCompletionType::kCancelled};
-                }
+                completion_status_ = DetermineCancellationCompletionStatus();
                 break;
             case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kDeadline:
                 UINVARIANT(false, "Waiting without timeout mustn't produce kDeadline");
@@ -239,6 +221,15 @@ private:
                 UINVARIANT(false, "Unknown WaitStatus");
                 break;
         }
+    }
+
+    CompletionStatus DetermineCancellationCompletionStatus() {
+        if (abandoned_) {
+            return utils::unexpected{SpecialCaseCompletionType::kAbandoned};
+        } else if (engine::current_task::CancellationReason() == engine::TaskCancellationReason::kDeadline) {
+            return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+        }
+        return utils::unexpected{SpecialCaseCompletionType::kCancelled};
     }
 
     void OnDone(const grpc::Status& status) {
@@ -267,6 +258,24 @@ private:
         state_.GetStatsScope().Flush();
     }
 
+    void ThrowSpecialCaseCompletionError(SpecialCaseCompletionType completion_case) {
+        switch (completion_case) {
+            case SpecialCaseCompletionType::kNetworkError:
+                throw RpcInterruptedError(state_.GetCallName(), "UnaryCall");
+            case SpecialCaseCompletionType::kCancelled:
+            case SpecialCaseCompletionType::kAbandoned:
+                throw RpcCancelledError{state_.GetCallName(), "UnaryCall"};
+            case SpecialCaseCompletionType::kTimeoutDeadlinePropagated:
+                throw DeadlineExceededError(
+                    state_.GetCallName(),
+                    grpc::Status{grpc::StatusCode::DEADLINE_EXCEEDED, "Propagated deadline exceeded"}
+                );
+            default:
+                UINVARIANT(false, "Unknown SpecialCaseCompletionType");
+                break;
+        }
+    }
+
     CallOptions call_options_;
     CallState state_;
     CallContext context_;
@@ -275,7 +284,7 @@ private:
     const Request& request_;
 
     Response response_;
-    CompletionStatus completion_status_{utils::unexpected{SpecialCaseCompletionType::kCancelled}};
+    CompletionStatus completion_status_;
     bool inherited_deadline_reached_{false};
 
     std::atomic<bool> abandoned_{false};

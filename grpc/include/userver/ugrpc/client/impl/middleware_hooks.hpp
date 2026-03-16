@@ -5,8 +5,6 @@
 #include <google/protobuf/message.h>
 #include <grpcpp/support/status.h>
 
-#include <userver/utils/expected.hpp>
-
 #include <userver/ugrpc/client/completion_status.hpp>
 
 USERVER_NAMESPACE_BEGIN

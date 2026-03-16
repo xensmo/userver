@@ -71,31 +71,12 @@ void ProcessFinish(
     const CompletionStatus& completion_status,
     const google::protobuf::Message* response
 ) {
-    if (completion_status.has_value() &&
-        completion_status.value().error_code() == grpc::StatusCode::DEADLINE_EXCEEDED && state.IsDeadlinePropagated())
-    {
-        RunMiddlewarePipeline(
-            state,
-            MiddlewareHooks::FinishHooks(
-                utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated},
-                nullptr
-            )
-        );
-    } else {
-        RunMiddlewarePipeline(
-            state,
-            MiddlewareHooks::FinishHooks(
-                completion_status,
-                completion_status.has_value() && completion_status.value().ok() ? response : nullptr
-            )
-        );
-    }
+    UINVARIANT(completion_status.has_value(), "ProcessFinish must be called only with grpc::Status completions");
+    const auto& status = completion_status.value();
 
-    if (completion_status.has_value()) {
-        HandleCallStatistics(state, completion_status.value());
-
-        SetStatusAndResetSpan(state, completion_status.value());
-    }
+    RunMiddlewarePipeline(state, MiddlewareHooks::FinishHooks(status, status.ok() ? response : nullptr));
+    HandleCallStatistics(state, status);
+    SetStatusAndResetSpan(state, status);
 }
 
 void ProcessFinishAbandoned(StreamingCallState& state, const grpc::Status& status) noexcept {
