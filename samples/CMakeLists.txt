@@ -11,6 +11,9 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-config_service)
 add_subdirectory(testsuite-support)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-testsuite-support)
 
+add_subdirectory(periodic_task)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-periodic-task)
+
 if(USERVER_FEATURE_CHAOTIC)
     add_subdirectory(chaotic_service)
     add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-chaotic_service)
