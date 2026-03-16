@@ -66,12 +66,6 @@ components_manager:
             method: GET
             task_processor: main-task-processor
 
-        handler-sigterm:
-            monitor-handler: true
-            path: /sigterm
-            method: POST
-            task_processor: main-task-processor
-
         tests-control:
             method: POST
             path: /tests/{action}

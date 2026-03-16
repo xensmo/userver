@@ -1,23 +1,15 @@
 import asyncio
+from signal import SIGTERM
 
-import pytest_userver.utils.sync as sync
-
-
-async def wait_for_daemon_stop(_global_daemon_store):
-    def is_ready():
-        return not _global_daemon_store.has_running_daemons()
-
-    await sync.wait(is_ready)
-
-    assert not _global_daemon_store.has_running_daemons(), 'Daemon has not stopped'
-    await _global_daemon_store.aclose()
+import pytest
 
 
+@pytest.mark.uservice_oneshot
 async def test_graceful_shutdown_timer_and_header(
+    service_daemon_instance,
     service_client,
     monitor_client,
     dynamic_config,
-    _global_daemon_store,
 ):
     params = [
         (True, {'x-envoy-immediate-health-check-fail': ['true']}),
@@ -38,8 +30,7 @@ async def test_graceful_shutdown_timer_and_header(
         for header, _ in headers.items():
             assert response.headers.get(header) is None
 
-    response = await monitor_client.post('/sigterm')
-    assert response.status == 200
+    service_daemon_instance.process.send_signal(SIGTERM)
 
     response = await service_client.get('/ping')
     assert response.status == 500
@@ -63,4 +54,4 @@ async def test_graceful_shutdown_timer_and_header(
     assert response.status == 500
 
     # After a couple more seconds, the service will start shutting down.
-    await wait_for_daemon_stop(_global_daemon_store)
+    service_daemon_instance.process.wait()

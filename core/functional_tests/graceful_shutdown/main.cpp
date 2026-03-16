@@ -9,8 +9,6 @@
 #include <userver/utest/using_namespace_userver.hpp>
 #include <userver/utils/daemon_run.hpp>
 
-#include <handler_sigterm.hpp>
-
 int main(int argc, char* argv[]) {
     const auto component_list =
         components::MinimalServerComponentList()
@@ -20,7 +18,6 @@ int main(int argc, char* argv[]) {
             .Append<server::handlers::TestsControl>()
             .Append<components::TestsuiteSupport>()
             .Append<server::handlers::Ping>()
-            .Append<handlers::Sigterm>()
             .Append<server::handlers::LogLevel>();
     return utils::DaemonMain(argc, argv, component_list);
 }
