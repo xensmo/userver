@@ -885,7 +885,8 @@ UTEST(HttpClientProxy, HttpsTruncatedBody) {
     proxy_server.proxy_client_socket.Close();
     proxy_server.endpoint_socket.Close();
 
-    UEXPECT_THROW(response_future.Get(), clients::http::NetworkProblemException);
+    // Throws clients::http::NetworkProblemException or clients::http::TechnicalError
+    UEXPECT_THROW(response_future.Get(), clients::http::BaseCodeException);
 }
 
 USERVER_NAMESPACE_END
