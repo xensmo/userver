@@ -201,3 +201,12 @@ async def test_upgrade_header_with_tab_then_reconnect(service_port):
         await chat.send('ping')
         resp = await chat.recv()
         assert resp == 'ping'
+
+
+async def test_non_websocket_request(service_client):
+    response = await service_client.get(
+        '/chat',
+    )
+
+    assert response.status == 400
+    assert response.text == 'Not a websocket request'

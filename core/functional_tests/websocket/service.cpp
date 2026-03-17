@@ -52,6 +52,12 @@ public:
             chat.Close(*message.close_status);
         }
     }
+
+    std::string HandleNonWebsocketRequest(server::http::HttpRequest& request, server::request::RequestContext&)
+        const override {
+        request.GetHttpResponse().SetStatus(server::http::HttpStatus::kBadRequest);
+        return "Not a websocket request";
+    }
 };
 
 class WebsocketsHandlerAlt final : public server::handlers::WebsocketHandlerBase {

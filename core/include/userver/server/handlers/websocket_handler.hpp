@@ -50,20 +50,24 @@ public:
     static yaml_config::Schema GetStaticConfigSchema();
     /// @endcond
 
+    bool IsWebsocketRequest(const server::http::HttpRequest& request) const;
+
     /// @brief If \a request isn't a websocket request the function handles a
     /// request.
-    virtual void HandleNonWebsocketRequest(
-        [[maybe_unused]] const server::http::HttpRequest& request,
-        [[maybe_unused]] server::request::RequestContext& context
-    ) const {
-        LOG_WARNING() << "Not a GET 'Upgrade: websocket' and 'Connection: Upgrade' request";
-        throw server::handlers::ClientError();
-    }
+    virtual std::string HandleNonWebsocketRequest(
+        server::http::HttpRequest& request,
+        server::request::RequestContext& context
+    ) const;
 
-private:
+    /// @brief If \a request is a websocket request, performs handshake and upgrade.
+    virtual void HandleWebsocketRequest(server::http::HttpRequest& request, server::request::RequestContext& context)
+        const;
+
+protected:
     std::string HandleRequest(server::http::HttpRequest& request, server::request::RequestContext& context)
         const override;
 
+private:
     websocket::Config config_;
     mutable websocket::Statistics stats_;
 };
