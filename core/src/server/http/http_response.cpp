@@ -54,7 +54,7 @@ void CheckHeaderName(std::string_view name) {
         auto code = static_cast<uint8_t>(c);
         if (bad_chars[code]) {
             throw std::runtime_error(
-                std::string("invalid character in header name: '") + c + "' (#" + std::to_string(code) + ")"
+                fmt::format("invalid character in header name: '{}' (#{}), full header name: {}", c, code, name)
             );
         }
     }
