@@ -19,6 +19,7 @@ There are default middlewares:
  - @ref ugrpc::server::middlewares::deadline_propagation::Component
  - @ref ugrpc::server::middlewares::baggage::Component
  - @ref ugrpc::server::middlewares::headers_propagator::Component
+ - @ref ugrpc::server::middlewares::graceful_shutdown_headers::Component
 
 If you add these middlewares to the @ref components::ComponentList, these middlewares will be enabled by default. 
 To register core gRPC server components and a set of builtin middlewares use @ref ugrpc::server::DefaultComponentList or @ref ugrpc::server::MinimalComponentList.
