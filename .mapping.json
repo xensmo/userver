@@ -1243,6 +1243,7 @@
   "core/src/cache/caching_component_base.cpp":"taxi/uservices/userver/core/src/cache/caching_component_base.cpp",
   "core/src/cache/caching_component_base.yaml":"taxi/uservices/userver/core/src/cache/caching_component_base.yaml",
   "core/src/cache/exceptions.cpp":"taxi/uservices/userver/core/src/cache/exceptions.cpp",
+  "core/src/cache/expirable_lru_cache_benchmark.cpp":"taxi/uservices/userver/core/src/cache/expirable_lru_cache_benchmark.cpp",
   "core/src/cache/expirable_lru_cache_test.cpp":"taxi/uservices/userver/core/src/cache/expirable_lru_cache_test.cpp",
   "core/src/cache/internal_helpers_test.cpp":"taxi/uservices/userver/core/src/cache/internal_helpers_test.cpp",
   "core/src/cache/internal_helpers_test.hpp":"taxi/uservices/userver/core/src/cache/internal_helpers_test.hpp",

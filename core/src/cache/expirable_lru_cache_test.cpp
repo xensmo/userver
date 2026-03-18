@@ -422,6 +422,7 @@ UTEST(ExpirableLruCache, Example) {
 }
 
 UTEST(LruCacheWrapper, HitWrapper) {
+    /// [Sample LruCacheWrapper]
     auto counter = std::make_shared<Counter>();
 
     auto cache_ptr = CreateSimpleCachePtr();
@@ -442,6 +443,7 @@ UTEST(LruCacheWrapper, HitWrapper) {
     WriteAndReadFromDump(*cache_ptr);
     EXPECT_EQ(std::make_optional(1), wrapper.GetOptional(key));
     EXPECT_EQ(Counter::Zero(), *counter);
+    /// [Sample LruCacheWrapper]
 }
 
 USERVER_NAMESPACE_END

@@ -13,6 +13,7 @@ UTEST(NWayLRU, Ctr) {
 }
 
 UTEST(NWayLRU, Set) {
+    /// [NWayLRU basic]
     Cache cache(1, 1);
     EXPECT_EQ(0, cache.GetSize());
 
@@ -20,8 +21,8 @@ UTEST(NWayLRU, Set) {
     EXPECT_EQ(1, cache.GetSize());
 
     cache.Put(2, 2);
-
     EXPECT_EQ(2, cache.Get(2));
+    /// [NWayLRU basic]
     EXPECT_EQ(1, cache.GetSize());
     EXPECT_FALSE(cache.Get(1).has_value());
 }
