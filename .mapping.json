@@ -1592,6 +1592,7 @@
   "core/src/engine/impl/generic_wait_list.cpp":"taxi/uservices/userver/core/src/engine/impl/generic_wait_list.cpp",
   "core/src/engine/impl/generic_wait_list.hpp":"taxi/uservices/userver/core/src/engine/impl/generic_wait_list.hpp",
   "core/src/engine/impl/mutex_impl.hpp":"taxi/uservices/userver/core/src/engine/impl/mutex_impl.hpp",
+  "core/src/engine/impl/non_cancellable_awaiter.hpp":"taxi/uservices/userver/core/src/engine/impl/non_cancellable_awaiter.hpp",
   "core/src/engine/impl/standalone.cpp":"taxi/uservices/userver/core/src/engine/impl/standalone.cpp",
   "core/src/engine/impl/standalone.hpp":"taxi/uservices/userver/core/src/engine/impl/standalone.hpp",
   "core/src/engine/impl/task_context_factory.cpp":"taxi/uservices/userver/core/src/engine/impl/task_context_factory.cpp",
