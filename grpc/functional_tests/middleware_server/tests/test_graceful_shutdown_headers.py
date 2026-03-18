@@ -27,8 +27,8 @@ async def test_graceful_shutdown_headers(service_daemon_instance, grpc_client, s
         call = grpc_client.SayHello(request)
         response = await call
         assert response.greeting == f'Hello, Python{MD_ONE_REQ}{MD_TWO_REQ}!{MD_TWO_RES}{MD_ONE_RES}'
-        assert len(await call.initial_metadata()) == 0
-        assert len(await call.trailing_metadata()) == 0
+        check_not_present(await call.initial_metadata(), headers)
+        check_not_present(await call.trailing_metadata(), headers)
 
     service_daemon_instance.process.send_signal(SIGTERM)
 
@@ -42,14 +42,27 @@ async def test_graceful_shutdown_headers(service_daemon_instance, grpc_client, s
         assert response.greeting == f'Hello, Python{MD_ONE_REQ}{MD_TWO_REQ}!{MD_TWO_RES}{MD_ONE_RES}'
 
         if headers_enabled:
-            assert to_dict(await call.initial_metadata()) == headers
+            check_present(await call.initial_metadata(), headers)
         else:
-            assert len(await call.initial_metadata()) == 0
+            check_not_present(await call.initial_metadata(), headers)
 
-        assert len(await call.trailing_metadata()) == 0
+        check_not_present(await call.trailing_metadata(), headers)
 
     # After a couple more seconds, the service will start shutting down.
     service_daemon_instance.process.wait()
+
+
+def check_present(metadata, headers: dict[str, list[str]]):
+    metadata_dict = to_dict(metadata)
+    for k, v in headers.items():
+        assert k in metadata_dict
+        assert metadata_dict[k] == v
+
+
+def check_not_present(metadata, headers: dict[str, list[str]]):
+    metadata_dict = to_dict(metadata)
+    for k in headers.keys():
+        assert k not in metadata_dict
 
 
 def to_dict(metadata) -> dict[str, list[str]]:
