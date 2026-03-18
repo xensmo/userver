@@ -1970,6 +1970,8 @@
   "core/src/server/middlewares/decompression.hpp":"taxi/uservices/userver/core/src/server/middlewares/decompression.hpp",
   "core/src/server/middlewares/exceptions_handling.cpp":"taxi/uservices/userver/core/src/server/middlewares/exceptions_handling.cpp",
   "core/src/server/middlewares/exceptions_handling.hpp":"taxi/uservices/userver/core/src/server/middlewares/exceptions_handling.hpp",
+  "core/src/server/middlewares/graceful_shutdown_headers.cpp":"taxi/uservices/userver/core/src/server/middlewares/graceful_shutdown_headers.cpp",
+  "core/src/server/middlewares/graceful_shutdown_headers.hpp":"taxi/uservices/userver/core/src/server/middlewares/graceful_shutdown_headers.hpp",
   "core/src/server/middlewares/handler_adapter.cpp":"taxi/uservices/userver/core/src/server/middlewares/handler_adapter.cpp",
   "core/src/server/middlewares/handler_adapter.hpp":"taxi/uservices/userver/core/src/server/middlewares/handler_adapter.hpp",
   "core/src/server/middlewares/handler_metrics.cpp":"taxi/uservices/userver/core/src/server/middlewares/handler_metrics.cpp",

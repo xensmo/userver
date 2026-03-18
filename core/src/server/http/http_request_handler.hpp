@@ -4,7 +4,6 @@
 
 #include <server/http/request_handler_base.hpp>
 #include <userver/components/component_context.hpp>
-#include <userver/components/state.hpp>
 #include <userver/engine/mutex.hpp>
 #include <userver/engine/task/task_processor_fwd.hpp>
 #include <userver/engine/task/task_with_result.hpp>
@@ -54,7 +53,6 @@ private:
 
     HandlerInfoIndex handler_info_index_;
 
-    const components::State components_state_;
     const bool is_monitor_;
     const std::string server_name_;
     NewRequestHook new_request_hook_;
