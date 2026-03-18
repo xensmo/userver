@@ -1,5 +1,7 @@
 #include <server/middlewares/graceful_shutdown_headers.hpp>
 
+#include <fmt/format.h>
+
 #include <dynamic_config/variables/GRACEFUL_SHUTDOWN_HEADERS.hpp>
 
 #include <server/request/internal_request_context.hpp>
