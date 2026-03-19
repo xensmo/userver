@@ -224,9 +224,13 @@ private:
     }
 
     CompletionStatus DetermineCancellationCompletionStatus() {
+        const auto inherited_deadline = USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline();
+
         if (abandoned_) {
             return utils::unexpected{SpecialCaseCompletionType::kAbandoned};
-        } else if (engine::current_task::CancellationReason() == engine::TaskCancellationReason::kDeadline) {
+        } else if (engine::current_task::CancellationReason() == engine::TaskCancellationReason::kDeadline &&
+                   inherited_deadline.IsReached())
+        {
             return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
         }
         return utils::unexpected{SpecialCaseCompletionType::kCancelled};
