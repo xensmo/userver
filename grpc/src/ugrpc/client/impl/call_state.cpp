@@ -147,7 +147,7 @@ void CallState::ResetSpan() noexcept {
 StreamingCallState::StreamingCallState(CallParams&& params)
     : CallState(std::move(params))
 {
-    SetupClientContext(*this, params.call_options);
+    SetupClientContext(*this, params.call_options, /*attempt*/ 1);
     Commit();
 }
 
@@ -214,8 +214,13 @@ bool IsWriteAndCheckAvailable(const StreamingCallState& state) noexcept {
     return !state.AreWritesFinished() && !state.IsFinished();
 }
 
-void SetupClientContext(CallState& state, const CallOptions& call_options) {
+void SetupClientContext(CallState& state, const CallOptions& call_options, int attempt) {
     auto client_context = CallOptionsAccessor::CreateClientContext(call_options);
+
+    if (1 < attempt) {
+        client_context
+            ->AddMetadata(ugrpc::impl::kXPrevAttempts, ugrpc::impl::ToGrpcString(std::to_string(attempt - 1)));
+    }
 
     AddTracingMetadata(*client_context, state.GetSpan());
 

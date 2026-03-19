@@ -92,7 +92,7 @@ private:
         while (!engine::current_task::ShouldCancel()) {
             ++attempt;
             state_.GetSpan().AddTag(tracing::kAttempts, attempt);
-            impl::SetupClientContext(state_, call_options_);
+            impl::SetupClientContext(state_, call_options_, attempt);
 
             PerformAttempt();
 

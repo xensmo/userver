@@ -181,7 +181,7 @@ bool IsWriteAvailable(const StreamingCallState&) noexcept;
 
 bool IsWriteAndCheckAvailable(const StreamingCallState&) noexcept;
 
-void SetupClientContext(CallState& state, const CallOptions& call_options);
+void SetupClientContext(CallState& state, const CallOptions& call_options, int attempt);
 
 void HandleCallStatistics(CallState& state, const grpc::Status& status) noexcept;
 
