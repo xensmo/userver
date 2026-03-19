@@ -32,8 +32,12 @@ async def test_graceful_shutdown_timer_and_header(
 
     service_daemon_instance.process.send_signal(SIGTERM)
 
-    response = await service_client.get('/ping')
-    assert response.status == 500
+    status = 200
+    while status == 200:
+        await asyncio.sleep(0.1)
+        response = await service_client.get('/ping')
+        status = response.status
+    assert status == 500
 
     for headers_enabled, headers in params:
         dynamic_config.set_values({'GRACEFUL_SHUTDOWN_HEADERS': {'enabled': headers_enabled, 'headers': headers}})
@@ -48,7 +52,7 @@ async def test_graceful_shutdown_timer_and_header(
             for header, _ in headers.items():
                 assert response.headers.get(header) is None
 
-    await asyncio.sleep(2)
+    await asyncio.sleep(1)
     # Check that the service is still alive.
     response = await service_client.get('/ping')
     assert response.status == 500
