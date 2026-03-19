@@ -70,7 +70,7 @@ Changelog news also go to the
 * Added a @ref ugrpc::RichStatus builder for creating rich gRPC error statuses with
   structured details following Google's error model
 * Added a @ref utils::statistics::RegisterWriterScope for safe and easy registration of statistics.
-* No more need to call `CacheUpdateTrait::StartPeriodicUpdates()` from your caching components.  
+* No more need to call `CacheUpdateTrait::StartPeriodicUpdates()` from your caching components.
 * Implemented a @ref scripts/docs/en/userver/libraries/multi_index_lru.md, thanks to
   [hzhdlrp](https://github.com/hzhdlrp).
 * Statement name is now logged when using @ref storages::postgres::Portal.
@@ -97,7 +97,7 @@ Changelog news also go to the
   help!
 * Fixed error in [uservice-dynconf](https://github.com/userver-framework/uservice-dynconf) schema. Many thanks to
   [Repin Daniil](https://github.com/Repin-Daniil) for the PR!
-* @ref components::ComponentContext::RegisterScope() now can be used to register some resource that will be
+* @ref components::ComponentContext::Scopes() now can be used to register some resource that will be
   called after the component is successfully created (including all
   class descendants) and destroyed right before calling the destructor of the most derived component. This is a low
   level feature, more high level functions for caches, distlocks and subscriptions will appear soon.
@@ -139,12 +139,13 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
 
 1. Instead of `.Append<components::HttpClient>()` use `.AppendComponentList(clients::http::ComponentList())` in
    your component list (see @ref clients::http::ComponentList "docs").
-2. For classes inherited from @ref tracing::TracingManagerBase:
-   1. Change @ref clients::http::PluginRequest in @ref tracing::TracingManagerBase::FillRequestWithTracingContext() parameters to @ref clients::http::MiddlewareRequest
-3. For classes inherited from @ref clients::http::Plugin:
+2. For classes inherited from @ref tracing::TracingManagerBase :
+   1. Change @ref clients::http::PluginRequest in @ref tracing::TracingManagerBase::FillRequestWithTracingContext()
+      parameters to @ref clients::http::MiddlewareRequest
+3. For classes inherited from @ref clients::http::Plugin :
    1. Replace `#include <userver/clients/http/plugin.hpp>` with `#include <userver/clients/http/middlewares/base.hpp>`
    2. Change base class to @ref clients::http::MiddlewareBase
-   3. Change @ref clients::http::PluginRequest in methods parameters to @ref clients::http::MiddlewareRequest
+   3. Change clients::http::PluginRequest in methods parameters to @ref clients::http::MiddlewareRequest
    4. Stop passing middleware name to  base class constructor
    5. Empty methods implementations (or `return true;` for @ref clients::http::MiddlewareBase::HookOnRetry()) may be omitted
 
@@ -173,7 +174,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
    ...
    };
    ```
-4. For plugin components inherited from @ref clients::http::plugin::ComponentBase:
+4. For plugin components inherited from @ref clients::http::plugin::ComponentBase :
    1. Replace `#include <userver/clients/http/plugin_component.hpp>` with `#include <userver/clients/http/middlewares/component.hpp>`
    2. Change base class to @ref clients::http::middlewares::ComponentBase
    3. Component name is not required to have prefix `http-client-plugin-` anymore, `http-client-` prefix is suggested instead
@@ -240,7 +241,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
    -        http-client-plugin-plugin-with-dynamic-config:
    +        http-client-middleware-with-dynamic-config:
                ...
-   
+
    -        http-client:
    +        http-client-core:
                 fs-task-processor: fs-task-processor
@@ -271,7 +272,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
 * Dots in tag keys of logs and spans are now not changed to underscores. HTTP client/server spans are now written
   according to OTel conventions.
 * Added support for ReplyTo, CorrelationId, Expiration fields. Many thanks to
-  [Alexander Aparin](https://github.com/alex-aparin) for the PR! 
+  [Alexander Aparin](https://github.com/alex-aparin) for the PR!
 * @ref s3api::Client now supports multipart upload.
 * Redis now understands the `GEOPOS` and `EXPIRE` commands via @ref storages::redis::Client member function `Geopos()`
   and `Expire()`.
@@ -288,7 +289,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
   * TSKV based formatters are now constructed 3 times faster leading to about 1% overall improvement for CPU
     consumption of some services.
   * Trace data extraction and processing is now 10 times faster.
-  * Optimized @ref logging::LogExtra efficiency with std::initializer_list to avoid memory allocations. 
+  * Optimized @ref logging::LogExtra efficiency with std::initializer_list to avoid memory allocations.
   * @ref fs::blocking::CFile now does not lock internal mutex when works with files. Up to 0.2% improvement in logging
     and ~40% improvement for dumping caches of integers.
   * Reuse `SSL_CTX` for TLS/SSL connections. As a result memory consumption drastically reduced for TLS/SSL server with.
@@ -297,7 +298,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
 * Build
   * Fix compiling with `fmt` >= 12. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
   * Improved compatibility of response body for aws sdk clients. Many thanks to
-    [Alexander Aparin](https://github.com/alex-aparin) for the PR! 
+    [Alexander Aparin](https://github.com/alex-aparin) for the PR!
   * Support libpq patching with pq >= 18. MAny thanks to [Vladislav Nepogodin](https://github.com/vnepogodin) for
     the PR!
   * `api-common-protos` are now used from the main branch of the upstream, rather than from `1.50` version.

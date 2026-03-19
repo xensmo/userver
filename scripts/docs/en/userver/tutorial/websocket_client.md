@@ -29,7 +29,7 @@ To create a WebSocket connection:
 
 Now we have to configure the service:
 
-@snippet samples/websocket_client/static_config.yaml
+@include samples/websocket_client/static_config.yaml
 
 ### int main()
 
@@ -73,11 +73,11 @@ Hello
 can be implemented using testsuite. The mockserver can emulate a WebSocket server
 by returning `aiohttp.web.WebSocketResponse`:
 
-@snippet samples/websocket_client/tests/test_websocket_client.py
+@include samples/websocket_client/tests/test_websocket_client.py
 
 Do not forget to add the plugin in conftest.py:
 
-@snippet samples/websocket_client/tests/conftest.py
+@include samples/websocket_client/tests/conftest.py
 
 ## Full sources
 

@@ -1,7 +1,7 @@
 #pragma once
 
 /// @file userver/utils/task_builder.hpp
-/// @brief @copybrief engine::TaskBuilder
+/// @brief @copybrief utils::TaskBuilder
 
 #include <variant>
 
@@ -17,11 +17,10 @@ USERVER_NAMESPACE_BEGIN
 
 namespace utils {
 
-/// Builder class for engine::Task and engine::TaskWithResult.
-/// Use it if you want to build a task with complex properties
-/// or even the property values are determined at runtime.
-/// If you just want to start a task, use @ref utils::Async
-/// or @ref engine::AsyncNoSpan.
+/// @brief Builder class for @ref engine::Task and @ref engine::TaskWithResult.
+///
+/// Use it if you want to build a task with complex properties or even the property values are determined at runtime.
+/// If you just want to start a task, use @ref utils::Async or @ref engine::AsyncNoSpan.
 ///
 /// @see @ref intro_tasks
 class TaskBuilder final {

@@ -16,8 +16,8 @@ A maintainer should (where possible):
 * cleanup EOL (end of life) distro versions dependency files
 * maintain CI setup in `.github/workflows` in "green" state
 
-The maintainer is a community role which is not paid, but is a honorable one. You will get a "distro maintainer" label
-in official userver telegram channels.
+The maintainer is a community role which is not paid, but is a honorable one. You will get a "Contributor" label
+in official userver Telegram channels.
 
 
 ## Call for maintainers

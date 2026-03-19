@@ -14,17 +14,17 @@ UTEST(NWayLRU, Ctr) {
 
 UTEST(NWayLRU, Set) {
     /// [NWayLRU basic]
-    Cache cache(1, 1);
+    cache::NWayLRU<int, std::string> cache(1, 1);
     EXPECT_EQ(0, cache.GetSize());
 
-    cache.Put(1, 1);
+    cache.Put(1, "1");
     EXPECT_EQ(1, cache.GetSize());
 
-    cache.Put(2, 2);
-    EXPECT_EQ(2, cache.Get(2));
-    /// [NWayLRU basic]
+    cache.Put(2, "2");
+    EXPECT_EQ("2", cache.Get(2));
     EXPECT_EQ(1, cache.GetSize());
     EXPECT_FALSE(cache.Get(1).has_value());
+    /// [NWayLRU basic]
 }
 
 UTEST(NWayLRU, GetExpired) {
