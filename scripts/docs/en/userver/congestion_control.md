@@ -60,6 +60,71 @@ components_manager:
 It is a good idea to disable @ref congestion_control::Component in unit tests to avoid getting HTTP 429 on an
 overloaded CI server.
 
+### Detailed Description of the Congestion Control Logic
+
+The Congestion Control logic is implemented as sensors (`overloads_ps`, `rps`) and a state machine with variables.
+
+**Sensor Data:**
+- `overloads_ps` – Number of tasks in the last second that waited in the execution queue for more than
+`USERVER_TASK_PROCESSOR_QOS.default-service.default-task-processor.sensor_time_limit_us` microseconds (default: 3ms).
+- `rps` – Number of requests received in the last second.
+
+**State Machine Variables:**
+- `is_overloaded – Whether the server is stably under unsustainable load.
+- `is_overloaded_now` – Whether the server is currently under unsustainable load.
+- `current_limit` – Current RPS limit.
+
+The congestion control state machine has 5 states:
+- no `current_limit`
+- `is_overloaded=true`, `is_overloaded_now=true` – The service is currently overloaded and has been overloaded for a
+  long time. Congestion COntrol **decreases service RPS limit by `down_rate_percent`%**.
+- `is_overloaded=true`, `is_overloaded_now=false` – The service is not overloaded now but was overloaded very recently.
+- `is_overloaded=false`, `is_overloaded_now=true` – The service is currently overloaded but was minimally overloaded
+  recently.
+- `is_overloaded=false`, `is_overloaded_now=false` – The service is not overloaded now and was minimally overloaded
+  recently. Congestion COntrol **increase service RPS limit by up_rate_percent%**.
+
+@dot
+digraph A {
+  no_limit [shape = "roundedbox"];
+  is_now [shape = "roundedbox", label="is_overloaded\nis_overloaded_now\n(RPS limit decreases)"];
+  no_is_no_now [shape = "roundedbox", label="!is_overloaded\n!is_overloaded_now\n(RPS limit increases)"];
+  no_is_now [shape = "roundedbox", label="!is_overloaded\nis_overloaded_now"];
+  is_no_now  [shape = "roundedbox", label="is_overloaded\n!is_overloaded_now"];
+
+  no_limit -> is_now;
+  no_is_no_now -> no_limit;
+  is_no_now -> is_now [minlen=5];
+  no_is_no_now -> no_is_now [minlen=5];
+  {rank=same is_now -> is_no_now}
+  is_no_now -> no_is_no_now;
+  no_is_now -> is_now;
+  {rank=same no_is_now -> no_is_no_now}
+}
+@enddot
+
+**Semantics of the `is_overloaded` flag:**
+- If `is_overloaded=true`, the service either decreases the RPS limit or waits (depending on `is_overloaded_now`).
+- If `is_overloaded=false`, the service either increases the RPS limit or waits (depending on `is_overloaded_now`).
+
+**Key State Transitions:**
+- Transition **is_overloaded=true, is_overloaded_now=false → is_overloaded=false, is_overloaded_now=false** occurs if
+  `overloads_ps <= down-level` holds for `overload-off` seconds (i.e., the service experienced no overload for
+  `overload-off` consecutive seconds).
+- Transition **is_overloaded=false, is_overloaded_now=true → is_overloaded=true, is_overloaded_now=true** occurs if
+  `overloads_ps > up-level` holds for `overload-on` seconds (i.e., the service experienced overload for `overload-on`
+  consecutive seconds).
+
+**Transitions between is_overloaded_now states:**
+- If `is_overloaded=true`, compute `is_overloaded_now = overloads_ps > down-level`.
+- If `is_overloaded=false`, compute `is_overloaded_now = overloads_ps > up-level`.
+
+**Purpose of splitting is_overloaded and is_overloaded_now:**
+This design mitigates flapping. Services may frequently execute isolated long tasks that monopolize the task processor
+for significant periods without critically impacting performance (wait times are negligible). Simultaneously, it
+ensures progressive limit increases when many tasks experience low wait times.
+
+
 ## Settings
 
 In some situations default settings are ineffective. For example:
