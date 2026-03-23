@@ -313,6 +313,7 @@ public:
 
 }  // namespace
 
+/// [Sample of LogCaptureFixture]
 using GrpcCancelSleep = utest::LogCaptureFixture<
     ugrpc::tests::ServiceWithClientFixture<UnitTestServiceCancelSleep, sample::ugrpc::UnitTestServiceClient>>;
 
@@ -324,9 +325,11 @@ UTEST_F(GrpcCancelSleep, CancelByTimeoutLogging) {
     // Make sure server logs are written.
     GetServer().StopServing();
 
+    // Check logs via utest::LogCaptureFixture :
     EXPECT_THAT(GetLogCapture().Filter("", {{"error_msg", "Call is interrupted"}}), testing::SizeIs(1))
         << GetLogCapture().GetAll();
 }
+/// [Sample of LogCaptureFixture]
 
 namespace {
 
