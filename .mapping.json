@@ -3886,6 +3886,7 @@
   "redis/functional_tests/integration_tests/redis_service.cpp":"taxi/uservices/userver/redis/functional_tests/integration_tests/redis_service.cpp",
   "redis/functional_tests/integration_tests/static_config.yaml":"taxi/uservices/userver/redis/functional_tests/integration_tests/static_config.yaml",
   "redis/functional_tests/integration_tests/tests/conftest.py":"taxi/uservices/userver/redis/functional_tests/integration_tests/tests/conftest.py",
+  "redis/functional_tests/integration_tests/tests/test_deadline_propagation.py":"taxi/uservices/userver/redis/functional_tests/integration_tests/tests/test_deadline_propagation.py",
   "redis/functional_tests/integration_tests/tests/test_redis_cluster.py":"taxi/uservices/userver/redis/functional_tests/integration_tests/tests/test_redis_cluster.py",
   "redis/functional_tests/integration_tests/tests/test_redis_sentinel.py":"taxi/uservices/userver/redis/functional_tests/integration_tests/tests/test_redis_sentinel.py",
   "redis/functional_tests/integration_tests/tests/test_redis_standalone.py":"taxi/uservices/userver/redis/functional_tests/integration_tests/tests/test_redis_standalone.py",

@@ -21,6 +21,7 @@ const std::string_view kCommandTypes[] = {
     "append",
     "auth",
     "bitop",
+    "blpop",
     "cluster",
     "dbsize",
     "decr",
