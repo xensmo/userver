@@ -325,6 +325,7 @@ TEST(YamlConfig, Basic) {
     duration2: 10ms
     duration3: 1
     int: 42
+    null_val: null
   )");
 
     const yaml_config::YamlConfig conf(std::move(node), {});
@@ -333,6 +334,7 @@ TEST(YamlConfig, Basic) {
     EXPECT_EQ(conf["duration2"].As<std::chrono::milliseconds>(), std::chrono::milliseconds(10));
     EXPECT_EQ(conf["duration3"].As<std::chrono::milliseconds>(), std::chrono::seconds(1));
     EXPECT_EQ(conf["int"].As<int>(), 42);
+    EXPECT_EQ(conf["null_val"].As<std::string>("dflt"), "dflt");
 }
 
 TEST(YamlConfig, VariableMap) {

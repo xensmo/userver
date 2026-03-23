@@ -22,7 +22,7 @@ bool IsTypeValid(FieldType type, const yaml_config::YamlConfig& value) {
         case FieldType::kInteger:
             return value.IsInt() || value.IsUInt64() || value.IsInt64();
         case FieldType::kString:
-            return value.IsString() || value.IsNull();
+            return value.IsString();
         case FieldType::kBool:
             return value.IsBool();
         case FieldType::kNumber:
