@@ -99,6 +99,16 @@ properties:
                 type: integer
                 description: size of a single coroutine, bytes
                 defaultDescription: 256 * 1024
+            unoptimized_stack_size_multiplier:
+                type: number
+                description: |
+                    Stack size is multiplied by this number in case of unoptimized build (-O0).
+                    With function inlining disabled, stack size may be increased as compared to production builds.
+                    Use this option to avoid annoying stack overflows during local development.
+                    stack_usage_monitor_enabled is advised to prevent crashes in production.
+                defaultDescription: 1.0
+                minimum: 1.0
+                maximum: 16.0
             local_cache_size:
                 type: integer
                 description: |
