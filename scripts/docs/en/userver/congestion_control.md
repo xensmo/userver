@@ -77,12 +77,12 @@ The Congestion Control logic is implemented as sensors (`overloads_ps`, `rps`) a
 The congestion control state machine has 5 states:
 - no `current_limit`
 - `is_overloaded=true`, `is_overloaded_now=true` – The service is currently overloaded and has been overloaded for a
-  long time. Congestion COntrol **decreases service RPS limit by `down_rate_percent`%**.
+  long time. Congestion Control **decreases service RPS limit by `down_rate_percent`%**.
 - `is_overloaded=true`, `is_overloaded_now=false` – The service is not overloaded now but was overloaded very recently.
 - `is_overloaded=false`, `is_overloaded_now=true` – The service is currently overloaded but was minimally overloaded
   recently.
 - `is_overloaded=false`, `is_overloaded_now=false` – The service is not overloaded now and was minimally overloaded
-  recently. Congestion COntrol **increase service RPS limit by up_rate_percent%**.
+  recently. Congestion Control **increase service RPS limit by up_rate_percent%**.
 
 @dot
 digraph A {

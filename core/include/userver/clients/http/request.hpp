@@ -426,6 +426,9 @@ public:
         utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
     );
 
+    /// @brief Starts the Websocket handshake.
+    ///
+    /// @snippet samples/websocket_client/main.cpp WebSocket client sample - handler
     [[nodiscard]] WebSocketResponse PerformWebSocketHandshake(
         utils::impl::SourceLocation location = utils::impl::SourceLocation::Current()
     );

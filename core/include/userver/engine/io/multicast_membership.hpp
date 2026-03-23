@@ -25,8 +25,8 @@ class Socket;
 /// @snippet src/engine/io/socket_test.cpp multicast socket creation sample
 class IpMreq final {
 public:
-    /// @brief Creates a structure storing multicast group membership request information.
-    /// The resulting object may be passed to @ref Socket::AddMembership and @ref Socket::DropMembership methods.
+    /// @brief Creates a structure storing multicast group membership request information. The resulting object may be
+    /// passed to @ref engine::io::AddMembership() and @ref engine::io::DropMembership() functions.
     /// @note IP version is chosen automatically from ip_multiaddr value.
     /// @param ip_multiaddr IP multicast group address (e.g. 239.255.0.1" or "ff02::1")
     /// @param interface_index Interface index (0 for default);
