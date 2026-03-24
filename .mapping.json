@@ -2921,6 +2921,7 @@
   "libraries/proto-structs/codegen-tests/src/box/options/cycles_test.cpp":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/src/box/options/cycles_test.cpp",
   "libraries/proto-structs/codegen-tests/src/box/options/initialization_test.cpp":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/src/box/options/initialization_test.cpp",
   "libraries/proto-structs/codegen-tests/src/enums/names_test.cpp":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/src/enums/names_test.cpp",
+  "libraries/proto-structs/codegen-tests/src/enums/string_operations_test.cpp":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/src/enums/string_operations_test.cpp",
   "libraries/proto-structs/codegen-tests/src/equals/equals_test.cpp":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/src/equals/equals_test.cpp",
   "libraries/proto-structs/codegen-tests/src/maps/basic_test.cpp":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/src/maps/basic_test.cpp",
   "libraries/proto-structs/codegen-tests/src/not_recommended_field_names/basic_test.cpp":"taxi/uservices/userver/libraries/proto-structs/codegen-tests/src/not_recommended_field_names/basic_test.cpp",
