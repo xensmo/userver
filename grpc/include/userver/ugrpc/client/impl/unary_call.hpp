@@ -7,6 +7,7 @@
 #include <userver/engine/sleep.hpp>
 #include <userver/server/request/task_inherited_data.hpp>
 #include <userver/tracing/tags.hpp>
+#include <userver/utils/assert.hpp>
 #include <userver/utils/expected.hpp>
 #include <userver/utils/fast_scope_guard.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
@@ -224,15 +225,16 @@ private:
     }
 
     CompletionStatus DetermineCancellationCompletionStatus() {
-        const auto inherited_deadline = USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline();
+        UASSERT(engine::current_task::ShouldCancel());
 
         if (abandoned_) {
             return utils::unexpected{SpecialCaseCompletionType::kAbandoned};
-        } else if (engine::current_task::CancellationReason() == engine::TaskCancellationReason::kDeadline &&
-                   inherited_deadline.IsReached())
-        {
+        }
+
+        if (USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline().IsReached()) {
             return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
         }
+
         return utils::unexpected{SpecialCaseCompletionType::kCancelled};
     }
 
@@ -265,15 +267,13 @@ private:
     void ThrowSpecialCaseCompletionError(SpecialCaseCompletionType completion_case) {
         switch (completion_case) {
             case SpecialCaseCompletionType::kNetworkError:
-                throw RpcInterruptedError(state_.GetCallName(), "UnaryCall");
+                throw RpcInterruptedError{state_.GetCallName(), "UnaryCall (NetworkError)"};
             case SpecialCaseCompletionType::kCancelled:
-            case SpecialCaseCompletionType::kAbandoned:
                 throw RpcCancelledError{state_.GetCallName(), "UnaryCall"};
+            case SpecialCaseCompletionType::kAbandoned:
+                throw RpcCancelledError{state_.GetCallName(), "UnaryCall (Abandoned)"};
             case SpecialCaseCompletionType::kTimeoutDeadlinePropagated:
-                throw DeadlineExceededError(
-                    state_.GetCallName(),
-                    grpc::Status{grpc::StatusCode::DEADLINE_EXCEEDED, "Propagated deadline exceeded"}
-                );
+                throw RpcCancelledError{state_.GetCallName(), "UnaryCall (Deadline Propagation)"};
             default:
                 UINVARIANT(false, "Unknown SpecialCaseCompletionType");
                 break;

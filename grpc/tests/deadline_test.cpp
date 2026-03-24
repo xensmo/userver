@@ -81,7 +81,7 @@ UTEST_F(GrpcDeadlinePropagation, TestClientUnaryCall) {
     ugrpc::client::CallOptions call_options;
 
     sample::ugrpc::GreetingResponse in;
-    UEXPECT_THROW(in = GetClient().SayHello(request, std::move(call_options)), ugrpc::client::DeadlineExceededError);
+    UEXPECT_THROW(in = GetClient().SayHello(request, std::move(call_options)), ugrpc::client::RpcCancelledError);
 }
 
 UTEST_F(GrpcDeadlinePropagation, TestClientUnaryCallAsync) {
@@ -92,7 +92,7 @@ UTEST_F(GrpcDeadlinePropagation, TestClientUnaryCallAsync) {
     auto future = GetClient().AsyncSayHello(request, std::move(call_options));
 
     sample::ugrpc::GreetingResponse in;
-    UEXPECT_THROW(in = future.Get(), ugrpc::client::DeadlineExceededError);
+    UEXPECT_THROW(in = future.Get(), ugrpc::client::RpcCancelledError);
 }
 
 UTEST_F(GrpcDeadlinePropagation, TestClientUnaryCallAsyncWaitUntil) {
@@ -108,7 +108,7 @@ UTEST_F(GrpcDeadlinePropagation, TestClientUnaryCallAsyncWaitUntil) {
     EXPECT_EQ(future.WaitUntil(deadline), engine::FutureStatus::kTimeout);
 
     sample::ugrpc::GreetingResponse in;
-    UEXPECT_THROW(in = future.Get(), ugrpc::client::DeadlineExceededError);
+    UEXPECT_THROW(in = future.Get(), ugrpc::client::RpcCancelledError);
 }
 
 UTEST_F(GrpcDeadlinePropagation, TestClientReadManyRead) {
@@ -377,7 +377,7 @@ UTEST_F(GrpcTestClientNotSendData, TestClientDoNotStartCallWithoutDeadline) {
     sample::ugrpc::GreetingResponse in;
     UEXPECT_THROW(
         in = GetClient().SayHello(request, tests::MakeCallOptions(/*set_timeout=*/false)),
-        ugrpc::client::DeadlineExceededError
+        ugrpc::client::RpcCancelledError
     );
 }
 
@@ -395,7 +395,7 @@ UTEST_F(GrpcTestClientNotSendData, TestClientDoNotStartCallWithDeadline) {
     sample::ugrpc::GreetingResponse in;
     UEXPECT_THROW(
         in = GetClient().SayHello(request, tests::MakeCallOptions(/*set_timeout=*/true)),
-        ugrpc::client::DeadlineExceededError
+        ugrpc::client::RpcCancelledError
     );
 }
 

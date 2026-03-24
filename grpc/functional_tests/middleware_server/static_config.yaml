@@ -27,7 +27,7 @@ components_manager:
             config-settings: false
             first-update-fail-ok: true
             full-update-interval: 1m
-            update-interval: 5s            
+            update-interval: 5s
 
         http-client:
         http-client-core:

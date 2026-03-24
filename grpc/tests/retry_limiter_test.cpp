@@ -456,7 +456,7 @@ UTEST_F(RetryLimiterTimeoutTest, DeadlinePropagationTimeoutAccountedSeparately) 
     ugrpc::client::CallOptions call_options;
     call_options.SetTimeout(tests::kLongTimeout);
 
-    UEXPECT_THROW(client.SayHello(request, std::move(call_options)), ugrpc::client::DeadlineExceededError);
+    UEXPECT_THROW(client.SayHello(request, std::move(call_options)), ugrpc::client::RpcCancelledError);
 
     const auto& stats = GetMethodStats(kSayHelloMethod);
     EXPECT_EQ(stats.success_count.load(), 0);
