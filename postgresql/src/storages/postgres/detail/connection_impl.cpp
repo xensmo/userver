@@ -287,8 +287,6 @@ void ConnectionImpl::AsyncConnect(const Dsn& dsn, engine::Deadline deadline) {
     conn_wrapper_.AsyncConnect(dsn, deadline, scope);
     conn_wrapper_.FillSpanTags(span, {timeout, GetStatementTimeout()});
 
-    LOG_DEBUG() << "Connection established";
-
     scope.Reset(scopes::kGetConnectData);
     // We cannot handle exceptions here, so we let them got to the caller
     if (settings_.discard_on_connect == ConnectionSettings::kDiscardAll) {

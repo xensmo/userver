@@ -308,9 +308,6 @@ void PGConnectionWrapper::AsyncConnect(const Dsn& dsn, Deadline deadline, tracin
     StartAsyncConnect(dsn);
     scope.Reset(scopes::kLibpqWaitConnectFinish);
     WaitConnectionFinish(deadline, dsn);
-
-    log_extra_.Extend("pg.backend_pid", PQbackendPID(conn_));
-
     PGCW_LOG_DEBUG() << "Connected to " << DsnCutPassword(dsn);
 }
 
