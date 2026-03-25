@@ -55,9 +55,11 @@ void ReportReopeningErrorAndThrow(
 ) {
     std::fputs(
         fmt::format(
-            "[{:%Y-%m-%d %H:%M:%S %Z}] loggers [{}] failed to reopen the log file: logs are getting lost now",
+            "[{:%Y-%m-%d %H:%M:%S %Z}] loggers [{}] failed to reopen the log file: logs are getting lost "
+            "now.\r\nErrors:\r\n{}\r\n",
             std::chrono::system_clock::now(),
-            fmt::join(failed_loggers, ", ")
+            fmt::join(failed_loggers, ", "),
+            fmt::join(result_messages, ",\r\n")
         )
             .c_str(),
         stderr
