@@ -134,7 +134,7 @@ void CallState::SetDeadlinePropagated() noexcept {
 void CallState::Commit() noexcept { committed_.store(true, std::memory_order_release); }
 
 grpc::ClientContext& CallState::GetClientContextCommitted() {
-    UINVARIANT(committed_, "Call state should be committed");
+    UINVARIANT(committed_.load(std::memory_order_acquire), "Call state should be committed");
     UINVARIANT(client_context_, "GetClientContext should not be called on cancelled RPC");
     return *client_context_;
 }
@@ -218,23 +218,13 @@ void SetupClientContext(CallState& state, const CallOptions& call_options, int a
     auto client_context = CallOptionsAccessor::CreateClientContext(call_options);
 
     if (1 < attempt) {
-        client_context
-            ->AddMetadata(ugrpc::impl::kXPrevAttempts, ugrpc::impl::ToGrpcString(std::to_string(attempt - 1)));
+        const auto prev_attempts = ugrpc::impl::ToGrpcString(std::to_string(attempt - 1));
+        client_context->AddMetadata(ugrpc::impl::kXPrevAttempts, prev_attempts);
     }
 
     AddTracingMetadata(*client_context, state.GetSpan());
 
     state.SetClientContext(std::move(client_context));
-}
-
-void HandleCallStatistics(CallState& state, const grpc::Status& status) noexcept {
-    auto& stats = state.GetStatsScope();
-    if (grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() && state.IsDeadlinePropagated()) {
-        stats.OnCancelledByDeadlinePropagation();
-    } else {
-        stats.OnExplicitFinish(status.error_code());
-    }
-    stats.Flush();
 }
 
 void RunMiddlewarePipeline(CallState& state, const MiddlewareHooks& hooks) {

@@ -2561,6 +2561,7 @@
   "grpc/src/ugrpc/client/impl/retry_backoff.cpp":"taxi/uservices/userver/grpc/src/ugrpc/client/impl/retry_backoff.cpp",
   "grpc/src/ugrpc/client/impl/stub_state.cpp":"taxi/uservices/userver/grpc/src/ugrpc/client/impl/stub_state.cpp",
   "grpc/src/ugrpc/client/impl/tracing.cpp":"taxi/uservices/userver/grpc/src/ugrpc/client/impl/tracing.cpp",
+  "grpc/src/ugrpc/client/impl/unary_call.cpp":"taxi/uservices/userver/grpc/src/ugrpc/client/impl/unary_call.cpp",
   "grpc/src/ugrpc/client/middlewares/baggage/middleware.cpp":"taxi/uservices/userver/grpc/src/ugrpc/client/middlewares/baggage/middleware.cpp",
   "grpc/src/ugrpc/client/middlewares/base.cpp":"taxi/uservices/userver/grpc/src/ugrpc/client/middlewares/base.cpp",
   "grpc/src/ugrpc/client/middlewares/deadline_propagation/middleware.cpp":"taxi/uservices/userver/grpc/src/ugrpc/client/middlewares/deadline_propagation/middleware.cpp",

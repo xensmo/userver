@@ -27,6 +27,16 @@ void SetErrorAndResetSpan(CallState& state, std::string_view error_message) noex
     state.ResetSpan();
 }
 
+void HandleCallStatistics(CallState& state, const grpc::Status& status) noexcept {
+    auto& stats = state.GetStatsScope();
+    if (grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() && state.IsDeadlinePropagated()) {
+        stats.OnCancelledByDeadlinePropagation();
+    } else {
+        stats.OnExplicitFinish(status.error_code());
+    }
+    stats.Flush();
+}
+
 }  // namespace
 
 void ThrowIfDeadlineIsExceeded(grpc::ClientContext& client_context, std::string_view call_name) {
@@ -75,7 +85,7 @@ void ProcessFinish(
     const auto& status = completion_status.value();
 
     RunMiddlewarePipeline(state, MiddlewareHooks::FinishHooks(status, status.ok() ? response : nullptr));
-    HandleCallStatistics(state, status);
+    impl::HandleCallStatistics(state, status);
     SetStatusAndResetSpan(state, status);
 }
 

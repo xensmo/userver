@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fmt/format.h>
 #include <google/protobuf/message.h>
 #include <grpcpp/support/async_unary_call.h>
 
@@ -8,7 +7,6 @@
 #include <userver/server/request/task_inherited_data.hpp>
 #include <userver/tracing/tags.hpp>
 #include <userver/utils/assert.hpp>
-#include <userver/utils/expected.hpp>
 #include <userver/utils/fast_scope_guard.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
 
@@ -19,10 +17,9 @@
 #include <userver/ugrpc/client/impl/async_methods.hpp>
 #include <userver/ugrpc/client/impl/call_params.hpp>
 #include <userver/ugrpc/client/impl/call_state.hpp>
-#include <userver/ugrpc/client/impl/middleware_pipeline.hpp>
+#include <userver/ugrpc/client/impl/middleware_hooks.hpp>
 #include <userver/ugrpc/client/impl/prepare_async_call.hpp>
 #include <userver/ugrpc/client/impl/retry_backoff.hpp>
-#include <userver/ugrpc/client/impl/tracing.hpp>
 #include <userver/ugrpc/impl/async_method_invocation.hpp>
 #include <userver/ugrpc/impl/status_utils.hpp>
 #include <userver/ugrpc/status_codes.hpp>
@@ -31,6 +28,34 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::client::impl {
+
+inline bool IsRetryable(const CompletionStatus& completion_status) noexcept {
+    return completion_status.has_value() && ugrpc::IsRetryable(completion_status.value().error_code());
+}
+
+// Returns true if it's okay to send a retry
+inline bool AccountCompletion(RetryLimiter& retry_limiter, const CompletionStatus& completion_status) {
+    retry_limiter.AccountCompletion(completion_status);
+    return retry_limiter.CanRetry();
+}
+
+inline bool IsTaskCancelledByDeadlinePropagation() noexcept {
+    UASSERT(engine::current_task::ShouldCancel());
+    return USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline().IsReached();
+}
+
+inline bool IsRequestCancelledByDeadlinePropagation(const grpc::Status& status, const CallState& state) noexcept {
+    return grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() && state.IsDeadlinePropagated();
+}
+
+void AccountStatistics(ugrpc::impl::RpcStatisticsScope& stats, CompletionStatus completion_status) noexcept;
+
+void SetStatusForSpan(tracing::Span& span, CompletionStatus completion_status) noexcept;
+
+[[noreturn]] void ThrowSpecialCaseCompletionError(
+    std::string_view call_name,
+    SpecialCaseCompletionType special_case_completion_type
+);
 
 template <typename Stub, typename Request, typename Response>
 class UnaryCall final {
@@ -53,31 +78,29 @@ public:
     CallContext& GetContext() noexcept { return context_; }
     const CallContext& GetContext() const noexcept { return context_; }
 
-    void Perform() {
+    Response Perform() {
         const utils::FastScopeGuard span_scope([this]() noexcept { state_.ResetSpan(); });
-        CallWithRetries();
+
+        auto completion_status = InterceptCall();
+
+        impl::AccountStatistics(state_.GetStatsScope(), completion_status);
+
+        impl::SetStatusForSpan(state_.GetSpan(), completion_status);
+
+        return HandleCompletion(completion_status);
     }
 
-    Response&& ExtractResponse() {
-        if (inherited_deadline_reached_) {
-            USERVER_NAMESPACE::server::request::MarkTaskInheritedDeadlineExpired();
-        }
-
-        if (!completion_status_.has_value()) {
-            ThrowSpecialCaseCompletionError(completion_status_.error());
-        }
-
-        if (!completion_status_.value().ok()) {
-            ugrpc::client::ThrowErrorWithStatus(state_.GetCallName(), std::move(completion_status_).value());
-        }
-
-        return std::move(response_);
+    void Abandon() noexcept {
+        // If we receive a cancellation due to abandonment, we are guaranteed to receive the value `abandoned_ == true`
+        // due to the engine's acquire-release guarantees.
+        // If the request is successfully processed and not dropped, it will always be `abandoned_ == false`.
+        // If there was a race condition between abandonment and notification, `abandoned_ == true` may or may not leak,
+        // but if it does, we don't want to do any unnecessary work.
+        abandoned_.store(true, std::memory_order_relaxed);
     }
-
-    void Abandon() { abandoned_ = true; }
 
 private:
-    void CallWithRetries() {
+    CompletionStatus InterceptCall() {
         const utils::FastScopeGuard commit_state_guard([this]() noexcept { state_.Commit(); });
 
         const auto inherited_deadline = USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline();
@@ -88,62 +111,88 @@ private:
         int attempt = 0;
         RetryBackoff retry_backoff;
 
-        auto* retry_limiter = state_.GetRetryLimiter();
-
         while (!engine::current_task::ShouldCancel()) {
             ++attempt;
             state_.GetSpan().AddTag(tracing::kAttempts, attempt);
             impl::SetupClientContext(state_, call_options_, attempt);
 
-            PerformAttempt();
+            RunStartCallHooks();
 
-            if (!completion_status_.has_value()) {
-                switch (completion_status_.error()) {
-                    case SpecialCaseCompletionType::kNetworkError:
-                        OnInterrupted();
-                        return;
-                    case SpecialCaseCompletionType::kTimeoutDeadlinePropagated:
-                        OnDone(grpc::Status{grpc::StatusCode::DEADLINE_EXCEEDED, "Propagated deadline exceeded"});
-                        return;
-                    case SpecialCaseCompletionType::kCancelled:
-                    case SpecialCaseCompletionType::kAbandoned:
-                        OnCancelled();
-                        return;
-                    default:
-                        UINVARIANT(false, "Unknown SpecialCaseCompletionType");
-                        return;
-                }
-            }
+            auto completion_status = PerformAttempt();
 
-            auto& status = completion_status_.value();
+            RunFinishHooks(completion_status);
 
-            if (status.ok()) {
-                OnDone(status);
-                return;
-            }
+            auto* retry_limiter = state_.GetRetryLimiter();
+            const bool retry_allowed = !retry_limiter || impl::AccountCompletion(*retry_limiter, completion_status);
 
-            const bool limiter_allows = !retry_limiter || retry_limiter->CanRetry();
-
-            if (!limiter_allows || attempt >= max_attempts || !ugrpc::IsRetryable(status.error_code())) {
-                OnDone(status);
-                return;
+            if (max_attempts <= attempt || !retry_allowed || !impl::IsRetryable(completion_status)) {
+                return completion_status;
             }
 
             const auto delay = retry_backoff.NextAttemptDelay();
             if (deadline.IsReachable() && deadline.TimeLeft() <= delay) {
                 if (deadline == inherited_deadline) {
-                    inherited_deadline_reached_ = true;
+                    USERVER_NAMESPACE::server::request::MarkTaskInheritedDeadlineExpired();
                 }
-                OnDone(status);
-                return;
+                return completion_status;
             }
 
             engine::InterruptibleSleepFor(delay);
         }
 
-        completion_status_ = DetermineCancellationCompletionStatus();
+        if (abandoned_.load(std::memory_order_relaxed)) {
+            return utils::unexpected{SpecialCaseCompletionType::kAbandoned};
+        }
 
-        OnCancelled();
+        if (impl::IsTaskCancelledByDeadlinePropagation()) {
+            utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+        }
+
+        return utils::unexpected{SpecialCaseCompletionType::kCancelled};
+    }
+
+    CompletionStatus PerformAttempt() {
+        // Awaits previous attempt completion, if any.
+        // The last attempt completion is awaited in the destructor.
+        finish_invocation_.emplace();
+
+        call_ = StartCall();
+        call_->Finish(&response_, &status_, finish_invocation_->GetCompletionTag());
+        const auto wait_status = finish_invocation_->Wait();
+
+        if (ugrpc::impl::AsyncMethodInvocation::WaitStatus::kCancelled == wait_status) {
+            // If the user cancelled the request, notify grpcpp as soon as possible
+            // (we still must wait for the operation to complete, but grpcpp should finish fast)
+            state_.GetClientContext().TryCancel();
+        }
+
+        if (abandoned_.load(std::memory_order_relaxed)) {
+            return utils::unexpected{SpecialCaseCompletionType::kAbandoned};
+        }
+
+        switch (wait_status) {
+            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kOk:
+                if (impl::IsRequestCancelledByDeadlinePropagation(status_, state_)) {
+                    return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+                }
+                ugrpc::impl::ClampStatusCodeToValidRange(status_);
+                return std::move(status_);
+
+            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kError:
+                // CompletionQueue returned ok=false. For Client-side Finish ok should always be true.
+                // RPC has finished in abnormal manner.
+                return utils::unexpected{SpecialCaseCompletionType::kNetworkError};
+
+            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kCancelled:
+                if (impl::IsTaskCancelledByDeadlinePropagation()) {
+                    utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+                }
+                return utils::unexpected{SpecialCaseCompletionType::kCancelled};
+
+            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kDeadline:
+                UINVARIANT(false, "Unexpected 'AsyncMethodInvocation::WaitStatus'");
+        }
+        UINVARIANT(false, "unreachable");  // (gcc 11): control reaches end of non-void function
     }
 
     std::unique_ptr<grpc::ClientAsyncResponseReader<Response>> StartCall() {
@@ -152,132 +201,31 @@ private:
         return call;
     }
 
-    void PerformAttempt() {
-        RunStartCallHooks();
-
-        auto response_reader = StartCall();
-
-        auto wait_status = ugrpc::impl::AsyncMethodInvocation::WaitStatus::kError;
-        {
-            ugrpc::impl::AsyncMethodInvocation invocation;  // Calls WaitNonCancellable in the destructor
-            completion_status_ = grpc::Status{};
-            response_reader->Finish(&response_, &completion_status_.value(), invocation.GetCompletionTag());
-            wait_status = invocation.Wait();
-
-            // If the user cancelled the request, notify grpcpp as soon as possible
-            // (we still must wait for the operation to complete, but grpcpp may finish faster)
-            if (ugrpc::impl::AsyncMethodInvocation::WaitStatus::kCancelled == wait_status) {
-                state_.GetClientContext().TryCancel();
-            }
-        }  // We must wait for the request to complete; only then we can access completion_status_ and destroy UnaryCall
-
-        if (ugrpc::impl::AsyncMethodInvocation::WaitStatus::kOk == wait_status) {
-            ugrpc::impl::ClampStatusCodeToValidRange(completion_status_.value());
-        }
-
-        UpdateCompletionStatus(wait_status);
-
-        impl::RunMiddlewarePipeline(
-            state_,
-            MiddlewareHooks::FinishHooks(
-                completion_status_,
-                completion_status_.has_value() && completion_status_.value().ok() ? ToBaseMessage(&response_) : nullptr
-            )
-        );
-
-        auto retry_limiter = state_.GetRetryLimiter();
-        if (retry_limiter) {
-            retry_limiter->AccountCompletion(completion_status_);
-        }
-    }
-
     void RunStartCallHooks() {
         impl::RunMiddlewarePipeline(state_, MiddlewareHooks::StartCallHooks(ToBaseMessage(&request_)));
     }
 
-    void UpdateCompletionStatus(ugrpc::impl::AsyncMethodInvocation::WaitStatus wait_status)
-    {
-        switch (wait_status) {
-            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kOk: {
-                if (grpc::StatusCode::DEADLINE_EXCEEDED == completion_status_.value().error_code() &&
-                    state_.IsDeadlinePropagated())
-                {
-                    completion_status_ = utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
-                }
-                break;
-            }
-            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kError:
-                // CompletionQueue returned ok=false. For Client-side Finish ok should always be true.
-                // It signifies that RPC has interrupted in abnormal manner.
-                // Do not attempt further operations on the RPC.
-                completion_status_ = utils::unexpected{SpecialCaseCompletionType::kNetworkError};
-                break;
-            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kCancelled:
-                completion_status_ = DetermineCancellationCompletionStatus();
-                break;
-            case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kDeadline:
-                UINVARIANT(false, "Waiting without timeout mustn't produce kDeadline");
-                break;
-            default:
-                UINVARIANT(false, "Unknown WaitStatus");
-                break;
-        }
+    void RunFinishHooks(const CompletionStatus& completion_status) {
+        impl::RunMiddlewarePipeline(
+            state_,
+            MiddlewareHooks::FinishHooks(
+                completion_status,
+                completion_status.has_value() && completion_status.value().ok() ? ToBaseMessage(&response_) : nullptr
+            )
+        );
     }
 
-    CompletionStatus DetermineCancellationCompletionStatus() {
-        UASSERT(engine::current_task::ShouldCancel());
-
-        if (abandoned_) {
-            return utils::unexpected{SpecialCaseCompletionType::kAbandoned};
+    Response HandleCompletion(CompletionStatus& completion_status) {
+        if (!completion_status.has_value()) {
+            impl::ThrowSpecialCaseCompletionError(state_.GetCallName(), completion_status.error());
         }
 
-        if (USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline().IsReached()) {
-            return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+        auto& status = completion_status.value();
+        if (!status.ok()) {
+            ugrpc::client::ThrowErrorWithStatus(state_.GetCallName(), std::move(status));
         }
 
-        return utils::unexpected{SpecialCaseCompletionType::kCancelled};
-    }
-
-    void OnDone(const grpc::Status& status) {
-        impl::HandleCallStatistics(state_, status);
-        impl::SetStatusForSpan(state_.GetSpan(), status);
-    }
-
-    void OnInterrupted() {
-        std::string error_message = "Call interrupted, Network error";
-        const auto debug_error_string = state_.GetClientContext().debug_error_string();
-        if (!debug_error_string.empty()) {
-            error_message += fmt::format("\nAdditional GRPC error information: {}", debug_error_string);
-        }
-        impl::SetErrorForSpan(state_.GetSpan(), error_message);
-        state_.GetStatsScope().OnNetworkError();
-        state_.GetStatsScope().Flush();
-    }
-
-    void OnCancelled() {
-        if (abandoned_) {
-            impl::SetErrorForSpan(state_.GetSpan(), "Call abandoned");
-        } else {
-            impl::SetErrorForSpan(state_.GetSpan(), "Call cancelled");
-            state_.GetStatsScope().OnCancelled();
-        }
-        state_.GetStatsScope().Flush();
-    }
-
-    void ThrowSpecialCaseCompletionError(SpecialCaseCompletionType completion_case) {
-        switch (completion_case) {
-            case SpecialCaseCompletionType::kNetworkError:
-                throw RpcInterruptedError{state_.GetCallName(), "UnaryCall (NetworkError)"};
-            case SpecialCaseCompletionType::kCancelled:
-                throw RpcCancelledError{state_.GetCallName(), "UnaryCall"};
-            case SpecialCaseCompletionType::kAbandoned:
-                throw RpcCancelledError{state_.GetCallName(), "UnaryCall (Abandoned)"};
-            case SpecialCaseCompletionType::kTimeoutDeadlinePropagated:
-                throw RpcCancelledError{state_.GetCallName(), "UnaryCall (Deadline Propagation)"};
-            default:
-                UINVARIANT(false, "Unknown SpecialCaseCompletionType");
-                break;
-        }
+        return std::move(response_);
     }
 
     CallOptions call_options_;
@@ -287,9 +235,11 @@ private:
     PrepareUnaryCall prepare_unary_call_;
     const Request& request_;
 
+    std::unique_ptr<grpc::ClientAsyncResponseReader<Response>> call_;
     Response response_;
-    CompletionStatus completion_status_;
-    bool inherited_deadline_reached_{false};
+    grpc::Status status_;
+    // Must go after `call_`, `response_` and `status_` to await `Finish` completion before destroying vars it needs.
+    std::optional<ugrpc::impl::AsyncMethodInvocation> finish_invocation_;
 
     std::atomic<bool> abandoned_{false};
 };

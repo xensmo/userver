@@ -183,8 +183,6 @@ bool IsWriteAndCheckAvailable(const StreamingCallState&) noexcept;
 
 void SetupClientContext(CallState& state, const CallOptions& call_options, int attempt);
 
-void HandleCallStatistics(CallState& state, const grpc::Status& status) noexcept;
-
 void RunMiddlewarePipeline(CallState& state, const MiddlewareHooks& hooks);
 
 }  // namespace ugrpc::client::impl
