@@ -207,6 +207,20 @@ constexpr USERVER_NAMESPACE::utils::StringLiteral kCommands[] = {
 
 alerts::Source kPreparedQueriesOverflowAlert("prepared_queries_overflow");
 
+std::string MakeStatementName(const Connection::StatementId& query_id, const Query& query) {
+    // max_identifier_length (NAMEDATALEN from src/include/pg_config_manual.h - 1)
+    constexpr std::size_t kMaxIdentifierLength = 63;
+
+    std::string statement_name = fmt::format("q_{:x}", query_id.GetUnderlying());
+    if (!query.GetOptionalNameView()) {
+        return statement_name;
+    }
+    auto name_view = *query.GetOptionalNameView();
+    statement_name += '_';
+    statement_name += name_view.substr(0, kMaxIdentifierLength - statement_name.size());
+    return statement_name;
+}
+
 }  // namespace
 
 std::string_view FindCommandName(std::string_view str) {
@@ -864,7 +878,7 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
     scope.Reset(scopes::kPrepare);
     LOG_TRACE() << "Query is not yet prepared";
 
-    const std::string meta_statement_name = "q" + std::to_string(query_hash) + "_" + uuid_;
+    const std::string meta_statement_name = MakeStatementName(query_id, query);
     const bool should_prepare = !statement_info;
     if (should_prepare) {
         conn_wrapper_.SendPrepare(meta_statement_name, statement, params, scope);
