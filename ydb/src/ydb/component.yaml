@@ -17,17 +17,6 @@ properties:
                 type: integer
                 description: default retries count for an operation
                 default: 3
-            operation-timeout:
-                type: string
-                description: |
-                    default operation timeout in utils::StringToDuration() format
-                default: 1s
-            cancel-after:
-                type: string
-                description: |
-                    cancel operation after specified string in
-                    utils::StringToDuration() format
-                default: 1s
             client-timeout:
                 type: string
                 description: default client timeout in utils::StringToDuration format

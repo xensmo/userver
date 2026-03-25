@@ -19,8 +19,6 @@ struct OperationSettings final {
     std::optional<std::uint32_t> retries{std::nullopt};
 
     // https://docs.yandex-team.ru/ydb-tech/best_practices/timeouts#operational
-    std::chrono::milliseconds operation_timeout_ms{0};
-    std::chrono::milliseconds cancel_after_ms{0};
     std::chrono::milliseconds client_timeout_ms{0};
     std::optional<TransactionMode> tx_mode{std::nullopt};
     std::chrono::milliseconds get_session_timeout_ms{0};

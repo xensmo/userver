@@ -34,27 +34,6 @@ void ApplyToRequestSettings(
 }
 
 template <typename T>
-void ApplyToRequestSettings(
-    NYdb::TOperationRequestSettings<T>& result,
-    const OperationSettings& settings,
-    engine::Deadline deadline
-) {
-    result.OperationTimeout(GetBoundTimeout(settings.operation_timeout_ms, deadline));
-
-    if (settings.cancel_after_ms > std::chrono::milliseconds::zero()) {
-        result.CancelAfter(settings.cancel_after_ms);
-    }
-
-    if (settings.client_timeout_ms > std::chrono::milliseconds::zero()) {
-        result.ClientTimeout(settings.client_timeout_ms);
-    }
-
-    if (!settings.trace_id.empty()) {
-        result.TraceId(impl::ToString(settings.trace_id));
-    }
-}
-
-template <typename T>
 T PrepareRequestSettings(const OperationSettings& settings, engine::Deadline deadline) {
     T result;
     impl::ApplyToRequestSettings(result, settings, deadline);

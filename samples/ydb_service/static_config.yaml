@@ -57,9 +57,7 @@ components_manager:
 
         ydb:
             operation-settings:
-                cancel-after: 1000ms
                 client-timeout: 1100ms
-                operation-timeout: 1000ms
                 retries: 3
             databases:
                 sampledb:

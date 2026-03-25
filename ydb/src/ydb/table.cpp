@@ -391,13 +391,6 @@ ExecuteResponse TableClient::ExecuteQuery(
     const Query& query,
     PreparedArgsBuilder&& builder
 ) {
-    if (settings.operation_timeout_ms > std::chrono::milliseconds::zero()) {
-        throw std::runtime_error("You set up custom operation_timeout in an execution method that does not use it");
-    }
-    if (settings.cancel_after_ms > std::chrono::milliseconds::zero()) {
-        throw std::runtime_error("You set up custom cancel_after in an execution method that does not use it");
-    }
-
     impl::RequestContext context{*this, query, std::move(settings)};
 
     auto future = impl::RetryQuery(
