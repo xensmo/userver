@@ -115,12 +115,15 @@ public:
     // ContextAccessor implementation
     bool IsReady() const noexcept override { return awaiters_.IsSignaled(); }
 
-    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) override {
-        if (awaiters_.GetSignalOrAppend(&awaiter, context)) {
-            return engine::impl::EarlyNotify{true};
+    engine::impl::EarlyNotify TryAppendAwaiter(
+        boost::intrusive_ptr<engine::impl::Awaiter>& awaiter,
+        std::uintptr_t context
+    ) override {
+        if (awaiters_.GetSignalOrAppend(awaiter, context)) {
+            return engine::impl::EarlyNotify::kYes;
         }
         watcher_.StartAsync(awaiters_.GetEpoch());
-        return engine::impl::EarlyNotify{false};
+        return engine::impl::EarlyNotify::kNo;
     }
 
     void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {

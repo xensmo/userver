@@ -31,16 +31,17 @@ public:
             });
 
             // SetupWakeups might throw.
-            const auto early_wakeup = target->TryAppendAwaiter(awaiter_, awaiter_.GetAwaiterContext());
+            boost::intrusive_ptr<Awaiter> awaiter_ptr{&awaiter_};
+            const auto early_wakeup = target->TryAppendAwaiter(awaiter_ptr, awaiter_.GetAwaiterContext());
 
             if (static_cast<bool>(early_wakeup)) {
-                return EarlyNotify{true};
+                return EarlyNotify::kYes;
             }
 
             disable_wakeups.Release();
         }
 
-        return EarlyNotify{false};
+        return EarlyNotify::kNo;
     }
 
     void DisableWakeups() noexcept override { DoDisableWakeups(targets_); }

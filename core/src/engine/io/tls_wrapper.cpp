@@ -218,7 +218,10 @@ public:
 
     bool IsReady() const noexcept override;
 
-    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) override;
+    engine::impl::EarlyNotify TryAppendAwaiter(
+        boost::intrusive_ptr<engine::impl::Awaiter>& awaiter,
+        std::uintptr_t context
+    ) override;
 
     void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
 
@@ -436,12 +439,12 @@ bool TlsWrapper::ReadContextAccessor::IsReady() const noexcept {
 }
 
 engine::impl::EarlyNotify TlsWrapper::ReadContextAccessor::TryAppendAwaiter(
-    engine::impl::Awaiter& awaiter,
+    boost::intrusive_ptr<engine::impl::Awaiter>& awaiter,
     std::uintptr_t context
 ) {
     auto* ssl = impl.ssl.get();
     if (!ssl || SSL_has_pending(ssl)) {
-        return engine::impl::EarlyNotify{true};
+        return engine::impl::EarlyNotify::kYes;
     }
 
     return GetSocketContextAccessor().TryAppendAwaiter(awaiter, context);

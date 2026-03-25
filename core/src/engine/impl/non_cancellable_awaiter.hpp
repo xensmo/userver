@@ -21,9 +21,13 @@ public:
           callback_(std::move(callback))
     {}
 
-    void DoNotify(std::uintptr_t context) noexcept override {
+    void DoNotify(boost::intrusive_ptr<PolymorphicAwaiter> self, std::uintptr_t context) noexcept override {
         UASSERT(context == 0);
         std::move(callback_)();
+
+        UASSERT(self->UseCount() == 1);
+        // Avoid an extra atomic refcount decrement.
+        delete static_cast<NonCancellableAwaiter*>(self.detach());
     }
 
     void Destroy() noexcept override { delete this; }
@@ -37,10 +41,10 @@ private:
 template <typename CallbackType>
 void AppendNonCancellableAwaiter(ContextAccessor& awaitable, CallbackType&& callback) {
     using AwaiterType = NonCancellableAwaiter<std::remove_const_t<std::remove_reference_t<CallbackType>>>;
-    auto awaiter = boost::intrusive_ptr<
-        Awaiter>{new AwaiterType(std::forward<CallbackType>(callback)), /*add_ref=*/false};
-    if (awaitable.TryAppendAwaiter(*awaiter, 0) == EarlyNotify{true}) {
-        static_cast<AwaiterType&>(*awaiter).DoNotify(0);
+    boost::intrusive_ptr<Awaiter> awaiter{new AwaiterType(std::forward<CallbackType>(callback)), /*add_ref=*/false};
+    if (awaitable.TryAppendAwaiter(awaiter, 0) == EarlyNotify::kYes) {
+        // With EarlyNotify::kYes, `awaiter` was not moved from.
+        impl::Notify(std::move(awaiter), 0);
     }
 }
 

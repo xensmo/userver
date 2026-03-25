@@ -616,11 +616,11 @@ task_local::Storage& TaskContext::GetLocalStorage() noexcept {
 
 bool TaskContext::IsReady() const noexcept { return IsFinished(); }
 
-EarlyNotify TaskContext::TryAppendAwaiter(Awaiter& awaiter, std::uintptr_t context) {
-    if (&awaiter == static_cast<Awaiter*>(this)) {
+EarlyNotify TaskContext::TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) {
+    if (awaiter.get() == static_cast<Awaiter*>(this)) {
         ReportDeadlock();
     }
-    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(&awaiter, context)};
+    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(awaiter, context)};
 }
 
 void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
@@ -674,7 +674,7 @@ void TaskContext::Schedule() noexcept {
     SetState(Task::State::kQueued);
     TraceStateTransition(Task::State::kQueued);
     try {
-        task_processor_.Schedule(this);
+        task_processor_.Schedule(boost::intrusive_ptr<TaskContext>{this});
     } catch (...) {
         // We cannot just refuse to run the task because of the lifetime guarantees for tasks and their data.
         utils::AbortWithStacktrace(

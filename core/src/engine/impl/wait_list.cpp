@@ -49,19 +49,19 @@ void WaitList::NotifyOne(Lock& lock) {
     if (awaiters_.empty()) {
         return;
     }
-    const boost::intrusive_ptr<impl::Awaiter> awaiter(&awaiters_.front(), kAdopt);
+    boost::intrusive_ptr<impl::Awaiter> awaiter(&awaiters_.front(), kAdopt);
     awaiter->wait_list_data_.unlink();
-
-    awaiter->Notify(awaiter->wait_list_data_.context);
+    const auto context = awaiter->wait_list_data_.context;
+    impl::Notify(std::move(awaiter), context);
 }
 
 void WaitList::NotifyAll(Lock& lock) {
     UASSERT(lock);
     while (!awaiters_.empty()) {
-        const boost::intrusive_ptr<impl::Awaiter> awaiter(&awaiters_.front(), kAdopt);
+        boost::intrusive_ptr<impl::Awaiter> awaiter(&awaiters_.front(), kAdopt);
         awaiter->wait_list_data_.unlink();
-
-        awaiter->Notify(awaiter->wait_list_data_.context);
+        const auto context = awaiter->wait_list_data_.context;
+        impl::Notify(std::move(awaiter), context);
     }
 }
 

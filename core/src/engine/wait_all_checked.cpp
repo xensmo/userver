@@ -102,7 +102,7 @@ private:
         void Unsubscribe() noexcept;
 
     private:
-        void DoNotify(std::uintptr_t context) noexcept override;
+        void DoNotify(boost::intrusive_ptr<impl::PolymorphicAwaiter> self, std::uintptr_t context) noexcept override;
 
         void Destroy() noexcept override { delete this; }
 
@@ -130,7 +130,8 @@ FutureStatus WaitAllCheckedContext::Impl::WaitUntil(Deadline deadline) {
         }
 
         pending_notifications_.fetch_add(1, std::memory_order_relaxed);
-        if (target->TryAppendAwaiter(*this, next_subscription_index_++) == EarlyNotify{true}) {
+        boost::intrusive_ptr<impl::Awaiter> awaiter_ptr{this};
+        if (target->TryAppendAwaiter(awaiter_ptr, next_subscription_index_++) == EarlyNotify::kYes) {
             pending_notifications_.fetch_sub(1, std::memory_order_relaxed);
             RethrowError(*target);
         }
@@ -161,7 +162,10 @@ void WaitAllCheckedContext::Impl::Unsubscribe() noexcept {
     }
 }
 
-void WaitAllCheckedContext::Impl::DoNotify(std::uintptr_t context) noexcept {
+void WaitAllCheckedContext::Impl::DoNotify(
+    boost::intrusive_ptr<impl::PolymorphicAwaiter> /*self*/,
+    std::uintptr_t context
+) noexcept {
     UASSERT(context <= std::numeric_limits<std::size_t>::max());
     const auto index = static_cast<std::size_t>(context);
     UASSERT(targets_[index] != nullptr);

@@ -34,7 +34,7 @@ Awaiter* const kSignaled = reinterpret_cast<Awaiter*>(1);
 
 void DoNotify(AwaiterWithContext awaiter) {
     LOG_TRACE() << "NotifyOne awaiter=" << fmt::to_string(awaiter) << " use_count=" << awaiter.awaiter->UseCount();
-    awaiter.awaiter->Notify(awaiter.context);
+    impl::Notify(boost::intrusive_ptr<Awaiter>{awaiter.awaiter, /*add_ref=*/false}, awaiter.context);
 }
 
 }  // namespace
@@ -46,11 +46,11 @@ WaitListLight::~WaitListLight() {
 }
 
 void WaitListLight::Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter, std::uintptr_t context) noexcept {
-    [[maybe_unused]] const bool was_signaled = GetSignalOrAppend(std::move(awaiter), context);
+    [[maybe_unused]] const bool was_signaled = GetSignalOrAppend(awaiter, context);
     UASSERT_MSG(!was_signaled, "Signals cannot be used with plain Append");
 }
 
-bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter> awaiter, std::uintptr_t context) noexcept {
+bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) noexcept {
     UASSERT(awaiter);
 
     const AwaiterWithContext new_awaiter{awaiter.get(), context};
@@ -90,10 +90,6 @@ void WaitListLight::NotifyOne() {
 
     UASSERT_MSG(old_awaiter.awaiter != kSignaled, "Use SetSignalAndNotifyOne for dealing with signals instead");
 
-    const boost::intrusive_ptr<Awaiter> awaiter{
-        old_awaiter.awaiter,
-        /*add_ref=*/false
-    };
     DoNotify(old_awaiter);
 }
 
@@ -104,10 +100,6 @@ void WaitListLight::SetSignalAndNotifyOne() {
         return;
     }
 
-    const boost::intrusive_ptr<Awaiter> awaiter{
-        old_awaiter.awaiter,
-        /*add_ref=*/false
-    };
     DoNotify(old_awaiter);
 }
 

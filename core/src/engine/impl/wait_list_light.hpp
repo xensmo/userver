@@ -36,11 +36,11 @@ public:
     /// @note Must not be used together with `SetSignalAndNotifyOne`.
     void Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter, std::uintptr_t context) noexcept;
 
-    /// @brief Get the signal if one was set by SetSignalAndNotifyOne, else
-    /// Append.
+    /// @brief Get the signal if one was set by SetSignalAndNotifyOne, else Append.
+    /// Only moves from `awaiter` if the awaiter has been appended.
     /// @returns `true` if already signaled
     /// @see Append
-    [[nodiscard]] bool GetSignalOrAppend(boost::intrusive_ptr<impl::Awaiter> awaiter, std::uintptr_t context) noexcept;
+    [[nodiscard]] bool GetSignalOrAppend(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) noexcept;
 
     /// @brief Remove the task from the `WaitListLight` without notification.
     void Remove(impl::Awaiter& awaiter, std::uintptr_t context) noexcept;

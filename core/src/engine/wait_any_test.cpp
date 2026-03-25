@@ -36,20 +36,23 @@ public:
         ready_ = true;
         if (awaiter_ != nullptr) {
             auto awaiter = std::move(awaiter_);
-            awaiter->Notify(context_);
+            engine::impl::Notify(std::move(awaiter), context_);
         }
     }
 
     bool IsReady() const noexcept override { return ready_; }
 
-    engine::impl::EarlyNotify TryAppendAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) override {
+    engine::impl::EarlyNotify TryAppendAwaiter(
+        boost::intrusive_ptr<engine::impl::Awaiter>& awaiter,
+        std::uintptr_t context
+    ) override {
         if (ready_) {
-            return engine::impl::EarlyNotify{true};
+            return engine::impl::EarlyNotify::kYes;
         }
         UINVARIANT(awaiter_ == nullptr, "Awaiter already appended");
-        awaiter_ = &awaiter;
+        awaiter_ = std::move(awaiter);
         context_ = context;
-        return engine::impl::EarlyNotify{false};
+        return engine::impl::EarlyNotify::kNo;
     }
 
     void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {
@@ -58,7 +61,7 @@ public:
         if (awaiter_ == nullptr) {
             return;
         }
-        UINVARIANT(awaiter_ == &awaiter, "Awaiter does not match");
+        UINVARIANT(awaiter_.get() == &awaiter, "Awaiter does not match");
         awaiter_ = nullptr;
     }
 

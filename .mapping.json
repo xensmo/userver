@@ -993,6 +993,7 @@
   "core/include/userver/engine/impl/detached_tasks_sync_block.hpp":"taxi/uservices/userver/core/include/userver/engine/impl/detached_tasks_sync_block.hpp",
   "core/include/userver/engine/impl/epoch.hpp":"taxi/uservices/userver/core/include/userver/engine/impl/epoch.hpp",
   "core/include/userver/engine/impl/future_state.hpp":"taxi/uservices/userver/core/include/userver/engine/impl/future_state.hpp",
+  "core/include/userver/engine/impl/ready_context_accessor.hpp":"taxi/uservices/userver/core/include/userver/engine/impl/ready_context_accessor.hpp",
   "core/include/userver/engine/impl/task_context_factory.hpp":"taxi/uservices/userver/core/include/userver/engine/impl/task_context_factory.hpp",
   "core/include/userver/engine/impl/task_context_holder.hpp":"taxi/uservices/userver/core/include/userver/engine/impl/task_context_holder.hpp",
   "core/include/userver/engine/impl/task_local_storage.hpp":"taxi/uservices/userver/core/include/userver/engine/impl/task_local_storage.hpp",
