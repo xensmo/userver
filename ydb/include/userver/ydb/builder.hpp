@@ -23,6 +23,10 @@ public:
     PreparedArgsBuilder(PreparedArgsBuilder&&) noexcept = default;
     PreparedArgsBuilder& operator=(PreparedArgsBuilder&&) = delete;
 
+    explicit PreparedArgsBuilder(NYdb::TParamsBuilder&& builder)
+        : builder_(std::move(builder))
+    {}
+
     /// Supported types and required includes are documented in:
     /// <userver/ydb/io/supported_types.hpp>
     template <typename T>
