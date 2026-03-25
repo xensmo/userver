@@ -42,7 +42,9 @@ constexpr std::string_view kStatementVacuum = "vacuum";
 constexpr std::string_view kStatementListen = "listen {}";
 constexpr std::string_view kStatementUnlisten = "unlisten {}";
 
-const Query kSetConfigQuery{fmt::format("SELECT set_config($1, $2, $3) as {}", kSetConfigQueryResultName)};
+const std::string kSetConfigSQL = fmt::format("SELECT set_config($1, $2, $3) as {}", kSetConfigQueryResultName);
+const Query::Name kSetConfigName{"set_config"};
+const Query kSetConfigQuery{kSetConfigSQL, kSetConfigName};
 
 // we hope lc_messages is en_US, we don't control it anyway
 const std::string kBadCachedPlanErrorMessage = "cached plan must not change result type";
@@ -137,7 +139,7 @@ struct CountRollback : TrackTrxEnd {
 
 const std::string kSetLocalWorkMem = "SET LOCAL work_mem='256MB'";
 
-const std::string kGetUserTypesSQL = R"~(
+constexpr USERVER_NAMESPACE::utils::StringLiteral kGetUserTypesSQL = R"~(
 SELECT  t.oid,
         n.nspname,
         t.typname,
@@ -155,7 +157,10 @@ FROM pg_catalog.pg_type t
 WHERE n.nspname NOT IN ('pg_catalog', 'pg_toast', 'information_schema')
   AND (c.relkind IS NULL OR c.relkind NOT IN ('i', 'S', 'I')))~";
 
-const std::string kGetCompositeAttribsSQL = R"~(
+constexpr Query::NameLiteral kGetUserTypesName{"get_user_types"};
+const Query kGetUserTypesQuery{kGetUserTypesSQL, kGetUserTypesName};
+
+constexpr USERVER_NAMESPACE::utils::StringLiteral kGetCompositeAttribsSQL = R"~(
 SELECT c.reltype,
     a.attname,
     a.atttypid
@@ -166,6 +171,9 @@ WHERE n.nspname NOT IN ('pg_catalog', 'pg_toast', 'information_schema')
   AND a.attnum > 0 AND NOT a.attisdropped
   AND c.relkind NOT IN ('i', 'S', 'I')
 ORDER BY c.reltype, a.attnum)~";
+
+constexpr Query::NameLiteral kGetCompositeAttribsName{"get_composite_attribs"};
+const Query kGetCompositeAttribsQuery{kGetCompositeAttribsSQL, kGetCompositeAttribsName};
 
 const std::string kPingStatement = "SELECT 1 AS ping";
 
@@ -1099,10 +1107,11 @@ void ConnectionImpl::SetParameter(
         << " scope";
     StaticQueryParameters<3> params;
     params.Write(db_types_, name, value, is_transaction_scope);
+
     if (IsPipelineActive()) {
-        SendCommandNoPrepare(kSetConfigQuery, detail::QueryParameters{params}, deadline, logging::Level::kDebug);
+        SendCommandNoPrepare(kSetConfigQuery, detail::QueryParameters{params}, deadline);
     } else {
-        ExecuteCommand(kSetConfigQuery, detail::QueryParameters{params}, deadline, logging::Level::kDebug);
+        ExecuteCommand(kSetConfigQuery, detail::QueryParameters{params}, deadline);
     }
 }
 
@@ -1123,9 +1132,9 @@ void ConnectionImpl::LoadUserTypes(engine::Deadline deadline) {
             ExecuteCommandNoPrepare("BEGIN", deadline);
             ExecuteCommandNoPrepare(kSetLocalWorkMem, deadline);
 #endif
-            types.emplace(ExecuteCommand(kGetUserTypesSQL, deadline).AsSetOf<DBTypeDescription>(kRowTag));
+            types.emplace(ExecuteCommand(kGetUserTypesQuery, deadline).AsSetOf<DBTypeDescription>(kRowTag));
             attribs =
-                ExecuteCommand(kGetCompositeAttribsSQL, deadline).AsContainer<UserTypes::CompositeFieldDefs>(kRowTag);
+                ExecuteCommand(kGetCompositeAttribsQuery, deadline).AsContainer<UserTypes::CompositeFieldDefs>(kRowTag);
             ExecuteCommandNoPrepare("COMMIT", deadline);
 #if LIBPQ_HAS_PIPELINING
             conn_wrapper_.ExitPipelineMode();
