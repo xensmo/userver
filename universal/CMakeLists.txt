@@ -82,6 +82,8 @@ userver_target_cxx_compile_options_if_supported(
     "-Wno-useless-cast"
     # Starting from C++20, passing zero arguments to a variadic macro parameter is allowed
     "-Wno-gnu-zero-variadic-macro-arguments"
+    # gcc complains: the ABI of passing union with ‘long double’ has changed in GCC 4.4
+    "-Wno-psabi"
 )
 
 # Gives false positives
