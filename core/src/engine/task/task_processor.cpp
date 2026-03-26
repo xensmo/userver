@@ -396,20 +396,14 @@ void TaskProcessor::ProcessTasks() noexcept {
 
         CheckWaitTime(*context);
 
-        bool has_failed = false;
         try {
             const impl::TaskCounter::RunningToken token{GetTaskCounter()};
             context->DoStep();
         } catch (const std::exception& ex) {
             LOG_ERROR() << "uncaught exception from DoStep: " << ex;
-            has_failed = true;
         }
 
         pools_->GetCoroPool().AccountStackUsage();
-
-        if (has_failed || context->IsFinished()) {
-            context->FinishDetached();
-        }
     }
 }
 

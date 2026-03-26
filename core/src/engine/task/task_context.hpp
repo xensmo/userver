@@ -106,9 +106,6 @@ public:
     // whether user code finished executing, coroutine may still be running
     bool IsFinished() const noexcept;
 
-    void SetDetached(DetachedTasksSyncBlock::Token& token) noexcept;
-    void FinishDetached() noexcept;
-
     // wait for this to become finished
     // should only be called from other context
     [[nodiscard]] FutureStatus WaitUntil(Deadline) const noexcept;

@@ -158,21 +158,6 @@ bool TaskContext::IsSharedWaitAllowed() const { return finish_awaiters_->IsShare
 
 bool TaskContext::IsFinished() const noexcept { return finish_awaiters_->IsSignaled(); }
 
-void TaskContext::SetDetached(DetachedTasksSyncBlock::Token& token) noexcept {
-    DetachedTasksSyncBlock::Token* expected = nullptr;
-    if (!detached_token_.compare_exchange_strong(expected, &token)) {
-        UASSERT(expected == kFinishedDetachedToken);
-        DetachedTasksSyncBlock::Dispose(token);
-    }
-}
-
-void TaskContext::FinishDetached() noexcept {
-    auto* const token = detached_token_.exchange(kFinishedDetachedToken);
-    if (token != nullptr && token != kFinishedDetachedToken) {
-        DetachedTasksSyncBlock::Dispose(*token);
-    }
-}
-
 FutureStatus TaskContext::WaitUntil(Deadline deadline) const noexcept {
     // try to avoid ctx switch if possible
     static_assert(noexcept(IsFinished()));
