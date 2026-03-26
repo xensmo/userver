@@ -125,7 +125,7 @@ rabbitmq - install dependencies to build with RabbitMQ messages broker (use with
 kafka - install dependencies to build with Apache Kafka (use with Cmake option USERVER_FEATURE_KAFKA=ON)
 rocksdb - install dependencies to build with RocksDB (unrecomented) (use with Cmake option USERVER_FEATURE_ROCKS=ON)
 utest - install dependencies to build with Utest (use with Cmake option USERVER_FEATURE_UTEST=ON)
-odbc - install dependencies to build with Complete ODBC driver manager (use with Cmake option USERVER_FEATURE_ODBC=ON)  
+odbc - install dependencies to build with Complete ODBC driver manager (use with Cmake option USERVER_FEATURE_ODBC=ON)
 sqlite - install dependencies to build with sqlite (use with Cmake option USERVER_FEATURE_SQLITE=ON)
 ```
 
@@ -269,7 +269,7 @@ sudo mkdir -p /etc/apt/preferences.d
 printf "Package: postgresql-14\nPin: version 14.5*\nPin-Priority: 1001\n" | sudo tee -a /etc/apt/preferences.d/postgresql-14
 printf "Package: postgresql-client-14\nPin: version 14.5*\nPin-Priority: 1001\n" | sudo tee -a /etc/apt/preferences.d/postgresql-client-14
 sudo apt install --allow-downgrades -y postgresql-14 postgresql-client-14
- 
+
 printf "Package: libpq5\nPin: version 14.5*\nPin-Priority: 1001\n" | sudo tee -a /etc/apt/preferences.d/libpq5
 printf "Package: libpq-dev\nPin: version 14.5*\nPin-Priority: 1001\n"| sudo tee -a /etc/apt/preferences.d/libpq-dev
 sudo apt install --allow-downgrades -y libpq5 libpq-dev
