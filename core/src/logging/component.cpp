@@ -262,12 +262,12 @@ void Logging::TryReopenFiles() {
             failed_loggers.push_back(name);
         }
     }
-    LOG_INFO() << "Log rotated";
+    LOG_INFO() << "Log reopening finished";
 
     const bool error_happened = !result_messages.empty();
     /// [alert_usage]
     if (error_happened) {
-        kLogReopeningAlert.FireAlert(*metrics_storage_);
+        kLogReopeningAlert.FireAlert(*metrics_storage_, alerts::Source::kInfiniteDuration);
         ReportReopeningErrorAndThrow(failed_loggers, result_messages);
     } else {
         kLogReopeningAlert.StopAlertNow(*metrics_storage_);
