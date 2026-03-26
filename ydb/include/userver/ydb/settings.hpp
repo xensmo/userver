@@ -27,7 +27,9 @@ struct OperationSettings final {
 };
 
 struct QuerySettings final {
+    // deprecated, Query Client doesn't have KeepInQueryCache, it caches automatically
     std::optional<bool> keep_in_query_cache{std::nullopt};
+
     std::optional<NYdb::NTable::ECollectQueryStatsMode> collect_query_stats{std::nullopt};
 };
 

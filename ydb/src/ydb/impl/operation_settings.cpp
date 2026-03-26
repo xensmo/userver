@@ -51,6 +51,12 @@ NYdb::NQuery::TExecuteQuerySettings ToExecuteQuerySettings(const QuerySettings& 
     return execute_query_settings;
 }
 
+NYdb::NTable::TExecDataQuerySettings ToExecDataQuerySettings(const QuerySettings& query_settings) {
+    return NYdb::NTable::TExecDataQuerySettings()
+        .KeepInQueryCache(query_settings.keep_in_query_cache)
+        .CollectQueryStats(query_settings.collect_query_stats);
+}
+
 }  // namespace ydb::impl
 
 USERVER_NAMESPACE_END

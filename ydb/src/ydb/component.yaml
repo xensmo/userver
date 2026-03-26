@@ -72,6 +72,10 @@ properties:
                     type: boolean
                     default: true
                     description: fail to boot if YDB is not available
+                use-query-client:
+                    type: boolean
+                    default: true
+                    description: whether to use query client for table client methods (ExecuteDataQuery, Transaction methods)
                 aliases:
                     description: list of aliases for this database
                     type: array

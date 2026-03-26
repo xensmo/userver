@@ -21,6 +21,7 @@ constexpr double kOperationTimeoutMultiplier = 0.8;
 std::chrono::milliseconds GetBoundTimeout(std::chrono::milliseconds timeout, engine::Deadline deadline);
 
 NYdb::NQuery::TExecuteQuerySettings ToExecuteQuerySettings(const QuerySettings& query_settings);
+NYdb::NTable::TExecDataQuerySettings ToExecDataQuerySettings(const QuerySettings& query_settings);
 
 template <typename T>
 void ApplyToRequestSettings(

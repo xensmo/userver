@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ydb-cpp-sdk/client/query/fwd.h>
+#include <ydb-cpp-sdk/client/query/client.h>
 #include <ydb-cpp-sdk/client/result/result.h>
 #include <ydb-cpp-sdk/client/table/table.h>
 
@@ -174,8 +174,8 @@ private:
 class ExecuteResponse final {
 public:
     /// @cond
-    explicit ExecuteResponse(NYdb::NTable::TDataQueryResult&& query_result);
-    explicit ExecuteResponse(NYdb::NQuery::TExecuteQueryResult&& query_result);
+    explicit ExecuteResponse(std::variant<NYdb::NQuery::TExecuteQueryResult, NYdb::NTable::TDataQueryResult>&&
+                                 query_result);
     /// @endcond
 
     ExecuteResponse(const ExecuteResponse&) = delete;
