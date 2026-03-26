@@ -703,15 +703,18 @@ void RequestState::ParseHeader(char* ptr, size_t size) try
     }
     *end = '\0';
 
-    const char* col_pos = static_cast<const char*>(memchr(ptr, ':', size));
-    if (col_pos == nullptr) {
-        if (IsHttpStatusLineStart(ptr, size)) {
-            if (!response()->headers().empty()) {
-                LOG_INFO() << "Drop headers: " << (response_->headers() | boost::adaptors::map_keys);
-            }
+    if (IsHttpStatusLineStart(ptr, size)) {
+        if (!response()->headers().empty()) {
+            LOG_INFO() << "Drop headers: " << (response_->headers() | boost::adaptors::map_keys);
             // In case of redirect drop 1st response headers
             response_->headers().clear();
         }
+        return;
+    }
+
+    const char* col_pos = static_cast<const char*>(memchr(ptr, ':', size));
+    if (col_pos == nullptr) {
+        LOG_WARNING() << "Incorrect header line: " << ptr;
         return;
     }
 
