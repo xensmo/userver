@@ -87,7 +87,8 @@ void DetachedTasksSyncBlock::Add(TaskContext& context) {
     }
 
     boost::intrusive_ptr<Awaiter> awaiter{&token, /*add_ref=*/false};
-    if (context.TryAppendAwaiter(awaiter, 0) == EarlyNotify::kYes) {
+    context.TryAppendAwaiter(awaiter, 0);
+    if (awaiter != nullptr) {  // task has already finished.
         impl::Notify(std::move(awaiter), 0);
     }
 

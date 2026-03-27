@@ -46,11 +46,11 @@ WaitListLight::~WaitListLight() {
 }
 
 void WaitListLight::Append(boost::intrusive_ptr<impl::Awaiter>&& awaiter, std::uintptr_t context) noexcept {
-    [[maybe_unused]] const bool was_signaled = GetSignalOrAppend(awaiter, context);
-    UASSERT_MSG(!was_signaled, "Signals cannot be used with plain Append");
+    GetSignalOrAppend(awaiter, context);
+    UASSERT_MSG(!awaiter, "Signals cannot be used with plain Append");
 }
 
-bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) noexcept {
+void WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) noexcept {
     UASSERT(awaiter);
 
     const AwaiterWithContext new_awaiter{awaiter.get(), context};
@@ -70,15 +70,13 @@ bool WaitListLight::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& awaiter, st
                 expected
             )
         );
-        return true;
+        return;
     }
 
     // Keep a reference logically stored in the WaitListLight to ensure that
     // WakeupOne can complete safely in parallel with the awaiting task being
     // cancelled, Remove-d and stopped.
     awaiter.detach();
-
-    return false;
 }
 
 void WaitListLight::NotifyOne() {

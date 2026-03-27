@@ -42,8 +42,8 @@ template <typename CallbackType>
 void AppendNonCancellableAwaiter(ContextAccessor& awaitable, CallbackType&& callback) {
     using AwaiterType = NonCancellableAwaiter<std::remove_const_t<std::remove_reference_t<CallbackType>>>;
     boost::intrusive_ptr<Awaiter> awaiter{new AwaiterType(std::forward<CallbackType>(callback)), /*add_ref=*/false};
-    if (awaitable.TryAppendAwaiter(awaiter, 0) == EarlyNotify::kYes) {
-        // With EarlyNotify::kYes, `awaiter` was not moved from.
+    awaitable.TryAppendAwaiter(awaiter, 0);
+    if (awaiter != nullptr) {  // awaitable is ready.
         impl::Notify(std::move(awaiter), 0);
     }
 }

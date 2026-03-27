@@ -42,17 +42,13 @@ public:
 
     bool IsReady() const noexcept override { return ready_; }
 
-    engine::impl::EarlyNotify TryAppendAwaiter(
-        boost::intrusive_ptr<engine::impl::Awaiter>& awaiter,
-        std::uintptr_t context
-    ) override {
+    void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>& awaiter, std::uintptr_t context) override {
         if (ready_) {
-            return engine::impl::EarlyNotify::kYes;
+            return;
         }
         UINVARIANT(awaiter_ == nullptr, "Awaiter already appended");
         awaiter_ = std::move(awaiter);
         context_ = context;
-        return engine::impl::EarlyNotify::kNo;
     }
 
     void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {

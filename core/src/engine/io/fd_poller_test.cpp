@@ -36,10 +36,7 @@ class ReadyAwaitableImpl final : public engine::impl::ContextAccessor {
 public:
     bool IsReady() const noexcept override { return is_ready_; }
 
-    engine::impl::EarlyNotify TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>&, std::uintptr_t) override {
-        is_ready_ = true;
-        return engine::impl::EarlyNotify::kYes;
-    }
+    void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>&, std::uintptr_t) override { is_ready_ = true; }
 
     void RemoveAwaiter(engine::impl::Awaiter&, std::uintptr_t) noexcept override {}
 

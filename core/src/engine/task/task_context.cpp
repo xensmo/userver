@@ -601,11 +601,11 @@ task_local::Storage& TaskContext::GetLocalStorage() noexcept {
 
 bool TaskContext::IsReady() const noexcept { return IsFinished(); }
 
-EarlyNotify TaskContext::TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) {
+void TaskContext::TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) {
     if (awaiter.get() == static_cast<Awaiter*>(this)) {
         ReportDeadlock();
     }
-    return EarlyNotify{finish_awaiters_->GetSignalOrAppend(awaiter, context)};
+    finish_awaiters_->GetSignalOrAppend(awaiter, context);
 }
 
 void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {

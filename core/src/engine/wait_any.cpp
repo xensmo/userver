@@ -199,9 +199,8 @@ std::optional<std::uint64_t> WaitAnyContext::Impl::TrySubscribe() {
         UASSERT(item.context_accessor);
 
         boost::intrusive_ptr<impl::Awaiter> awaiter_ptr{this};
-        if (item.context_accessor->TryAppendAwaiter(awaiter_ptr, reinterpret_cast<std::uintptr_t>(&item)) ==
-            impl::EarlyNotify::kYes)
-        {
+        item.context_accessor->TryAppendAwaiter(awaiter_ptr, reinterpret_cast<std::uintptr_t>(&item));
+        if (awaiter_ptr != nullptr) {  // context_accessor is already ready.
             unused_.push_front(item);
             return item.index;
         }

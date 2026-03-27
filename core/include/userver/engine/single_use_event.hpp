@@ -92,7 +92,7 @@ public:
 private:
     friend class impl::FutureWaitStrategy<SingleUseEvent>;
 
-    impl::EarlyNotify TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) override;
+    void TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) override;
     void RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
 
     impl::FastPimplWaitListLight awaiters_;

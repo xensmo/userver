@@ -131,7 +131,8 @@ FutureStatus WaitAllCheckedContext::Impl::WaitUntil(Deadline deadline) {
 
         pending_notifications_.fetch_add(1, std::memory_order_relaxed);
         boost::intrusive_ptr<impl::Awaiter> awaiter_ptr{this};
-        if (target->TryAppendAwaiter(awaiter_ptr, next_subscription_index_++) == EarlyNotify::kYes) {
+        target->TryAppendAwaiter(awaiter_ptr, next_subscription_index_++);
+        if (awaiter_ptr != nullptr) {  // target is already ready.
             pending_notifications_.fetch_sub(1, std::memory_order_relaxed);
             RethrowError(*target);
         }

@@ -39,7 +39,7 @@ protected:
 private:
     friend class FutureWaitStrategy<FutureStateBase>;
 
-    EarlyNotify TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) final;
+    void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) final;
     void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept final;
 
     FastPimplWaitListLight finish_awaiters_;

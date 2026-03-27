@@ -13,9 +13,7 @@ public:
 
     bool IsReady() const noexcept override { return true; }
 
-    engine::impl::EarlyNotify TryAppendAwaiter(boost::intrusive_ptr<Awaiter>&, std::uintptr_t) override {
-        return engine::impl::EarlyNotify::kYes;
-    }
+    void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>&, std::uintptr_t) override {}
 
     void RemoveAwaiter(engine::impl::Awaiter&, std::uintptr_t) noexcept override {}
 };

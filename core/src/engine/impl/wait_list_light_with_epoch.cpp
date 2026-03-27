@@ -41,7 +41,7 @@ bool WaitListLightWithEpoch::SetEpochThenGetAndResetSignal(std::uint32_t epoch) 
 
 std::uint32_t WaitListLightWithEpoch::GetEpoch() const noexcept { return state_.LoadWithTearing().epoch; }
 
-bool WaitListLightWithEpoch::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) {
+void WaitListLightWithEpoch::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) {
     UASSERT(awaiter);
 
     const auto epoch = state_.LoadWithTearing().epoch;
@@ -65,8 +65,8 @@ bool WaitListLightWithEpoch::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& aw
             "An unexpected awaiter is occupying the WaitListLightWithEpoch or epoch does not match"
         );
 
-        // Already signaled with matching epoch.
-        return true;
+        // Already signaled with matching epoch: awaiter is not moved from.
+        return;
     }
 
     // CAS succeeded - release ownership to the atomic.
@@ -74,7 +74,6 @@ bool WaitListLightWithEpoch::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& aw
 
     // Keep a reference logically stored in the WaitListLightWithEpoch.
     awaiter.detach();
-    return false;
 }
 
 void WaitListLightWithEpoch::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {

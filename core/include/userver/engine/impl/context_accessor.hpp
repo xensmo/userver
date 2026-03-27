@@ -21,16 +21,14 @@ public:
     // Atomically:
     //
     // 1. If not `IsReady`, then
-    //    * move from `awaiter`
-    //    * store `awaiter` and `context` somewhere to notify when `IsReady() == true` is reached;
-    //    * return `EarlyNotify::kNo`.
-    // 2. if `IsReady`, then
+    //    * move from `awaiter`;
+    //    * store `awaiter` and `context` somewhere to notify when `IsReady() == true` is reached.
+    // 2. If `IsReady`, then
     //    * do not move from `awaiter`;
-    //    * do not notify `awaiter`;
-    //    * return `EarlyNotify::kYes`.
+    //    * do not notify `awaiter`.
     //
     // You may not sleep in `TryAppendAwaiter`.
-    virtual EarlyNotify TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) = 0;
+    virtual void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) = 0;
 
     // Remove `awaiter` from the internal wait list if it's still there.
     // Depending on a wait list implementation `context` match also could be required for the awaiter removal.

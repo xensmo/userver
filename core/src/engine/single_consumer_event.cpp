@@ -18,7 +18,8 @@ public:
 
     impl::EarlyNotify SetupWakeups() override {
         boost::intrusive_ptr<impl::Awaiter> awaiter_ptr{&current_};
-        return impl::EarlyNotify{event_.waiters_->GetSignalOrAppend(awaiter_ptr, current_.GetAwaiterContext())};
+        event_.waiters_->GetSignalOrAppend(awaiter_ptr, current_.GetAwaiterContext());
+        return impl::EarlyNotify{awaiter_ptr != nullptr};
     }
 
     void DisableWakeups() noexcept override { event_.waiters_->Remove(current_, current_.GetAwaiterContext()); }

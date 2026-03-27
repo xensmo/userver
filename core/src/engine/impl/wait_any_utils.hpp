@@ -32,9 +32,8 @@ public:
 
             // SetupWakeups might throw.
             boost::intrusive_ptr<Awaiter> awaiter_ptr{&awaiter_};
-            const auto early_wakeup = target->TryAppendAwaiter(awaiter_ptr, awaiter_.GetAwaiterContext());
-
-            if (static_cast<bool>(early_wakeup)) {
+            target->TryAppendAwaiter(awaiter_ptr, awaiter_.GetAwaiterContext());
+            if (awaiter_ptr != nullptr) {  // target is ready.
                 return EarlyNotify::kYes;
             }
 

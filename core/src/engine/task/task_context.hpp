@@ -175,7 +175,7 @@ public:
 
     // ContextAccessor implementation
     bool IsReady() const noexcept override;
-    EarlyNotify TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) override;
+    void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) override;
     void RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept override;
     std::exception_ptr GetErrorResult() const noexcept override;
 
