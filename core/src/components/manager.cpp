@@ -243,10 +243,12 @@ engine::TaskWithResult<void> Manager::StartComponentSystem(const ComponentList& 
 Manager::~Manager() {
     LOG_INFO() << "Stopping components manager";
 
-    try {
-        RunInCoro(*default_task_processor_, [this] { component_context_->OnGracefulShutdownStarted(); });
-    } catch (const std::exception& exc) {
-        LOG_ERROR() << "Graceful shutdown failed: " << exc;
+    if (component_context_) {
+        try {
+            RunInCoro(*default_task_processor_, [this] { component_context_->OnGracefulShutdownStarted(); });
+        } catch (const std::exception& exc) {
+            LOG_ERROR() << "Graceful shutdown failed: " << exc;
+        }
     }
     engine::impl::TeardownPhdrCacheAndEnableDynamicLoading();
 
@@ -468,6 +470,9 @@ void Manager::ClearComponents() noexcept {
     {
         const std::lock_guard<std::shared_timed_mutex> lock(context_mutex_);
         components_cleared_ = true;
+    }
+    if (!component_context_) {
+        return;
     }
     try {
         component_context_->ClearComponents();
