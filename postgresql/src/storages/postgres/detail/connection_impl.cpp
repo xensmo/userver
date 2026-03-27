@@ -175,6 +175,15 @@ ORDER BY c.reltype, a.attnum)~";
 constexpr Query::NameLiteral kGetCompositeAttribsName{"get_composite_attribs"};
 const Query kGetCompositeAttribsQuery{kGetCompositeAttribsSQL, kGetCompositeAttribsName};
 
+// https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-LINE-PREFIX
+constexpr USERVER_NAMESPACE::utils::StringLiteral kGetSessionIdSQL = R"~(
+    SELECT to_hex(trunc(EXTRACT(EPOCH FROM backend_start))::integer) || '.' || to_hex(pid) AS session_id
+    FROM pg_stat_activity
+    WHERE pid = pg_backend_pid())~";
+
+constexpr Query::NameLiteral kGetSessionIdName{"get_session_id"};
+const Query kGetSessionIdQuery{kGetSessionIdSQL, kGetSessionIdName};
+
 const std::string kPingStatement = "SELECT 1 AS ping";
 
 void CheckQueryParameters(std::string_view statement, const QueryParameters& params) {
@@ -308,6 +317,9 @@ void ConnectionImpl::AsyncConnect(const Dsn& dsn, engine::Deadline deadline) {
     deadline = testsuite_pg_ctl_.MakeExecuteDeadline(timeout);
     conn_wrapper_.AsyncConnect(dsn, deadline, scope);
     conn_wrapper_.FillSpanTags(span, {timeout, GetStatementTimeout()});
+
+    const auto session_id = ExecuteCommandNoPrepare(kGetSessionIdQuery, deadline).AsSingleRow<std::string>();
+    conn_wrapper_.SetSessionId(session_id, span);
 
     scope.Reset(scopes::kGetConnectData);
     // We cannot handle exceptions here, so we let them got to the caller

@@ -149,6 +149,8 @@ public:
 
     void PutPipelineSync();
 
+    void SetSessionId(const std::string& session_id, tracing::Span& span);
+
 private:
     PGTransactionStatusType GetTransactionStatus() const;
 

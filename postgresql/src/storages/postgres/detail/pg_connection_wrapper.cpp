@@ -1013,6 +1013,12 @@ void PGConnectionWrapper::PutPipelineSync() {
 #endif
 }
 
+void PGConnectionWrapper::SetSessionId(const std::string& session_id, tracing::Span& span) {
+    const std::string pg_session_id = "pg.session_id";
+    log_extra_.Extend(pg_session_id, session_id);
+    span.AddNonInheritableTag(pg_session_id, session_id);
+}
+
 }  // namespace storages::postgres::detail
 
 USERVER_NAMESPACE_END
