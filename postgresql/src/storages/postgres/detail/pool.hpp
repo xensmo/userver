@@ -151,8 +151,6 @@ private:
     rcu::Variable<PoolSettings> settings_;
     rcu::Variable<ConnectionSettings> conn_settings_;
     engine::TaskProcessor& bg_task_processor_;
-    concurrent::BackgroundTaskStorageCore connect_task_storage_;
-    concurrent::BackgroundTaskStorageCore close_task_storage_;
     USERVER_NAMESPACE::utils::PeriodicTask ping_task_;
     std::shared_ptr<ConnectionQueue> queue_;
     ConnectionQueue::MultiConsumer conn_consumer_;
@@ -174,6 +172,10 @@ private:
     cc::Limiter cc_limiter_;
     congestion_control::v2::LinearController cc_controller_;
     std::atomic<std::size_t> cc_max_connections_{0};
+
+    concurrent::BackgroundTaskStorageCore close_task_storage_;
+    concurrent::BackgroundTaskStorageCore cleanup_task_storage_;
+    concurrent::BackgroundTaskStorageCore connect_task_storage_;
 };
 
 }  // namespace storages::postgres::detail
