@@ -131,6 +131,15 @@ properties:
                             When `false`, disables deadline propagation by default in all HTTP handlers.
                             Can be overridden by the corresponding option in server::handlers::HandlerBase.
                         default: true
+                    deadline_propagation_prefer_timestamp:
+                        type: boolean
+                        description: |
+                            When `true`, the handler uses a valid X-Request-Deadline (ISO 8601 UTC with
+                            microsecond fraction) as the local request deadline when dynamic config
+                            USERVER_DEADLINE_PROPAGATION_ABSOLUTE_TIMESTAMP_ENABLED allows it. The header
+                            is still parsed for downstream forwarding whenever deadline propagation is
+                            enabled.
+                        default: false
                     deadline_expired_status_code:
                         type: integer
                         description: the HTTP status code to return if the request deadline expires
