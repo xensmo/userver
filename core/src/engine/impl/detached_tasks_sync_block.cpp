@@ -45,6 +45,14 @@ struct DetachedTasksSyncBlock::Token final : public PolymorphicAwaiter {
     utils::impl::WaitTokenStorageLock wait_token{};
 };
 
+// Token is non-standard-layout type, because it is a polymorphic class.
+// GCC complains that compilers are not required to implement offsetof for such types.
+// TODO Find some way to work around that, e.g. split Token into multiple types?
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
+
 struct DetachedTasksSyncBlock::Impl final {
     std::optional<utils::impl::WaitTokenStorage> wait_tokens{};
     concurrent::impl::IntrusiveWalkablePool<  //
@@ -54,6 +62,10 @@ struct DetachedTasksSyncBlock::Impl final {
         cancel_tokens{};
     std::atomic<TaskCancellationReason> cancel_new_tasks{TaskCancellationReason::kNone};
 };
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 DetachedTasksSyncBlock::DetachedTasksSyncBlock(StopMode stop_mode) {
     if (stop_mode == StopMode::kCancelAndWait) {
