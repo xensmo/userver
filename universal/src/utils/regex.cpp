@@ -82,7 +82,7 @@ regex::~regex() = default;
 
 bool regex::operator==(const regex& other) const { return GetPatternView() == other.GetPatternView(); }
 
-std::string_view regex::GetPatternView() const { return impl_->Get().pattern(); }
+std::string_view regex::GetPatternView() const USERVER_IMPL_LIFETIME_BOUND { return impl_->Get().pattern(); }
 
 std::string regex::str() const { return std::string{GetPatternView()}; }
 

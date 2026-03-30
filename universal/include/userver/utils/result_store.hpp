@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include <userver/compiler/impl/lifetime.hpp>
+
 USERVER_NAMESPACE_BEGIN
 
 namespace utils {
@@ -25,7 +27,7 @@ public:
 
     /// @brief Returns the stored value or rethrows the stored exception
     /// @throws std::logic_error if no value/exception stored
-    const T& Get() const&;
+    const T& Get() const& USERVER_IMPL_LIFETIME_BOUND;
 
     /// Stores a value
     void SetValue(const T&);
@@ -83,7 +85,7 @@ T ResultStore<T>::Retrieve() {
 }
 
 template <typename T>
-const T& ResultStore<T>::Get() const& {
+const T& ResultStore<T>::Get() const& USERVER_IMPL_LIFETIME_BOUND {
     if (value_) {
         return *value_;
     }
