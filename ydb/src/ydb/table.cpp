@@ -49,6 +49,19 @@ NYdb::NTable::TTxSettings MakeTableTxSettings(TransactionMode tx_mode) {
     }
 }
 
+NYdb::NQuery::EStatsMode ConvertStatsMode(NYdb::NTable::ECollectQueryStatsMode collect_query_stats_mode) {
+    switch (collect_query_stats_mode) {
+        case NYdb::NTable::ECollectQueryStatsMode::None:
+            return NYdb::NQuery::EStatsMode::None;
+        case NYdb::NTable::ECollectQueryStatsMode::Basic:
+            return NYdb::NQuery::EStatsMode::Basic;
+        case NYdb::NTable::ECollectQueryStatsMode::Full:
+            return NYdb::NQuery::EStatsMode::Full;
+        case NYdb::NTable::ECollectQueryStatsMode::Profile:
+            return NYdb::NQuery::EStatsMode::Profile;
+    }
+}
+
 }  // namespace
 
 TableClient::TableClient(
@@ -393,12 +406,7 @@ ExecuteResponse TableClient::ExecuteDataQuery(
     PreparedArgsBuilder&& builder
 ) {
     if (use_query_client_) {
-        return ExecuteQuery(
-            impl::ToExecuteQuerySettings(query_settings),
-            std::move(settings),
-            query,
-            std::move(builder)
-        );
+        return ExecuteQuery(ToExecuteQuerySettings(query_settings), std::move(settings), query, std::move(builder));
     }
 
     impl::RequestContext context{*this, query, std::move(settings)};
@@ -407,7 +415,7 @@ ExecuteResponse TableClient::ExecuteDataQuery(
         context,
         [query,
          params = std::move(builder).Build(),
-         exec_settings = impl::ToExecDataQuerySettings(query_settings),
+         exec_settings = ToExecDataQuerySettings(query_settings),
          settings = context.settings,
          deadline = context.deadline](NYdb::NTable::TSession session) mutable {
             impl::ApplyToRequestSettings(exec_settings, settings, deadline);
@@ -471,6 +479,29 @@ void DumpMetric(utils::statistics::Writer& writer, const TableClient& table_clie
 }
 
 PreparedArgsBuilder TableClient::GetBuilder() const { return PreparedArgsBuilder{}; }
+
+NYdb::NQuery::TExecuteQuerySettings TableClient::ToExecuteQuerySettings(const QuerySettings& query_settings) const {
+    NYdb::NQuery::TExecuteQuerySettings exec_settings;
+
+    // Query Client doesn't have KeepInQueryCache, it caches automatically
+    if (query_settings.collect_query_stats) {
+        exec_settings.StatsMode(ConvertStatsMode(*query_settings.collect_query_stats));
+    }
+
+    return exec_settings;
+}
+
+NYdb::NTable::TExecDataQuerySettings TableClient::ToExecDataQuerySettings(const QuerySettings& query_settings) const {
+    NYdb::NTable::TExecDataQuerySettings exec_settings;
+
+    exec_settings.KeepInQueryCache(query_settings.keep_in_query_cache.value_or(keep_in_query_cache_));
+
+    if (query_settings.collect_query_stats) {
+        exec_settings.CollectQueryStats(*query_settings.collect_query_stats);
+    }
+
+    return exec_settings;
+}
 
 }  // namespace ydb
 

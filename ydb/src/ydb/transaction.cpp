@@ -170,10 +170,10 @@ ExecuteResponse Transaction::Execute(
     impl::RequestContext context{table_client_, query, std::move(settings), impl::IsStreaming{false}, &span_};
     auto internal_params = std::move(builder).Build();
 
-    auto exec_query_settings = impl::ToExecuteQuerySettings(query_settings);
+    auto exec_query_settings = table_client_.ToExecuteQuerySettings(query_settings);
     impl::ApplyToRequestSettings(exec_query_settings, context.settings, context.deadline);
 
-    auto exec_data_query_settings = impl::ToExecDataQuerySettings(query_settings);
+    auto exec_data_query_settings = table_client_.ToExecDataQuerySettings(query_settings);
     impl::ApplyToRequestSettings(exec_data_query_settings, context.settings, context.deadline);
 
     // Must go after PrepareExecuteSettings, because an exception from there
