@@ -402,17 +402,6 @@ const ConnectionSettings& ConnectionImpl::GetSettings() const { return settings_
 
 CommandControl ConnectionImpl::GetDefaultCommandControl() const { return default_cmd_ctls_.GetDefaultCmdCtl(); }
 
-void ConnectionImpl::UpdateDefaultCommandControl() {
-    auto cmd_ctl = GetDefaultCommandControl();
-    if (cmd_ctl != default_cmd_ctl_) {
-        SetConnectionStatementTimeout(
-            cmd_ctl.statement_timeout_ms,
-            testsuite_pg_ctl_.MakeExecuteDeadline(cmd_ctl.network_timeout_ms)
-        );
-        default_cmd_ctl_ = cmd_ctl;
-    }
-}
-
 const OptionalCommandControl& ConnectionImpl::GetTransactionCommandControl() const { return transaction_cmd_ctl_; }
 
 OptionalCommandControl ConnectionImpl::GetNamedQueryCommandControl(std::optional<Query::NameView> query_name) const {

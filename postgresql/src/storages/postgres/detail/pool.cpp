@@ -247,7 +247,6 @@ ConnectionPtr ConnectionPool::Acquire(engine::Deadline deadline) {
     ++stats_.connection.used;
     CheckDeadlineIsExpired(config);
 
-    connection->UpdateDefaultCommandControl();
     return connection;
 }
 
