@@ -304,8 +304,9 @@ void ConnectionPool::Release(Connection* connection) {
     } else {
         // Connection cleanup is done asynchronously while returning control to
         // the user
-        cleanup_task_storage_.Detach(USERVER_NAMESPACE::utils::CriticalAsync(
+        cleanup_task_storage_.Detach(USERVER_NAMESPACE::utils::CriticalAsyncBackground(
             "clear_conn_after_cancel",
+            bg_task_processor_,
             [this, connection, dec_cnt = std::move(dg)] {
                 LOG_LIMITED_WARNING() << "Released connection in busy state. Trying to clean up...";
                 TESTPOINT("pg_cleanup", formats::json::Value{});
