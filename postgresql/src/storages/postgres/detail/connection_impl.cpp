@@ -315,7 +315,13 @@ void ConnectionImpl::AsyncConnect(const Dsn& dsn, engine::Deadline deadline) {
     // some allowance.
     auto timeout = std::chrono::duration_cast<std::chrono::milliseconds>(deadline.TimeLeft());
     deadline = testsuite_pg_ctl_.MakeExecuteDeadline(timeout);
-    conn_wrapper_.AsyncConnect(dsn, deadline, scope);
+    const std::string client_encoding = "UTF8";
+    const PGConnectionWrapper::ConnectParams start_params{
+        /* .dsn = */ dsn,
+        /* .application_name = */ settings_.application_name,
+        /* .client_encoding = */ client_encoding,
+    };
+    conn_wrapper_.AsyncConnect(start_params, deadline, scope);
     conn_wrapper_.FillSpanTags(span, {timeout, GetStatementTimeout()});
 
     const auto session_id = ExecuteCommandNoPrepare(kGetSessionIdQuery, deadline).AsSingleRow<std::string>();
@@ -325,8 +331,16 @@ void ConnectionImpl::AsyncConnect(const Dsn& dsn, engine::Deadline deadline) {
     // We cannot handle exceptions here, so we let them got to the caller
     if (settings_.discard_on_connect == ConnectionSettings::kDiscardAll) {
         ExecuteCommandNoPrepare("DISCARD ALL", deadline);
+        SetParameter("client_encoding", client_encoding, Connection::ParameterScope::kSession, deadline);
+        if (start_params.application_name) {
+            SetParameter(
+                "application_name",
+                *start_params.application_name,
+                Connection::ParameterScope::kSession,
+                deadline
+            );
+        }
     }
-    SetParameter("client_encoding", "UTF8", Connection::ParameterScope::kSession, deadline);
     RefreshReplicaState(deadline);
     SetConnectionStatementTimeout(GetDefaultCommandControl().statement_timeout_ms, deadline);
     if (settings_.user_types != ConnectionSettings::kPredefinedTypesOnly) {

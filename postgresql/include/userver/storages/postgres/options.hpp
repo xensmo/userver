@@ -296,6 +296,8 @@ struct ConnectionSettings {
     /// Helps keep track of the changes in settings
     SettingsVersion version{0U};
 
+    std::optional<std::string> application_name{};
+
     bool operator==(const ConnectionSettings& rhs) const {
         return !RequiresConnectionReset(rhs) && recent_errors_threshold == rhs.recent_errors_threshold;
     }
@@ -308,7 +310,7 @@ struct ConnectionSettings {
                ignore_unused_query_params != rhs.ignore_unused_query_params ||
                max_prepared_cache_size != rhs.max_prepared_cache_size || pipeline_mode != rhs.pipeline_mode ||
                max_ttl != rhs.max_ttl || discard_on_connect != rhs.discard_on_connect ||
-               omit_describe_mode != rhs.omit_describe_mode;
+               omit_describe_mode != rhs.omit_describe_mode || application_name != rhs.application_name;
     }
 };
 

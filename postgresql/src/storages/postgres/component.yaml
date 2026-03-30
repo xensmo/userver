@@ -146,3 +146,6 @@ properties:
           - auto
           - manual
         description: how to learn the `max_pool_size`
+    application_name:
+        type: string
+        description: will be displayed in postgres statistics and logs

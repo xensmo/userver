@@ -7,6 +7,7 @@
 #include <storages/postgres/experiments.hpp>
 #include <userver/storages/postgres/component.hpp>
 #include <userver/storages/postgres/exceptions.hpp>
+#include <userver/utils/userver_info.hpp>
 
 #include <userver/formats/common/items.hpp>
 
@@ -97,6 +98,8 @@ ConnectionSettings ParseConnectionSettings(const ConfigType& config) {
             ? ConnectionSettings::kDiscardAll
             : ConnectionSettings::kDiscardNone;
     settings.deadline_propagation_enabled = config["deadline-propagation-enabled"].template As<bool>(true);
+    settings.application_name =
+        config["application_name"].template As<std::string>(USERVER_NAMESPACE::utils::GetUserverIdentifier());
 
     return settings;
 }
