@@ -26,6 +26,7 @@ USERVER_NAMESPACE_BEGIN
 namespace server::middlewares {
 class HttpMiddlewareBase;
 class HandlerAdapter;
+class HandlerMetrics;
 class Auth;
 }  // namespace server::middlewares
 
@@ -33,6 +34,7 @@ class Auth;
 namespace server::handlers {
 
 class HttpHandlerStatistics;
+class HttpHandlerStatisticsAggregate;
 class HttpHandlerMethodStatistics;
 class HttpHandlerStatisticsScope;
 
@@ -73,7 +75,7 @@ public:
 
     /// @cond
     // For internal use only.
-    HttpHandlerStatistics& GetHandlerStatistics() const;
+    HttpHandlerStatisticsAggregate& GetHandlerStatistics() const;
     /// @endcond
 
     /// Override it if you need a custom logging level for messages about finish
@@ -187,6 +189,7 @@ protected:
 
 private:
     friend class middlewares::HandlerAdapter;
+    friend class middlewares::HandlerMetrics;
     friend class middlewares::Auth;
 
     void HandleHttpRequest(http::HttpRequest& request, request::RequestContext& context) const;
@@ -202,6 +205,8 @@ private:
     template <typename HttpStatistics>
     void FormatStatistics(utils::statistics::Writer result, const HttpStatistics& stats);
 
+    void FormatPerLabelStatistics(utils::statistics::Writer result) const;
+
     void SetResponseServerHostname(http::HttpResponse& response) const;
 
     void BuildMiddlewarePipeline(const components::ComponentConfig&, const components::ComponentContext&);
@@ -212,7 +217,7 @@ private:
     std::optional<logging::Level> log_level_;
     std::unordered_map<int, logging::Level> log_level_for_status_codes_;
 
-    std::unique_ptr<HttpHandlerStatistics> handler_statistics_;
+    std::unique_ptr<HttpHandlerStatisticsAggregate> handler_statistics_;
 
     bool set_response_server_hostname_;
     bool is_body_streamed_;

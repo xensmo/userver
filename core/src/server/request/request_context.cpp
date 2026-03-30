@@ -110,6 +110,10 @@ utils::AnyMovable* RequestContext::GetAnyDataOptional(std::string_view name) { r
 
 void RequestContext::EraseAnyData(std::string_view name) { impl_->EraseAnyData(name); }
 
+void RequestContext::SetHandlerMetricsShard(std::string_view path, utils::statistics::LabelsSpan labels) {
+    impl_->GetInternalContext().SetHandlerMetricsShard(path, labels);
+}
+
 impl::InternalRequestContext& RequestContext::GetInternalContext() { return impl_->GetInternalContext(); }
 
 }  // namespace server::request

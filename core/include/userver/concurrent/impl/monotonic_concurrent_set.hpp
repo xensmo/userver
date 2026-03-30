@@ -454,6 +454,11 @@ std::pair<T&, bool> MonotonicConcurrentSet<T, Hash, KeyEqual>::TryEmplace(const 
 
         auto& bucket = current.GetBucket(hash);
 
+        // Fast path: lock-free search (same as Find) - avoid lock when item already exists
+        if (T* const existing = FindInBucket(bucket.LoadHead(boost::memory_order_acquire), key)) {
+            return {*existing, false};
+        }
+
         {
             std::lock_guard lock(bucket);
 

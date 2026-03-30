@@ -49,6 +49,7 @@ private:
 
 bool operator<(const LabelView& x, const LabelView& y) noexcept;
 bool operator==(const LabelView& x, const LabelView& y) noexcept;
+bool operator!=(const LabelView& x, const LabelView& y) noexcept;
 
 /// @ingroup userver_universal
 ///
@@ -79,6 +80,7 @@ private:
 
 bool operator<(const Label& x, const Label& y) noexcept;
 bool operator==(const Label& x, const Label& y) noexcept;
+bool operator!=(const Label& x, const Label& y) noexcept;
 
 /// @ingroup userver_universal
 ///

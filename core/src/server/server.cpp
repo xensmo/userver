@@ -307,8 +307,9 @@ void ServerImpl::WriteTotalHandlerStatistics(utils::statistics::Writer& writer) 
 
         for (const auto& handler_ptr : *handlers) {
             for (const auto method : handler_ptr->GetAllowedMethods()) {
-                total.Add(handlers::HttpHandlerStatisticsSnapshot{handler_ptr->GetHandlerStatistics().GetByMethod(method
-                )});
+                total.Add(handlers::HttpHandlerStatisticsSnapshot{
+                    handler_ptr->GetHandlerStatistics().GetOverallStatistics().GetByMethod(method)
+                });
             }
         }
     }
