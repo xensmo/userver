@@ -3,7 +3,7 @@
 # Exit on any error and treat unset variables as errors, print all commands
 set -euox pipefail
 
-sudo apt install -y openjdk-17-jdk
+DEBIAN_FRONTEND=noninteractive sudo apt install -y openjdk-17-jdk
 
 curl https://dlcdn.apache.org/kafka/4.0.1/kafka_2.13-4.0.1.tgz -o kafka.tgz
 mkdir -p /etc/kafka

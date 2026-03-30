@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <unordered_map>
+
 #include <userver/chaotic/object.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/sax_parser/primitive.hpp>

@@ -280,7 +280,7 @@ const Cookie& HttpResponse::GetCookie(std::string_view cookie_name) const { retu
 
 void HttpResponse::SetHeadersEnd() { headers_end_.Send(); }
 
-void HttpResponse::SetSystemHeadersEnd() { system_headers_ended_ = true; };
+void HttpResponse::SetSystemHeadersEnd() { system_headers_ended_ = true; }
 
 bool HttpResponse::WaitForHeadersEnd() { return headers_end_.WaitForEvent(); }
 
