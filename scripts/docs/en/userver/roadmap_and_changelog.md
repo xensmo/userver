@@ -37,6 +37,97 @@ Changelog news also go to the
 
 ## Changelog
 
+### Release v2.16
+
+* **Support of C++17 is deprecated and will be removed in one on the next releases**. C++20 is the default for
+  userver for quite some time. Use C++20 or even a more modern C++.
+* New readiness notification flow for tasks, futures, events and other awaitable objects. It provides a lightweight and
+  efficient framework for more efficient implementation of waiting objects/methods like @ref engine::WaitAny,
+  @ref engine::FdPoller, @ref engine::TaskBase::BlockingWait .
+* Ydb: @ref ydb::Transaction and @ref ydb::TableClient::ExecuteDataQuery switched from Table Client to Query Client API.
+* Multicast support for sockets. See @ref engine::io::IpMreq .
+  Many thanks to [Dmitry Borchuk](https://github.com/dmitryborchuk) for the contribution!
+* SAX parsing in Chaotic codegen. See @ref scripts/docs/en/userver/chaotic.md .
+* HttpClient: New Websocket client. See @ref scripts/docs/en/userver/tutorial/websocket_client.md .
+* gRPC: Retry limiter. See @ref ugrpc::client::RetryLimiter .
+* Separate log for components loading that simplifies components loading issues debugging.
+  See `components_manager.boot-log-path` in @ref components::ManagerControllerComponent .
+* Redis: Valkey and Redis dynamic client component. See @ref components::DynamicRedis .
+* @ref components::StatisticsStorage allows filtering of metrics by @ref utils::statistics::MetricTag .
+* Automatic conversions between structs and JSON in `easy` library. See @ref scripts/docs/en/userver/libraries/easy.md .
+* Resource scopes separated from the component system. See @ref utils::ResourceScopeStorage .
+* New @ref multi_index_lru::ExpirableContainer container. Many thanks to [hzhdlrp](https://github.com/hzhdlrp)
+  for the contribution!
+* Kafka: Added `group_instance_id` option to @ref kafka::ConsumerComponent .
+* gRPC: Perform retry on the next channel.
+* Ydb: New transaction modes support. See @ref ydb::TransactionMode .
+* Ydb: New AsContainer() method in cursor. See @ref ydb::Cursor::AsContainer .
+* Redis: New @ref storages::redis::Client::EvalReadOnly and @ref storages::redis::Client::EvalShaReadOnly functions.
+* Per-handler metrics in HTTP server. See `SetHandlerMetricsShard` in @ref server::request::RequestContext .
+* gRPC: Extended gRPC client completion statuses. See @ref ugrpc::client::SpecialCaseCompletionType .
+* `operator==` for proto structs.
+* Userver can listen on a socket passed via `execve`. See `listen-socket-fd` parameter description in
+  @ref components::Server .
+* New `contains_no_update` method in @ref multi_index_lru::Container and benchmarks cleanup.
+  Many thanks to [hzhdlrp](https://github.com/hzhdlrp) for the contribution!
+* New @ref net::blocking::ConnectTcpByName method to connect to a remote endpoint via a host name and a port.
+* Converters between proto structs and binary data. See @ref userver/proto-structs/convert.hpp .
+* Converters between proto structs and JSON. See @ref userver/proto-structs/json.hpp .
+* Converters between proto structs enums and strings.
+* @ref server::websocket::WebSocketConnection support for waiting primitives (like @ref engine::MakeWaitAny ).
+* Added @ref engine::io::Sockaddr::MakeIPSocketAddress, @ref engine::io::Sockaddr::MakeInaddrAny and
+  @ref engine::io::Sockaddr::MakeIPv4InaddrAny functions.
+  Many thanks to [Dmitry Borchuk](https://github.com/dmitryborchuk) for the contribution!
+
+* Optimizations and fixes
+  * New @ref engine::WaitAnyContext (@ref engine::MakeWaitAny ) and @ref engine::WaitAllChecked waiting primitives
+    optimized for usage in loops.
+  * Kafka: Reuse consumer after a user exception.
+  * Redis: Optimized statistics storage - removed most of per-shard and per-instance statistics that are rarely used
+    to save memory, CPU and network bandwidth.
+  * Prevent an unnecessary copy inside the `ServerImpl::WriteTotalHandlerStatistics` function.
+    Many thanks to [gabrielyanabraham](https://github.com/gabrielyanabraham) for the PR!
+  * Optimized @ref engine::TaskBase::BlockingWait .
+  * Kafka: Deprecated @ref engine::WaitAny replaced with @ref engine::MakeWaitAny .
+    Many thanks to [Dmitry Isaikin](https://github.com/disaykin) for the PR!
+  * Fixed @ref yaml_config::YamlConfig mode when accessing an array by index.
+    Many thanks to [Fedor Shatokhin](https://github.com/FedShat) for the contribution!
+  * Fixed compilation error with modern `libfmt` versions. Many thanks to
+    [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+  * Fixed -flto=auto support for GCC. Many thanks to [Konstantin Goncharik](https://github.com/botanegg)
+    for the PR!
+  * Fixed broken `journal_mode` and `synchronous` options definitions in @ref components::SQLite .
+    Many thanks to [Alexey Mednyy](https://github.com/swex) for the PR!
+  * Fixed a compile warning in @ref utils::PeriodicTask .
+    Many thanks to [Evgeny Proydakov](https://github.com/proydakov) for the PR!
+  * HttpClient: Fixed socket type equality check. Many thanks to [Konstantin Goncharik](https://github.com/botanegg)
+    for the PR!
+  * Ydb: Fixed compilation error with modern `libfmt` versions.
+    Many thanks to [Vasily Sviridov](https://github.com/vasily-sviridov) for the PR!
+
+* Build and testing
+  * Updated Google benchmark to 1.9.5. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+  * Userver devcontainer. See @ref scripts/docs/en/userver/build/userver.md#devcontainers_userver .
+  * New `component_manager.coro_pool.unoptimized_stack_size_multiplier` option to automatically increase stack size
+    in unoptimized builds. See @ref components::ManagerControllerComponent .
+  * gRPC: @ref @ref pytest_userver.grpc._client.PreCallClientInterceptor accessible from testsuite.
+  * New @ref utils::StartPeriodicTask method that allows deterministic testing of periodic tasks in testsuite.
+  * Upgraded CPM.cmake to 0.42.1. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+
+* Documentation
+  * Better documentation and benchmark for LRU caches.
+  * Markdown documentation for cmake files.
+  * Postgres: Updated connections limit documentation. See @ref scripts/docs/en/userver/pg_connlimit_mode_auto.md .
+  * Extra samples for metrics unit testing.
+  * Updated @ref engine::SingleUseEvent and @ref engine::SingleConsumerEvent documentation.
+  * gRPC: @ref ugrpc::RichStatus documentation. See @ref scripts/docs/en/userver/grpc/rich_status.md .
+  * Added missing include to @ref README.md. Many thanks to [Aleksey Belov](https://github.com/belov-aleksey) for the PR!
+  * Updated Gentoo build docs. Many thanks to [halfdarkangel](https://github.com/halfdarkangel) for the contribution!
+  * Detailed description of Congestion Control logic. See @ref scripts/docs/en/userver/congestion_control.md .
+  * Kafka: Added `pool_timeout` to kafka-consumer config in @ref samples/kafka_service/static_config.yaml .
+    Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+
+
 ### Release v2.15
 
 * **Support of C++17 is deprecated and will be removed in one on the next releases**. C++20 is the default for
