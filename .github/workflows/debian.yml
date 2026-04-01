@@ -61,7 +61,7 @@ jobs:
         env:
             CMAKE_FLAGS: >-
                 -DCMAKE_BUILD_TYPE=Debug
-                -DCMAKE_CXX_STANDARD=17
+                -DCMAKE_CXX_STANDARD=20
                 -DUSERVER_USE_LD=lld
                 -DUSERVER_NO_WERROR=OFF
                 -DUSERVER_BUILD_ALL_COMPONENTS=1
