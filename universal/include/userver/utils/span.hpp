@@ -35,11 +35,16 @@ public:
     constexpr span() noexcept : span(nullptr, nullptr) {}
 
     constexpr span(T* begin, T* end) noexcept : begin_(begin), end_(end) {
-        UASSERT((begin != nullptr && end != nullptr && begin <= end) || (begin == nullptr && end == nullptr));
+        // GCC 11.4.0 has issues with comparing pointers at compile time.
+        UASSERT(
+            std::is_constant_evaluated() || (begin != nullptr && end != nullptr && begin <= end) ||
+            (begin == nullptr && end == nullptr)
+        );
     }
 
     constexpr span(T* begin, std::size_t size) noexcept : begin_(begin), end_(begin + size) {
-        UASSERT(begin != nullptr || size == 0);
+        // GCC 11.4.0 has issues with comparing pointers at compile time.
+        UASSERT(std::is_constant_evaluated() || begin != nullptr || size == 0);
     }
 
 #if defined(__GNUC__) && !defined(__clang__)
