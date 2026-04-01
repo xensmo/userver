@@ -48,7 +48,10 @@ struct DetachedTasksSyncBlock::Token final : public PolymorphicAwaiter {
 // Token is non-standard-layout type, because it is a polymorphic class.
 // GCC complains that compilers are not required to implement offsetof for such types.
 // TODO Find some way to work around that, e.g. split Token into multiple types?
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-offsetof"
+#elif defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
 #endif
@@ -63,7 +66,9 @@ struct DetachedTasksSyncBlock::Impl final {
     std::atomic<TaskCancellationReason> cancel_new_tasks{TaskCancellationReason::kNone};
 };
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
