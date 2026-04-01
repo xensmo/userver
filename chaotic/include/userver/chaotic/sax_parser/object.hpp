@@ -149,7 +149,7 @@ public:
             s.extra.clear();
             s.extra.insert(std::move_iterator(map_.begin()), std::move_iterator(map_.end()));
         } else {
-            s.extra = Convert(std::move(map_), convert::To<TargetType>{});
+            s.extra = chaotic::ConvertTo<TargetType>(std::move(map_));
         }
     }
 
@@ -227,7 +227,7 @@ public:
             } else if constexpr (std::is_arithmetic_v<TargetType> && std::is_arithmetic_v<DefaultType>) {
                 object_.*FieldType::kField = TargetType{ModeDescriptorType::DefaultValue};
             } else {
-                object_.*FieldType::kField = Convert(ModeDescriptorType::DefaultValue, convert::To<TargetType>{});
+                object_.*FieldType::kField = chaotic::ConvertTo<TargetType>(ModeDescriptorType::DefaultValue);
             }
         }
     }

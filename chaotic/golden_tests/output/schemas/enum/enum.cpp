@@ -45,7 +45,7 @@ Enum Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::format
   return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
 }
 
-Enum::Foo FromString(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo>) {
+Enum::Foo Convert(std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>) {
   const auto result = k__ns__Enum__Foo_Mapping.TryFindBySecond(value);
   if (result.has_value()) {
     return *result;
@@ -53,8 +53,13 @@ Enum::Foo FromString(std::string_view value, USERVER_NAMESPACE::formats::parse::
   throw std::runtime_error(fmt::format("Invalid enum value ({}) for type ::ns::Enum::Foo", value));
 }
 
-Enum::Foo Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo> to) {
-  return FromString(value, to);
+std::optional<Enum::Foo> TryConvert(std::string_view value,
+                                    USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>) noexcept {
+  return k__ns__Enum__Foo_Mapping.TryFindBySecond(value);
+}
+
+Enum::Foo Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo>) {
+  return Convert(value, USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>{});
 }
 
 USERVER_NAMESPACE::formats::json::Value Serialize(

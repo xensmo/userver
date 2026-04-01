@@ -41,7 +41,7 @@ private:
         } else {
             auto user_value = [this, &value] {
                 try {
-                    return Convert(std::move(value), convert::To<UserType>{});
+                    return chaotic::ConvertTo<UserType>(std::move(value));
                 } catch (const std::exception& e) {
                     formats::json::parser::BaseParser& base = parser_.GetParser();
                     chaotic::ThrowForPath<formats::json::Value>(e.what(), base.GetCurrentPath());

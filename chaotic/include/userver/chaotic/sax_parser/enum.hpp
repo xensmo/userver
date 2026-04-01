@@ -1,9 +1,9 @@
 #pragma once
 
+#include <userver/chaotic/convert.hpp>
 #include <userver/chaotic/sax_parser/primitive.hpp>
 #include <userver/formats/json/parser/int_parser.hpp>
 #include <userver/formats/json/parser/string_parser.hpp>
-#include <userver/formats/parse/to.hpp>
 #include <userver/utils/void_t.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -28,9 +28,7 @@ public:
     formats::json::parser::BaseParser& GetParser() { return parser_; }
 
 private:
-    void OnSend(std::string&& value) override {
-        subscriber_->OnSend(FromString(value, formats::parse::To<StringEnum>()));
-    }
+    void OnSend(std::string&& value) override { subscriber_->OnSend(chaotic::ConvertTo<StringEnum>(value)); }
 
     formats::json::parser::StringParser parser_;
     formats::json::parser::Subscriber<StringEnum>* subscriber_{nullptr};
@@ -53,7 +51,7 @@ public:
     formats::json::parser::BaseParser& GetParser() { return parser_; }
 
 private:
-    void OnSend(std::int64_t&& value) override { subscriber_->OnSend(FromInt(value, formats::parse::To<IntEnum>())); }
+    void OnSend(std::int64_t&& value) override { subscriber_->OnSend(chaotic::ConvertTo<IntEnum>(value)); }
 
     formats::json::parser::Int64Parser parser_;
     formats::json::parser::Subscriber<IntEnum>* subscriber_{nullptr};
@@ -63,7 +61,7 @@ template <typename Enum, typename = void>
 struct IsStringEnum : std::false_type {};
 
 template <typename Enum>
-struct IsStringEnum<Enum, utils::void_t<decltype(FromString(std::string_view{}, formats::parse::To<Enum>{}))>>
+struct IsStringEnum<Enum, utils::void_t<decltype(Convert(std::string_view{}, chaotic::convert::To<Enum>{}))>>
     : std::true_type {};
 
 }  // namespace impl

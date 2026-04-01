@@ -258,6 +258,11 @@ TEST(Simple, IntegerEnum) {
     std::size_t index = 0;
     for (const auto& value : ns::kIntegerEnumValues) {
         EXPECT_EQ(value, values[index]);
+        EXPECT_EQ(chaotic::ConvertTo<ns::IntegerEnum>(value), value);
+        EXPECT_EQ(chaotic::ConvertTo<ns::IntegerEnum>(static_cast<std::int64_t>(value)), value);
+        EXPECT_EQ(Convert(static_cast<std::int64_t>(value), chaotic::convert::To<ns::IntegerEnum>{}), value);
+        EXPECT_EQ(TryConvert(static_cast<std::int64_t>(value), chaotic::convert::To<ns::IntegerEnum>{}), value);
+
         ++index;
     }
 }
@@ -296,9 +301,18 @@ TEST(Simple, StringEnum) {
     EXPECT_EQ("bar", ToString(ns::StringEnum::kBar));
     EXPECT_EQ("some!thing", ToString(ns::StringEnum::kSomeThing));
 
-    EXPECT_EQ(FromString("foo", formats::parse::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
+    EXPECT_EQ(TryConvert("foo", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
+    EXPECT_EQ(TryConvert("bar", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kBar);
+    EXPECT_EQ(TryConvert("some!thing", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kSomeThing);
+    EXPECT_FALSE(TryConvert("invalid", chaotic::convert::To<ns::StringEnum>{}));
+
+    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("foo"), ns::StringEnum::kFoo);
+    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("bar"), ns::StringEnum::kBar);
+    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("some!thing"), ns::StringEnum::kSomeThing);
+
+    EXPECT_EQ(Convert("foo", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
     UEXPECT_THROW_MSG(
-        FromString("zoo", formats::parse::To<ns::StringEnum>{}),
+        Convert("zoo", chaotic::convert::To<ns::StringEnum>{}),
         std::runtime_error,
         "Invalid enum value (zoo) for type ::ns::StringEnum"
     );

@@ -630,7 +630,7 @@ class CppStructField:
             elif isinstance(default, int):
                 default = f'{default}LL'
             type_ = self.schema.user_cpp_type
-            return f'Convert({default}, USERVER_NAMESPACE::chaotic::convert::To<{type_}>{{}})'
+            return f'USERVER_NAMESPACE::chaotic::ConvertTo<{type_}>({default})'
 
         return f'{default}'
 

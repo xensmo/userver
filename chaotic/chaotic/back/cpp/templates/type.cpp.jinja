@@ -60,16 +60,20 @@
     {% if type.need_dom_parser() %}
         {% set local_name = shortest_cpp_name(type) %}
         {% if type.get_py_type() == 'CppIntEnum' %}
-            {{ local_name }} FromInt(std::int64_t value, {{ userver }}::formats::parse::To<{{ local_name }}>) {
+            {{ local_name }} Convert(std::int64_t value, {{ userver }}::chaotic::convert::To<{{ local_name }}>) {
                 const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
                 if (result.has_value()) {
                     return *result;
                 }
                 throw std::runtime_error(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value));
             }
+
+            std::optional<{{ local_name }}> TryConvert(std::int64_t value, {{ userver }}::chaotic::convert::To<{{ local_name }}>) noexcept {
+                return k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
+            }
         {% elif type.get_py_type() == 'CppStringEnum' %}
-            {{ local_name }} FromString(std::string_view value,
-                            {{userver}}::formats::parse::To<{{ local_name }}>)
+            {{ local_name }} Convert(std::string_view value,
+                            {{userver}}::chaotic::convert::To<{{ local_name }}>)
             {
                 const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
                 if (result.has_value()) {
@@ -78,10 +82,14 @@
                 throw std::runtime_error(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value));
             }
 
-            {{ local_name }} Parse(std::string_view value,
-                            {{userver}}::formats::parse::To<{{ local_name }}> to)
+            std::optional<{{ local_name }}> TryConvert(std::string_view value, {{userver}}::chaotic::convert::To<{{ local_name }}>) noexcept
             {
-                return FromString(value, to);
+                return k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
+            }
+
+            {{ local_name }} Parse(std::string_view value, {{userver}}::formats::parse::To<{{ local_name }}>)
+            {
+                return Convert(value, {{userver}}::chaotic::convert::To<{{ local_name }}>{});
             }
         {% endif %}
     {% endif %}

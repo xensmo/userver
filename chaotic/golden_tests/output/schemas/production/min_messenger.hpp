@@ -491,8 +491,11 @@ V1LikeTriggerRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 
 V1LikeTriggerRequest FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest>);
 
-V1LikeTriggerRequest::Animation FromString(std::string_view value,
-                                           USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>);
+V1LikeTriggerRequest::Animation Convert(std::string_view value,
+                                        USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>);
+
+std::optional<V1LikeTriggerRequest::Animation> TryConvert(
+    std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>) noexcept;
 
 V1LikeTriggerRequest::Animation Parse(std::string_view value,
                                       USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>);

@@ -713,8 +713,8 @@ V1LikeTriggerRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
   return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
 }
 
-V1LikeTriggerRequest::Animation FromString(std::string_view value,
-                                           USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>) {
+V1LikeTriggerRequest::Animation Convert(std::string_view value,
+                                        USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>) {
   const auto result = k__ns__V1LikeTriggerRequest__Animation_Mapping.TryFindBySecond(value);
   if (result.has_value()) {
     return *result;
@@ -723,9 +723,14 @@ V1LikeTriggerRequest::Animation FromString(std::string_view value,
       fmt::format("Invalid enum value ({}) for type ::ns::V1LikeTriggerRequest::Animation", value));
 }
 
+std::optional<V1LikeTriggerRequest::Animation> TryConvert(
+    std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>) noexcept {
+  return k__ns__V1LikeTriggerRequest__Animation_Mapping.TryFindBySecond(value);
+}
+
 V1LikeTriggerRequest::Animation Parse(std::string_view value,
-                                      USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation> to) {
-  return FromString(value, to);
+                                      USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>) {
+  return Convert(value, USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>{});
 }
 
 USERVER_NAMESPACE::formats::json::Value Serialize(

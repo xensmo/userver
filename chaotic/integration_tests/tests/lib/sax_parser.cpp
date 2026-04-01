@@ -89,7 +89,7 @@ enum class EnumInt {
     kTwo,
 };
 
-EnumInt FromInt(int i, formats::parse::To<EnumInt>) {
+EnumInt Convert(std::int64_t i, chaotic::convert::To<EnumInt>) {
     switch (i) {
         case 1:
             return EnumInt::kOne;
@@ -114,7 +114,7 @@ enum class EnumString {
     kTwo,
 };
 
-EnumString FromString(std::string_view str, formats::parse::To<EnumString>) {
+EnumString Convert(std::string_view str, chaotic::convert::To<EnumString>) {
     if (str == "one") {
         return EnumString::kOne;
     } else if (str == "two") {
