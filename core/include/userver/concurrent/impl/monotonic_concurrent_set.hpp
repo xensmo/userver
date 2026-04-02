@@ -14,7 +14,6 @@
 
 #include <boost/atomic/atomic.hpp>
 
-#include <userver/compiler/impl/constexpr.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/impl/fused_allocations.hpp>
 #include <userver/utils/not_null.hpp>
@@ -94,7 +93,7 @@ struct Bucket {
 };
 
 template <typename T>
-inline USERVER_IMPL_CONSTINIT Bucket<T> kNullBucket{};
+inline constinit Bucket<T> kNullBucket{};
 
 template <typename T>
 struct Table {
@@ -162,7 +161,7 @@ struct Table {
 };
 
 template <typename T>
-inline USERVER_IMPL_CONSTINIT Table<T> kNullTable{};
+inline constinit Table<T> kNullTable{};
 
 }  // namespace monotonic_concurrent_set
 

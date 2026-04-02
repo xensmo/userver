@@ -42,7 +42,7 @@ public:
         // clang-16 and below lose (optimize out) the pointer to `literal` with consteval. Clang-18 is know to work
         constexpr
 #else
-        USERVER_IMPL_CONSTEVAL
+        consteval
 #endif
             NameLiteral(const char* literal) noexcept
             : zstring_view{literal} {

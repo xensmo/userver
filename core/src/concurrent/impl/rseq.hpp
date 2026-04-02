@@ -28,7 +28,6 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include <userver/compiler/impl/constexpr.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/impl/static_registration.hpp>
 
@@ -39,7 +38,7 @@ namespace concurrent::impl {
 inline constexpr std::size_t kRseqArraySizeUninitialized = -1;
 inline constexpr std::size_t kRseqArraySizeDisabled = 0;
 
-inline USERVER_IMPL_CONSTINIT std::size_t rseq_array_size = kRseqArraySizeUninitialized;
+inline constinit std::size_t rseq_array_size = kRseqArraySizeUninitialized;
 
 __attribute__((constructor)) inline std::size_t GetRseqArraySize() noexcept {
     if (rseq_array_size == kRseqArraySizeUninitialized) {

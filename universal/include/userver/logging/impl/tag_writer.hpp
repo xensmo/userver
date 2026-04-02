@@ -3,7 +3,6 @@
 #include <string_view>
 #include <type_traits>
 
-#include <userver/compiler/impl/constexpr.hpp>
 #include <userver/logging/log_extra.hpp>
 #include <userver/logging/log_helper.hpp>
 #include <userver/utils/encoding/tskv.hpp>
@@ -17,7 +16,7 @@ namespace logging::impl {
 class TagKey final {
 public:
     template <typename StringType, typename Enabled = std::enable_if_t<!std::is_same_v<StringType, TagKey>>>
-    USERVER_IMPL_CONSTEVAL /*implicit*/ TagKey(const StringType& escaped_key);
+    consteval /*implicit*/ TagKey(const StringType& escaped_key);
 
     std::string_view GetEscapedKey() const noexcept;
 
@@ -80,7 +79,7 @@ constexpr bool DoesTagNeedEscaping(std::string_view key) noexcept {
 }
 
 template <typename StringType, typename Enabled>
-USERVER_IMPL_CONSTEVAL TagKey::TagKey(const StringType& escaped_key)
+consteval TagKey::TagKey(const StringType& escaped_key)
     : escaped_key_(escaped_key)
 {
     if (DoesTagNeedEscaping(escaped_key_)) {
