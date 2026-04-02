@@ -90,6 +90,10 @@ endif()
 set(USERVER_YDB_DEFAULT OFF)
 if(USERVER_FEATURE_CORE AND USERVER_BUILD_ALL_COMPONENTS)
     set(USERVER_YDB_DEFAULT ON)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "13.1")
+        # ydb-cpp-sdk requires <format> header support, and GCC only implemented it in 13.1.
+        set(USERVER_YDB_DEFAULT OFF)
+    endif()
 endif()
 
 option(USERVER_CONAN "Build with Conan packages" "${CONAN_EXPORTED}")
