@@ -221,6 +221,10 @@ ExecuteResponse Transaction::Execute(
     return ExecuteResponse(std::move(status));
 }
 
+NYdb::TTransactionBase& Transaction::GetNativeTransaction() {
+    return std::visit([](auto& tx) -> NYdb::TTransactionBase& { return tx; }, ydb_tx_);
+}
+
 }  // namespace ydb
 
 USERVER_NAMESPACE_END

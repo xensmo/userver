@@ -78,6 +78,12 @@ public:
     ) noexcept;
     /// @endcond
 
+    /// Get native transaction
+    /// @warning Use with care! Facilities from
+    /// `<core/include/userver/drivers/subscribable_futures.hpp>` can help with
+    /// non-blocking wait operations.
+    NYdb::TTransactionBase& GetNativeTransaction();
+
 private:
     void MarkError() noexcept;
     auto ErrorGuard();
