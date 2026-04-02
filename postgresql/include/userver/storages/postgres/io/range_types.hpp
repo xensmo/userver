@@ -434,7 +434,7 @@ template <typename U, typename>
 Range<T>::Range(U&& lower, U&& upper, RangeBounds bounds)
     : data_{RangeData{std::forward<U>(lower), std::forward<U>(upper), bounds}}
 {
-    if (lower == upper && bounds != RangeBound::kBoth) {
+    if (data_->lower == data_->upper && bounds != RangeBound::kBoth) {
         // this will make an empty range
         data_.reset();
     }

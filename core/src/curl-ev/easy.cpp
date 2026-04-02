@@ -601,6 +601,7 @@ void easy::add_resolve(const std::string& host, const std::string& port, const s
             std::move(host_port_addr)
         ))
     {
+        // NOLINTNEXTLINE(bugprone-use-after-move)
         UASSERT_MSG(!host_port_addr.empty(), "ReplaceFirstIf moved the string out, when it shouldn't have done so.");
         resolved_hosts_->add(std::move(host_port_addr));
     }

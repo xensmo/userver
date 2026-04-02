@@ -46,7 +46,7 @@ public:
                 break;
             }
 
-            chat.Send(std::move(message));
+            chat.Send(message);
         }
         if (message.close_status) {
             chat.Close(*message.close_status);
@@ -74,7 +74,7 @@ public:
                 if (message.close_status) {
                     break;
                 }
-                chat.Send(std::move(message));
+                chat.Send(message);
             } else {
                 // we could've sent yet another server::websocket::Message
                 // e.g. chat.SendBinary(server::websocket::Message{ "blah", {}, true });

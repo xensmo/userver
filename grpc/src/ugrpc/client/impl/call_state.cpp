@@ -147,6 +147,8 @@ void CallState::ResetSpan() noexcept {
 StreamingCallState::StreamingCallState(CallParams&& params)
     : CallState(std::move(params))
 {
+    // CallState constructor does not consume call_options.
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     SetupClientContext(*this, params.call_options, /*attempt*/ 1);
     Commit();
 }

@@ -16,6 +16,7 @@
 #include <userver/utils/assert.hpp>
 #include <userver/utils/constexpr_indices.hpp>
 #include <userver/utils/enumerate.hpp>
+#include <userver/utils/forward_like.hpp>
 #include <userver/utils/trivial_map.hpp>
 
 #include <userver/ydb/exceptions.hpp>
@@ -134,7 +135,7 @@ constexpr auto MakeTupleOfOptionals(std::index_sequence<Indices...>) {
 
 template <typename T, typename Tuple, std::size_t... Indices>
 constexpr auto MakeFromTupleOfOptionals(Tuple&& tuple, std::index_sequence<Indices...>) {
-    return T{*std::get<Indices>(std::forward<Tuple>(tuple))...};
+    return T{*utils::ForwardLike<Tuple>(std::get<Indices>(tuple))...};
 }
 
 }  // namespace impl

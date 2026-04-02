@@ -133,7 +133,9 @@ TEST(DefineStructSubset, NonCopyableToCopyable) {
     const SmolCopyable copyable_subset_move = std::move(dependencies);
     EXPECT_EQ(copyable_subset_move.a, 1);
     // b is not touched, as it's not in SmolCopyable.
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     ASSERT_TRUE(dependencies.b);
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     EXPECT_EQ(*dependencies.b, 2);
     EXPECT_EQ(&copyable_subset_move.c, &c);
 }
@@ -149,6 +151,7 @@ TEST(DefineStructSubset, NonCopyableToNonCopyable) {
     const SmolNonCopyable non_copyable_subset = std::move(dependencies);
     ASSERT_TRUE(non_copyable_subset.b);
     EXPECT_EQ(*non_copyable_subset.b, 2);
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     EXPECT_FALSE(dependencies.b);
     EXPECT_EQ(&non_copyable_subset.c, &c);
 }
@@ -177,6 +180,7 @@ TEST(DefineStructSubset, NonMovableToMovable) {
     const SmolMovable movable_subset = std::move(dependencies);
     ASSERT_TRUE(movable_subset.a);
     EXPECT_EQ(*movable_subset.a, 2);
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     EXPECT_FALSE(dependencies.a);
 
     // Dependencies&& is not convertible to SmolNonMovable

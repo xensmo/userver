@@ -10,6 +10,7 @@
 #include <boost/preprocessor/empty.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 
+#include <userver/utils/forward_like.hpp>
 #include <userver/utils/impl/boost_variadic_to_seq.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
 
@@ -40,7 +41,8 @@ USERVER_NAMESPACE_END
 /// @cond
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define USERVER_IMPL_STRUCT_MAP(r, data, elem) std::forward<OtherDeps>(other).elem,
+#define USERVER_IMPL_STRUCT_MAP(r, data, elem) \
+    USERVER_NAMESPACE::utils::ForwardLike<OtherDeps, decltype(other.elem)>(other.elem),
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define USERVER_IMPL_MAKE_FROM_SUPERSET(Self, ...)                                                     \

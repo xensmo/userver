@@ -184,7 +184,7 @@ UTEST(Task, MoveConstructor) {
         EXPECT_FALSE(initial_task_was_cancelled);
 
         auto task_new = std::move(task);
-        // NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
+        // NOLINTNEXTLINE(clang-analyzer-cplusplus.Move, bugprone-use-after-move)
         EXPECT_FALSE(task.IsValid());
         EXPECT_TRUE(task_new.IsValid());
         EXPECT_FALSE(initial_task_was_cancelled);

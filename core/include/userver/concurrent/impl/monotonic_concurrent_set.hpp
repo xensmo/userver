@@ -467,6 +467,8 @@ std::pair<T&, bool> MonotonicConcurrentSet<T, Hash, KeyEqual>::TryEmplace(const 
                 continue;
             }
 
+            // Value of 'args' is only consumed if item construction happens.
+            // NOLINTNEXTLINE(bugprone-use-after-move)
             auto [item, inserted] = TryEmplaceLocked(current, bucket, key, std::forward<Args>(args)...);
 
             if (item) {

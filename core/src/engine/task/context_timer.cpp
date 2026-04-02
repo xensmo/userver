@@ -96,16 +96,17 @@ void ContextTimer::Impl::Start(
 }
 
 void ContextTimer::Impl::Restart(Params params) {
+    const auto deadline = params.deadline;
     UASSERT(WasStarted());
-    UASSERT(params.deadline.IsReachable());
-    if (params.deadline.IsReached()) {
+    UASSERT(deadline.IsReachable());
+    if (deadline.IsReached()) {
         InvokeTimerFunction(params, *context_);
         return;
     }
 
     params_pipe_to_ev_.Push(std::move(params));
     if (PrepareEnqueue()) {
-        thread_control_->RunPayloadInEvLoopDeferred(GetTimerArmer(), params.deadline);
+        thread_control_->RunPayloadInEvLoopDeferred(GetTimerArmer(), deadline);
     }
 }
 

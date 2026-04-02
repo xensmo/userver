@@ -339,7 +339,7 @@ Transaction TableClient::Begin(utils::StringLiteral transaction_name, OperationS
 
 Transaction TableClient::Begin(DynamicTransactionName transaction_name, OperationSettings settings) {
     const Query query{"", Query::Name{"Begin"}};
-    impl::RequestContext context{*this, query, std::move(settings)};
+    impl::RequestContext context{*this, query, OperationSettings{settings}};
 
     if (use_query_client_) {
         auto tx_settings = MakeTxSettings(context.settings.tx_mode.value());

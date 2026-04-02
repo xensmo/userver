@@ -5514,6 +5514,7 @@
   "universal/include/userver/utils/fixed_array.hpp":"taxi/uservices/userver/universal/include/userver/utils/fixed_array.hpp",
   "universal/include/userver/utils/flags.hpp":"taxi/uservices/userver/universal/include/userver/utils/flags.hpp",
   "universal/include/userver/utils/fmt_compat.hpp":"taxi/uservices/userver/universal/include/userver/utils/fmt_compat.hpp",
+  "universal/include/userver/utils/forward_like.hpp":"taxi/uservices/userver/universal/include/userver/utils/forward_like.hpp",
   "universal/include/userver/utils/from_string.hpp":"taxi/uservices/userver/universal/include/userver/utils/from_string.hpp",
   "universal/include/userver/utils/function_ref.hpp":"taxi/uservices/userver/universal/include/userver/utils/function_ref.hpp",
   "universal/include/userver/utils/get_if.hpp":"taxi/uservices/userver/universal/include/userver/utils/get_if.hpp",

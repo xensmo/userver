@@ -253,6 +253,7 @@ Request& Request::url(std::string url) & {
 
     /// `curl::easy::set_url(std::string&&, std::error_code&)` doesn't consume the string if fails.
     if (ec) {
+        // NOLINTNEXTLINE(bugprone-use-after-move)
         throw BadArgumentException(ec, "Bad URL", url, {});
     }
 

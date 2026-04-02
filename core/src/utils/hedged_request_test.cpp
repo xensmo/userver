@@ -90,12 +90,13 @@ public:
     }
 
     std::optional<std::chrono::milliseconds> ProcessReply(RequestType&& request) {
+        const size_t attempt = request.attempt;
         reply = std::move(request).Get();
-        event_log.push_back({Event::kProcessReply, request.attempt});
-        if (attempt_program.size() <= request.attempt) {
+        event_log.push_back({Event::kProcessReply, attempt});
+        if (attempt_program.size() <= attempt) {
             return std::nullopt;
         }
-        return attempt_program[request.attempt].process_reply_result;
+        return attempt_program[attempt].process_reply_result;
     }
 
     // NOLINTNEXTLINE(readability-make-member-function-const)

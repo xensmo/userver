@@ -264,7 +264,7 @@ SentinelImpl::SentinelImpl(
             return std::make_unique<StandaloneTopologyHolder>(
                 ev_thread_,
                 redis_thread_pool,
-                shard_group_name,
+                shard_group_name_,
                 password,
                 database_index_,
                 conns.front()

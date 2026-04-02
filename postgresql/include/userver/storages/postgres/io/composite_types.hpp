@@ -82,7 +82,7 @@ private:
     void
     ReadTuple(FieldBuffer& buffer, const TypeBufferCategory& categories, Tuple&& tuple, std::index_sequence<Indexes...>)
         const {
-        (ReadField(buffer, categories, Indexes, std::get<Indexes>(std::forward<Tuple>(tuple))), ...);
+        (ReadField(buffer, categories, Indexes, std::get<Indexes>(tuple)), ...);
     }
 };
 
@@ -153,7 +153,7 @@ private:
     void
     WriteTuple(const UserTypes& types, const CompositeTypeDescription& type_desc, Buffer& buffer, Tuple&& tuple, std::index_sequence<Indexes...>)
         const {
-        (WriteField(types, type_desc, Indexes, buffer, std::get<Indexes>(std::forward<Tuple>(tuple))), ...);
+        (WriteField(types, type_desc, Indexes, buffer, std::get<Indexes>(tuple)), ...);
     }
 };
 
