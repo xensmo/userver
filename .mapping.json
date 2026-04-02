@@ -5182,6 +5182,7 @@
   "third_party/pfr/include/boost/pfr/detail/core14_loophole.hpp":"taxi/uservices/userver/third_party/pfr/include/boost/pfr/detail/core14_loophole.hpp",
   "third_party/pfr/include/boost/pfr/detail/core17.hpp":"taxi/uservices/userver/third_party/pfr/include/boost/pfr/detail/core17.hpp",
   "third_party/pfr/include/boost/pfr/detail/core17_generated.hpp":"taxi/uservices/userver/third_party/pfr/include/boost/pfr/detail/core17_generated.hpp",
+  "third_party/pfr/include/boost/pfr/detail/core26.hpp":"taxi/uservices/userver/third_party/pfr/include/boost/pfr/detail/core26.hpp",
   "third_party/pfr/include/boost/pfr/detail/core_name.hpp":"taxi/uservices/userver/third_party/pfr/include/boost/pfr/detail/core_name.hpp",
   "third_party/pfr/include/boost/pfr/detail/core_name14_disabled.hpp":"taxi/uservices/userver/third_party/pfr/include/boost/pfr/detail/core_name14_disabled.hpp",
   "third_party/pfr/include/boost/pfr/detail/core_name20_static.hpp":"taxi/uservices/userver/third_party/pfr/include/boost/pfr/detail/core_name20_static.hpp",
