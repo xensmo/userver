@@ -152,7 +152,9 @@ TEST(DatetimeUtilsDateIsValid, DayDoesNotMatchMonth) { EXPECT_FALSE(ugrpc::IsVal
 
 #if __cpp_lib_chrono >= 201907L
 
-TEST(DatetimeUtils, ToProtoDateFromYearMonthDay) { EXPECT_TRUE(GrpcCompare(kDate, ugrpc::ToProtoDate(kYearMonthDay))); }
+TEST(DatetimeUtils, ToProtoDateFromYearMonthDay) {
+    EXPECT_TRUE(kGrpcCompare(kDate, ugrpc::ToProtoDate(kYearMonthDay)));
+}
 
 TEST(DatetimeUtils, ToProtoDateFromInvalidYearMonthDay) {
     constexpr std::chrono::year_month_day

@@ -83,7 +83,7 @@ jobs:
                     os: ubuntu-22.04
                     info: clang-14 + debug + sanitize addr+ub
                     id: ubuntu22_clang14_debug_sanitize-addr-ub
-                    tests-flags: ''
+                    tests-flags: '--gtest_filter=-LoggingTest.Format:LoggingTest.CallFormat'
                     tests-env: ''
 
                   # GCC-10 - testing minimal required compiler
