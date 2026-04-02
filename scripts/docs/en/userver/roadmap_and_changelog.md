@@ -43,13 +43,14 @@ Changelog news also go to the
   userver for quite some time. Use C++20 or even a more modern C++.
 * New readiness notification flow for tasks, futures, events and other awaitable objects. It provides a lightweight and
   efficient framework for more efficient implementation of waiting objects/methods like @ref engine::WaitAny,
-  @ref engine::FdPoller, @ref engine::TaskBase::BlockingWait .
-* Ydb: @ref ydb::Transaction and @ref ydb::TableClient::ExecuteDataQuery switched from Table Client to Query Client API.
+  @ref engine::io::FdPoller, @ref engine::TaskBase::BlockingWait .
+* Ydb: @ref ydb::Transaction and `ydb::TableClient::ExecuteDataQuery` switched from Table Client to Query Client API.
 * Multicast support for sockets. See @ref engine::io::IpMreq .
   Many thanks to [Dmitry Borchuk](https://github.com/dmitryborchuk) for the contribution!
 * SAX parsing in Chaotic codegen. See @ref scripts/docs/en/userver/chaotic.md .
 * HttpClient: New Websocket client. See @ref scripts/docs/en/userver/tutorial/websocket_client.md .
 * gRPC: Retry limiter. See @ref ugrpc::client::RetryLimiter .
+
 * Separate log for components loading that simplifies components loading issues debugging.
   See `components_manager.boot-log-path` in @ref components::ManagerControllerComponent .
 * Redis: Valkey and Redis dynamic client component. See @ref components::DynamicRedis .
@@ -60,7 +61,7 @@ Changelog news also go to the
   for the contribution!
 * Kafka: Added `group_instance_id` option to @ref kafka::ConsumerComponent .
 * gRPC: Perform retry on the next channel.
-* Ydb: New transaction modes support. See @ref ydb::TransactionMode .
+* Ydb: New transaction modes support. See `ydb::TransactionMode`.
 * Ydb: New AsContainer() method in cursor. See @ref ydb::Cursor::AsContainer .
 * Redis: New @ref storages::redis::Client::EvalReadOnly and @ref storages::redis::Client::EvalShaReadOnly functions.
 * Per-handler metrics in HTTP server. See `SetHandlerMetricsShard` in @ref server::request::RequestContext .
@@ -107,10 +108,10 @@ Changelog news also go to the
 
 * Build and testing
   * Updated Google benchmark to 1.9.5. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
-  * Userver devcontainer. See @ref scripts/docs/en/userver/build/userver.md#devcontainers_userver .
+  * Userver dev container. See @ref scripts/docs/en/userver/build/userver.md .
   * New `component_manager.coro_pool.unoptimized_stack_size_multiplier` option to automatically increase stack size
     in unoptimized builds. See @ref components::ManagerControllerComponent .
-  * gRPC: @ref @ref pytest_userver.grpc._client.PreCallClientInterceptor accessible from testsuite.
+  * gRPC: @ref pytest_userver.grpc._client.PreCallClientInterceptor accessible from testsuite.
   * New @ref utils::StartPeriodicTask method that allows deterministic testing of periodic tasks in testsuite.
   * Upgraded CPM.cmake to 0.42.1. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
 
