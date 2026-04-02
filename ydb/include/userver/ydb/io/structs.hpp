@@ -41,6 +41,14 @@ constexpr NotStruct DetectStructMemberNames(Args&&...) noexcept {
     return NotStruct{};
 }
 
+// To avoid including heavy <array> header for std::array<T, 0>.
+template <typename T>
+class EmptyRange final {
+public:
+    constexpr T* begin() const noexcept { return nullptr; }
+    constexpr T* end() const noexcept { return nullptr; }
+};
+
 }  // namespace impl
 
 /// @see ydb::CustomMemberNames
@@ -56,6 +64,13 @@ template <std::size_t N>
 struct StructMemberNames final {
     CustomMemberName custom_names[N];
 };
+
+/// @cond
+template <>
+struct StructMemberNames<0> final {
+    impl::EmptyRange<CustomMemberName> custom_names;
+};
+/// @endcond
 
 // clang-format off
 StructMemberNames() -> StructMemberNames<0>;
