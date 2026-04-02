@@ -152,18 +152,25 @@ TEST(DatetimeUtilsDateIsValid, DayDoesNotMatchMonth) { EXPECT_FALSE(ugrpc::IsVal
 
 #if __cpp_lib_chrono >= 201907L
 
+template <typename Value>
+concept YearMonthDaySerializationSupported = requires(const Value& value) {
+    Parse(value, formats::parse::To<std::chrono::year_month_day>{});
+};
+
 TEST(DatetimeUtils, ToProtoDateFromYearMonthDay) {
     EXPECT_TRUE(kGrpcCompare(kDate, ugrpc::ToProtoDate(kYearMonthDay)));
 }
 
 TEST(DatetimeUtils, ToProtoDateFromInvalidYearMonthDay) {
-    constexpr std::chrono::year_month_day
-        kInvalidYearMonthDay(std::chrono::year(11000), std::chrono::month(4), std::chrono::day(10));
-    UEXPECT_THROW_MSG(
-        formats::json::ValueBuilder(kInvalidYearMonthDay).ExtractValue(),
-        ugrpc::DateConversionError,
-        "system_date is invalid"
-    );
+    if constexpr (YearMonthDaySerializationSupported<formats::json::Value>) {
+        constexpr std::chrono::year_month_day
+            kInvalidYearMonthDay(std::chrono::year(11000), std::chrono::month(4), std::chrono::day(10));
+        UEXPECT_THROW_MSG(
+            formats::json::ValueBuilder(kInvalidYearMonthDay).ExtractValue(),
+            ugrpc::DateConversionError,
+            "system_date is invalid"
+        );
+    }
 }
 
 TEST(DatetimeUtils, ToYearMonthDay) { EXPECT_EQ(kYearMonthDay, ugrpc::ToYearMonthDay(kDate)); }
