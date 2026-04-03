@@ -652,6 +652,8 @@
   "core/dynamic_configs/USERVER_BAGGAGE_ENABLED.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_BAGGAGE_ENABLED.yaml",
   "core/dynamic_configs/USERVER_CACHES.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_CACHES.yaml",
   "core/dynamic_configs/USERVER_CANCEL_HANDLE_REQUEST_BY_DEADLINE.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_CANCEL_HANDLE_REQUEST_BY_DEADLINE.yaml",
+  "core/dynamic_configs/USERVER_DEADLINE_PROPAGATION_ABSOLUTE_TIMESTAMP_ENABLED.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_DEADLINE_PROPAGATION_ABSOLUTE_TIMESTAMP_ENABLED.yaml",
+  "core/dynamic_configs/USERVER_DEADLINE_PROPAGATION_CLOCK_SKEW_THRESHOLD_MS.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_DEADLINE_PROPAGATION_CLOCK_SKEW_THRESHOLD_MS.yaml",
   "core/dynamic_configs/USERVER_DEADLINE_PROPAGATION_ENABLED.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_DEADLINE_PROPAGATION_ENABLED.yaml",
   "core/dynamic_configs/USERVER_DUMPS.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_DUMPS.yaml",
   "core/dynamic_configs/USERVER_FILES_CONTENT_TYPE_MAP.yaml":"taxi/uservices/userver/core/dynamic_configs/USERVER_FILES_CONTENT_TYPE_MAP.yaml",
