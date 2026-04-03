@@ -477,6 +477,7 @@ UTEST(WaitAnyContext, WaitAnyContextSingleVector) {
 }
 
 UTEST(WaitAnyContext, WaitAnyContextPlainAwaitables) {
+    /// [sample MakeWaitAny]
     std::vector<TestAwaitable> awaitables(3);
 
     auto wait_any = engine::MakeWaitAny(awaitables[0], awaitables[1], awaitables[2]);
@@ -493,6 +494,7 @@ UTEST(WaitAnyContext, WaitAnyContextPlainAwaitables) {
     }
     ASSERT_EQ(wait_any.GetSize(), 0);
     EXPECT_EQ(wait_any.Wait(), std::nullopt);
+    /// [sample MakeWaitAny]
 }
 
 UTEST(WaitAnyContext, WaitAnyContextMixed) {

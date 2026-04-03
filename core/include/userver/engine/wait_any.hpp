@@ -1,7 +1,8 @@
 #pragma once
 
 /// @file userver/engine/wait_any.hpp
-/// @brief Provides engine::WaitAny, engine::WaitAnyFor, engine::WaitAnyUntil and engine::MakeWaitAny
+/// @brief Provides engine::WaitAny, engine::WaitAnyFor, engine::WaitAnyUntil, engine::WaitAnyContext and
+/// engine::MakeWaitAny
 
 #include <chrono>
 #include <cstdint>
@@ -39,7 +40,7 @@ std::optional<std::size_t> WaitAny(Tasks&... tasks);
 
 /// @ingroup userver_concurrency
 ///
-/// @deprecated `WaitAnyFor` is deprecated. Please, prefer @ref MakeWaitAny + @ref WaitAnyContext::WaitFor().
+/// @deprecated `WaitAnyFor` is deprecated. Please, prefer @ref MakeWaitAny + @ref WaitAnyContext::WaitFor.
 /// @overload std::optional<std::size_t> WaitAny(Tasks&... tasks)
 template <typename... Tasks, typename Rep, typename Period>
 std::optional<std::size_t> WaitAnyFor(const std::chrono::duration<Rep, Period>& duration, Tasks&... tasks);
@@ -143,10 +144,18 @@ public:
     /// completed awaitables (possible if current task was cancelled).
     std::optional<std::uint64_t> Wait();
 
-    /// @overload std::optional<std::size_t> Wait()
+    /// @brief Waits for the completion of any of the awaitables stored in the context
+    /// or cancellation of the caller or deadline expiration.
+    ///
+    /// @returns the index of the completed awaitable, or `std::nullopt` if there are no
+    /// completed awaitables (possible if current task was cancelled or the deadline was reached).
     std::optional<std::uint64_t> WaitUntil(Deadline deadline);
 
-    /// @overload std::optional<std::size_t> Wait()
+    /// @brief Waits for the completion of any of the awaitables stored in the context
+    /// or cancellation of the caller or expiration of the given duration.
+    ///
+    /// @returns the index of the completed awaitable, or `std::nullopt` if there are no
+    /// completed awaitables (possible if current task was cancelled or the given duration has passed).
     template <typename Rep, typename Period>
     std::optional<std::uint64_t> WaitFor(const std::chrono::duration<Rep, Period>& duration) {
         return WaitUntil(Deadline::FromDuration(duration));

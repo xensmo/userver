@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file userver/utils/scope.hpp
+/// @file userver/utils/resource_scopes.hpp
 /// @brief @copybrief utils::ResourceScopeStorage
 
 #include <functional>
@@ -62,7 +62,7 @@ using ScopePtr = std::unique_ptr<impl::ScopeBase>;
 
 }  // namespace impl
 
-/// @brief Smart collection of @ref ScopePtr.
+/// @brief Smart collection of resource registration and release scopes.
 /// It is a helper class used in component system or in a component-less
 /// unit tests.
 class ResourceScopeStorage final {
