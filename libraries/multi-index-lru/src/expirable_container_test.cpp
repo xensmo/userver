@@ -305,6 +305,27 @@ UTEST_F(ExpirableUsersTest, ThreadSafetyBasic) {
     EXPECT_LE(cache.size(), 100);
 }
 
+#ifdef NDEBUG
+
+UTEST_F(ExpirableUsersTest, ZeroTTL) {
+    using namespace std::chrono_literals;
+
+    EXPECT_THROW({ UserCacheExpirable cache(10, 0ms); }, utils::InvariantError);
+}
+
+UTEST_F(ExpirableUsersTest, ZeroCapacity) {
+    using namespace std::chrono_literals;
+
+    EXPECT_THROW({ UserCacheExpirable cache(0, 10s); }, utils::InvariantError);
+}
+
+UTEST_F(ExpirableUsersTest, NegativeTTL) {
+    using namespace std::chrono_literals;
+
+    EXPECT_THROW({ UserCacheExpirable cache(10, -1ms); }, utils::InvariantError);
+}
+#endif
+
 }  // namespace
 
 USERVER_NAMESPACE_END

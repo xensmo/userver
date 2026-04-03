@@ -22,7 +22,8 @@ public:
         : container_(max_size),
           ttl_(ttl)
     {
-        UASSERT_MSG(ttl.count() > 0, "ttl must be positive");
+        UINVARIANT(ttl.count() > 0, "ttl must be positive");
+        UINVARIANT(max_size > 0, "capacity must be positive");
     }
 
     template <typename... Args>
@@ -47,7 +48,7 @@ public:
 
         if (it != container_.template end<Tag>()) {
             if (now > it->last_accessed + ttl_) {
-                container_.template get_index<Tag>().erase(it);
+                container_.erase(it);
                 return end<Tag>();
             } else {
                 it->last_accessed = now;
@@ -66,7 +67,6 @@ public:
     template <typename Tag, typename Key>
     auto equal_range(const Key& key) {
         const auto now = std::chrono::steady_clock::now();
-        auto& index = container_.template get_index<Tag>();
         auto range = container_.template equal_range<Tag, Key>(key);
 
         auto it = range.first;
@@ -74,7 +74,7 @@ public:
 
         while (it != range.second) {
             if (now > it->last_accessed + ttl_) {
-                it = index.erase(it);
+                it = container_.erase(it);
                 changed = true;
             } else {
                 it->last_accessed = now;
@@ -82,7 +82,7 @@ public:
             }
         }
         if (changed) {
-            range = index.equal_range(key);
+            range = container_.template equal_range_no_update<Tag, Key>(key);
         }
         return std::pair{impl::IteratorToValue{range.first}, impl::IteratorToValue{range.second}};
     }
@@ -103,17 +103,33 @@ public:
         return this->template find_no_update<Tag, Key>(key) != this->template end<Tag>();
     }
 
+    /// Removes the @b it from container, leaving the node in an internal pool. The key and value are not destroyed
+    /// and are reused on next insertion.
+    template <typename IteratorType>
+    bool erase(IteratorType it) {
+        return container_.template erase(it);
+    }
+
+    /// Removes the @b key from container, leaving the node in an internal pool. The key and value are not destroyed
+    /// and are reused on next insertion.
     template <typename Tag, typename Key>
     bool erase(const Key& key) {
         return container_.template erase<Tag, Key>(key);
     }
 
     std::size_t size() const noexcept { return container_.size(); }
+
     bool empty() const noexcept { return container_.empty(); }
+
     std::size_t capacity() const noexcept { return container_.capacity(); }
 
     void set_capacity(std::size_t new_capacity) { container_.set_capacity(new_capacity); }
 
+    /// Clears the internal nodes pool
+    void shrink_to_fit() { container_.shrink_to_fit(); }
+
+    /// Removes all elements from the container, leaving the node in an internal pool. The keys and values are
+    /// not destroyed and are reused on next insertion.
     void clear() { container_.clear(); }
 
     template <typename Tag>
@@ -123,12 +139,11 @@ public:
 
     void cleanup_expired() {
         const auto now = std::chrono::steady_clock::now();
-        auto& seq_index = container_.get_sequenced();
 
-        while (!seq_index.empty()) {
-            const auto it = seq_index.rbegin();
+        while (!container_.empty()) {
+            const auto it = container_.find_last_accessed_no_update();
             if (now > it->last_accessed + ttl_) {
-                seq_index.pop_back();
+                container_.erase(it);
             } else {
                 break;
             }
