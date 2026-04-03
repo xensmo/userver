@@ -4,6 +4,7 @@ import platform
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake
 from conan.tools.cmake import cmake_layout
 from conan.tools.cmake import CMakeDeps
@@ -184,6 +185,8 @@ class UserverConan(ConanFile):
         self.tool_requires('protobuf/<host_version>')
 
     def validate(self):
+        check_min_cppstd(self, 20)
+
         if self.settings.os == 'Windows':
             raise ConanInvalidConfiguration(
                 'userver cannot be built on Windows',

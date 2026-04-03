@@ -431,6 +431,7 @@ To build the userver Conan package run the following in the userver root directo
 
 ```shell
 conan profile detect && conan profile show
+conan profile update settings.compiler.cppstd=20 default
 conan create . --build=missing --version=`cat version.txt` -pr:b=default
 ```
 
