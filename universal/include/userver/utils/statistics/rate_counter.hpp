@@ -59,6 +59,8 @@ public:
         val_.store(val_.load(std::memory_order_relaxed) + arg.value, std::memory_order_relaxed);
     }
 
+    void Increment() noexcept { val_.fetch_add(1, std::memory_order_relaxed); }
+
     Rate operator++() noexcept { return Rate{val_.fetch_add(1, std::memory_order_relaxed) + 1}; }
 
     Rate operator++(int) noexcept { return Rate{val_.fetch_add(1, std::memory_order_relaxed)}; }

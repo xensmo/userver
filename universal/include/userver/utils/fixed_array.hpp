@@ -4,6 +4,7 @@
 /// @brief @copybrief utils::FixedArray
 
 #include <cstddef>
+#include <iterator>
 #include <memory>  // std::allocator
 #include <type_traits>
 #include <utility>
@@ -37,6 +38,10 @@ public:
     /// Make an array and initialize each element with "args"
     template <class... Args>
     explicit FixedArray(std::size_t size, Args&&... args);
+
+    /// Make an array by copying elements from a forward iterator range [first, last).
+    template <std::forward_iterator ForwardIterator>
+    FixedArray(ForwardIterator first, ForwardIterator last);
 
     FixedArray(FixedArray&& other) noexcept;
     FixedArray& operator=(FixedArray&& other) noexcept;
@@ -132,7 +137,19 @@ FixedArray<T>::FixedArray(std::size_t size, Args&&... args)
 }
 
 template <class T>
+template <std::forward_iterator ForwardIterator>
+FixedArray<T>::FixedArray(ForwardIterator first, ForwardIterator last)
+    : FixedArray(
+          impl::InternalTag{},
+          static_cast<std::size_t>(std::distance(first, last)),
+          [it = first](std::size_t) mutable -> decltype(*first) { return *it++; }
+      )
+{}
+
+template <class T>
 template <class GeneratorFunc>
+// Accepting `generator` by forwarding reference to be able to be called with both prvalue and non-const references.
+// NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
 FixedArray<T>::FixedArray(impl::InternalTag /*tag*/, std::size_t size, GeneratorFunc&& generator)
     : size_(size)
 {
