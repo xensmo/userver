@@ -66,12 +66,12 @@ public:
 
     void Subscribe(formats::json::parser::Subscriber<ResultType>& subscriber) { subscriber_ = &subscriber; }
 
-    formats::json::parser::BaseParser& GetParser() { return parser_; }
+    formats::json::parser::BaseParser& GetParser() { return parser_.GetParser(); }
 
 private:
     void OnSend(ResultType&& value) override {
         [[maybe_unused]] const auto error_reporter = [this](std::string_view error) {
-            formats::json::parser::BaseParser& base = parser_;
+            formats::json::parser::BaseParser& base = parser_.GetParser();
             chaotic::ThrowForPath<formats::json::Value>(error, base.GetCurrentPath());
         };
         (Validator::Validate(value, error_reporter), ...);
