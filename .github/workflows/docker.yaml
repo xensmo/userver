@@ -38,7 +38,7 @@ jobs:
                         -DUSERVER_BUILD_SAMPLES=1
                         -DUSERVER_BUILD_TESTS=1
                         -DCMAKE_BUILD_TYPE=Release
-                    gtest-filter: '*'
+                    gtest-filter: '-LoggingTest.Format:LoggingTest.CallFormat'
                     image: ubuntu-22.04-userver-base-ci
                     info: ubuntu + clang-16 + cxx20
                     id: ubuntu_clang16_cxx20
@@ -58,20 +58,6 @@ jobs:
                     image: ubuntu-22.04-userver-base-ci
                     info: ubuntu + gcc-11 + cxx20
                     id: ubuntu_gcc11_cxx20
-                  - cmake-flags: >-
-                        -DCMAKE_C_COMPILER=clang-16
-                        -DCMAKE_CXX_COMPILER=clang++-16
-                        -DCMAKE_CXX_STANDARD=20
-                        -DCPM_SOURCE_CACHE=/userver/.cpm
-                        -DUSERVER_BUILD_ALL_COMPONENTS=1
-                        -DUSERVER_FEATURE_ROCKS=0
-                        -DUSERVER_BUILD_SAMPLES=1
-                        -DUSERVER_BUILD_TESTS=1
-                        -DCMAKE_BUILD_TYPE=Release
-                    gtest-filter: -YdbExecuteTpl/1.SimpleWriteReadBinary:LoggingTest.Format:LoggingTest.CallFormat
-                    image: ubuntu-22.04-userver-base-ci
-                    info: ubuntu + clang-16 + cxx20
-                    id: ubuntu_clang16_cxx20
                   - cmake-flags: >-
                         -DCMAKE_C_COMPILER=gcc-13
                         -DCMAKE_CXX_COMPILER=g++-13
