@@ -107,7 +107,7 @@ public:
     /// and are reused on next insertion.
     template <typename IteratorType>
     bool erase(IteratorType it) {
-        return container_.template erase(it);
+        return container_.erase(it);
     }
 
     /// Removes the @b key from container, leaving the node in an internal pool. The key and value are not destroyed
