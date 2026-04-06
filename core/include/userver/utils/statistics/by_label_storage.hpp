@@ -155,6 +155,8 @@ struct ByLabelEntryEqual {
 ///
 /// @brief Thread-safe monotonic storage of metrics indexed by label values.
 ///
+/// See @ref scripts/docs/en/userver/metrics.md .
+///
 /// `Labels` must be an aggregate type where all fields are interconvertible
 /// with `std::string_view`, i.e. constructible from `std::string_view` and
 /// convertible to `std::string_view`. This includes `std::string_view` itself,
@@ -181,11 +183,22 @@ struct ByLabelEntryEqual {
 /// Write to the storage via `Emplace`:
 /// @snippet core/src/utils/statistics/by_label_storage_test.cpp  by_label_storage emplace
 ///
-/// ## Advanced usage of MonotonicByLabelStorage
+/// ## Usage of MonotonicByLabelStorage with a group of per-label metrics
 ///
 /// Any dumpable type is supported as `Metric`. When multiple metrics have the same labels,
 /// declare a struct with metrics and create a storage of structs instead of creating multiple storages.
-/// See @ref scripts/docs/en/userver/metrics.md .
+///
+/// Define the metric struct and its `DumpMetric`:
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  composite metric structs
+///
+/// Define the labels struct:
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  composite metric labels
+///
+/// Declare a @ref utils::statistics::MetricTag for the storage:
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  composite metric tag
+///
+/// Write to the storage:
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  composite metric usage
 ///
 /// `MonotonicByLabelStorage` is also composable the other way around, it can be included in larger metric structures
 /// as a field.
@@ -202,10 +215,19 @@ public:
     MonotonicByLabelStorage(MonotonicByLabelStorage&&) = delete;
     MonotonicByLabelStorage& operator=(MonotonicByLabelStorage&&) = delete;
 
+    /// @brief Get or create a default-constructed metric for the given label values.
+    /// @param labels Label values.
+    /// @return Reference to the metric, valid until the storage's destruction.
+    Metric& operator[](const Labels& labels)
+    requires std::default_initializable<Metric>
+    {
+        return Emplace(labels);
+    }
+
     /// @brief Get or create a metric for the given label values.
-    /// @param labels Label values (all fields must be `std::string_view`).
+    /// @param labels Label values.
     /// @param args Arguments forwarded to `Metric` constructor on first insertion.
-    /// @return Reference to the metric.
+    /// @return Reference to the metric, valid until the storage's destruction.
     template <typename... Args>
     requires std::constructible_from<Metric, Args...>
     Metric& Emplace(const Labels& labels, Args&&... args) {
@@ -216,7 +238,7 @@ public:
     }
 
     /// @brief Find a metric by label values without creating it.
-    /// @return Pointer to the metric, or nullptr if not found.
+    /// @return Pointer to the metric (valid until the storage's destruction), or nullptr if not found.
     Metric* GetIfExists(const Labels& labels) {
         const auto view_array = impl::LabelsStructToViewArray(labels);
         auto ref = set_.Find(view_array);

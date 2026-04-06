@@ -75,7 +75,7 @@ struct ThreeLabels {
 
 UTEST(MonotonicByLabelStorage, EmptyGetIfExistsReturnsNull) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    EXPECT_EQ(storage.GetIfExists({"foo"}), nullptr);
+    EXPECT_EQ(storage.GetIfExists({.name = "foo"}), nullptr);
 }
 
 UTEST(MonotonicByLabelStorage, EmptyVisitAllVisitsNothing) {
@@ -91,27 +91,56 @@ UTEST(MonotonicByLabelStorage, EmptyDumpMetricProducesNoOutput) {
     EXPECT_FALSE(snapshot.SingleMetricOptional("").has_value());
 }
 
+UTEST(MonotonicByLabelStorage, SubscriptCreatesEntry) {
+    utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
+    auto& c = storage[{.name = "foo"}];
+    ++c;
+    EXPECT_EQ(c.Load(), Rate{1});
+}
+
+UTEST(MonotonicByLabelStorage, SubscriptIdempotentReturnsSameEntry) {
+    utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
+    auto& first = storage[{.name = "key"}];
+    first.Add(Rate{7});
+
+    // Second operator[] with same labels must return the existing entry.
+    auto& second = storage[{.name = "key"}];
+    EXPECT_EQ(&second, &first);
+    EXPECT_EQ(second.Load(), Rate{7});
+}
+
+UTEST(MonotonicByLabelStorage, SubscriptDifferentLabelsCreatesSeparateEntries) {
+    utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
+    auto& a = storage[{.name = "a"}];
+    auto& b = storage[{.name = "b"}];
+    EXPECT_NE(&a, &b);
+    a.Add(Rate{1});
+    b.Add(Rate{2});
+    EXPECT_EQ(a.Load(), Rate{1});
+    EXPECT_EQ(b.Load(), Rate{2});
+}
+
 UTEST(MonotonicByLabelStorage, EmplaceCreatesEntry) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    auto& c = storage.Emplace({"foo"});
+    auto& c = storage.Emplace({.name = "foo"});
     ++c;
     EXPECT_EQ(c.Load(), Rate{1});
 }
 
 UTEST(MonotonicByLabelStorage, EmplaceWithArgsForwardsToConstructor) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, CompositeMetric> storage;
-    CompositeMetric& m = storage.Emplace({"bar"}, Rate{5}, 42);
+    CompositeMetric& m = storage.Emplace({.name = "bar"}, Rate{5}, 42);
     EXPECT_EQ(m.requests.Load(), Rate{5});
     EXPECT_EQ(m.errors.load(), 42);
 }
 
 UTEST(MonotonicByLabelStorage, EmplaceIdempotentReturnsSameEntry) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    auto& first = storage.Emplace({"key"});
+    auto& first = storage.Emplace({.name = "key"});
     first.Add(Rate{7});
 
     // Second Emplace with same labels must return the existing entry.
-    auto& second = storage.Emplace({"key"});
+    auto& second = storage.Emplace({.name = "key"});
     EXPECT_EQ(&second, &first);
     EXPECT_EQ(second.Load(), Rate{7});
 }
@@ -119,19 +148,19 @@ UTEST(MonotonicByLabelStorage, EmplaceIdempotentReturnsSameEntry) {
 UTEST(MonotonicByLabelStorage, EmplaceIdempotentIgnoresConstructorArgs) {
     // RateCounter(Rate) constructor: first Emplace initialises to 10.
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    auto& first = storage.Emplace({"k"}, Rate{10});
+    auto& first = storage.Emplace({.name = "k"}, Rate{10});
     EXPECT_EQ(first.Load(), Rate{10});
 
     // Constructor arg must be ignored: entry already exists.
-    auto& second = storage.Emplace({"k"}, Rate{20});
+    auto& second = storage.Emplace({.name = "k"}, Rate{20});
     EXPECT_EQ(&second, &first);
     EXPECT_EQ(second.Load(), Rate{10});
 }
 
 UTEST(MonotonicByLabelStorage, EmplaceDifferentLabelsCreatesSeparateEntries) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    auto& a = storage.Emplace({"a"});
-    auto& b = storage.Emplace({"b"});
+    auto& a = storage.Emplace({.name = "a"});
+    auto& b = storage.Emplace({.name = "b"});
     EXPECT_NE(&a, &b);
     a.Add(Rate{1});
     b.Add(Rate{2});
@@ -141,10 +170,10 @@ UTEST(MonotonicByLabelStorage, EmplaceDifferentLabelsCreatesSeparateEntries) {
 
 UTEST(MonotonicByLabelStorage, GetIfExistsFindsExistingEntry) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    auto& emplaced = storage.Emplace({"x"});
+    auto& emplaced = storage.Emplace({.name = "x"});
     emplaced.Add(Rate{55});
 
-    auto* found = storage.GetIfExists({"x"});
+    auto* found = storage.GetIfExists({.name = "x"});
     ASSERT_NE(found, nullptr);
     EXPECT_EQ(found, &emplaced);
     EXPECT_EQ(found->Load(), Rate{55});
@@ -152,20 +181,20 @@ UTEST(MonotonicByLabelStorage, GetIfExistsFindsExistingEntry) {
 
 UTEST(MonotonicByLabelStorage, GetIfExistsReturnsNullForMissingEntry) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    storage.Emplace({"present"});
-    EXPECT_EQ(storage.GetIfExists({"absent"}), nullptr);
+    storage.Emplace({.name = "present"});
+    EXPECT_EQ(storage.GetIfExists({.name = "absent"}), nullptr);
 }
 
 UTEST(MonotonicByLabelStorage, GetIfExistsDistinguishesDifferentLabels) {
     utils::statistics::MonotonicByLabelStorage<TwoLabels, RateCounter> storage;
-    storage.Emplace({"host1", "dc1"}).Add(Rate{1});
-    storage.Emplace({"host1", "dc2"}).Add(Rate{2});
-    storage.Emplace({"host2", "dc1"}).Add(Rate{3});
+    storage.Emplace({.host = "host1", .dc = "dc1"}).Add(Rate{1});
+    storage.Emplace({.host = "host1", .dc = "dc2"}).Add(Rate{2});
+    storage.Emplace({.host = "host2", .dc = "dc1"}).Add(Rate{3});
 
-    auto* p11 = storage.GetIfExists({"host1", "dc1"});
-    auto* p12 = storage.GetIfExists({"host1", "dc2"});
-    auto* p21 = storage.GetIfExists({"host2", "dc1"});
-    auto* p22 = storage.GetIfExists({"host2", "dc2"});
+    auto* p11 = storage.GetIfExists({.host = "host1", .dc = "dc1"});
+    auto* p12 = storage.GetIfExists({.host = "host1", .dc = "dc2"});
+    auto* p21 = storage.GetIfExists({.host = "host2", .dc = "dc1"});
+    auto* p22 = storage.GetIfExists({.host = "host2", .dc = "dc2"});
 
     ASSERT_NE(p11, nullptr);
     ASSERT_NE(p12, nullptr);
@@ -179,9 +208,9 @@ UTEST(MonotonicByLabelStorage, GetIfExistsDistinguishesDifferentLabels) {
 
 UTEST(MonotonicByLabelStorage, VisitAllVisitsAllEntries) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    storage.Emplace({"a"}).Add(Rate{1});
-    storage.Emplace({"b"}).Add(Rate{2});
-    storage.Emplace({"c"}).Add(Rate{3});
+    storage.Emplace({.name = "a"}).Add(Rate{1});
+    storage.Emplace({.name = "b"}).Add(Rate{2});
+    storage.Emplace({.name = "c"}).Add(Rate{3});
 
     std::vector<Rate> visited_rates;
     storage.VisitAll([&visited_rates](const SingleLabel& /*labels*/, const auto& metric) {
@@ -192,8 +221,8 @@ UTEST(MonotonicByLabelStorage, VisitAllVisitsAllEntries) {
 
 UTEST(MonotonicByLabelStorage, VisitAllProvidesCorrectLabelValues) {
     utils::statistics::MonotonicByLabelStorage<TwoLabels, RateCounter> storage;
-    storage.Emplace({"h1", "d1"}).Add(Rate{10});
-    storage.Emplace({"h2", "d2"}).Add(Rate{20});
+    storage.Emplace({.host = "h1", .dc = "d1"}).Add(Rate{10});
+    storage.Emplace({.host = "h2", .dc = "d2"}).Add(Rate{20});
 
     std::vector<std::pair<std::string, std::string>> all_labels;
     storage.VisitAll([&all_labels](const TwoLabels& labels, const auto& /*metric*/) {
@@ -206,7 +235,7 @@ UTEST(MonotonicByLabelStorage, VisitAllProvidesCorrectLabelValues) {
 
 UTEST(MonotonicByLabelStorage, DumpMetricSingleLabel) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    storage.Emplace({"myval"}).Add(Rate{7});
+    storage.Emplace({.name = "myval"}).Add(Rate{7});
 
     // Field name is "name" (from pfr), value is "myval", metric value is 7.
     const auto snapshot = MakeSnapshot(storage);
@@ -215,7 +244,7 @@ UTEST(MonotonicByLabelStorage, DumpMetricSingleLabel) {
 
 UTEST(MonotonicByLabelStorage, DumpMetricTwoLabels) {
     utils::statistics::MonotonicByLabelStorage<TwoLabels, RateCounter> storage;
-    storage.Emplace({"srv01", "eu-west"}).Add(Rate{42});
+    storage.Emplace({.host = "srv01", .dc = "eu-west"}).Add(Rate{42});
 
     const auto snapshot = MakeSnapshot(storage);
     EXPECT_EQ(snapshot.SingleMetric("", {{"host", "srv01"}, {"dc", "eu-west"}}), Rate{42});
@@ -223,7 +252,7 @@ UTEST(MonotonicByLabelStorage, DumpMetricTwoLabels) {
 
 UTEST(MonotonicByLabelStorage, DumpMetricThreeLabels) {
     utils::statistics::MonotonicByLabelStorage<ThreeLabels, RateCounter> storage;
-    storage.Emplace({"us", "us-east-1a", "rack3"}).Add(Rate{5});
+    storage.Emplace({.region = "us", .zone = "us-east-1a", .rack = "rack3"}).Add(Rate{5});
 
     const auto snapshot = MakeSnapshot(storage);
     EXPECT_EQ(snapshot.SingleMetric("", {{"region", "us"}, {"zone", "us-east-1a"}, {"rack", "rack3"}}), Rate{5});
@@ -231,8 +260,8 @@ UTEST(MonotonicByLabelStorage, DumpMetricThreeLabels) {
 
 UTEST(MonotonicByLabelStorage, DumpMetricMultipleEntries) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    storage.Emplace({"alpha"}).Add(Rate{1});
-    storage.Emplace({"beta"}).Add(Rate{2});
+    storage.Emplace({.name = "alpha"}).Add(Rate{1});
+    storage.Emplace({.name = "beta"}).Add(Rate{2});
 
     const auto snapshot = MakeSnapshot(storage);
     EXPECT_EQ(snapshot.SingleMetric("", {{"name", "alpha"}}), Rate{1});
@@ -247,7 +276,7 @@ UTEST(MonotonicByLabelStorage, DumpMetricEmptyStorageProducesNoMetrics) {
 
 UTEST(MonotonicByLabelStorage, CompositeMetricEmplaceAndDumpMetric) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, CompositeMetric> storage;
-    auto& m = storage.Emplace({"svc"});
+    auto& m = storage.Emplace({.name = "svc"});
     m.requests.Add(Rate{3});
     m.errors.store(1);
 
@@ -258,15 +287,15 @@ UTEST(MonotonicByLabelStorage, CompositeMetricEmplaceAndDumpMetric) {
 
 UTEST(MonotonicByLabelStorage, ResetMetricResetsAllEntries) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    storage.Emplace({"a"}).Add(Rate{10});
-    storage.Emplace({"b"}).Add(Rate{20});
-    storage.Emplace({"c"}).Add(Rate{30});
+    storage.Emplace({.name = "a"}).Add(Rate{10});
+    storage.Emplace({.name = "b"}).Add(Rate{20});
+    storage.Emplace({.name = "c"}).Add(Rate{30});
 
     ResetMetric(storage);
 
-    auto* pa = storage.GetIfExists({"a"});
-    auto* pb = storage.GetIfExists({"b"});
-    auto* pc = storage.GetIfExists({"c"});
+    auto* pa = storage.GetIfExists({.name = "a"});
+    auto* pb = storage.GetIfExists({.name = "b"});
+    auto* pc = storage.GetIfExists({.name = "c"});
     ASSERT_NE(pa, nullptr);
     ASSERT_NE(pb, nullptr);
     ASSERT_NE(pc, nullptr);
@@ -277,12 +306,12 @@ UTEST(MonotonicByLabelStorage, ResetMetricResetsAllEntries) {
 
 UTEST(MonotonicByLabelStorage, ResetMetricDoesNotRemoveEntries) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    storage.Emplace({"x"}).Add(Rate{99});
+    storage.Emplace({.name = "x"}).Add(Rate{99});
 
     ResetMetric(storage);
 
     // Entry must still be findable after reset.
-    auto* found = storage.GetIfExists({"x"});
+    auto* found = storage.GetIfExists({.name = "x"});
     ASSERT_NE(found, nullptr);
     EXPECT_EQ(found->Load(), Rate{0});
 }
@@ -302,7 +331,7 @@ UTEST(MonotonicByLabelStorage, ManyEntriesTriggersRehashing) {
 
     for (int i = 0; i < kCount; ++i) {
         const std::string s = std::to_string(i);
-        RateCounter& entry = storage.Emplace({s});
+        RateCounter& entry = storage.Emplace({.name = s});
         entry.Add(Rate{static_cast<std::uint64_t>(i)});
         entry_references.push_back(utils::NotNull<RateCounter*>{&entry});
     }
@@ -310,7 +339,7 @@ UTEST(MonotonicByLabelStorage, ManyEntriesTriggersRehashing) {
     // All entries must be findable after rehashing, and references must be stable.
     for (int i = 0; i < kCount; ++i) {
         const std::string s = std::to_string(i);
-        auto* found = storage.GetIfExists({s});
+        auto* found = storage.GetIfExists({.name = s});
         ASSERT_NE(found, nullptr) << "Missing entry for i=" << i;
         EXPECT_EQ(found, entry_references[i].GetBase()) << "Reference unstable for i=" << i;
         EXPECT_EQ(found->Load(), Rate{static_cast<std::uint64_t>(i)});
@@ -322,38 +351,38 @@ UTEST(MonotonicByLabelStorage, LabelValuesAreOwnedAfterEmplace) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
     {
         std::string ephemeral = "temporary_label_value";
-        storage.Emplace({ephemeral}).Add(Rate{123});
+        storage.Emplace({.name = ephemeral}).Add(Rate{123});
         // ephemeral goes out of scope here.
     }
     // The storage must still find the entry by a fresh string_view.
-    auto* found = storage.GetIfExists({"temporary_label_value"});
+    auto* found = storage.GetIfExists({.name = "temporary_label_value"});
     ASSERT_NE(found, nullptr);
     EXPECT_EQ(found->Load(), Rate{123});
 }
 
 UTEST(MonotonicByLabelStorage, EmptyStringLabelValue) {
     utils::statistics::MonotonicByLabelStorage<SingleLabel, RateCounter> storage;
-    storage.Emplace({""}).Add(Rate{1});
-    auto* found = storage.GetIfExists({""});
+    storage.Emplace({.name = ""}).Add(Rate{1});
+    auto* found = storage.GetIfExists({.name = ""});
     ASSERT_NE(found, nullptr);
     EXPECT_EQ(found->Load(), Rate{1});
-    EXPECT_EQ(storage.GetIfExists({"nonempty"}), nullptr);
+    EXPECT_EQ(storage.GetIfExists({.name = "nonempty"}), nullptr);
 }
 
 UTEST(MonotonicByLabelStorage, TwoLabelsEmptyVsNonEmpty) {
     utils::statistics::MonotonicByLabelStorage<TwoLabels, RateCounter> storage;
-    storage.Emplace({"", "dc"}).Add(Rate{1});
-    storage.Emplace({"host", ""}).Add(Rate{2});
-    storage.Emplace({"", ""}).Add(Rate{3});
+    storage.Emplace({.host = "", .dc = "dc"}).Add(Rate{1});
+    storage.Emplace({.host = "host", .dc = ""}).Add(Rate{2});
+    storage.Emplace({.host = "", .dc = ""}).Add(Rate{3});
 
-    EXPECT_NE(nullptr, storage.GetIfExists({"", "dc"}));
-    EXPECT_NE(nullptr, storage.GetIfExists({"host", ""}));
-    EXPECT_NE(nullptr, storage.GetIfExists({"", ""}));
-    EXPECT_EQ(nullptr, storage.GetIfExists({"host", "dc"}));
+    EXPECT_NE(nullptr, storage.GetIfExists({.host = "", .dc = "dc"}));
+    EXPECT_NE(nullptr, storage.GetIfExists({.host = "host", .dc = ""}));
+    EXPECT_NE(nullptr, storage.GetIfExists({.host = "", .dc = ""}));
+    EXPECT_EQ(nullptr, storage.GetIfExists({.host = "host", .dc = "dc"}));
 
-    EXPECT_EQ(storage.GetIfExists({"", "dc"})->Load(), Rate{1});
-    EXPECT_EQ(storage.GetIfExists({"host", ""})->Load(), Rate{2});
-    EXPECT_EQ(storage.GetIfExists({"", ""})->Load(), Rate{3});
+    EXPECT_EQ(storage.GetIfExists({.host = "", .dc = "dc"})->Load(), Rate{1});
+    EXPECT_EQ(storage.GetIfExists({.host = "host", .dc = ""})->Load(), Rate{2});
+    EXPECT_EQ(storage.GetIfExists({.host = "", .dc = ""})->Load(), Rate{3});
 }
 
 /// [by_label_storage labels struct]
@@ -379,13 +408,64 @@ UTEST(MonotonicByLabelStorage, SnippetUsage) {
 
     /// [by_label_storage emplace]
     auto& storage = metrics_storage.GetMetric(kRequestsMetric);
-    storage.Emplace({{"frontend"}, "ok"}).Increment();
-    storage.Emplace({{"backend"}, "error"}).Add(utils::statistics::Rate{3});
+    ++storage[{.source = "frontend"}];
+    storage[{.source = "backend", .status = "error"}].Add(utils::statistics::Rate{3});
     /// [by_label_storage emplace]
 
     const auto snapshot = MakeSnapshot(storage);
     EXPECT_EQ(snapshot.SingleMetric("", {{"source", "frontend"}, {"status", "ok"}}), Rate{1});
     EXPECT_EQ(snapshot.SingleMetric("", {{"source", "backend"}, {"status", "error"}}), Rate{3});
+}
+
+namespace {
+
+/// [composite metric structs]
+struct EndpointMetrics {
+    RateCounter requests;
+    RateCounter errors;
+};
+
+[[maybe_unused]] void DumpMetric(utils::statistics::Writer& writer, const EndpointMetrics& m) {
+    writer["requests"] = m.requests;
+    writer["errors"] = m.errors;
+}
+/// [composite metric structs]
+
+}  // namespace
+
+/// [composite metric labels]
+struct EndpointLabels {
+    utils::Required<std::string_view> endpoint;
+};
+/// [composite metric labels]
+
+namespace {
+
+/// [composite metric tag]
+// Needs to be `inline` if defined in a header.
+const utils::statistics::MetricTag<utils::statistics::MonotonicByLabelStorage<EndpointLabels, EndpointMetrics>>
+    kEndpointMetric{"my-service.endpoints"};
+/// [composite metric tag]
+
+}  // namespace
+
+UTEST(MonotonicByLabelStorage, SnippetCompositeMetricUsage) {
+    utils::statistics::MetricsStorage metrics_storage;
+
+    /// [composite metric usage]
+    auto& storage = metrics_storage.GetMetric(kEndpointMetric);
+    auto& search = storage[{.endpoint = "/search"}];
+    ++search.requests;
+    auto& order = storage[{.endpoint = "/order"}];
+    ++order.requests;
+    ++order.errors;
+    /// [composite metric usage]
+
+    const auto snapshot = MakeSnapshot(storage);
+    EXPECT_EQ(snapshot.SingleMetric("requests", {{"endpoint", "/search"}}), Rate{1});
+    EXPECT_EQ(snapshot.SingleMetric("errors", {{"endpoint", "/search"}}), Rate{0});
+    EXPECT_EQ(snapshot.SingleMetric("requests", {{"endpoint", "/order"}}), Rate{1});
+    EXPECT_EQ(snapshot.SingleMetric("errors", {{"endpoint", "/order"}}), Rate{1});
 }
 
 USERVER_NAMESPACE_END

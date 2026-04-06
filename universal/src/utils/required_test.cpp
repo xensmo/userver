@@ -39,7 +39,7 @@ struct MyConfig {
 
 TEST(UtilsRequired, Sample) {
     /// [sample usage]
-    MyConfig cfg{{"my-service"}, {42}};
+    MyConfig cfg{.name = "my-service", .timeout = 42};
     EXPECT_EQ(*cfg.name, "my-service");
     EXPECT_EQ(*cfg.timeout, 42);
     /// [sample usage]
