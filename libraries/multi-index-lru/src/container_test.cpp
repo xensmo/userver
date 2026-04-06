@@ -231,7 +231,78 @@ UTEST_F(ProductsTest, ProductEviction) {
     EXPECT_EQ(cache.find<NameTag>("Mouse"), cache.end<NameTag>());
 }
 
-TEST(Snippet, SimpleUsage) {
+class ProductsTestWithAllocator : public ProductsTest {
+protected:
+    class Counter {
+    public:
+        static std::atomic<size_t> count;
+        static void increment() { count++; }
+        static size_t get() { return count.load(); }
+        static void reset() { count = 0; }
+    };
+
+    template <typename T>
+    class CountingAllocator : public std::allocator<T> {
+    public:
+        CountingAllocator() = default;
+        template <typename U>
+        CountingAllocator(const CountingAllocator<U>&) {}
+
+        T* allocate(size_t n) {
+            Counter::increment();
+            return std::allocator<T>::allocate(n);
+        }
+
+        static size_t get_count() { return Counter::get(); }
+        static void reset_count() { Counter::reset(); }
+
+        template <typename U>
+        struct rebind {  // NOLINT(readability-identifier-naming)
+            using other = CountingAllocator<U>;
+        };
+    };
+
+    using ProductCache = multi_index_lru::Container<
+        Product,
+        boost::multi_index::indexed_by<
+            boost::multi_index::ordered_unique<
+                boost::multi_index::tag<SkuTag>,
+                boost::multi_index::member<Product, std::string, &Product::sku>>,
+            boost::multi_index::ordered_unique<
+                boost::multi_index::tag<NameTag>,
+                boost::multi_index::member<Product, std::string, &Product::name>>>,
+        CountingAllocator<Product>>;
+};
+
+std::atomic<size_t> ProductsTestWithAllocator::Counter::count{0};
+
+UTEST_F(ProductsTestWithAllocator, AllocationsCheck) {
+    ProductCache cache(20);
+
+    for (int i = 0; i < 1000; ++i) {
+        cache.insert(Product{"A" + std::to_string(i), "Laptop_" + std::to_string(i), 999.99});
+    }
+    const auto first_allocations_count = ProductsTestWithAllocator::CountingAllocator<int>::get_count();
+
+    cache.clear();
+    for (int i = 0; i < 1000; ++i) {
+        cache.insert(Product{"A" + std::to_string(i), "Laptop_" + std::to_string(i), 999.99});
+    }
+
+    // no extra allocations since nodes are being reused
+    EXPECT_EQ(first_allocations_count, ProductsTestWithAllocator::CountingAllocator<int>::get_count());
+
+    cache.insert(Product{"B_0", "C_0", 999.99});
+    cache.erase(cache.find<NameTag>("C_0"));
+    cache.insert(Product{"B_1", "C_1", 999.99});
+    cache.erase(cache.find<SkuTag>("B_1"));
+    cache.insert(Product{"B_2", "C_2", 999.99});
+
+    // no extra allocations since nodes are being reused
+    EXPECT_EQ(first_allocations_count, ProductsTestWithAllocator::CountingAllocator<int>::get_count());
+}
+
+UTEST(Snippet, SimpleUsage) {
     struct MyValueT {
         std::string key;
         int val;
