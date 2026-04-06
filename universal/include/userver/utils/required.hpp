@@ -4,6 +4,7 @@
 /// @brief @copybrief utils::Required
 
 #include <concepts>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -79,6 +80,19 @@ public:
 private:
     T value_;
 };
+
+/// @brief Convert `Required<T>` to `std::string_view` via ADL-found `ToStringView` on the inner value.
+///
+/// Participates in overload resolution only when `ToStringView(*req)` is valid.
+template <typename T>
+requires requires(const T& v) {
+    {
+        ToStringView(v)
+    } -> std::same_as<std::string_view>;
+}
+std::string_view ToStringView(const Required<T>& req) {
+    return ToStringView(*req);
+}
 
 }  // namespace utils
 

@@ -34,23 +34,45 @@ template <typename Metric>
 concept ResettableMetric = requires(Metric& m) { ResetMetric(m); };
 
 template <typename Field>
-concept StringViewCompatibleField =
-    std::constructible_from<Field, std::string_view> && std::constructible_from<std::string_view, const Field&>;
+std::string_view FieldToStringView(const Field& field) {
+    if constexpr (std::constructible_from<std::string_view, const Field&>) {
+        return std::string_view{field};
+    } else {
+        // ADL lookup.
+        return ToStringView(field);
+    }
+}
+
+template <typename Field>
+concept FieldConvertibleToStringView =
+    std::constructible_from<std::string_view, const Field&> || requires(const Field& f) {
+        {
+            ToStringView(f)
+        } -> std::same_as<std::string_view>;
+    };
+
+template <typename Field>
+concept FieldConstructibleFromStringView = std::constructible_from<Field, std::string_view>;
 
 template <typename Labels>
-concept AllFieldsAreStringViewCompatible = []<std::size_t... Is>(std::index_sequence<Is...>) {
-    return (StringViewCompatibleField<boost::pfr::tuple_element_t<Is, Labels>> && ...);
+concept AllFieldsConvertibleToStringView = []<std::size_t... Is>(std::index_sequence<Is...>) {
+    return (FieldConvertibleToStringView<boost::pfr::tuple_element_t<Is, Labels>> && ...);
 }(std::make_index_sequence<boost::pfr::tuple_size_v<Labels>>{});
 
 template <typename Labels>
-concept LabelsAggregate = std::is_aggregate_v<Labels> && AllFieldsAreStringViewCompatible<Labels>;
+concept AllFieldsConstructibleFromStringView = []<std::size_t... Is>(std::index_sequence<Is...>) {
+    return (FieldConstructibleFromStringView<boost::pfr::tuple_element_t<Is, Labels>> && ...);
+}(std::make_index_sequence<boost::pfr::tuple_size_v<Labels>>{});
+
+template <typename Labels>
+concept LabelsAggregate = std::is_aggregate_v<Labels> && AllFieldsConvertibleToStringView<Labels>;
 
 template <typename Labels>
 auto LabelsStructToViewArray(const Labels& labels) {
     constexpr std::size_t kN = boost::pfr::tuple_size_v<Labels>;
     std::array<std::string_view, kN> result{};
     boost::pfr::for_each_field(labels, [&result](const auto& field, std::size_t i) {
-        result[i] = std::string_view{field};
+        result[i] = FieldToStringView(field);
     });
     return result;
 }
@@ -157,10 +179,13 @@ struct ByLabelEntryEqual {
 ///
 /// See @ref scripts/docs/en/userver/metrics.md .
 ///
-/// `Labels` must be an aggregate type where all fields are interconvertible
-/// with `std::string_view`, i.e. constructible from `std::string_view` and
-/// convertible to `std::string_view`. This includes `std::string_view` itself,
-/// `utils::Required<std::string_view>`, `std::string`, @ref utils::StrongTypedef, etc.
+/// `Labels` must be an aggregate type where all fields are convertible to `std::string_view`, by at least one of:
+///
+/// * a (possibly `explicit`) conversion operator to `std::string_view`;
+/// * an ADL-found `std::string_view ToStringView(const Field&)` function.
+///
+/// This includes `std::string_view` itself, `utils::Required<std::string_view>`,
+/// `std::string`, @ref utils::StrongTypedef, code-generated enums, etc.
 ///
 /// Label names are taken from `Labels` field names.
 ///
@@ -203,7 +228,19 @@ struct ByLabelEntryEqual {
 /// `MonotonicByLabelStorage` is also composable the other way around, it can be included in larger metric structures
 /// as a field.
 ///
-/// @tparam Labels An aggregate type with `std::string_view` fields.
+/// ## Usage of MonotonicByLabelStorage with enum labels
+///
+/// An enum can be used as a label as long as it has `ToStringView` defined. Usage example:
+///
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  enum label ToStringView
+///
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  enum label labels
+///
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  enum label metric tag
+///
+/// @snippet core/src/utils/statistics/by_label_storage_test.cpp  enum label usage
+///
+/// @tparam Labels An aggregate type whose fields are convertible to `std::string_view`.
 /// @tparam Metric The metric type. Must support `DumpMetric(Writer&, const Metric&)`.
 template <typename Labels, typename Metric>
 requires impl::LabelsAggregate<Labels> && impl::DumpableMetric<Metric>
@@ -249,8 +286,13 @@ public:
     }
 
     /// @brief Visit all stored metrics.
+    ///
+    /// Requires that all fields of `Labels` are constructible from `std::string_view`.
+    ///
     /// @param func Callable accepting `(const Labels&, const Metric&)`.
-    void VisitAll(std::invocable<const Labels&, const Metric&> auto func) const {
+    void VisitAll(std::invocable<const Labels&, const Metric&> auto func) const
+    requires impl::AllFieldsConstructibleFromStringView<Labels>
+    {
         set_.Visit([&func](const Entry& entry) { func(impl::LabelsArrayToStruct<Labels>(entry.labels), entry.metric); }
         );
     }

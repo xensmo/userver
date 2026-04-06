@@ -468,4 +468,51 @@ UTEST(MonotonicByLabelStorage, SnippetCompositeMetricUsage) {
     EXPECT_EQ(snapshot.SingleMetric("errors", {{"endpoint", "/order"}}), Rate{1});
 }
 
+namespace {
+
+/// [enum label ToStringView]
+enum class RequestType : std::uint8_t { kRead, kWrite };
+
+[[maybe_unused]] std::string_view ToStringView(RequestType type) {
+    switch (type) {
+        case RequestType::kRead:
+            return "read";
+        case RequestType::kWrite:
+            return "write";
+    }
+    UINVARIANT(false, "Unknown RequestType");
+}
+/// [enum label ToStringView]
+
+}  // namespace
+
+/// [enum label labels]
+struct TypedRequestLabels {
+    utils::Required<RequestType> type;
+};
+/// [enum label labels]
+
+namespace {
+
+/// [enum label metric tag]
+// Needs to be `inline` if defined in a header.
+const utils::statistics::MetricTag<
+    utils::statistics::MonotonicByLabelStorage<TypedRequestLabels, utils::statistics::RateCounter>>
+    kTypedRequestsMetric{"my-service.typed-requests"};
+/// [enum label metric tag]
+
+}  // namespace
+
+UTEST(MonotonicByLabelStorage, SnippetEnumLabelWithToStringView) {
+    utils::statistics::MetricsStorage metrics_storage;
+
+    /// [enum label usage]
+    auto& storage = metrics_storage.GetMetric(kTypedRequestsMetric);
+    ++storage[{.type = RequestType::kRead}];
+    /// [enum label usage]
+
+    const auto snapshot = MakeSnapshot(storage);
+    EXPECT_EQ(snapshot.SingleMetric("", {{"type", "read"}}), Rate{1});
+}
+
 USERVER_NAMESPACE_END
