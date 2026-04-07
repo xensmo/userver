@@ -240,7 +240,7 @@ bool IsHttp11WithCompleteBody(const std::shared_ptr<Response> response) {
 RequestState::RequestState(
     impl::EasyWrapper&& wrapper,
     RequestStats&& req_stats,
-    const std::shared_ptr<DestinationStatistics>& dest_stats,
+    DestinationStatistics& dest_stats,
     clients::dns::Resolver* resolver,
     const tracing::TracingManagerBase& tracing_manager
 )
@@ -420,7 +420,7 @@ void RequestState::SetDestinationMetricNameAuto(std::string destination) {
 }
 
 void RequestState::SetDestinationMetricName(const std::string& destination) {
-    dest_req_stats_ = dest_stats_->GetStatisticsForDestination(destination);
+    dest_req_stats_ = dest_stats_.GetStatisticsForDestination(destination);
 }
 
 void RequestState::SetTestsuiteConfig(const std::shared_ptr<const TestsuiteConfig>& config) {
@@ -1215,7 +1215,7 @@ void RequestState::StartNewSpan(utils::impl::SourceLocation location) {
 
 void RequestState::StartStats() {
     if (!dest_req_stats_) {
-        dest_req_stats_ = dest_stats_->GetStatisticsForDestinationAuto(destination_metric_name_);
+        dest_req_stats_ = dest_stats_.GetStatisticsForDestinationAuto(destination_metric_name_);
     }
 
     WithRequestStats([](RequestStats& stats) { stats.Start(); });

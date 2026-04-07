@@ -243,7 +243,7 @@ struct ByLabelEntryEqual {
 /// @tparam Labels An aggregate type whose fields are convertible to `std::string_view`.
 /// @tparam Metric The metric type. Must support `DumpMetric(Writer&, const Metric&)`.
 template <typename Labels, typename Metric>
-requires impl::LabelsAggregate<Labels> && impl::DumpableMetric<Metric>
+requires impl::LabelsAggregate<Labels>
 class MonotonicByLabelStorage final {
 public:
     /// @brief Create an empty storage.
@@ -298,7 +298,9 @@ public:
     }
 
     /// @brief Dump all metrics to a Writer, using label names from `Labels` fields.
-    friend void DumpMetric(Writer& writer, const MonotonicByLabelStorage& storage) {
+    friend void DumpMetric(Writer& writer, const MonotonicByLabelStorage& storage)
+    requires impl::DumpableMetric<Metric>
+    {
         static constexpr auto kLabelNames = impl::GetLabelNames<Labels>();
         static constexpr std::size_t kFieldCount = boost::pfr::tuple_size_v<Labels>;
 

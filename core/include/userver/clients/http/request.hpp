@@ -96,7 +96,7 @@ public:
     explicit Request(
         impl::EasyWrapper&&,
         RequestStats&& req_stats,
-        const std::shared_ptr<DestinationStatistics>& dest_stats,
+        DestinationStatistics& dest_stats,
         clients::dns::Resolver* resolver,
         const tracing::TracingManagerBase& tracing_manager
     );

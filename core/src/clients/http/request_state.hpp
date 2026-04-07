@@ -51,7 +51,7 @@ public:
     RequestState(
         impl::EasyWrapper&&,
         RequestStats&& req_stats,
-        const std::shared_ptr<DestinationStatistics>& dest_stats,
+        DestinationStatistics& dest_stats,
         clients::dns::Resolver* resolver,
         const tracing::TracingManagerBase& tracing_manager
     );
@@ -214,10 +214,10 @@ private:
     /// curl handler wrapper
     impl::EasyWrapper easy_;
     RequestStats stats_;
-    std::shared_ptr<RequestStats> dest_req_stats_;
+    std::optional<RequestStats> dest_req_stats_;
     CancellationPolicy cancellation_policy_{CancellationPolicy::kCancel};
 
-    std::shared_ptr<DestinationStatistics> dest_stats_;
+    DestinationStatistics& dest_stats_;
     std::string destination_metric_name_;
 
     std::shared_ptr<const TestsuiteConfig> testsuite_config_;

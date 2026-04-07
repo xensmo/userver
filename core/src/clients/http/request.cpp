@@ -204,7 +204,7 @@ ProxyAuthType ProxyAuthTypeFromString(std::string_view auth_name) {
 Request::Request(
     impl::EasyWrapper&& wrapper,
     RequestStats&& req_stats,
-    const std::shared_ptr<DestinationStatistics>& dest_stats,
+    DestinationStatistics& dest_stats,
     clients::dns::Resolver* resolver,
     const tracing::TracingManagerBase& tracing_manager
 )
