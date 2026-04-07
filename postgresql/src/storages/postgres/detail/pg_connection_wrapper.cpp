@@ -16,12 +16,6 @@ auto PQXsendQueryPrepared(PGconn* conn, const char* stmtName, int nParams, const
 }
 #endif
 
-#ifdef ARCADIA_ROOT
-#define USERVER_LIBPQ_VERSION PG_VERSION_NUM
-#else
-#include <userver_libpq_version.hpp>  // Y_IGNORE
-#endif
-
 #include <userver/concurrent/background_task_storage.hpp>
 #include <userver/crypto/openssl.hpp>
 #include <userver/engine/task/cancel.hpp>
@@ -32,6 +26,7 @@ auto PQXsendQueryPrepared(PGconn* conn, const char* stmtName, int nParams, const
 
 #include <storages/postgres/detail/cancel.hpp>
 #include <storages/postgres/detail/pg_message_severity.hpp>
+#include <storages/postgres/detail/pg_version.hpp>
 #include <storages/postgres/detail/tracing_tags.hpp>
 #include <userver/storages/postgres/dsn.hpp>
 #include <userver/storages/postgres/exceptions.hpp>
