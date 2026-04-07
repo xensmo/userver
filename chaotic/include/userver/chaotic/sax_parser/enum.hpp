@@ -57,20 +57,21 @@ private:
     formats::json::parser::Subscriber<IntEnum>* subscriber_{nullptr};
 };
 
-template <typename Enum, typename = void>
-struct IsStringEnum : std::false_type {};
-
 template <typename Enum>
-struct IsStringEnum<Enum, utils::void_t<decltype(Convert(std::string_view{}, chaotic::convert::To<Enum>{}))>>
-    : std::true_type {};
+concept IsStringEnum = requires { Convert(std::string_view{}, chaotic::convert::To<Enum>{}); };
 
 }  // namespace impl
 
 template <typename Enum>
-std::enable_if_t<
-    std::is_enum_v<Enum>,
-    std::conditional_t<impl::IsStringEnum<Enum>::value, impl::StringEnumParser<Enum>, impl::IntEnumParser<Enum>>>
-    ParserOf(Type<Enum>);
+requires std::is_enum_v<Enum>
+auto ParserOf(Type<Enum>)
+{
+    if constexpr (impl::IsStringEnum<Enum>) {
+        return impl::StringEnumParser<Enum>{};
+    } else {
+        return impl::IntEnumParser<Enum>{};
+    }
+}
 
 }  // namespace chaotic::sax
 
