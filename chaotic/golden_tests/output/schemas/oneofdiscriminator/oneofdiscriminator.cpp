@@ -7,7 +7,8 @@
 namespace ns {
 
 A FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<A>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<A, USERVER_NAMESPACE::chaotic::sax::Parser<A>>(json);
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      A, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<A>>>(json);
 }
 
 bool operator==(const A& lhs, const A& rhs) {
@@ -49,7 +50,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 }
 
 B FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<B>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<B, USERVER_NAMESPACE::chaotic::sax::Parser<B>>(json);
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      B, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<B>>>(json);
 }
 
 bool operator==(const B& lhs, const B& rhs) {
@@ -91,7 +93,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 }
 
 C FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<C>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<C, USERVER_NAMESPACE::chaotic::sax::Parser<C>>(json);
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      C, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<C>>>(json);
 }
 
 bool operator==(const C& lhs, const C& rhs) { return lhs.version == rhs.version && true; }
@@ -125,7 +128,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 }
 
 D FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<D>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<D, USERVER_NAMESPACE::chaotic::sax::Parser<D>>(json);
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      D, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<D>>>(json);
 }
 
 bool operator==(const D& lhs, const D& rhs) { return lhs.version == rhs.version && true; }
@@ -161,7 +165,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 IntegerOneOfDiscriminator FromJsonString(std::string_view json,
                                          USERVER_NAMESPACE::formats::parse::To<IntegerOneOfDiscriminator>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      IntegerOneOfDiscriminator, USERVER_NAMESPACE::chaotic::sax::Parser<IntegerOneOfDiscriminator>>(json);
+      IntegerOneOfDiscriminator, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                     USERVER_NAMESPACE::chaotic::sax::Parser<IntegerOneOfDiscriminator>>>(json);
 }
 
 bool operator==(const IntegerOneOfDiscriminator& lhs, const IntegerOneOfDiscriminator& rhs) {
@@ -201,7 +206,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 
 OneOfDiscriminator FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<OneOfDiscriminator>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      OneOfDiscriminator, USERVER_NAMESPACE::chaotic::sax::Parser<OneOfDiscriminator>>(json);
+      OneOfDiscriminator, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                              USERVER_NAMESPACE::chaotic::sax::Parser<OneOfDiscriminator>>>(json);
 }
 
 bool operator==(const OneOfDiscriminator& lhs, const OneOfDiscriminator& rhs) { return lhs.foo == rhs.foo && true; }

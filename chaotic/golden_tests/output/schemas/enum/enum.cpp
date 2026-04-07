@@ -7,7 +7,8 @@
 namespace ns {
 
 Enum FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Enum>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<Enum, USERVER_NAMESPACE::chaotic::sax::Parser<Enum>>(
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      Enum, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<Enum>>>(
       json);
 }
 

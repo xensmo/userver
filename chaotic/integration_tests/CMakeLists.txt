@@ -12,7 +12,7 @@ add_google_tests(${PROJECT_NAME})
 
 file(GLOB_RECURSE SCHEMAS ${CMAKE_CURRENT_SOURCE_DIR}/schemas/*.yaml)
 set(NON_SAX_SCHEMAS
-        ${CMAKE_CURRENT_SOURCE_DIR}/schemas/custom_cpp_type.yaml
+        ${CMAKE_CURRENT_SOURCE_DIR}/schemas/no_sax.yaml
 )
 list(REMOVE_ITEM SCHEMAS ${NON_SAX_SCHEMAS})
 

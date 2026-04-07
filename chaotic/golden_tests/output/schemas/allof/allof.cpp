@@ -7,7 +7,9 @@
 namespace ns {
 
 AllOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<AllOf>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<AllOf, USERVER_NAMESPACE::chaotic::sax::Parser<AllOf>>(
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      AllOf,
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<AllOf>>>(
       json);
 }
 

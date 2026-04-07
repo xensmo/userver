@@ -55,6 +55,19 @@ private:
     formats::json::parser::Subscriber<ResultType>* subscriber_{nullptr};
 };
 
+template <typename Parser>
+struct RemoveUserTypeParserImpl {
+    using type = Parser;
+};
+
+template <typename RawParser, typename UserType>
+struct RemoveUserTypeParserImpl<WithType<RawParser, UserType>> {
+    using type = RawParser;
+};
+
+template <typename Parser>
+using RemoveUserTypeParser = typename RemoveUserTypeParserImpl<Parser>::type;
+
 template <typename Parser, typename... Validator>
 class WithValidators final : private formats::json::parser::Subscriber<typename Parser::ResultType> {
 public:

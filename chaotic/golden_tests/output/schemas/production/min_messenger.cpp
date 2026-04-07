@@ -7,9 +7,9 @@
 namespace ns {
 
 V1CurrentUser FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1CurrentUser>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<V1CurrentUser,
-                                                               USERVER_NAMESPACE::chaotic::sax::Parser<V1CurrentUser>>(
-      json);
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      V1CurrentUser, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                         USERVER_NAMESPACE::chaotic::sax::Parser<V1CurrentUser>>>(json);
 }
 
 bool operator==(const V1CurrentUser& lhs, const V1CurrentUser& rhs) {
@@ -56,7 +56,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 
 V1ChannelMessage FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessage>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelMessage, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessage>>(json);
+      V1ChannelMessage, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                            USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessage>>>(json);
 }
 
 bool operator==(const V1ChannelMessage& lhs, const V1ChannelMessage& rhs) {
@@ -104,8 +105,9 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1ChannelMessageByTimestampRequest FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelMessageByTimestampRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageByTimestampRequest>>(
-      json);
+      V1ChannelMessageByTimestampRequest,
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+          USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageByTimestampRequest>>>(json);
 }
 
 bool operator==(const V1ChannelMessageByTimestampRequest& lhs, const V1ChannelMessageByTimestampRequest& rhs) {
@@ -152,7 +154,8 @@ V1ChannelMessageByTimestampResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelMessageByTimestampResponse,
-      USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageByTimestampResponse>>(json);
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+          USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageByTimestampResponse>>>(json);
 }
 
 bool operator==(const V1ChannelMessageByTimestampResponse& lhs, const V1ChannelMessageByTimestampResponse& rhs) {
@@ -196,7 +199,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1ChannelMessageNewRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelMessageNewRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageNewRequest>>(json);
+      V1ChannelMessageNewRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                      USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageNewRequest>>>(json);
 }
 
 bool operator==(const V1ChannelMessageNewRequest& lhs, const V1ChannelMessageNewRequest& rhs) {
@@ -241,7 +245,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1ChannelMessageNewResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelMessageNewResponse, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageNewResponse>>(json);
+      V1ChannelMessageNewResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                       USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageNewResponse>>>(json);
 }
 
 bool operator==(const V1ChannelMessageNewResponse& lhs, const V1ChannelMessageNewResponse& rhs) {
@@ -281,7 +286,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1ChannelNotificationListRequest FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelNotificationListRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationListRequest>>(
+      V1ChannelNotificationListRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                            USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationListRequest>>>(
       json);
 }
 
@@ -324,8 +330,9 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1ChannelNotificationListResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelNotificationListResponse, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationListResponse>>(
-      json);
+      V1ChannelNotificationListResponse,
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+          USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationListResponse>>>(json);
 }
 
 bool operator==(const V1ChannelNotificationListResponse& lhs, const V1ChannelNotificationListResponse& rhs) {
@@ -367,7 +374,9 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1ChannelNotificationNewRequest FromJsonString(std::string_view json,
                                                USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelNotificationNewRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationNewRequest>>(json);
+      V1ChannelNotificationNewRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                           USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationNewRequest>>>(
+      json);
 }
 
 bool operator==(const V1ChannelNotificationNewRequest& lhs, const V1ChannelNotificationNewRequest& rhs) {
@@ -418,7 +427,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1ChannelNotificationNewResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1ChannelNotificationNewResponse, USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationNewResponse>>(
+      V1ChannelNotificationNewResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                            USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationNewResponse>>>(
       json);
 }
 
@@ -460,8 +470,10 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 }
 
 V1Error FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1Error>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<V1Error,
-                                                               USERVER_NAMESPACE::chaotic::sax::Parser<V1Error>>(json);
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      V1Error,
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<V1Error>>>(
+      json);
 }
 
 bool operator==(const V1Error::Details& lhs, const V1Error::Details& rhs) {
@@ -540,7 +552,9 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 }
 
 V1File FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1File>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<V1File, USERVER_NAMESPACE::chaotic::sax::Parser<V1File>>(
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      V1File,
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<V1File>>>(
       json);
 }
 
@@ -582,7 +596,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 
 V1FileByUriRequest FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1FileByUriRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1FileByUriRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1FileByUriRequest>>(json);
+      V1FileByUriRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                              USERVER_NAMESPACE::chaotic::sax::Parser<V1FileByUriRequest>>>(json);
 }
 
 bool operator==(const V1FileByUriRequest& lhs, const V1FileByUriRequest& rhs) {
@@ -623,7 +638,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 
 V1FileNewResponse FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1FileNewResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1FileNewResponse, USERVER_NAMESPACE::chaotic::sax::Parser<V1FileNewResponse>>(json);
+      V1FileNewResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                             USERVER_NAMESPACE::chaotic::sax::Parser<V1FileNewResponse>>>(json);
 }
 
 bool operator==(const V1FileNewResponse& lhs, const V1FileNewResponse& rhs) {
@@ -665,7 +681,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1LikeTriggerRequest FromJsonString(std::string_view json,
                                     USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1LikeTriggerRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1LikeTriggerRequest>>(json);
+      V1LikeTriggerRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                USERVER_NAMESPACE::chaotic::sax::Parser<V1LikeTriggerRequest>>>(json);
 }
 
 bool operator==(const V1LikeTriggerRequest& lhs, const V1LikeTriggerRequest& rhs) {
@@ -770,7 +787,8 @@ std::string ToString(V1LikeTriggerRequest::Animation value) {
 V1UserAuthorizationRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserAuthorizationRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1UserAuthorizationRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1UserAuthorizationRequest>>(json);
+      V1UserAuthorizationRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                      USERVER_NAMESPACE::chaotic::sax::Parser<V1UserAuthorizationRequest>>>(json);
 }
 
 bool operator==(const V1UserAuthorizationRequest& lhs, const V1UserAuthorizationRequest& rhs) {
@@ -814,7 +832,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1UserAuthorizationResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1UserAuthorizationResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1UserAuthorizationResponse, USERVER_NAMESPACE::chaotic::sax::Parser<V1UserAuthorizationResponse>>(json);
+      V1UserAuthorizationResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                       USERVER_NAMESPACE::chaotic::sax::Parser<V1UserAuthorizationResponse>>>(json);
 }
 
 bool operator==(const V1UserAuthorizationResponse& lhs, const V1UserAuthorizationResponse& rhs) {
@@ -854,7 +873,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1UserRegistrationRequest FromJsonString(std::string_view json,
                                          USERVER_NAMESPACE::formats::parse::To<V1UserRegistrationRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1UserRegistrationRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1UserRegistrationRequest>>(json);
+      V1UserRegistrationRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                     USERVER_NAMESPACE::chaotic::sax::Parser<V1UserRegistrationRequest>>>(json);
 }
 
 bool operator==(const V1UserRegistrationRequest& lhs, const V1UserRegistrationRequest& rhs) {
@@ -905,9 +925,9 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 }
 
 V1UserStatus FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1UserStatus>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<V1UserStatus,
-                                                               USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatus>>(
-      json);
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      V1UserStatus, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                        USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatus>>>(json);
 }
 
 bool operator==(const V1UserStatus& lhs, const V1UserStatus& rhs) {
@@ -951,7 +971,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1UserStatusByLoginRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1UserStatusByLoginRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusByLoginRequest>>(json);
+      V1UserStatusByLoginRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                      USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusByLoginRequest>>>(json);
 }
 
 bool operator==(const V1UserStatusByLoginRequest& lhs, const V1UserStatusByLoginRequest& rhs) {
@@ -994,7 +1015,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1UserStatusByLoginResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1UserStatusByLoginResponse, USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusByLoginResponse>>(json);
+      V1UserStatusByLoginResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                       USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusByLoginResponse>>>(json);
 }
 
 bool operator==(const V1UserStatusByLoginResponse& lhs, const V1UserStatusByLoginResponse& rhs) {
@@ -1034,7 +1056,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1UserStatusUpdateRequest FromJsonString(std::string_view json,
                                          USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1UserStatusUpdateRequest, USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusUpdateRequest>>(json);
+      V1UserStatusUpdateRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                     USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusUpdateRequest>>>(json);
 }
 
 bool operator==(const V1UserStatusUpdateRequest& lhs, const V1UserStatusUpdateRequest& rhs) {
@@ -1076,7 +1099,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 V1UserStatusUpdateResponse FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
-      V1UserStatusUpdateResponse, USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusUpdateResponse>>(json);
+      V1UserStatusUpdateResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                      USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusUpdateResponse>>>(json);
 }
 
 bool operator==(const V1UserStatusUpdateResponse& lhs, const V1UserStatusUpdateResponse& rhs) {

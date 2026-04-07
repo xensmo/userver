@@ -7,7 +7,9 @@
 namespace ns {
 
 OneOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<OneOf>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<OneOf, USERVER_NAMESPACE::chaotic::sax::Parser<OneOf>>(
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      OneOf,
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<OneOf>>>(
       json);
 }
 

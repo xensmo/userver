@@ -40,8 +40,10 @@
         {
           {% if generate_sax_parser %}
               return {{ userver }}::formats::json::parser::ParseToType<
-                               {{ shortest_cpp_name(type) }},
-                               {{ userver }}::chaotic::sax::Parser<{{ shortest_cpp_name(type) }}>
+                   {{ shortest_cpp_name(type) }},
+                   {{ userver }}::chaotic::sax::impl::RemoveUserTypeParser<
+                       {{ userver }}::chaotic::sax::Parser<{{ shortest_cpp_name(type) }}>
+                   >
               >(json);
           {% else %}
               return {{ userver }}::formats::json::FromString(json).As<{{ shortest_cpp_name(type) }}>();

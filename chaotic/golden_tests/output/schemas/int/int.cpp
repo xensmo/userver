@@ -7,7 +7,8 @@
 namespace ns {
 
 Int FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Int>) {
-  return USERVER_NAMESPACE::formats::json::parser::ParseToType<Int, USERVER_NAMESPACE::chaotic::sax::Parser<Int> >(
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      Int, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<Int> > >(
       json);
 }
 
