@@ -1,5 +1,6 @@
 #include <storages/postgres/tests/util_pgtest.hpp>
 #include <userver/engine/async.hpp>
+#include <userver/engine/single_consumer_event.hpp>
 #include <userver/engine/sleep.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -52,6 +53,40 @@ UTEST_P(PostgreConnection, Cancel) {
     ASSERT_TRUE(conn->IsIdle()) << "connection must be in idle state";
 
     ASSERT_NO_THROW(conn->Execute("select 1", /*query_params*/ {}, cmd_ctrl)) << "connection must be usable";
+}
+
+void CleanupConnectionTest(storages::postgres::detail::ConnectionPtr& conn, bool use_cancel) {
+    EXPECT_EQ(pg::ConnectionState::kIdle, conn->GetState());
+
+    const DefaultCommandControlScope scope(pg::CommandControl{utest::kMaxTestWaitTime, utest::kMaxTestWaitTime});
+
+    engine::SingleConsumerEvent task_started;
+    auto task = engine::AsyncNoSpan([&] {
+        task_started.Send();
+        UEXPECT_THROW(conn->Execute("select pg_sleep(1)"), pg::ConnectionInterrupted);
+    });
+    ASSERT_TRUE(task_started.WaitForEventFor(utest::kMaxTestWaitTime));
+    task.RequestCancel();
+    task.WaitFor(utest::kMaxTestWaitTime);
+    ASSERT_TRUE(task.IsFinished());
+
+    EXPECT_EQ(pg::ConnectionState::kTranActive, conn->GetState());
+    if (use_cancel) {
+        UEXPECT_NO_THROW(conn->CancelAndCleanup(utest::kMaxTestWaitTime));
+    } else {
+        UEXPECT_NO_THROW(conn->Cleanup(std::chrono::seconds{2}));
+    }
+    EXPECT_EQ(pg::ConnectionState::kIdle, conn->GetState());
+}
+
+UTEST_P(PostgreConnection, QueryTaskCancelAndCleanup) {
+    CheckConnection(GetConn());
+    CleanupConnectionTest(GetConn(), /*use cancel=*/true);
+}
+
+UTEST_P(PostgreConnection, QueryTaskCleanup) {
+    CheckConnection(GetConn());
+    CleanupConnectionTest(GetConn(), /*use cancel=*/false);
 }
 
 }  // namespace
