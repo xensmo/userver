@@ -56,6 +56,19 @@ private:
 struct Diff final {
     std::optional<Snapshot> previous;
     Snapshot current;
+
+    template <typename... Keys>
+    bool HasConfigsChanged(const Keys&... keys) const {
+        if (!previous) {
+            return true;
+        }
+
+        UASSERT(!current.GetData().IsEmpty());
+        UASSERT(!previous->GetData().IsEmpty());
+
+        const bool is_equal = (true && ... && ((*previous)[keys] == current[keys]));
+        return !is_equal;
+    }
 };
 
 // clang-format off
@@ -205,7 +218,7 @@ public:
         const Keys&... keys
     ) {
         auto wrapper = [obj, func, &keys...](const Diff& diff) {
-            if (!HasChanged(diff, keys...)) {
+            if (!diff.HasConfigsChanged(keys...)) {
                 return;
             }
             (obj->*func)(diff.current);
@@ -216,22 +229,6 @@ public:
     SnapshotEventSource& GetEventChannel();
 
 private:
-    template <typename... Keys>
-    static bool HasChanged(const Diff& diff, const Keys&... keys) {
-        if (!diff.previous) {
-            return true;
-        }
-
-        const auto& previous = *diff.previous;
-        const auto& current = diff.current;
-
-        UASSERT(!current.GetData().IsEmpty());
-        UASSERT(!previous.GetData().IsEmpty());
-
-        const bool is_equal = (true && ... && (previous[keys] == current[keys]));
-        return !is_equal;
-    }
-
     concurrent::AsyncEventSubscriberScope DoUpdateAndListen(
         concurrent::FunctionId id,
         std::string_view name,

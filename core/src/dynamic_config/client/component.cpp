@@ -101,7 +101,7 @@ DynamicConfigClient::DynamicConfigClient(const ComponentConfig& config, const Co
     }
 
     config_client_ = std::make_unique<dynamic_config::Client>(
-        context.FindComponent<HttpClient>(config["http-client"].As<std::string>("dynamic-config-http-client"))
+        context.FindComponent<HttpClient>(config["http-client"].As<std::string>(HttpClient::kDynamicConfigClientName))
             .GetHttpClient(),
         client_config
     );

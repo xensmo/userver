@@ -157,6 +157,7 @@ private:
     // for the constructor
     friend class Source;
     friend class impl::StorageData;
+    friend struct Diff;
 
     explicit Snapshot(const impl::StorageData& storage);
 
