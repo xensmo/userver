@@ -83,6 +83,7 @@ Checks:
   ,-modernize-return-braced-init-list\
   ,-modernize-use-designated-initializers\
   ,-modernize-use-nodiscard\
+  ,-modernize-use-starts-ends-with\
   ,-modernize-use-trailing-return-type\
   ,-performance-move-const-arg\
   ,-performance-no-int-to-ptr\
