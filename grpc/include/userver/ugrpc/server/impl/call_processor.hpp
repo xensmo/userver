@@ -66,7 +66,7 @@ void UnpackResult(StreamingResult<Response>&& result, std::optional<Response>& r
 }
 
 template <typename CallTraits>
-bool Finish(
+[[nodiscard]] bool Finish(
     impl::Responder<CallTraits>& responder,
     const std::optional<typename CallTraits::Response>& response,
     grpc::Status& status
@@ -85,6 +85,12 @@ bool Finish(
     } else {
         return responder.FinishWithError(status);
     }
+}
+
+template <typename CallTraits>
+void FinishInterrupted(impl::Responder<CallTraits>& responder) {
+    grpc::Status status{grpc::Status::CANCELLED};
+    [[maybe_unused]] const bool ok = responder.FinishWithError(status);
 }
 
 template <typename CallTraits>
@@ -137,8 +143,11 @@ public:
         if (!engine::current_task::ShouldCancel() && !responder_.IsInterrupted()) {
             RunPreFinishHooks(response);
             finished = impl::Finish(responder_, response, status_);
-            scope_time.Reset("post_finish");
+        } else {
+            impl::FinishInterrupted(responder_);
         }
+
+        scope_time.Reset("post_finish");
 
         if (finished) {
             impl::ReportFinished(status_, state_);
