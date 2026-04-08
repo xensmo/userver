@@ -3,6 +3,7 @@
 #include <userver/multi-index-lru/expirable_container.hpp>
 #include <userver/utest/utest.hpp>
 #include <userver/utils/async.hpp>
+#include <userver/utils/mock_now.hpp>
 
 #include <mutex>
 #include <string>
@@ -109,6 +110,7 @@ UTEST_F(ExpirableUsersTest, LRUEviction) {
 
 UTEST_F(ExpirableUsersTest, TTLExpiration) {
     using namespace std::chrono_literals;
+    utils::datetime::MockNowSet(std::chrono::system_clock::now());
 
     UserCacheExpirable cache(100, 100ms);  // Very short TTL for testing
 
@@ -121,7 +123,7 @@ UTEST_F(ExpirableUsersTest, TTLExpiration) {
     EXPECT_EQ(cache.size(), 2);
 
     // Wait for TTL to expire
-    engine::SleepFor(150ms);
+    utils::datetime::MockSleep(150ms);
 
     EXPECT_EQ(cache.find<IdTag>(1), cache.end<IdTag>());
     EXPECT_EQ(cache.find<IdTag>(2), cache.end<IdTag>());
@@ -130,23 +132,24 @@ UTEST_F(ExpirableUsersTest, TTLExpiration) {
 
 UTEST_F(ExpirableUsersTest, TTLRefreshOnAccess) {
     using namespace std::chrono_literals;
+    utils::datetime::MockNowSet(std::chrono::system_clock::now());
 
     UserCacheExpirable cache(100, 190ms);
 
     cache.insert(User{1, "alice@test.com", "Alice"});
 
     // Wait a bit but not enough to expire
-    engine::SleepFor(99ms);
+    utils::datetime::MockSleep(99ms);
 
     // Access via find should refresh TTL
     EXPECT_NE(cache.find<IdTag>(1), cache.end<IdTag>());
 
     // Wait again - should still be alive due to refresh
-    engine::SleepFor(99ms);
+    utils::datetime::MockSleep(99ms);
     EXPECT_NE(cache.find<IdTag>(1), cache.end<IdTag>());
 
     // Wait for full TTL from last access
-    engine::SleepFor(200ms);
+    utils::datetime::MockSleep(200ms);
     EXPECT_EQ(cache.find<IdTag>(1), cache.end<IdTag>());
 }
 
@@ -248,6 +251,7 @@ UTEST_F(ExpirableUsersTest, Clear) {
 
 UTEST_F(ExpirableUsersTest, CleanupExpired) {
     using namespace std::chrono_literals;
+    utils::datetime::MockNowSet(std::chrono::system_clock::now());
 
     UserCacheExpirable cache(5, 100ms);
 
@@ -255,7 +259,7 @@ UTEST_F(ExpirableUsersTest, CleanupExpired) {
     cache.insert(User{2, "bob@test.com", "Bob"});
 
     // Wait for TTL to expire
-    engine::SleepFor(150ms);
+    utils::datetime::MockSleep(150ms);
 
     // cleanup_expired should remove expired items
     cache.cleanup_expired();

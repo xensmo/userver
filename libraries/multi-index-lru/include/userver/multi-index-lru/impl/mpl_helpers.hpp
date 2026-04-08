@@ -58,14 +58,14 @@ struct TimestampedValue {
 
     TimestampedValue() = default;
 
-    explicit TimestampedValue(const Value& val)
+    TimestampedValue(std::chrono::steady_clock::time_point now, const Value& val)
         : value(val),
-          last_accessed(std::chrono::steady_clock::now())
+          last_accessed(now)
     {}
 
-    explicit TimestampedValue(Value&& val)
+    TimestampedValue(std::chrono::steady_clock::time_point now, Value&& val)
         : value(std::move(val)),
-          last_accessed(std::chrono::steady_clock::now())
+          last_accessed(now)
     {}
 
     operator Value&() noexcept { return value; }

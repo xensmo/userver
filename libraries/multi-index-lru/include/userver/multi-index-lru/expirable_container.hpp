@@ -7,6 +7,7 @@
 #include "impl/mpl_helpers.hpp"
 
 #include <userver/utils/assert.hpp>
+#include <userver/utils/datetime.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -28,10 +29,11 @@ public:
 
     template <typename... Args>
     auto emplace(Args&&... args) {
-        auto result = container_.emplace(std::forward<Args>(args)...);
+        const auto now = utils::datetime::SteadyClock::now();
+        auto result = container_.emplace(now, std::forward<Args>(args)...);
 
         if (!result.second) {
-            result.first->last_accessed = std::chrono::steady_clock::now();
+            result.first->last_accessed = now;
         }
 
         return result;
@@ -43,7 +45,7 @@ public:
 
     template <typename Tag, typename Key>
     auto find(const Key& key) {
-        const auto now = std::chrono::steady_clock::now();
+        const auto now = utils::datetime::SteadyClock::now();
         auto it = container_.template find<Tag, Key>(key);
 
         if (it != container_.template end<Tag>()) {
@@ -66,7 +68,7 @@ public:
 
     template <typename Tag, typename Key>
     auto equal_range(const Key& key) {
-        const auto now = std::chrono::steady_clock::now();
+        const auto now = utils::datetime::SteadyClock::now();
         auto range = container_.template equal_range<Tag, Key>(key);
 
         auto it = range.first;
@@ -139,7 +141,7 @@ public:
 
     /// @brief Removes all expired items from container
     void cleanup_expired() {
-        const auto now = std::chrono::steady_clock::now();
+        const auto now = utils::datetime::SteadyClock::now();
 
         while (!container_.empty()) {
             const auto it = container_.find_last_accessed_no_update();
