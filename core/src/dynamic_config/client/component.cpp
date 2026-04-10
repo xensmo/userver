@@ -47,8 +47,8 @@ bool IsClownductorPrestable() {
         return false;
     }
 
-    utils::text::Trim(*content);
-    return utils::text::EndsWith(*content, "_pre_stable") || utils::text::EndsWith(*content, "_prestable");
+    const auto trimmed = utils::text::TrimView(*content);
+    return utils::text::EndsWith(trimmed, "_pre_stable") || utils::text::EndsWith(trimmed, "_prestable");
 }
 
 std::string ReadCircuit() {
