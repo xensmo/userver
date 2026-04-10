@@ -3061,6 +3061,7 @@
   "libraries/proto-structs/src/proto-structs/io/userver/proto_structs/duration_conv.cpp":"taxi/uservices/userver/libraries/proto-structs/src/proto-structs/io/userver/proto_structs/duration_conv.cpp",
   "libraries/proto-structs/src/proto-structs/io/userver/proto_structs/time_of_day_conv.cpp":"taxi/uservices/userver/libraries/proto-structs/src/proto-structs/io/userver/proto_structs/time_of_day_conv.cpp",
   "libraries/proto-structs/src/proto-structs/io/userver/proto_structs/timestamp_conv.cpp":"taxi/uservices/userver/libraries/proto-structs/src/proto-structs/io/userver/proto_structs/timestamp_conv.cpp",
+  "libraries/proto-structs/src/proto-structs/json.cpp":"taxi/uservices/userver/libraries/proto-structs/src/proto-structs/json.cpp",
   "libraries/proto-structs/src/proto-structs/time_of_day.cpp":"taxi/uservices/userver/libraries/proto-structs/src/proto-structs/time_of_day.cpp",
   "libraries/proto-structs/src/proto-structs/timestamp.cpp":"taxi/uservices/userver/libraries/proto-structs/src/proto-structs/timestamp.cpp",
   "libraries/proto-structs/tests/any_test.cpp":"taxi/uservices/userver/libraries/proto-structs/tests/any_test.cpp",
