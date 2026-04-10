@@ -19,6 +19,93 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ydb {
 
+TxActor::TxActor(
+    TableClient& table_client,
+    NYdb::NQuery::TSession& session,
+    NYdb::NQuery::TTxSettings&& tx_settings,
+    engine::Deadline deadline,
+    std::uint32_t attempt
+) noexcept
+    : table_client_(table_client),
+      deadline_(deadline),
+      attempt_(attempt),
+      ydb_tx_(BeginTx(session, std::move(tx_settings)))
+{}
+
+NYdb::NQuery::TTransaction TxActor::BeginTx(NYdb::NQuery::TSession& session, NYdb::NQuery::TTxSettings&& tx_settings) {
+    impl::RequestContext<RequestSettings> context{
+        table_client_,
+        Query{"", Query::Name{"Begin"}},
+        RequestSettings{},
+        impl::IsStreaming{false},
+        nullptr,
+        deadline_
+    };
+    context.span.AddTag("attempt", attempt_);
+
+    const auto ydb_settings = impl::PrepareRequestSettings<
+        NYdb::NQuery::TBeginTxSettings>(context.settings, context.deadline, context.span.GetTraceId());
+    auto future = session.BeginTransaction(tx_settings, ydb_settings);
+    return impl::GetFutureValueChecked(std::move(future), "BeginTransaction", context).GetTransaction();
+}
+
+ExecuteResponse TxActor::Execute(ExecuteSettings settings, const Query& query, PreparedArgsBuilder&& builder) {
+    impl::RequestContext<ExecuteSettings>
+        context{table_client_, query, std::move(settings), impl::IsStreaming{false}, nullptr, deadline_};
+    context.span.AddTag("attempt", attempt_);
+
+    auto internal_params = std::move(builder).Build();
+
+    auto exec_settings = impl::PrepareRequestSettings<
+        NYdb::NQuery::TExecuteQuerySettings,
+        ExecuteSettings>(context.settings, context.deadline, context.span.GetTraceId());
+
+    const auto tx = NYdb::NQuery::TTxControl::Tx(ydb_tx_);
+    auto execute_fut =
+        ydb_tx_.GetSession()
+            .ExecuteQuery(impl::ToString(query.GetStatementView()), tx, std::move(internal_params), exec_settings);
+
+    auto status = impl::GetFutureValueChecked(std::move(execute_fut), "TxActor::Execute", context);
+
+    return ExecuteResponse(std::move(status));
+}
+
+template <TxAction Action>
+void TxActor::FinishTx(const RequestSettings& settings) {
+    constexpr std::string_view action_name = Action == TxAction::kCommit ? "Commit" : "Rollback";
+
+    impl::RequestContext<RequestSettings> context{
+        table_client_,
+        Query{"", Query::Name{action_name}},
+        RequestSettings{settings},
+        impl::IsStreaming{false},
+        nullptr,
+        deadline_
+    };
+    context.span.AddTag("attempt", attempt_);
+
+    using SettingsType = std::conditional_t<
+        Action == TxAction::kCommit,
+        NYdb::NQuery::TCommitTxSettings,
+        NYdb::NQuery::TRollbackTxSettings>;
+
+    const auto ydb_settings = impl::PrepareRequestSettings<
+        SettingsType>(context.settings, context.deadline, context.span.GetTraceId());
+
+    if constexpr (Action == TxAction::kCommit) {
+        auto future = ydb_tx_.Commit(ydb_settings);
+        impl::GetFutureValueChecked(std::move(future), action_name, context);
+    } else {
+        auto future = ydb_tx_.Rollback(ydb_settings);
+        impl::GetFutureValueChecked(std::move(future), action_name, context);
+    }
+}
+
+template void TxActor::FinishTx<TxAction::kCommit>(const RequestSettings& settings);
+template void TxActor::FinishTx<TxAction::kRollback>(const RequestSettings& settings);
+
+PreparedArgsBuilder TxActor::GetBuilder() const { return table_client_.GetBuilder(); }
+
 Transaction::Transaction(
     TableClient& table_client,
     std::variant<NYdb::NQuery::TTransaction, NYdb::NTable::TTransaction> ydb_tx,
@@ -171,10 +258,15 @@ ExecuteResponse Transaction::Execute(
     auto internal_params = std::move(builder).Build();
 
     auto exec_query_settings = table_client_.ToExecuteQuerySettings(query_settings);
-    impl::ApplyToRequestSettings(exec_query_settings, context.settings, context.deadline);
+    impl::ApplyToRequestSettings(exec_query_settings, context.settings, context.deadline, context.span.GetTraceId());
 
     auto exec_data_query_settings = table_client_.ToExecDataQuerySettings(query_settings);
-    impl::ApplyToRequestSettings(exec_data_query_settings, context.settings, context.deadline);
+    impl::ApplyToRequestSettings(
+        exec_data_query_settings,
+        context.settings,
+        context.deadline,
+        context.span.GetTraceId()
+    );
 
     // Must go after PrepareExecuteSettings, because an exception from there
     // leaves the transaction active.

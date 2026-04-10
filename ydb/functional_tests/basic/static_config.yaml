@@ -91,6 +91,10 @@ components_manager:
             method: POST
             path: /ydb/upsert-row
             task_processor: main-task-processor
+        handler-upsert-row-old:
+            method: POST
+            path: /ydb/upsert-row-old
+            task_processor: main-task-processor
         handler-describe-table:
             method: POST
             path: /ydb/describe-table

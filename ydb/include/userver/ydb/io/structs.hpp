@@ -10,6 +10,7 @@
 #include <tuple>
 #include <type_traits>
 
+#include <fmt/ranges.h>
 #include <boost/pfr/core.hpp>
 #include <boost/pfr/core_name.hpp>
 

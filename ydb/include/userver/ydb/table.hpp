@@ -33,7 +33,8 @@ namespace impl {
 struct Stats;
 struct TableSettings;
 class Driver;
-struct RequestContext;
+template <typename Settings>
+class RequestContext;
 enum class IsStreaming : bool {};
 }  // namespace impl
 
@@ -48,7 +49,8 @@ using DescribeTableSettings = NYdb::NTable::TDescribeTableSettings;
 using DropTableSettings = NYdb::NTable::TDropTableSettings;
 using ScanQuerySettings = NYdb::NTable::TStreamExecScanQuerySettings;
 
-/// @brief A dynamic transaction name for @see TableClient::Begin.
+/// @brief A dynamic transaction name for @see TableClient::Begin or
+/// @see TableClient::RetryTx.
 ///
 /// @warning Make sure that transaction name has low cardinality.
 /// If transaction name is unique for every call, per-transaction metrics will overflow metrics quota,
@@ -119,9 +121,32 @@ public:
     );
     /// @}
 
-    /// @name Transactions
+    /// @name Transactions with retry
+    /// @brief Execute a transactional function with automatic retries.
+    ///
+    /// The user-provided function receives a TxActor for executing queries
+    /// and returns TxAction::kCommit or TxAction::kRollback. On transient
+    /// errors the whole function is retried automatically.
+    ///
+    /// @code
+    /// client.RetryTx("my_tx", {.retries = 3},
+    ///     [](ydb::TxActor& tx) {
+    ///         tx.Execute(query, "$id", 1);
+    ///         return ydb::TxAction::kCommit;
+    ///     });
+    /// @endcode
+    ///
+    /// @{
+    void RetryTx(utils::StringLiteral transaction_name, RetryTxSettings retry_settings, RetryTxFunction fn);
+
+    /// @warning Make sure that `transaction_name` has low cardinality.
+    void RetryTx(DynamicTransactionName transaction_name, RetryTxSettings retry_settings, RetryTxFunction fn);
+    /// @}
+
+    /// @name Transactions (deprecated)
     /// @brief Begin a transaction with the specified name. The settings are used
     /// for the `BEGIN` statement.
+    /// @deprecated Use RetryTx instead for automatic retry support.
     /// @see ydb::Transaction
     ///
     /// @{
@@ -233,7 +258,9 @@ public:
 
 private:
     friend class Transaction;
-    friend struct impl::RequestContext;
+    friend class TxActor;
+    template <typename Settings>
+    friend class impl::RequestContext;
 
     std::string JoinDbPath(std::string_view path) const;
 
