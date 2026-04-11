@@ -107,8 +107,8 @@ constexpr bool DetectIsSuitableRowType() {
 template <typename T>
 struct IsSuitableRowType : BoolConstant<detail::DetectIsSuitableRowType<T>()> {};
 
-template <typename Tag, typename T, USERVER_NAMESPACE::utils::StrongTypedefOps Ops, typename Enable>
-struct IsSuitableRowType<USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops, Enable>> : IsSuitableRowType<T> {};
+template <typename Tag, typename T, USERVER_NAMESPACE::utils::StrongTypedefOps Ops>
+struct IsSuitableRowType<USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops>> : IsSuitableRowType<T> {};
 
 template <typename T>
 inline constexpr bool kIsSuitableRowType = IsSuitableRowType<T>::value;
@@ -131,8 +131,8 @@ struct RowCategory
                   RowCategoryConstant<RowCategoryType::kAggregate>,
                   RowCategoryConstant<RowCategoryType::kNonRow>>>> {};
 
-template <typename Tag, typename T, USERVER_NAMESPACE::utils::StrongTypedefOps Ops, typename Enable>
-struct RowCategory<USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops, Enable>> : RowCategory<T> {};
+template <typename Tag, typename T, USERVER_NAMESPACE::utils::StrongTypedefOps Ops>
+struct RowCategory<USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops>> : RowCategory<T> {};
 
 template <typename T>
 inline constexpr RowCategoryType kRowCategory = RowCategory<T>::value;

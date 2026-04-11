@@ -64,7 +64,8 @@ public:
         : root_(root)
     {}
 
-    template <typename Visitor, typename = std::enable_if_t<std::is_invocable_v<Visitor&, YAML::Node&>>>
+    template <typename Visitor>
+    requires std::is_invocable_v<Visitor&, YAML::Node&>
     void VisitPreOrder(Visitor visitor) {
         if (!root_.IsSequence() && !root_.IsMap()) {
             return;

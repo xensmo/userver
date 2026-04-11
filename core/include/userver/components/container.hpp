@@ -86,8 +86,8 @@ struct DependencyLocator {
 ///
 /// @snippet core/src/dynamic_config/storage/component.cpp LocateDependency example
 template <typename T>
-std::enable_if_t<formats::common::impl::kHasParse<yaml_config::YamlConfig, T> && std::is_class_v<T>, T>
-LocateDependency(WithType<T>, const ComponentConfig& config, const ComponentContext&)
+requires(formats::common::impl::HasParse<yaml_config::YamlConfig, T> && std::is_class_v<T>)
+T LocateDependency(WithType<T>, const ComponentConfig& config, const ComponentContext&)
 {
     return config.As<T>();
 }
