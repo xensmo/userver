@@ -2778,6 +2778,7 @@
   "kafka/include/userver/kafka/impl/consumer.hpp":"taxi/uservices/userver/kafka/include/userver/kafka/impl/consumer.hpp",
   "kafka/include/userver/kafka/impl/consumer_params.hpp":"taxi/uservices/userver/kafka/include/userver/kafka/impl/consumer_params.hpp",
   "kafka/include/userver/kafka/impl/holders.hpp":"taxi/uservices/userver/kafka/include/userver/kafka/impl/holders.hpp",
+  "kafka/include/userver/kafka/impl/messages.hpp":"taxi/uservices/userver/kafka/include/userver/kafka/impl/messages.hpp",
   "kafka/include/userver/kafka/impl/stats.hpp":"taxi/uservices/userver/kafka/include/userver/kafka/impl/stats.hpp",
   "kafka/include/userver/kafka/message.hpp":"taxi/uservices/userver/kafka/include/userver/kafka/message.hpp",
   "kafka/include/userver/kafka/offset_range.hpp":"taxi/uservices/userver/kafka/include/userver/kafka/offset_range.hpp",
