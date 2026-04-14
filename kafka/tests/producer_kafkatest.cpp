@@ -220,31 +220,39 @@ UTEST_F(ProducerTest, MessageTimeout) {
     producer_configuration.queue_buffering_max = std::chrono::milliseconds{0};
 
     auto producer = MakeProducer("kafka-producer", producer_configuration);
-    const std::string topic = GenerateTopic();
 
-    /// [Producer retryable error]
-    std::vector<engine::TaskWithResult<void>> results;
-    results.reserve(kMaxQueueMessages);
-    for (std::uint32_t send{0}; send < kMaxQueueMessages; ++send) {
-        results.push_back(producer.SendAsync(topic, fmt::format("test-key-{}", send), fmt::format("test-{}", send)));
-    }
+    constexpr std::size_t kMaxRetries = 10;
+    for (std::size_t i = 0; i < kMaxRetries; ++i) {
+        const std::string topic = GenerateTopic();
 
-    std::vector<std::uint32_t> sends_to_retry;
-    for (std::uint32_t send{0}; send < kMaxQueueMessages; ++send) {
-        try {
-            results[send].Get();
-        } catch (const kafka::SendException& e) {
-            if (e.IsRetryable()) {
-                // Probabl issues with network and reached `delivery_timeout`, retry
-                sends_to_retry.push_back(send);
-            } else {
-                // LOG ...
+        /// [Producer retryable error]
+        std::vector<engine::TaskWithResult<void>> results;
+        results.reserve(kMaxQueueMessages);
+        for (std::uint32_t send{0}; send < kMaxQueueMessages; ++send) {
+            results.push_back(producer.SendAsync(topic, fmt::format("test-key-{}", send), std::to_string(send)));
+        }
+
+        std::vector<std::uint32_t> sends_to_retry;
+        for (std::uint32_t send{0}; send < kMaxQueueMessages; ++send) {
+            try {
+                results[send].Get();
+            } catch (const kafka::SendException& e) {
+                if (e.IsRetryable()) {
+                    // Probabl issues with network and reached `delivery_timeout`, retry
+                    sends_to_retry.push_back(send);
+                } else {
+                    // LOG ...
+                }
             }
         }
-    }
-    /// [Producer retryable error]
+        /// [Producer retryable error]
 
-    EXPECT_GT(sends_to_retry.size(), 0);  // remove the check if the CI is too fast and the check flaps in tests
+        if (!sends_to_retry.empty()) {
+            return;
+        }
+    }
+
+    FAIL() << "Failed to trigger failures after " << kMaxRetries << " retries.";
 }
 
 UTEST_F(ProducerTest, FullQueueBulk) {
