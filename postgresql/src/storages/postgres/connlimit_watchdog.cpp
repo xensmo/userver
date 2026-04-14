@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <storages/postgres/connlimit_watchdog.hpp>
 
 #include <storages/postgres/detail/cluster_impl.hpp>
 #include <userver/utils/from_string.hpp>
+#include <userver/utils/impl/userver_experiments.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -39,6 +41,7 @@ ConnlimitWatchdog::ConnlimitWatchdog(
     detail::ClusterImpl& cluster,
     testsuite::TestsuiteTasks& testsuite_tasks,
     int shard_number,
+    std::size_t min_fallback_connections,
     std::function<void()> on_new_connlimit,
     std::string host_name
 )
@@ -47,6 +50,7 @@ ConnlimitWatchdog::ConnlimitWatchdog(
       on_new_connlimit_(std::move(on_new_connlimit)),
       testsuite_tasks_(testsuite_tasks),
       shard_number_(shard_number),
+      min_fallback_connections_(std::max(min_fallback_connections, kDefaultPoolMinSize)),
       host_name_(std::move(host_name))
 {}
 
@@ -158,7 +162,13 @@ void ConnlimitWatchdog::DoStep(
              * connlimit value. The period with "too low max_connections" should be
              * relatively small.
              */
-            connlimit_ = kFallbackConnlimit;
+            if (!USERVER_NAMESPACE::utils::impl::kPgConnlimitWatchdogFallbackExperiment.IsEnabled()) {
+                connlimit_ = kFallbackConnlimit;
+            } else {
+                const auto previous_connlimit = connlimit_.load();
+                connlimit_ = std::max(previous_connlimit / 2, min_fallback_connections_);
+                steps_with_errors_ = 0;
+            }
         }
     }
 
