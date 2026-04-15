@@ -69,7 +69,8 @@ pg::Transaction GetTransaction(pgd::ClusterImpl& cluster) {
 }
 
 constexpr size_t kReservedConn = 5;
-constexpr size_t kTestsuiteConnlimit = 100 - kReservedConn;
+constexpr size_t kTestsuiteServerConnlimit = 100;
+constexpr size_t kTestsuiteConnlimit = kTestsuiteServerConnlimit - kReservedConn;
 constexpr size_t kFallbackConnlimit = 17;
 constexpr size_t kMaxStepsWithError = 3;
 
@@ -124,6 +125,17 @@ private:
 
     testsuite::TestsuiteTasks testsuite_tasks_{true};
     pgd::ClusterImpl cluster_;
+    utils::impl::UserverExperimentsScope scope_;
+};
+
+class WatchdogWithNewConnectionsReservation : public Watchdog {
+public:
+    void SetUp() override {
+        Watchdog::SetUp();
+        scope_.Set(utils::impl::kPgConnlimitWatchdogReservationExperiment, true);
+    }
+
+private:
     utils::impl::UserverExperimentsScope scope_;
 };
 
@@ -241,6 +253,19 @@ UTEST_F(Watchdog, FallbackConnlimit) {
     }
 
     ASSERT_EQ(kFallbackConnlimit, watchdog.GetConnlimit());
+}
+
+UTEST_F(WatchdogWithNewConnectionsReservation, CheckLimit) {
+    constexpr auto
+        kConnectionsLimit = kTestsuiteServerConnlimit - static_cast<std::size_t>(kTestsuiteServerConnlimit * 0.05);
+
+    EXPECT_EQ(kConnectionsLimit, DoStepV1());
+
+    // There are two hosts after 'StepV2'.
+    EXPECT_EQ(kConnectionsLimit / 2, DoStepV2());
+
+    // There are two hosts after 'StepV2'.
+    EXPECT_EQ(kConnectionsLimit / 2, DoStepV1());
 }
 
 USERVER_NAMESPACE_END

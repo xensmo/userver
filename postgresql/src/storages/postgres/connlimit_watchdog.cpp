@@ -13,6 +13,9 @@ namespace {
 constexpr CommandControl kCommandControl{std::chrono::seconds(2), std::chrono::seconds(2)};
 constexpr std::size_t kTestsuiteConnlimit = 100;
 constexpr std::size_t kReservedConn = 5;
+constexpr std::size_t kMinReservedConnections = 2;
+constexpr std::size_t kMaxReservedConnections = 10;
+constexpr double kReservedConnectionsPercentage = 0.05;
 
 constexpr int kMaxStepsWithError = 3;
 constexpr std::size_t kFallbackConnlimit = 20;
@@ -27,8 +30,18 @@ std::size_t GetMaxConnections(Transaction& trx) {
     }
     std::size_t max_connections = std::min(max_server_connections, max_user_connections);
 
-    if (max_connections > kReservedConn) {
-        max_connections -= kReservedConn;
+    const auto reserved_connections =
+        !USERVER_NAMESPACE::utils::impl::kPgConnlimitWatchdogReservationExperiment.IsEnabled()
+            ? kReservedConn
+            : std::max(
+                  kMinReservedConnections,
+                  std::min(
+                      kMaxReservedConnections,
+                      static_cast<std::size_t>(max_connections * kReservedConnectionsPercentage)
+                  )
+              );
+    if (max_connections > reserved_connections) {
+        max_connections -= reserved_connections;
     } else {
         max_connections = 1;
     }
