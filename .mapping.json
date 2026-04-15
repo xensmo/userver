@@ -2387,6 +2387,8 @@
   "grpc/handlers/functional_tests/health/CMakeLists.txt":"taxi/uservices/userver/grpc/handlers/functional_tests/health/CMakeLists.txt",
   "grpc/handlers/functional_tests/health/service.cpp":"taxi/uservices/userver/grpc/handlers/functional_tests/health/service.cpp",
   "grpc/handlers/functional_tests/health/static_config.yaml":"taxi/uservices/userver/grpc/handlers/functional_tests/health/static_config.yaml",
+  "grpc/handlers/functional_tests/health/tests-graceful-shutdown/conftest.py":"taxi/uservices/userver/grpc/handlers/functional_tests/health/tests-graceful-shutdown/conftest.py",
+  "grpc/handlers/functional_tests/health/tests-graceful-shutdown/test_graceful_shutdown.py":"taxi/uservices/userver/grpc/handlers/functional_tests/health/tests-graceful-shutdown/test_graceful_shutdown.py",
   "grpc/handlers/functional_tests/health/tests/conftest.py":"taxi/uservices/userver/grpc/handlers/functional_tests/health/tests/conftest.py",
   "grpc/handlers/functional_tests/health/tests/grpcserver/test_grpcserver.py":"taxi/uservices/userver/grpc/handlers/functional_tests/health/tests/grpcserver/test_grpcserver.py",
   "grpc/handlers/include/userver/ugrpc/server/health/component.hpp":"taxi/uservices/userver/grpc/handlers/include/userver/ugrpc/server/health/component.hpp",
