@@ -973,8 +973,8 @@ void RequestState::UpdateTimeoutHeader() {
     );
 
     if (inherited_original_deadline_.has_value()) {
-        const auto
-            iso_str = utils::datetime::UtcTimestring(*inherited_original_deadline_, utils::datetime::kTaximeterFormat);
+        const auto iso_str =
+            utils::datetime::UtcTimestring(*inherited_original_deadline_, utils::datetime::kAbsoluteDeadlineFormat);
         easy().add_header(
             USERVER_NAMESPACE::http::headers::kXRequestDeadline,
             iso_str,

@@ -54,7 +54,7 @@ std::optional<TaskInheritedOriginalDeadline> ParseXRequestDeadlineString(const s
         return std::nullopt;
     }
     try {
-        const auto timestamp = utils::datetime::UtcStringtime(timestring, utils::datetime::kTaximeterFormat);
+        const auto timestamp = utils::datetime::UtcStringtime(timestring, utils::datetime::kAbsoluteDeadlineFormat);
         return std::chrono::time_point_cast<std::chrono::microseconds>(timestamp);
     } catch (const std::exception& exception) {
         LOG_LIMITED_WARNING() << "Can't parse X-Request-Deadline: " << exception.what();
