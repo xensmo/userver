@@ -17,6 +17,9 @@ Changelog news also go to the
 ## Roadmap
 
 * 👨‍💻 gRPC simplification and functionality improvement.
+* gRPC: @ref scripts/docs/en/userver/deadline_propagation.md "Deadline propagation" support for absolute
+  deadline metadata (`x-request-deadline`) in addition to duration deadlines (`grpc-timeout`); see @ref
+  scripts/docs/en/userver/grpc/grpc.md.
 * Keep improving the @ref scripts/docs/en/userver/chaotic.md
 
 
@@ -77,6 +80,8 @@ Detailed diff against v2.16 could be found below.
       -e 's/kCanClear/CanClear/g' \
       -e 's/traits::kIsFixedSizeContainer/meta::kIsFixedSizeContainer/g' \
   ```
+* HTTP: @ref scripts/docs/en/userver/deadline_propagation.md "Deadline propagation" support for an absolute
+  deadline timepoint via the `X-Request-Deadline` header in addition to `X-YaTaxi-Client-TimeoutMs`.
 
 
 ### Release v2.16
