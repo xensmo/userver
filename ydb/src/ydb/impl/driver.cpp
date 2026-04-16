@@ -28,7 +28,9 @@ Driver::Driver(std::string dbname, impl::DriverSettings settings)
             settings.prefer_local_dc
                 ? NYdb::EBalancingPolicy::UsePreferableLocation
                 : NYdb::EBalancingPolicy::UseAllNodes
-        );
+        )
+        .SetNetworkThreadsNum(settings.network_threads_num)
+        .SetClientThreadsNum(settings.client_threads_num);
 
     if (settings.secure_connection_cert.has_value()) {
         driver_config.UseSecureConnection(*settings.secure_connection_cert);

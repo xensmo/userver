@@ -64,6 +64,20 @@ properties:
                     type: boolean
                     default: true
                     description: whether to use query cache
+                network-threads-num:
+                    type: integer
+                    minimum: 1
+                    default: 2
+                    description: |
+                        Number of gRPC worker threads in YDB C++ SDK (NYdb::TDriverConfig::SetNetworkThreadsNum).
+                        Defaults to the SDK default (2).
+                client-threads-num:
+                    type: integer
+                    minimum: 0
+                    default: 0
+                    description: |
+                        Number of threads for async user callbacks in YDB C++ SDK (NYdb::TDriverConfig::SetClientThreadsNum).
+                        0 means adaptive thread pool (SDK default).
                 prefer_local_dc:
                     type: boolean
                     default: true

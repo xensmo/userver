@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -39,6 +40,9 @@ struct TopicSettings {};
 struct DriverSettings {
     std::string endpoint;
     std::string database;
+
+    std::size_t network_threads_num{2};
+    std::size_t client_threads_num{0};
 
     bool prefer_local_dc{false};
     std::optional<std::string> oauth_token;
