@@ -28,9 +28,13 @@ Driver::Driver(std::string dbname, impl::DriverSettings settings)
             settings.prefer_local_dc
                 ? NYdb::EBalancingPolicy::UsePreferableLocation
                 : NYdb::EBalancingPolicy::UseAllNodes
-        )
-        .SetNetworkThreadsNum(settings.network_threads_num)
-        .SetClientThreadsNum(settings.client_threads_num);
+        );
+    if (settings.network_threads_num.has_value()) {
+        driver_config.SetNetworkThreadsNum(*settings.network_threads_num);
+    }
+    if (settings.client_threads_num.has_value()) {
+        driver_config.SetClientThreadsNum(*settings.client_threads_num);
+    }
 
     if (settings.secure_connection_cert.has_value()) {
         driver_config.UseSecureConnection(*settings.secure_connection_cert);
@@ -49,6 +53,21 @@ Driver::Driver(std::string dbname, impl::DriverSettings settings)
         creds.User = *settings.user;
         creds.Password = *settings.password;
         driver_config.SetCredentialsProviderFactory(NYdb::CreateLoginCredentialsProviderFactory(std::move(creds)));
+    }
+
+    if (settings.tcp_keepalive.has_value()) {
+        driver_config.SetTcpKeepAliveSettings(
+            settings.tcp_keepalive->enabled,
+            settings.tcp_keepalive->idle_sec,
+            settings.tcp_keepalive->probe_count,
+            settings.tcp_keepalive->interval_sec
+        );
+    }
+    if (settings.grpc_keepalive_timeout.has_value()) {
+        driver_config.SetGRpcKeepAliveTimeout(TDuration(*settings.grpc_keepalive_timeout));
+    }
+    if (settings.grpc_keepalive_permit_without_calls.has_value()) {
+        driver_config.SetGRpcKeepAlivePermitWithoutCalls(*settings.grpc_keepalive_permit_without_calls);
     }
 
     driver_ = std::make_unique<NYdb::TDriver>(driver_config);

@@ -37,12 +37,24 @@ struct TableSettings {
 
 struct TopicSettings {};
 
+struct TcpKeepaliveSettings {
+    bool enabled;
+    std::size_t idle_sec;
+    std::size_t probe_count;
+    std::size_t interval_sec;
+};
+
 struct DriverSettings {
     std::string endpoint;
     std::string database;
 
-    std::size_t network_threads_num{2};
-    std::size_t client_threads_num{0};
+    std::optional<std::size_t> network_threads_num{};
+    std::optional<std::size_t> client_threads_num{};
+
+    std::optional<TcpKeepaliveSettings> tcp_keepalive{};
+
+    std::optional<std::chrono::milliseconds> grpc_keepalive_timeout{};
+    std::optional<bool> grpc_keepalive_permit_without_calls{};
 
     bool prefer_local_dc{false};
     std::optional<std::string> oauth_token;
