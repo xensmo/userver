@@ -183,6 +183,7 @@ void ConnlimitWatchdog::DoStep(
                 steps_with_errors_ = 0;
             }
         }
+        LOG_WARNING() << fmt::format("Can't connect to u_clients. Fallback max_size to {}. ", connlimit_.load()) << e;
     }
 
     on_new_connlimit_();
