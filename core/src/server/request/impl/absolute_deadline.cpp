@@ -38,7 +38,7 @@ bool IsClockSkewAcceptable(
     }
 
     if (skew_ms > threshold) {
-        LOG_LIMITED_WARNING()
+        LOG_LIMITED_INFO()
             << "Clock skew detected: " << skew_ms << ", threshold: " << threshold
             << ". Falling back to duration-based deadline propagation";
         return false;
@@ -57,7 +57,7 @@ std::optional<TaskInheritedOriginalDeadline> ParseXRequestDeadlineString(const s
         const auto timestamp = utils::datetime::UtcStringtime(timestring, utils::datetime::kAbsoluteDeadlineFormat);
         return std::chrono::time_point_cast<std::chrono::microseconds>(timestamp);
     } catch (const std::exception& exception) {
-        LOG_LIMITED_WARNING() << "Can't parse X-Request-Deadline: " << exception.what();
+        LOG_LIMITED_INFO() << "Can't parse X-Request-Deadline: " << exception.what();
         return std::nullopt;
     }
 }
