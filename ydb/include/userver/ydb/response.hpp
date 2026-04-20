@@ -256,7 +256,7 @@ T Row::Get(std::string_view column_name) {
     ConsumedColumnsCheck(parse_state_.parser.ColumnIndex(impl::ToString(column_name)));
 #endif
     auto& column = GetColumn(column_name);
-    return Parse<T>(column, ParseContext{/*column_name=*/column_name});
+    return Parse<T>(column, ParseContext{.column_name = column_name});
 }
 
 template <typename T>
@@ -266,7 +266,7 @@ T Row::Get(std::size_t column_index) {
 #endif
     auto& column = GetColumn(column_index);
     const auto column_name = std::to_string(column_index);
-    return Parse<T>(column, ParseContext{/*column_name=*/column_name});
+    return Parse<T>(column, ParseContext{.column_name = column_name});
 }
 
 template <typename Container>

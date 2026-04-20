@@ -209,7 +209,7 @@ Data& AnyStorage<StorageTag>::Emplace(const AnyStorageDataTag<StorageTag, Data>&
 
     auto offset = tag.offset_;
     auto ptr = new (&raw_data_[offset]) Data(std::forward<Args>(args)...);
-    record = {&any_storage::impl::Delete<Data>, offset};
+    record = {.deleter = &any_storage::impl::Delete<Data>, .offset = offset};
     return *ptr;
 }
 

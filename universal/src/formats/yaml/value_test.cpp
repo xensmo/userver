@@ -59,8 +59,8 @@ struct MyKeyValue {
 //  The function must be declared in the namespace of your type
 MyKeyValue Parse(const formats::yaml::Value& yaml, formats::parse::To<MyKeyValue>) {
     return MyKeyValue{
-        yaml["field1"].As<std::string>(""),
-        yaml["field2"].As<int>(1),  // return `1` if "field2" is missing
+        .field1 = yaml["field1"].As<std::string>(""),
+        .field2 = yaml["field2"].As<int>(1),  // return `1` if "field2" is missing
     };
 }
 

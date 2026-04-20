@@ -343,7 +343,7 @@ UTEST_P(ServerMiddlewareHooksUnaryTest, DeadlinePropagation) {
 INSTANTIATE_UTEST_SUITE_P(
     /*no prefix*/,
     ServerMiddlewareHooksUnaryTest,
-    testing::Values(Flags{/*set_error=*/true}, Flags{/*set_error*/ false})
+    testing::Values(Flags{.set_error = true}, Flags{.set_error = false})
 );
 
 USERVER_NAMESPACE_END

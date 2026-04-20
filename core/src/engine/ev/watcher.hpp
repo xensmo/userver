@@ -185,7 +185,7 @@ void Watcher<EvType>::StopAsync() noexcept {
     if (!IsActive()) {
         return;
     }
-    PushAsyncOp({AsyncOpType::kStop, /*epoch=*/0});
+    PushAsyncOp({.type = AsyncOpType::kStop, .epoch = 0});
 }
 
 template <typename EvType>

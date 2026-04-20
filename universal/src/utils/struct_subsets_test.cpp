@@ -42,7 +42,7 @@ TEST(DefineStructSubset, Sample) {
 
     // Suppose that some common utility function produces Dependencies struct with
     // a lot of fields. However, we don't actually need all of them for Foo.
-    Dependencies dependencies{1, 2, "3", some_client};
+    Dependencies dependencies{.a = 1, .b = 2, .c = "3", .d = some_client};
 
     // SmolDependencies is implicitly convertible from Dependencies, conversion by
     // copy and by move is supported.
@@ -77,14 +77,14 @@ TEST(DefineStructSubset, ExactCopy) {
     using copyable::Dependencies, copyable::DepsCopy;
 
     NonMovable c;
-    const Dependencies dependencies{1, 2, c};
+    const Dependencies dependencies{.a = 1, .b = 2, .c = c};
 
     const DepsCopy subset = dependencies;
     EXPECT_EQ(subset.a, dependencies.a);
     EXPECT_EQ(subset.b, dependencies.b);
     EXPECT_EQ(&subset.c, &dependencies.c);
 
-    const DepsCopy from_scratch{4, 5, c};
+    const DepsCopy from_scratch{.a = 4, .b = 5, .c = c};
     EXPECT_EQ(from_scratch.a, 4);
     EXPECT_EQ(from_scratch.b, 5);
     EXPECT_EQ(&from_scratch.c, &c);
@@ -94,7 +94,7 @@ TEST(DefineStructSubset, SmolDeps) {
     using copyable::Dependencies, copyable::SmolDeps, copyable::TinyDeps;
 
     NonMovable c;
-    const Dependencies dependencies{1, 2, c};
+    const Dependencies dependencies{.a = 1, .b = 2, .c = c};
 
     const SmolDeps subset = dependencies;
     EXPECT_EQ(subset.a, dependencies.a);
@@ -123,7 +123,7 @@ TEST(DefineStructSubset, NonCopyableToCopyable) {
     using non_copyable::Dependencies, non_copyable::SmolCopyable;
 
     NonMovable c;
-    Dependencies dependencies{1, std::make_unique<int>(2), c};
+    Dependencies dependencies{.a = 1, .b = std::make_unique<int>(2), .c = c};
 
     const SmolCopyable copyable_subset = dependencies;
     EXPECT_EQ(copyable_subset.a, dependencies.a);
@@ -144,7 +144,7 @@ TEST(DefineStructSubset, NonCopyableToNonCopyable) {
     using non_copyable::Dependencies, non_copyable::SmolNonCopyable;
 
     NonMovable c;
-    Dependencies dependencies{1, std::make_unique<int>(2), c};
+    Dependencies dependencies{.a = 1, .b = std::make_unique<int>(2), .c = c};
 
     // const Dependencies& is not convertible to SmolNonCopyable
 
@@ -228,7 +228,7 @@ TEST(DefineStructSubsetRef, Sample) {
     /// [ref usage]
     int c = 3;
     NonMovable d;
-    const Dependencies dependencies{"1", 2, c, d};
+    const Dependencies dependencies{.a = "1", .b = 2, .c = c, .d = d};
 
     EXPECT_EQ(Foo(dependencies), 4);
     EXPECT_EQ(Bar(dependencies), 4);

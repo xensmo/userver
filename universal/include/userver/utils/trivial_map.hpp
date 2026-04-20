@@ -799,7 +799,7 @@ public:
     constexpr ValueType GetValuesByIndex(std::size_t index) const {
         UASSERT_MSG(index < size(), "Index is out of bounds");
         auto result = func_([index]() { return impl::CaseGetValuesByIndex<First, Second>{index}; });
-        return ValueType{result.GetFirst(), result.GetSecond()};
+        return ValueType{.first = result.GetFirst(), .second = result.GetSecond()};
     }
 
     class Iterator {

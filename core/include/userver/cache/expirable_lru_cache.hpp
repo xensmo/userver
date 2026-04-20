@@ -42,8 +42,10 @@ template <typename Value>
 impl::ExpirableValue<Value> Read(dump::Reader& reader, dump::To<impl::ExpirableValue<Value>>) {
     const auto [now, steady_now] = utils::impl::GetGlobalTime();
     // Evaluation order of arguments is guaranteed in brace-initialization.
-    return impl::ExpirableValue<
-        Value>{reader.Read<Value>(), reader.Read<std::chrono::system_clock::time_point>() - now + steady_now};
+    return impl::ExpirableValue<Value>{
+        .value = reader.Read<Value>(),
+        .update_time = reader.Read<std::chrono::system_clock::time_point>() - now + steady_now,
+    };
 }
 
 }  // namespace impl
@@ -299,7 +301,7 @@ Value ExpirableLruCache<
 
     auto value = update_func(key);
     if (read_mode == ReadMode::kUseCache) {
-        lru_.Put(key, {value, now});
+        lru_.Put(key, {.value = value, .update_time = now});
     }
     return value;
 }
@@ -398,12 +400,12 @@ std::optional<Value> ExpirableLruCache<Key, Value, Hash, Equal>::GetOptionalNoUp
 
 template <typename Key, typename Value, typename Hash, typename Equal>
 void ExpirableLruCache<Key, Value, Hash, Equal>::Put(const Key& key, const Value& value) {
-    lru_.Put(key, {value, utils::datetime::SteadyNow()});
+    lru_.Put(key, {.value = value, .update_time = utils::datetime::SteadyNow()});
 }
 
 template <typename Key, typename Value, typename Hash, typename Equal>
 void ExpirableLruCache<Key, Value, Hash, Equal>::Put(const Key& key, Value&& value) {
-    lru_.Put(key, {std::move(value), utils::datetime::SteadyNow()});
+    lru_.Put(key, {.value = std::move(value), .update_time = utils::datetime::SteadyNow()});
 }
 
 template <typename Key, typename Value, typename Hash, typename Equal>
@@ -456,7 +458,7 @@ void ExpirableLruCache<Key, Value, Hash, Equal>::UpdateInBackground(const Key& k
 
             auto now = utils::datetime::SteadyNow();
             auto value = update_func(key);
-            lru_.Put(key, {value, now});
+            lru_.Put(key, {.value = value, .update_time = now});
         })
     );
 }

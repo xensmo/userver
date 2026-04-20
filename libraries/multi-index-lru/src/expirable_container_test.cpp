@@ -51,9 +51,9 @@ UTEST_F(ExpirableUsersTest, BasicOperations) {
     UserCacheExpirable cache(3, std::chrono::seconds(10));  // capacity=3, TTL=10s
 
     // Test insertion
-    EXPECT_TRUE(cache.insert(User{1, "alice@test.com", "Alice"}));
-    EXPECT_TRUE(cache.insert(User{2, "bob@test.com", "Bob"}));
-    EXPECT_TRUE(cache.insert(User{3, "charlie@test.com", "Charlie"}));
+    EXPECT_TRUE(cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"}));
+    EXPECT_TRUE(cache.insert({.id = 2, .email = "bob@test.com", .name = "Bob"}));
+    EXPECT_TRUE(cache.insert({.id = 3, .email = "charlie@test.com", .name = "Charlie"}));
 
     EXPECT_EQ(cache.size(), 3);
     EXPECT_EQ(cache.capacity(), 3);
@@ -78,9 +78,9 @@ UTEST_F(ExpirableUsersTest, BasicOperations) {
 UTEST_F(ExpirableUsersTest, FindNoUpdate) {
     UserCacheExpirable cache(3, std::chrono::seconds(10));
 
-    cache.insert(User{1, "alice@test.com", "Alice"});
-    cache.insert(User{2, "bob@test.com", "Bob"});
-    cache.insert(User{3, "charlie@test.com", "Charlie"});
+    cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"});
+    cache.insert({.id = 2, .email = "bob@test.com", .name = "Bob"});
+    cache.insert({.id = 3, .email = "charlie@test.com", .name = "Charlie"});
 
     // Both finds should succeed
     EXPECT_NE(cache.find<IdTag>(1), cache.end<IdTag>());
@@ -90,16 +90,16 @@ UTEST_F(ExpirableUsersTest, FindNoUpdate) {
 UTEST_F(ExpirableUsersTest, LRUEviction) {
     UserCacheExpirable cache(3, std::chrono::seconds(10));
 
-    cache.insert(User{1, "alice@test.com", "Alice"});
-    cache.insert(User{2, "bob@test.com", "Bob"});
-    cache.insert(User{3, "charlie@test.com", "Charlie"});
+    cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"});
+    cache.insert({.id = 2, .email = "bob@test.com", .name = "Bob"});
+    cache.insert({.id = 3, .email = "charlie@test.com", .name = "Charlie"});
 
     // Access Alice and Charlie to make them recently used
     EXPECT_NE(cache.find<IdTag>(1), cache.end<IdTag>());
     EXPECT_NE(cache.find<IdTag>(3), cache.end<IdTag>());
 
     // Add fourth element - Bob should be evicted (LRU)
-    cache.insert(User{4, "david@test.com", "David"});
+    cache.insert({.id = 4, .email = "david@test.com", .name = "David"});
 
     EXPECT_EQ(cache.find<IdTag>(2), cache.end<IdTag>());  // Bob evicted (LRU)
     EXPECT_NE(cache.find<IdTag>(1), cache.end<IdTag>());  // Alice remains
@@ -114,8 +114,8 @@ UTEST_F(ExpirableUsersTest, TTLExpiration) {
 
     UserCacheExpirable cache(100, 100ms);  // Very short TTL for testing
 
-    cache.insert(User{1, "alice@test.com", "Alice"});
-    cache.insert(User{2, "bob@test.com", "Bob"});
+    cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"});
+    cache.insert({.id = 2, .email = "bob@test.com", .name = "Bob"});
 
     // Items should still exist
     EXPECT_NE(cache.find<IdTag>(1), cache.end<IdTag>());
@@ -136,7 +136,7 @@ UTEST_F(ExpirableUsersTest, TTLRefreshOnAccess) {
 
     UserCacheExpirable cache(100, 190ms);
 
-    cache.insert(User{1, "alice@test.com", "Alice"});
+    cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"});
 
     // Wait a bit but not enough to expire
     utils::datetime::MockSleep(99ms);
@@ -159,10 +159,10 @@ UTEST_F(ExpirableUsersTest, EqualRangeOperations) {
     UserCacheExpirable cache(10, 1h);  // Long TTL to avoid expiration
 
     // Insert multiple users with the same name
-    cache.insert(User{1, "john1@test.com", "John"});
-    cache.insert(User{2, "john2@test.com", "John"});
-    cache.insert(User{3, "john3@test.com", "John"});
-    cache.insert(User{4, "alice@test.com", "Alice"});
+    cache.insert({.id = 1, .email = "john1@test.com", .name = "John"});
+    cache.insert({.id = 2, .email = "john2@test.com", .name = "John"});
+    cache.insert({.id = 3, .email = "john3@test.com", .name = "John"});
+    cache.insert({.id = 4, .email = "alice@test.com", .name = "Alice"});
 
     // Test equal_range for non-unique index
     auto [begin, end] = cache.equal_range<NameTag>("John");
@@ -185,8 +185,8 @@ UTEST_F(ExpirableUsersTest, EqualRangeNoUpdate) {
 
     UserCacheExpirable cache(10, 1h);
 
-    cache.insert(User{1, "john1@test.com", "John"});
-    cache.insert(User{2, "john2@test.com", "John"});
+    cache.insert({.id = 1, .email = "john1@test.com", .name = "John"});
+    cache.insert({.id = 2, .email = "john2@test.com", .name = "John"});
 
     // equal_range_no_update should work and find all matches
     auto [begin, end] = cache.equal_range_no_update<NameTag>("John");
@@ -202,8 +202,8 @@ UTEST_F(ExpirableUsersTest, EqualRangeNoUpdate) {
 UTEST_F(ExpirableUsersTest, EraseOperations) {
     UserCacheExpirable cache(3, std::chrono::seconds(10));
 
-    cache.insert(User{1, "alice@test.com", "Alice"});
-    cache.insert(User{2, "bob@test.com", "Bob"});
+    cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"});
+    cache.insert({.id = 2, .email = "bob@test.com", .name = "Bob"});
 
     EXPECT_TRUE(cache.erase<IdTag>(1));
     EXPECT_EQ(cache.find<IdTag>(1), cache.end<IdTag>());
@@ -219,7 +219,7 @@ UTEST_F(ExpirableUsersTest, SetCapacity) {
 
     // Fill cache
     for (int i = 1; i <= 5; ++i) {
-        cache.insert(User{i, std::to_string(i) + "@test.com", "User" + std::to_string(i)});
+        cache.insert(User{.id = i, .email = std::to_string(i) + "@test.com", .name = "User" + std::to_string(i)});
     }
     EXPECT_EQ(cache.size(), 5);
     EXPECT_EQ(cache.capacity(), 5);
@@ -235,8 +235,8 @@ UTEST_F(ExpirableUsersTest, SetCapacity) {
 UTEST_F(ExpirableUsersTest, Clear) {
     UserCacheExpirable cache(5, std::chrono::seconds(10));
 
-    cache.insert(User{1, "alice@test.com", "Alice"});
-    cache.insert(User{2, "bob@test.com", "Bob"});
+    cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"});
+    cache.insert({.id = 2, .email = "bob@test.com", .name = "Bob"});
 
     EXPECT_EQ(cache.size(), 2);
     EXPECT_FALSE(cache.empty());
@@ -255,8 +255,8 @@ UTEST_F(ExpirableUsersTest, CleanupExpired) {
 
     UserCacheExpirable cache(5, 100ms);
 
-    cache.insert(User{1, "alice@test.com", "Alice"});
-    cache.insert(User{2, "bob@test.com", "Bob"});
+    cache.insert({.id = 1, .email = "alice@test.com", .name = "Alice"});
+    cache.insert({.id = 2, .email = "bob@test.com", .name = "Bob"});
 
     // Wait for TTL to expire
     utils::datetime::MockSleep(150ms);
@@ -284,7 +284,11 @@ UTEST_F(ExpirableUsersTest, ThreadSafetyBasic) {
 
                 {
                     const std::lock_guard lock{mutex};
-                    cache.insert(User{id, std::to_string(id) + "@test.com", "User" + std::to_string(id)});
+                    cache.insert(User{
+                        .id = id,
+                        .email = std::to_string(id) + "@test.com",
+                        .name = "User" + std::to_string(id)
+                    });
                 }
 
                 if (id % 3 == 0) {

@@ -24,7 +24,11 @@ GenericMethodParseResults ParseGenericMethodName(std::string_view generic_method
     auto service_name = generic_method_name.substr(1, slash_pos - 1);
     auto method_name = generic_method_name.substr(slash_pos + 1);
 
-    return GenericMethodParseResults{call_name, service_name, method_name};
+    return GenericMethodParseResults{
+        .call_name = call_name,
+        .service_name = service_name,
+        .method_name = method_name,
+    };
 }
 
 }  // namespace ugrpc::server::impl

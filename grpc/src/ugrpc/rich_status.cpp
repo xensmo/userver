@@ -154,9 +154,9 @@ std::optional<ErrorInfo> ErrorInfo::TryUnpack(const ::google::protobuf::Any& any
     }
 
     return ErrorInfo{
-        pb_error_info_opt->reason(),
-        pb_error_info_opt->domain(),
-        {pb_error_info_opt->metadata().begin(), pb_error_info_opt->metadata().end()},
+        .reason = pb_error_info_opt->reason(),
+        .domain = pb_error_info_opt->domain(),
+        .metadata = {pb_error_info_opt->metadata().begin(), pb_error_info_opt->metadata().end()},
     };
 }
 
@@ -188,8 +188,8 @@ std::optional<DebugInfo> DebugInfo::TryUnpack(const ::google::protobuf::Any& any
     }
 
     return DebugInfo{
-        {pb_debug_info_opt->stack_entries().begin(), pb_debug_info_opt->stack_entries().end()},
-        pb_debug_info_opt->detail(),
+        .stack_entries = {pb_debug_info_opt->stack_entries().begin(), pb_debug_info_opt->stack_entries().end()},
+        .detail = pb_debug_info_opt->detail(),
     };
 }
 
@@ -212,7 +212,8 @@ std::optional<QuotaFailure> QuotaFailure::TryUnpack(const ::google::protobuf::An
     QuotaFailure result;
     result.violations.reserve(pb_violations.size());
     for (const auto& pb_violation : pb_violations) {
-        result.violations.push_back(QuotaViolation{pb_violation.subject(), pb_violation.description()});
+        result.violations
+            .push_back(QuotaViolation{.subject = pb_violation.subject(), .description = pb_violation.description()});
     }
     return result;
 }
@@ -236,8 +237,11 @@ std::optional<PreconditionFailure> PreconditionFailure::TryUnpack(const ::google
     PreconditionFailure result;
     result.violations.reserve(pb_violations.size());
     for (const auto& pb_violation : pb_violations) {
-        result.violations
-            .push_back(PreconditionViolation{pb_violation.type(), pb_violation.subject(), pb_violation.description()});
+        result.violations.push_back(PreconditionViolation{
+            .type = pb_violation.type(),
+            .subject = pb_violation.subject(),
+            .description = pb_violation.description(),
+        });
     }
     return result;
 }
@@ -259,7 +263,8 @@ std::optional<BadRequest> BadRequest::TryUnpack(const ::google::protobuf::Any& a
     BadRequest result;
     result.field_violations.reserve(pb_field_violations.size());
     for (const auto& pb_violation : pb_field_violations) {
-        result.field_violations.push_back(FieldViolation{pb_violation.field(), pb_violation.description()});
+        result.field_violations
+            .push_back(FieldViolation{.field = pb_violation.field(), .description = pb_violation.description()});
     }
     return result;
 }
@@ -277,8 +282,8 @@ std::optional<RequestInfo> RequestInfo::TryUnpack(const ::google::protobuf::Any&
     }
 
     return RequestInfo{
-        pb_request_info_opt->request_id(),
-        pb_request_info_opt->serving_data(),
+        .request_id = pb_request_info_opt->request_id(),
+        .serving_data = pb_request_info_opt->serving_data(),
     };
 }
 
@@ -297,10 +302,10 @@ std::optional<ResourceInfo> ResourceInfo::TryUnpack(const ::google::protobuf::An
     }
 
     return ResourceInfo{
-        pb_resource_info_opt->resource_type(),
-        pb_resource_info_opt->resource_name(),
-        pb_resource_info_opt->owner(),
-        pb_resource_info_opt->description(),
+        .resource_type = pb_resource_info_opt->resource_type(),
+        .resource_name = pb_resource_info_opt->resource_name(),
+        .owner = pb_resource_info_opt->owner(),
+        .description = pb_resource_info_opt->description(),
     };
 }
 
@@ -319,7 +324,7 @@ std::optional<Help> Help::TryUnpack(const ::google::protobuf::Any& any) {
     Help result;
     result.links.reserve(pb_links.size());
     for (const auto& pb_link : pb_links) {
-        result.links.push_back(HelpLink{pb_link.description(), pb_link.url()});
+        result.links.push_back(HelpLink{.description = pb_link.description(), .url = pb_link.url()});
     }
     return result;
 }

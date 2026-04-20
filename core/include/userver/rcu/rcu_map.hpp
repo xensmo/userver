@@ -313,7 +313,7 @@ typename RcuMap<K, V, RcuMapTraits>::InsertReturnType RcuMap<
     K,
     V,
     RcuMapTraits>::Insert(const K& key, typename RcuMap<K, V, RcuMapTraits>::ValuePtr value) {
-    InsertReturnType result{Get(key), false};
+    InsertReturnType result{.value = Get(key), .inserted = false};
     if (result.value) {
         return result;
     }
@@ -327,7 +327,7 @@ typename RcuMap<K, V, RcuMapTraits>::InsertReturnType RcuMap<
     K,
     V,
     RcuMapTraits>::Emplace(const K& key, Args&&... args) {
-    InsertReturnType result{Get(key), false};
+    InsertReturnType result{.value = Get(key), .inserted = false};
     if (result.value) {
         return result;
     }
@@ -342,7 +342,7 @@ typename RcuMap<K, V, RcuMapTraits>::InsertReturnType RcuMap<
     RcuMapTraits>::DoInsert(const K& key, typename RcuMap<K, V, RcuMapTraits>::ValuePtr value) {
     auto txn = rcu_.StartWrite();
     auto insertion_result = txn->emplace(key, std::move(value));
-    InsertReturnType result{insertion_result.first->second, insertion_result.second};
+    InsertReturnType result{.value = insertion_result.first->second, .inserted = insertion_result.second};
     if (result.inserted) {
         txn.Commit();
     }
@@ -355,7 +355,7 @@ typename RcuMap<K, V, RcuMapTraits>::InsertReturnType RcuMap<
     K,
     V,
     RcuMapTraits>::TryEmplace(const K& key, Args&&... args) {
-    InsertReturnType result{Get(key), false};
+    InsertReturnType result{.value = Get(key), .inserted = false};
     if (!result.value) {
         auto txn = rcu_.StartWrite();
         auto insertion_result = txn->try_emplace(key, nullptr);

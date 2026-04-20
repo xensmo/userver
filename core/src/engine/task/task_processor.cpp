@@ -44,9 +44,9 @@ constexpr OverloadActionAndValue<OverloadBitAndValue> GetOverloadActionAndValue(
 ) {
     const auto value = x.load();
     if (value < OverloadBitAndValue{0}) {
-        return {TaskProcessorSettingsOverloadAction::kIgnore, -value};
+        return {.action = TaskProcessorSettingsOverloadAction::kIgnore, .value = -value};
     } else {
-        return {TaskProcessorSettingsOverloadAction::kCancel, value};
+        return {.action = TaskProcessorSettingsOverloadAction::kCancel, .value = value};
     }
 }
 
@@ -77,7 +77,7 @@ void EmitMagicNanosleep() {
     // that all startup stuff of the current thread is done.
     // Before this timepoint we could do blocking syscalls.
     // From now on, every blocking syscall is a bug.
-    const struct timespec ts = {0, 42};
+    const struct timespec ts = {.tv_sec = 0, .tv_nsec = 42};
     nanosleep(&ts, nullptr);
 }
 

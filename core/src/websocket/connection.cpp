@@ -53,8 +53,8 @@ void SendFrame(
 
 Config Parse(const yaml_config::YamlConfig& config, formats::parse::To<Config>) {
     return {
-        config["max-remote-payload"].As<unsigned>(65536),
-        config["fragment-size"].As<unsigned>(65536),
+        .max_remote_payload = config["max-remote-payload"].As<unsigned>(65536),
+        .fragment_size = config["fragment-size"].As<unsigned>(65536),
     };
 }
 

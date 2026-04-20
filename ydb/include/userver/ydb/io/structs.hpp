@@ -263,7 +263,7 @@ struct StructRowParser final {
         return T{
             Parse<boost::pfr::tuple_element_t<Indices, T>>(
                 parser.ColumnParser(cpp_to_ydb_mapping[Indices]),
-                ParseContext{/*column_name=*/kFieldNames[Indices]}
+                ParseContext{.column_name = kFieldNames[Indices]}
             )...,
         };
     }
