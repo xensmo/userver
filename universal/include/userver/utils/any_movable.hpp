@@ -34,7 +34,8 @@ public:
 
     /// Copies or moves the provided object inside the `AnyMovable`. `const`,
     /// reference, arrays and function pointers are decayed.
-    template <typename ValueType, typename = std::enable_if_t<!std::is_same_v<AnyMovable, std::decay_t<ValueType>>>>
+    template <typename ValueType>
+    requires(!std::is_same_v<AnyMovable, std::decay_t<ValueType>>)
     /*implicit*/ AnyMovable(ValueType&& value);
 
     /// In-place constructs an object of the specified type
@@ -151,7 +152,8 @@ struct AnyMovable::Holder final : public HolderBase {
     }
 };
 
-template <typename ValueType, typename>
+template <typename ValueType>
+requires(!std::is_same_v<AnyMovable, std::decay_t<ValueType>>)
 AnyMovable::AnyMovable(ValueType&& value)
     : content_(Holder<std::decay_t<ValueType>>::Make(std::forward<ValueType>(value)))
 {

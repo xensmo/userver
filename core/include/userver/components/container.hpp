@@ -24,16 +24,13 @@ class Container;
 
 namespace impl {
 
-template <typename T, typename = void>
-struct ContainerHasName : std::false_type {};
-
 template <typename T>
-struct ContainerHasName<T, utils::void_t<decltype(ContainerName(Of<T>()))>> : std::true_type {};
+concept ContainerHasName = requires { ContainerName(Of<T>{}); };
 
 template <typename T>
 constexpr std::string_view GetContainerName()
 {
-    if constexpr (ContainerHasName<T>::value) {
+    if constexpr (ContainerHasName<T>) {
         return ContainerName(Of<T>());
     } else {
         static_assert(!sizeof(T), "Container name is not registered. Forgot to define ContainerName(Of<T>)?");
@@ -62,12 +59,14 @@ struct DependencyLocator {
         && !!sizeof(LocateDependencyResult<T>)             // 2) U is locate'able
         ;
 
-    template <typename T, typename = std::enable_if_t<!kIsReference<T> && kIsLocatable<T>>>
+    template <typename T>
+    requires(!kIsReference<T> && kIsLocatable<T>)
     operator T() const {
         return LocateDependency(WithType<std::decay_t<T>>{}, config, context);
     }
 
-    template <typename T, typename = std::enable_if_t<kIsReference<T> && kIsLocatable<T>>>
+    template <typename T>
+    requires(kIsReference<T> && kIsLocatable<T>)
     operator T&() const {
         return LocateDependency(WithType<std::decay_t<T>>{}, config, context);
     }
@@ -93,21 +92,15 @@ T LocateDependency(WithType<T>, const ComponentConfig& config, const ComponentCo
 }
 
 template <typename T>
-std::enable_if_t<impl::ContainerHasName<T>::value, T&> LocateDependency(
-    WithType<T>,
-    const ComponentConfig&,
-    const ComponentContext& context
-)
+requires impl::ContainerHasName<T>
+T& LocateDependency(WithType<T>, const ComponentConfig&, const ComponentContext& context)
 {
     return context.FindComponent<Container<T>>().Get();
 }
 
 template <typename T>
-std::enable_if_t<std::is_base_of_v<RawComponentBase, T>, T&> LocateDependency(
-    WithType<T>,
-    const ComponentConfig&,
-    const ComponentContext& context
-)
+requires std::is_base_of_v<RawComponentBase, T>
+T& LocateDependency(WithType<T>, const ComponentConfig&, const ComponentContext& context)
 {
     return context.FindComponent<T>();
 }

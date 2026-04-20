@@ -29,11 +29,14 @@ template <typename T>
 using MappedType = typename T::mapped_type;
 
 template <typename T>
-using IsRange =
-    ExpectSame<std::decay_t<decltype(begin(std::declval<T&>()))>, std::decay_t<decltype(end(std::declval<T&>()))>>;
+requires std::is_same_v<
+             std::decay_t<decltype(begin(std::declval<T&>()))>,
+             std::decay_t<decltype(end(std::declval<T&>()))>>
+using IsRange = void;
 
 template <typename T>
-using IteratorType = std::enable_if_t<IsDetected<IsRange, T>, decltype(begin(std::declval<T&>()))>;
+requires IsDetected<IsRange, T>
+using IteratorType = decltype(begin(std::declval<T&>()));
 
 template <typename T>
 using RangeValueType = typename std::iterator_traits<DetectedType<IteratorType, T>>::value_type;

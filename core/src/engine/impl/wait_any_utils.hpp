@@ -62,11 +62,9 @@ private:
 inline bool AreUniqueValues(utils::span<ContextAccessor*> targets) {
     std::vector<ContextAccessor*> sorted;
     sorted.reserve(targets.size());
-    std::copy_if(targets.begin(), targets.end(), std::back_inserter(sorted), [](const auto& target) {
-        return target != nullptr;
-    });
-    std::sort(sorted.begin(), sorted.end());
-    return std::adjacent_find(sorted.begin(), sorted.end()) == sorted.end();
+    std::ranges::copy_if(targets, std::back_inserter(sorted), [](const auto& target) { return target != nullptr; });
+    std::ranges::sort(sorted);
+    return std::ranges::adjacent_find(sorted) == sorted.end();
 }
 
 }  // namespace engine::impl

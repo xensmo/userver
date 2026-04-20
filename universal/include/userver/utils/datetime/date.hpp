@@ -72,7 +72,8 @@ Date DateFromRFC3339String(const std::string& date_string);
 std::string ToString(Date date);
 
 template <typename Value>
-std::enable_if_t<formats::common::kIsFormatValue<Value>, Date> Parse(const Value& value, formats::parse::To<Date>) {
+requires formats::common::kIsFormatValue<Value>
+Date Parse(const Value& value, formats::parse::To<Date>) {
     std::string str;
     try {
         str = value.template As<std::string>();
@@ -88,7 +89,8 @@ std::enable_if_t<formats::common::kIsFormatValue<Value>, Date> Parse(const Value
 }
 
 template <typename Value>
-std::enable_if_t<formats::common::kIsFormatValue<Value>, Value> Serialize(Date date, formats::serialize::To<Value>) {
+requires formats::common::kIsFormatValue<Value>
+Value Serialize(Date date, formats::serialize::To<Value>) {
     return typename Value::Builder(ToString(date)).ExtractValue();
 }
 

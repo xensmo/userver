@@ -15,7 +15,8 @@ namespace logging::impl {
 
 class TagKey final {
 public:
-    template <typename StringType, typename Enabled = std::enable_if_t<!std::is_same_v<StringType, TagKey>>>
+    template <typename StringType>
+    requires(!std::is_same_v<StringType, TagKey>)
     consteval /*implicit*/ TagKey(const StringType& escaped_key);
 
     std::string_view GetEscapedKey() const noexcept;
@@ -78,7 +79,8 @@ constexpr bool DoesTagNeedEscaping(std::string_view key) noexcept {
     return false;
 }
 
-template <typename StringType, typename Enabled>
+template <typename StringType>
+requires(!std::is_same_v<StringType, TagKey>)
 consteval TagKey::TagKey(const StringType& escaped_key)
     : escaped_key_(escaped_key)
 {

@@ -63,10 +63,12 @@ public:
     expected(const unexpected<E>& error);
     expected(unexpected<E>&& error);
 
-    template <class G, typename = std::enable_if_t<std::is_convertible_v<G, E>>>
+    template <class G>
+    requires std::is_convertible_v<G, E>
     expected(const unexpected<G>& error);
 
-    template <class G, typename = std::enable_if_t<std::is_convertible_v<G, E>>>
+    template <class G>
+    requires std::is_convertible_v<G, E>
     expected(unexpected<G>&& error);
 
     /// @brief Check whether *this contains an expected value
@@ -105,10 +107,12 @@ public:
     expected(const unexpected<E>& error);
     expected(unexpected<E>&& error);
 
-    template <class G, typename = std::enable_if_t<std::is_convertible_v<G, E>>>
+    template <class G>
+    requires std::is_convertible_v<G, E>
     expected(const unexpected<G>& error);
 
-    template <class G, typename = std::enable_if_t<std::is_convertible_v<G, E>>>
+    template <class G>
+    requires std::is_convertible_v<G, E>
     expected(unexpected<G>&& error);
 
     bool has_value() const noexcept;
@@ -180,13 +184,15 @@ expected<S, E>::expected(unexpected<E>&& error)
 {}
 
 template <class S, class E>
-template <class G, typename>
+template <class G>
+requires std::is_convertible_v<G, E>
 expected<S, E>::expected(const unexpected<G>& error)
     : data_(utils::unexpected<E>(std::forward<G>(error.error())))
 {}
 
 template <class S, class E>
-template <class G, typename>
+template <class G>
+requires std::is_convertible_v<G, E>
 expected<S, E>::expected(unexpected<G>&& error)
     : data_(utils::unexpected<E>(std::forward<G>(error.error())))
 {}
@@ -256,13 +262,15 @@ expected<void, E>::expected(unexpected<E>&& error)
 {}
 
 template <class E>
-template <class G, typename>
+template <class G>
+requires std::is_convertible_v<G, E>
 expected<void, E>::expected(const unexpected<G>& error)
     : data_(utils::unexpected<E>(std::forward<G>(error.error())))
 {}
 
 template <class E>
-template <class G, typename>
+template <class G>
+requires std::is_convertible_v<G, E>
 expected<void, E>::expected(unexpected<G>&& error)
     : data_(utils::unexpected<E>(std::forward<G>(error.error())))
 {}

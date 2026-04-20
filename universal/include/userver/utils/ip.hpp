@@ -82,7 +82,8 @@ std::string AddressV6ToString(const AddressV6& address);
 /// @ingroup userver_containers
 ///
 /// @brief Base class for IPv4/IPv6 network
-template <typename Address, typename = std::enable_if_t<kIsAddressType<Address>>>
+template <typename Address>
+requires kIsAddressType<Address>
 class NetworkBase final {
 public:
     using AddressType = Address;

@@ -27,12 +27,12 @@ public:
     using Duration = typename Timer::duration;
 
     static_assert(
-        (detail::kResultWantsAddFunction<Result, Counter, Duration> || detail::kResultCanUseAddAssign<Result, Counter>),
+        (detail::ResultWantsAddFunction<Result, Counter, Duration> || detail::ResultCanUseAddAssign<Result, Counter>),
         "The Result template type argument must provide either Add(Counter, "
         "Duration, Duration) function or add assignment operator"
     );
 
-    static constexpr bool kUseAddFunction = detail::kResultWantsAddFunction<Result, Counter, Duration>;
+    static constexpr bool kUseAddFunction = detail::ResultWantsAddFunction<Result, Counter, Duration>;
 
     /**
      * @param epoch_duration duration of epoch.
@@ -157,7 +157,7 @@ private:
     }
 
     struct EpochBucket {
-        static constexpr bool kUseReset = detail::kCanReset<Counter>;
+        static constexpr bool kUseReset = detail::CanReset<Counter>;
         std::atomic<Duration> epoch;
         Counter counter;
 
