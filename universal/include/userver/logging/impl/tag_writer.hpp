@@ -50,19 +50,10 @@ public:
     // The tags must not be duplicated in other Put* calls.
     void PutLogExtra(const LogExtra& extra);
 
-    // Copies the tags to the internal LogExtra. They will be deduplicated
-    // automatically.
-    void ExtendLogExtra(const LogExtra& extra);
-
 private:
     friend class logging::LogHelper;
 
     explicit TagWriter(LogHelper& lh) noexcept;
-
-    void PutKey(TagKey key);
-    void PutKey(RuntimeTagKey key);
-
-    void MarkValueEnd() noexcept;
 
     LogHelper& lh_;
 };
@@ -91,12 +82,20 @@ consteval TagKey::TagKey(const StringType& escaped_key)
 
 template <typename T>
 void TagWriter::PutTag(TagKey key, const T& value) {
-    lh_.PutTag(key.GetEscapedKey(), value);
+    if constexpr (std::is_convertible_v<T, std::string_view>) {
+        lh_.PutSwTag(key.GetEscapedKey(), value);
+    } else {
+        lh_.PutTag(key.GetEscapedKey(), value);
+    }
 }
 
 template <typename T>
 void TagWriter::PutTag(RuntimeTagKey key, const T& value) {
-    lh_.PutTag(key.GetUnescapedKey(), std::variant{value});
+    if constexpr (std::is_convertible_v<T, std::string_view>) {
+        lh_.PutSwTag(key.GetUnescapedKey(), value);
+    } else {
+        lh_.PutTag(key.GetUnescapedKey(), value);
+    }
 }
 
 }  // namespace logging::impl
