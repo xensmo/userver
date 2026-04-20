@@ -4,15 +4,13 @@
 /// @brief @copybrief concurrent::impl::MonotonicConcurrentSet
 
 #include <atomic>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>  // for std::lock_guard
-#include <type_traits>
 #include <utility>
-
-#include <boost/atomic/atomic.hpp>
 
 #include <userver/utils/assert.hpp>
 #include <userver/utils/impl/fused_allocations.hpp>
@@ -59,35 +57,33 @@ inline std::uintptr_t MakeBucketValue(ItemNode<T>* ptr, bool locked) noexcept {
 // Bucket is an atomic stack with lowest bit used for locking.
 template <typename T>
 struct Bucket {
-    boost::atomic<std::uintptr_t> value{0};  // TODO use std::atomic in C++20
+    std::atomic<std::uintptr_t> value{0};
 
     void lock() noexcept {
-        std::uintptr_t expected = value.load(boost::memory_order_relaxed);
+        std::uintptr_t expected = value.load(std::memory_order_relaxed);
         while (true) {
             // Wait if already locked
             while (IsBucketLocked(expected)) {
-                value.wait(expected, boost::memory_order_relaxed);
-                expected = value.load(boost::memory_order_relaxed);
+                value.wait(expected, std::memory_order_relaxed);
+                expected = value.load(std::memory_order_relaxed);
             }
 
             // Try to acquire lock
             std::uintptr_t desired = expected | kLockBit;
-            if (value
-                    .compare_exchange_weak(expected, desired, boost::memory_order_acquire, boost::memory_order_relaxed))
-            {
+            if (value.compare_exchange_weak(expected, desired, std::memory_order_acquire, std::memory_order_relaxed)) {
                 return;
             }
         }
     }
 
     void unlock() noexcept {
-        std::uintptr_t val = value.load(boost::memory_order_relaxed);
+        std::uintptr_t val = value.load(std::memory_order_relaxed);
         UASSERT(IsBucketLocked(val));
-        value.store(val & kPtrMask, boost::memory_order_release);
+        value.store(val & kPtrMask, std::memory_order_release);
         value.notify_one();
     }
 
-    ItemNode<T>* LoadHead(boost::memory_order order) const noexcept {
+    ItemNode<T>* LoadHead(std::memory_order order) const noexcept {
         return reinterpret_cast<ItemNode<T>*>(value.load(order) & kPtrMask);
     }
 };
@@ -130,7 +126,7 @@ struct Table {
             utils::impl::FusedArray{item_capacity, items}
         );
 
-        ::new (&*table) Table(buckets, nodes, items);  // TODO use std::construct_at in C++20
+        std::construct_at(&*table, buckets, nodes, items);
         std::uninitialized_value_construct_n(buckets.data(), buckets.size());
         std::uninitialized_default_construct_n(nodes.data(), nodes.size());
         std::uninitialized_default_construct_n(items.data(), items.size());
@@ -207,12 +203,14 @@ public:
 
     /// @brief Call the passed `visitor` on all contained items.
     /// @param visitor A callable that accepts `const T&`
-    template <typename Visitor, typename = std::enable_if_t<std::is_invocable_v<Visitor&, const T&>>>
+    template <typename Visitor>
+    requires std::invocable<Visitor&, const T&>
     void Visit(Visitor visitor) const;
 
     /// @brief Call the passed `visitor` on all contained items.
     /// @param visitor A callable that accepts `T&`
-    template <typename Visitor, typename = std::enable_if_t<std::is_invocable_v<Visitor&, T&>>>
+    template <typename Visitor>
+    requires std::invocable<Visitor&, T&>
     void Visit(Visitor visitor);
 
 private:
@@ -291,7 +289,7 @@ T* MonotonicConcurrentSet<T, Hash, KeyEqual>::DoFind(const Key& key) const {
     const std::size_t hash = hasher_(key);
     Table& table = *head_.load(std::memory_order_acquire);
     const auto& bucket = table.GetBucket(hash);
-    return FindInBucket(bucket.LoadHead(boost::memory_order_acquire), key);
+    return FindInBucket(bucket.LoadHead(std::memory_order_acquire), key);
 }
 
 template <typename T, typename Hash, typename KeyEqual>
@@ -317,7 +315,7 @@ template <typename ItemReference, typename Visitor>
 void MonotonicConcurrentSet<T, Hash, KeyEqual>::DoVisit(Visitor visitor) const {
     auto table = head_.load(std::memory_order_acquire);
     for (const auto& bucket : table->buckets) {
-        for (const ItemNode* node = bucket.LoadHead(boost::memory_order_acquire); node != nullptr; node = node->next) {
+        for (const ItemNode* node = bucket.LoadHead(std::memory_order_acquire); node != nullptr; node = node->next) {
             T* item = node->item;
             UASSERT(item);
             visitor(static_cast<ItemReference>(*item));
@@ -326,13 +324,15 @@ void MonotonicConcurrentSet<T, Hash, KeyEqual>::DoVisit(Visitor visitor) const {
 }
 
 template <typename T, typename Hash, typename KeyEqual>
-template <typename Visitor, typename>
+template <typename Visitor>
+requires std::invocable<Visitor&, const T&>
 void MonotonicConcurrentSet<T, Hash, KeyEqual>::Visit(Visitor visitor) const {
     DoVisit<const T&>(visitor);
 }
 
 template <typename T, typename Hash, typename KeyEqual>
-template <typename Visitor, typename>
+template <typename Visitor>
+requires std::invocable<Visitor&, T&>
 void MonotonicConcurrentSet<T, Hash, KeyEqual>::Visit(Visitor visitor) {
     DoVisit<T&>(visitor);
 }
@@ -343,7 +343,7 @@ std::pair<T*, bool> MonotonicConcurrentSet<
     T,
     Hash,
     KeyEqual>::TryEmplaceLocked(Table& table, Bucket& bucket, const Key& key, Args&&... args) {
-    ItemNode* const bucket_head = bucket.LoadHead(boost::memory_order_relaxed);
+    ItemNode* const bucket_head = bucket.LoadHead(std::memory_order_relaxed);
 
     if (T* const existing = FindInBucket(bucket_head, key)) {
         return {existing, false};
@@ -356,13 +356,13 @@ std::pair<T*, bool> MonotonicConcurrentSet<
         return {nullptr, false};
     }
 
-    ::new (&table.items[item_index].item) T(std::forward<Args>(args)...);  // TODO use std::construct_at in C++20
+    std::construct_at(&table.items[item_index].item, std::forward<Args>(args)...);
     T& new_item = table.items[item_index].item;
 
     ItemNode& new_node = GetNodeForItemIndex(table, item_index);
     new_node.item = &new_item;
     new_node.next = bucket_head;
-    bucket.value.store(monotonic_concurrent_set::MakeBucketValue(&new_node, true), boost::memory_order_release);
+    bucket.value.store(monotonic_concurrent_set::MakeBucketValue(&new_node, true), std::memory_order_release);
 
     return {&new_item, true};
 }
@@ -385,9 +385,8 @@ void MonotonicConcurrentSet<T, Hash, KeyEqual>::FillNewTable(Table& old_table, T
 
             ItemNode& new_node = *(next_new_node++);
             new_node.item = &item;
-            new_node.next = bucket.LoadHead(boost::memory_order_relaxed);
-            bucket.value
-                .store(monotonic_concurrent_set::MakeBucketValue(&new_node, false), boost::memory_order_relaxed);
+            new_node.next = bucket.LoadHead(std::memory_order_relaxed);
+            bucket.value.store(monotonic_concurrent_set::MakeBucketValue(&new_node, false), std::memory_order_relaxed);
         }
     }
 }
@@ -454,7 +453,7 @@ std::pair<T&, bool> MonotonicConcurrentSet<T, Hash, KeyEqual>::TryEmplace(const 
         auto& bucket = current.GetBucket(hash);
 
         // Fast path: lock-free search (same as Find) - avoid lock when item already exists
-        if (T* const existing = FindInBucket(bucket.LoadHead(boost::memory_order_acquire), key)) {
+        if (T* const existing = FindInBucket(bucket.LoadHead(std::memory_order_acquire), key)) {
             return {*existing, false};
         }
 
