@@ -3,6 +3,7 @@
 /// @file userver/utils/strong_typedef.hpp
 /// @brief @copybrief utils::StrongTypedef
 
+#include <compare>
 #include <functional>
 #include <iosfwd>
 #include <string>
@@ -15,7 +16,6 @@
 #include <boost/functional/hash_fwd.hpp>
 
 #include <userver/compiler/impl/lifetime.hpp>
-#include <userver/compiler/impl/three_way_comparison.hpp>
 #include <userver/formats/common/meta.hpp>
 #include <userver/utils/meta.hpp>
 #include <userver/utils/strong_typedef_fwd.hpp>
@@ -296,10 +296,7 @@ UTILS_STRONG_TYPEDEF_REL_OP(<)
 UTILS_STRONG_TYPEDEF_REL_OP(>)
 UTILS_STRONG_TYPEDEF_REL_OP(<=)
 UTILS_STRONG_TYPEDEF_REL_OP(>=)
-
-#ifdef USERVER_IMPL_HAS_THREE_WAY_COMPARISON
 UTILS_STRONG_TYPEDEF_REL_OP(<=>)
-#endif
 
 #undef UTILS_STRONG_TYPEDEF_REL_OP
 

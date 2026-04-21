@@ -20,6 +20,7 @@
 
 #include <array>
 #include <cassert>
+#include <compare>
 #include <cstdint>
 #include <ios>
 #include <iosfwd>
@@ -35,7 +36,6 @@
 #include <fmt/compile.h>
 #include <fmt/format.h>
 
-#include <userver/compiler/impl/three_way_comparison.hpp>
 #include <userver/decimal64/format_options.hpp>
 #include <userver/formats/common/meta.hpp>
 #include <userver/utils/assert.hpp>
@@ -573,21 +573,7 @@ public:
         return *this;
     }
 
-#ifdef USERVER_IMPL_HAS_THREE_WAY_COMPARISON
     constexpr auto operator<=>(const Decimal& rhs) const = default;
-#else
-    constexpr bool operator==(Decimal rhs) const { return value_ == rhs.value_; }
-
-    constexpr bool operator!=(Decimal rhs) const { return value_ != rhs.value_; }
-
-    constexpr bool operator<(Decimal rhs) const { return value_ < rhs.value_; }
-
-    constexpr bool operator<=(Decimal rhs) const { return value_ <= rhs.value_; }
-
-    constexpr bool operator>(Decimal rhs) const { return value_ > rhs.value_; }
-
-    constexpr bool operator>=(Decimal rhs) const { return value_ >= rhs.value_; }
-#endif
 
     constexpr Decimal operator+() const { return *this; }
 

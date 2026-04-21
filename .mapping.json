@@ -5365,7 +5365,6 @@
   "universal/include/userver/compiler/impl/asan.hpp":"taxi/uservices/userver/universal/include/userver/compiler/impl/asan.hpp",
   "universal/include/userver/compiler/impl/lifetime.hpp":"taxi/uservices/userver/universal/include/userver/compiler/impl/lifetime.hpp",
   "universal/include/userver/compiler/impl/lsan.hpp":"taxi/uservices/userver/universal/include/userver/compiler/impl/lsan.hpp",
-  "universal/include/userver/compiler/impl/three_way_comparison.hpp":"taxi/uservices/userver/universal/include/userver/compiler/impl/three_way_comparison.hpp",
   "universal/include/userver/compiler/impl/tls.hpp":"taxi/uservices/userver/universal/include/userver/compiler/impl/tls.hpp",
   "universal/include/userver/compiler/impl/tsan.hpp":"taxi/uservices/userver/universal/include/userver/compiler/impl/tsan.hpp",
   "universal/include/userver/compiler/select.hpp":"taxi/uservices/userver/universal/include/userver/compiler/select.hpp",
