@@ -5,7 +5,7 @@
 #include <userver/dynamic_config/snapshot.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/tracing/span.hpp>
-#include <userver/utils/datetime.hpp>
+#include <userver/utils/from_string.hpp>
 
 #include <dynamic_config/variables/USERVER_DEADLINE_PROPAGATION_ABSOLUTE_TIMESTAMP_ENABLED.hpp>
 #include <dynamic_config/variables/USERVER_DEADLINE_PROPAGATION_CLOCK_SKEW_THRESHOLD_MS.hpp>
@@ -53,13 +53,13 @@ std::optional<TaskInheritedOriginalDeadline> ParseXRequestDeadlineString(const s
     if (timestring.empty()) {
         return std::nullopt;
     }
-    try {
-        const auto timestamp = utils::datetime::UtcStringtime(timestring, utils::datetime::kAbsoluteDeadlineFormat);
-        return std::chrono::time_point_cast<std::chrono::microseconds>(timestamp);
-    } catch (const std::exception& exception) {
-        LOG_LIMITED_INFO() << "Can't parse X-Request-Deadline: " << exception.what();
+
+    const auto parsed = utils::FromStringNoThrow<std::uint64_t>(timestring);
+    if (!parsed.has_value()) {
+        LOG_LIMITED_INFO() << "Can't parse X-Request-Deadline: " << utils::ToString(parsed.error());
         return std::nullopt;
     }
+    return TaskInheritedOriginalDeadline{std::chrono::microseconds{parsed.value()}};
 }
 
 std::optional<engine::Deadline> TryMakeDeadlinePreferringAbsoluteTimestamp(

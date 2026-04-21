@@ -9,11 +9,14 @@ DP_ABSOLUTE_DEADLINE = 'X-Request-Deadline'
 VERSION = {'version': '2'}
 
 
-def _make_iso_deadline(offset_seconds: float) -> str:
-    tp = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+def _make_deadline_epoch_us(offset_seconds: float) -> str:
+    deadline_utc = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
         seconds=offset_seconds,
     )
-    return tp.strftime('%Y-%m-%dT%H:%M:%S.') + f'{tp.microsecond:06d}Z'
+    unix_epoch_utc = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+    one_microsecond = datetime.timedelta(microseconds=1)
+    microseconds_since_epoch = (deadline_utc - unix_epoch_utc) // one_microsecond
+    return str(microseconds_since_epoch)
 
 
 @pytest.fixture(name='call')
@@ -397,7 +400,7 @@ async def test_dp_timeout_not_retried(
 
 
 async def test_absolute_deadline_propagated_as_is(call, mockserver):
-    iso_deadline = _make_iso_deadline(10.0)
+    epoch_us_deadline = _make_deadline_epoch_us(10.0)
     captured = {}
 
     @mockserver.handler('/test')
@@ -408,8 +411,8 @@ async def test_absolute_deadline_propagated_as_is(call, mockserver):
     response = await call(
         headers={
             DP_TIMEOUT_MS: '500',
-            DP_ABSOLUTE_DEADLINE: iso_deadline,
+            DP_ABSOLUTE_DEADLINE: epoch_us_deadline,
         },
     )
     assert response.status == 200
-    assert captured['headers'].get(DP_ABSOLUTE_DEADLINE) == iso_deadline
+    assert captured['headers'].get(DP_ABSOLUTE_DEADLINE) == epoch_us_deadline

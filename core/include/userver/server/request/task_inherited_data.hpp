@@ -48,7 +48,7 @@ struct TaskInheritedData final {
     /// Signals when an operation has detected deadline expiration
     mutable DeadlineSignal deadline_signal{};
 
-    /// Original absolute deadline parsed from `X-Request-Deadline` header.
+    /// Original absolute deadline from `X-Request-Deadline` (Unix epoch microseconds).
     /// Intended solely for propagation to downstream services; use @ref deadline for the task deadline.
     std::optional<TaskInheritedOriginalDeadline> original_deadline = std::nullopt;
 };

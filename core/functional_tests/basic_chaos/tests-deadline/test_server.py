@@ -15,11 +15,14 @@ DP_DEADLINE_EXPIRED = 'X-YaTaxi-Deadline-Expired'
 DP_ABSOLUTE_DEADLINE = 'X-Request-Deadline'
 
 
-def _make_iso_deadline(offset_seconds: float) -> str:
-    tp = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+def _make_deadline_epoch_us(offset_seconds: float) -> str:
+    deadline_utc = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
         seconds=offset_seconds,
     )
-    return tp.strftime('%Y-%m-%dT%H:%M:%S.') + f'{tp.microsecond:06d}Z'
+    unix_epoch_utc = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+    one_microsecond = datetime.timedelta(microseconds=1)
+    microseconds_since_epoch = (deadline_utc - unix_epoch_utc) // one_microsecond
+    return str(microseconds_since_epoch)
 
 
 @pytest.fixture(name='call')
@@ -106,7 +109,7 @@ async def test_absolute_deadline_used(call):
         headers={
             **HEADERS,
             DP_TIMEOUT_MS: '1',
-            DP_ABSOLUTE_DEADLINE: _make_iso_deadline(5.0),
+            DP_ABSOLUTE_DEADLINE: _make_deadline_epoch_us(5.0),
         },
     )
     assert response.status == 200
@@ -116,7 +119,7 @@ async def test_absolute_deadline_expired(call):
     response = await call(
         headers={
             **HEADERS,
-            DP_ABSOLUTE_DEADLINE: _make_iso_deadline(-120.0),
+            DP_ABSOLUTE_DEADLINE: _make_deadline_epoch_us(-120.0),
         },
     )
     _check_deadline_propagation_response(response)
@@ -127,7 +130,7 @@ async def test_absolute_deadline_expired_with_sleep(call):
         htype='sleep',
         headers={
             **HEADERS,
-            DP_ABSOLUTE_DEADLINE: _make_iso_deadline(-120.0),
+            DP_ABSOLUTE_DEADLINE: _make_deadline_epoch_us(-120.0),
         },
     )
     _check_deadline_propagation_response(response)
@@ -139,7 +142,7 @@ async def test_absolute_deadline_disabled_dynamically(call):
         headers={
             **HEADERS,
             DP_TIMEOUT_MS: '5000',
-            DP_ABSOLUTE_DEADLINE: _make_iso_deadline(-1.0),
+            DP_ABSOLUTE_DEADLINE: _make_deadline_epoch_us(-1.0),
         },
     )
     assert response.status == 200
@@ -150,7 +153,7 @@ async def test_absolute_deadline_clock_skew_fallback(call):
         headers={
             **HEADERS,
             DP_TIMEOUT_MS: '5000',
-            DP_ABSOLUTE_DEADLINE: _make_iso_deadline(5.0 + 120.0),
+            DP_ABSOLUTE_DEADLINE: _make_deadline_epoch_us(5.0 + 120.0),
         },
     )
     assert response.status == 200
@@ -161,7 +164,7 @@ async def test_absolute_deadline_clock_skew_fallback_when_negative_skew(call):
         headers={
             **HEADERS,
             DP_TIMEOUT_MS: '5000',
-            DP_ABSOLUTE_DEADLINE: _make_iso_deadline(-120.0),
+            DP_ABSOLUTE_DEADLINE: _make_deadline_epoch_us(-120.0),
         },
     )
     assert response.status == 200
@@ -173,7 +176,7 @@ async def test_absolute_deadline_threshold_zero_disables_skew_check(call):
         headers={
             **HEADERS,
             DP_TIMEOUT_MS: '5000',
-            DP_ABSOLUTE_DEADLINE: _make_iso_deadline(-120.0),
+            DP_ABSOLUTE_DEADLINE: _make_deadline_epoch_us(-120.0),
         },
     )
     _check_deadline_propagation_response(response)

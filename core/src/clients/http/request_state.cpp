@@ -24,7 +24,6 @@
 #include <userver/utils/algo.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
-#include <userver/utils/datetime_light.hpp>
 #include <userver/utils/encoding/hex.hpp>
 #include <userver/utils/from_string.hpp>
 #include <userver/utils/overloaded.hpp>
@@ -973,11 +972,10 @@ void RequestState::UpdateTimeoutHeader() {
     );
 
     if (inherited_original_deadline_.has_value()) {
-        const auto iso_str =
-            utils::datetime::UtcTimestring(*inherited_original_deadline_, utils::datetime::kAbsoluteDeadlineFormat);
+        const auto deadline_header = std::to_string(inherited_original_deadline_->time_since_epoch().count());
         easy().add_header(
             USERVER_NAMESPACE::http::headers::kXRequestDeadline,
-            iso_str,
+            deadline_header,
             curl::easy::DuplicateHeaderAction::kReplace
         );
     }
