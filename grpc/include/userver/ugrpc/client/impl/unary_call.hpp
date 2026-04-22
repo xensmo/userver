@@ -145,7 +145,7 @@ private:
         }
 
         if (impl::IsTaskCancelledByDeadlinePropagation()) {
-            utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+            return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
         }
 
         return utils::unexpected{SpecialCaseCompletionType::kCancelled};
@@ -185,7 +185,7 @@ private:
 
             case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kCancelled:
                 if (impl::IsTaskCancelledByDeadlinePropagation()) {
-                    utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+                    return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
                 }
                 return utils::unexpected{SpecialCaseCompletionType::kCancelled};
 

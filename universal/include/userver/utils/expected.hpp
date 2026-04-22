@@ -30,7 +30,7 @@ private:
 };
 
 template <class E>
-class unexpected {
+class [[nodiscard]] unexpected {
 public:
     unexpected(const E& error);
     unexpected(E&& error);
