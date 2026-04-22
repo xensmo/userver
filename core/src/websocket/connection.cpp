@@ -140,7 +140,7 @@ public:
                     need_data_masking_
                 );
 
-                SendFrame(*io_, frame, fragment, need_data_masking_);
+                SendFrame(*io_, {frame.data(), frame.size()}, fragment, need_data_masking_);
                 continuation = impl::frames::Continuation::kYes;
                 data_to_send = data_to_send.last(data_to_send.size() - config_.fragment_size);
             }
@@ -153,7 +153,7 @@ public:
                 impl::frames::Final::kYes,
                 need_data_masking_
             );
-            SendFrame(*io_, frame, data_to_send, need_data_masking_);
+            SendFrame(*io_, {frame.data(), frame.size()}, data_to_send, need_data_masking_);
         }
     }
 

@@ -536,10 +536,9 @@ std::vector<std::uint32_t> ConsumerImpl::GetPartitionIds(
 
     const utils::span<const rd_kafka_metadata_topic>
         topics{metadata->topics, static_cast<std::size_t>(metadata->topic_cnt)};
-    const auto*
-        topic_it = std::find_if(topics.begin(), topics.end(), [&topic](const rd_kafka_metadata_topic& topic_raw) {
-            return topic == topic_raw.topic;
-        });
+    const auto topic_it = std::ranges::find_if(topics, [&topic](const rd_kafka_metadata_topic& topic_raw) {
+        return topic == topic_raw.topic;
+    });
     if (topic_it == topics.end()) {
         throw TopicNotFoundException{fmt::format("Failed to find topic: {}", topic)};
     }

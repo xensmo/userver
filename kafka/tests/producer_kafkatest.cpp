@@ -115,7 +115,7 @@ UTEST_F(ProducerTest, OneProducerHeadersSendAsyncMemorySafety) {
             "test-key",
             "test-msg",
             /*partition=*/kafka::kUnassignedPartition,
-            headers_small_vector
+            {headers_small_vector.data(), headers_small_vector.size()}
         );
     }
     UEXPECT_NO_THROW(task_vector.Get());
