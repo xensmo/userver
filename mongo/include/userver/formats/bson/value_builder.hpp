@@ -179,6 +179,9 @@ public:
     /// @throws TypeMismatchExcepiton if value is not a document or `null`
     bool HasMember(const std::string& name) const;
 
+    /// @brief Returns full path to this value.
+    std::string GetPath() const;
+
     /// @brief Creates or resizes the array
     /// @param size new size
     /// @throws TypeMismatchException if value is not an array or `null`
