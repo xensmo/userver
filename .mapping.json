@@ -2346,6 +2346,8 @@
   "grpc/functional_tests/middleware_client/tests-unimplemented-service/test_unimplemented.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests-unimplemented-service/test_unimplemented.py",
   "grpc/functional_tests/middleware_client/tests/conftest.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests/conftest.py",
   "grpc/functional_tests/middleware_client/tests/test_client_name_metadata.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests/test_client_name_metadata.py",
+  "grpc/functional_tests/middleware_client/tests/test_custom_mockserver_scope.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests/test_custom_mockserver_scope.py",
+  "grpc/functional_tests/middleware_client/tests/test_custom_mockserver_session_scope.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests/test_custom_mockserver_session_scope.py",
   "grpc/functional_tests/middleware_client/tests/test_error_status.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests/test_error_status.py",
   "grpc/functional_tests/middleware_client/tests/test_headers_propagator.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests/test_headers_propagator.py",
   "grpc/functional_tests/middleware_client/tests/test_install_servicer.py":"taxi/uservices/userver/grpc/functional_tests/middleware_client/tests/test_install_servicer.py",
