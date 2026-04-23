@@ -106,7 +106,7 @@ template <typename... Tasks, typename Clock, typename Duration>
 
 template <typename... Tasks>
 [[nodiscard]] FutureStatus WaitAllCheckedUntil(Deadline deadline, Tasks&... tasks) {
-    if constexpr (meta::impl::IsSingleRange<Tasks...>()) {
+    if constexpr (meta::impl::IsSingleRange<Tasks...>) {
         return impl::WaitAllCheckedFromContainer(deadline, tasks...);
     } else {
         return impl::WaitAllCheckedFromTasks(deadline, tasks...);

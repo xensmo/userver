@@ -8,23 +8,20 @@
 // Don't add new includes here! Put concepts that require them in meta.hpp.
 #include <type_traits>
 
-#include <userver/utils/void_t.hpp>
-
 USERVER_NAMESPACE_BEGIN
 
 namespace meta {
 
 namespace impl {
 
-template <typename Default, typename AlwaysVoid, template <typename...> typename Trait, typename... Args>
+template <typename Default, template <typename...> typename Trait, typename... Args>
 struct Detector {
-    using value_t = std::false_type;
     using type = Default;
 };
 
 template <typename Default, template <typename...> typename Trait, typename... Args>
-struct Detector<Default, utils::void_t<Trait<Args...>>, Trait, Args...> {
-    using value_t = std::true_type;
+requires requires { typename Trait<Args...>; }
+struct Detector<Default, Trait, Args...> {
     using type = Trait<Args...>;
 };
 
@@ -55,6 +52,11 @@ struct NotDetected {};
 /// ...
 /// if constexpr (utils::meta::IsDetected<HasValueType, T>) { ... }
 /// @endcode
+///
+/// @deprecated Prefer using `requires` expressions directly in new code:
+/// @code
+/// if constexpr (requires { typename T::ValueType; }) { ... }
+/// @endcode
 template <template <typename...> typename Trait, typename... Args>
 concept IsDetected = requires { typename Trait<Args...>; };
 
@@ -62,13 +64,13 @@ concept IsDetected = requires { typename Trait<Args...>; };
 /// it's incorrect for the given template args
 /// @see utils::meta::IsDetected
 template <template <typename...> typename Trait, typename... Args>
-using DetectedType = typename impl::Detector<NotDetected, void, Trait, Args...>::type;
+using DetectedType = typename impl::Detector<NotDetected, Trait, Args...>::type;
 
 /// @brief Produces the result type of a trait, or @a Default if it's incorrect
 /// for the given template args
 /// @see utils::meta::IsDetected
 template <typename Default, template <typename...> typename Trait, typename... Args>
-using DetectedOr = typename impl::Detector<Default, void, Trait, Args...>::type;
+using DetectedOr = typename impl::Detector<Default, Trait, Args...>::type;
 
 /// Helps in definitions of traits for utils::meta::IsDetected
 template <typename T, typename U>

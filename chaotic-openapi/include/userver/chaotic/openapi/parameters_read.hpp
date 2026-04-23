@@ -1,5 +1,7 @@
 #pragma once
 
+#include <concepts>
+
 #include <userver/chaotic/convert.hpp>
 #include <userver/chaotic/openapi/parameters.hpp>
 #include <userver/utils/function_ref.hpp>
@@ -45,8 +47,8 @@ template <typename T>
 struct To {};
 }  // namespace parse
 
-template <typename T>
-std::enable_if_t<std::is_integral_v<T>, T> FromStr(std::string&& s, parse::To<T>) {
+template <std::integral T>
+T FromStr(std::string&& s, parse::To<T>) {
     return utils::FromString<T>(s);
 }
 

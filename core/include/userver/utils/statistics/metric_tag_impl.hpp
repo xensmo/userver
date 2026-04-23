@@ -12,7 +12,6 @@
 
 #include <userver/formats/json/value.hpp>
 #include <userver/formats/json/value_builder.hpp>
-#include <userver/utils/meta_light.hpp>
 #include <userver/utils/statistics/writer.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -32,10 +31,10 @@ void ResetMetric(std::atomic<Metric>& m) {
 }
 
 template <typename Metric>
-using HasDumpMetric = decltype(DumpMetric(std::declval<Metric&>()));
+concept HasDumpMetric = requires(Metric& m) { DumpMetric(m); };
 
 template <typename Metric>
-using HasResetMetric = decltype(ResetMetric(std::declval<Metric&>()));
+concept HasResetMetric = requires(Metric& m) { ResetMetric(m); };
 
 // TODO remove after C++20 atomic value-initialization
 template <typename T>
@@ -63,7 +62,7 @@ public:
 template <typename Metric>
 class MetricWrapper final : public MetricWrapperBase {
     static_assert(
-        meta::IsDetected<HasDumpMetric, Metric> || kHasWriterSupport<Metric>,
+        HasDumpMetric<Metric> || kHasWriterSupport<Metric>,
         "Provide a `void DumpMetric(utils::statistics::Writer&, const Metric&)`"
         "function in the namespace of `Metric`."
     );
@@ -96,7 +95,7 @@ public:
     bool HasWriterSupport() const noexcept override { return kHasWriterSupport<Metric>; }
 
     void Reset() override {
-        if constexpr (meta::IsDetected<HasResetMetric, Metric>) {
+        if constexpr (HasResetMetric<Metric>) {
             ResetMetric(data_);
         }
     }

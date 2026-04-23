@@ -21,6 +21,7 @@
 #include <array>
 #include <cassert>
 #include <compare>
+#include <concepts>
 #include <cstdint>
 #include <ios>
 #include <iosfwd>
@@ -88,12 +89,6 @@ inline constexpr auto kMinRepresentableLongDouble =
     static_cast<long double>(impl::kMinInt64) * (1 - 2 * std::numeric_limits<long double>::epsilon());
 inline constexpr auto kMaxRepresentableLongDouble =
     static_cast<long double>(impl::kMaxInt64) * (1 - 2 * std::numeric_limits<long double>::epsilon());
-
-template <typename T>
-concept IsInt = meta::kIsInteger<T>;
-
-template <typename T>
-concept IsFloat = std::is_floating_point_v<T>;
 
 template <int MaxExp>
 constexpr std::array<int64_t, MaxExp + 1> PowSeries(int64_t base) {
@@ -466,8 +461,7 @@ public:
     constexpr Decimal() noexcept = default;
 
     /// @brief Convert from an integer
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     explicit constexpr Decimal(Int value)
         : Decimal(FromDecimal(Decimal<0>::FromUnbiased(impl::ToInt64(value))))
     {}
@@ -566,8 +560,7 @@ public:
     }
 
     /// @brief Assignment from an integer
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal& operator=(Int rhs) {
         *this = Decimal{rhs};
         return *this;
@@ -599,14 +592,12 @@ public:
         }
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal operator+(Int rhs) const {
         return *this + Decimal{rhs};
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     friend constexpr Decimal operator+(Int lhs, Decimal rhs) {
         return Decimal{lhs} + rhs;
     }
@@ -618,8 +609,7 @@ public:
         return *this;
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal& operator+=(Int rhs) {
         *this = *this + rhs;
         return *this;
@@ -640,14 +630,12 @@ public:
         }
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal operator-(Int rhs) const {
         return *this - Decimal{rhs};
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     friend constexpr Decimal operator-(Int lhs, Decimal rhs) {
         return Decimal{lhs} - rhs;
     }
@@ -659,15 +647,13 @@ public:
         return *this;
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal& operator-=(Int rhs) {
         *this = *this - rhs;
         return *this;
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal operator*(Int rhs) const {
         int64_t result{};
         if (rhs > impl::kMaxInt64 || __builtin_mul_overflow(value_, static_cast<int64_t>(rhs), &result)) {
@@ -676,14 +662,12 @@ public:
         return FromUnbiased(result);
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     friend constexpr Decimal operator*(Int lhs, Decimal rhs) {
         return rhs * lhs;
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal& operator*=(Int rhs) {
         *this = *this * rhs;
         return *this;
@@ -700,20 +684,17 @@ public:
         return *this;
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal operator/(Int rhs) const {
         return FromUnbiased(impl::Div<RoundPolicy>(AsUnbiased(), rhs));
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     friend constexpr Decimal operator/(Int lhs, Decimal rhs) {
         return Decimal{lhs} / rhs;
     }
 
-    template <typename Int>
-    requires impl::IsInt<Int>
+    template <meta::kIsInteger Int>
     constexpr Decimal& operator/=(Int rhs) {
         *this = *this / rhs;
         return *this;
@@ -1603,8 +1584,7 @@ logging::LogHelper& operator<<(logging::LogHelper& lh, const Decimal<Prec, Round
 
 /// @brief Parses the `Decimal` from the string
 /// @see Decimal::Decimal(std::string_view)
-template <int Prec, typename RoundPolicy, typename Value>
-requires formats::common::kIsFormatValue<Value>
+template <int Prec, typename RoundPolicy, formats::common::kIsFormatValue Value>
 Decimal<Prec, RoundPolicy> Parse(const Value& value, formats::parse::To<Decimal<Prec, RoundPolicy>>) {
     const std::string input = value.template As<std::string>();
 

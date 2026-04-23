@@ -41,7 +41,7 @@ std::string AddressToString(const AddressBase<N>& address) {
     );
 }
 
-template <typename Address, typename = std::enable_if_t<kIsAddressType<Address>>>
+template <IsAddressType Address>
 NetworkBase<Address> NetworkFromString(const std::string& str) {
     const auto throw_exception = []() {
         throw std::invalid_argument(fmt::format(
@@ -90,7 +90,7 @@ AddressV6 AddressV6FromString(utils::zstring_view str) { return AddressFromStrin
 std::string AddressV6ToString(const AddressV6& address) { return AddressToString(address); }
 
 template <typename T>
-T CidrNetworkFromInetNetwork(const InetNetwork& inet_network) {
+static T CidrNetworkFromInetNetwork(const InetNetwork& inet_network) {
     typename T::AddressType::BytesType bytes;
     const auto& inet_bytes = inet_network.GetBytes();
     std::copy(inet_bytes.cbegin(), inet_bytes.cend(), bytes.begin());
@@ -98,7 +98,7 @@ T CidrNetworkFromInetNetwork(const InetNetwork& inet_network) {
 }
 
 template <typename T>
-InetNetwork InetNetworkFromCidrNetwork(const T& network) {
+static InetNetwork InetNetworkFromCidrNetwork(const T& network) {
     const auto bytes = network.GetAddress().GetBytes();
     std::vector<unsigned char> inet_bytes;
     inet_bytes.reserve(bytes.size());

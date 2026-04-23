@@ -73,10 +73,8 @@ void JsonToMessage(
 ///          is not supported. This behavior may be disabled in the future versions of the protobuf library thus
 ///          should not be relied upon.
 /// @warning The `proto2` syntax is not fully supported and tested (at least extension fields are not supported).
-template <
-    typename T,
-    typename = std::enable_if_t<
-        std::is_base_of_v<::google::protobuf::Message, T> || !std::is_same_v<::google::protobuf::Message, T>>>
+template <typename T>
+requires(std::is_base_of_v<::google::protobuf::Message, T> || !std::is_same_v<::google::protobuf::Message, T>)
 [[nodiscard]] T JsonToMessage(const formats::json::Value& json, const ParseOptions& options = {}) {
     T message;
     protobuf::json::JsonToMessage(json, message, options);

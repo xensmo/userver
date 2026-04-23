@@ -6,9 +6,8 @@
 
 #include <functional>
 #include <memory>
+#include <type_traits>
 #include <utility>
-
-#include <userver/utils/meta_light.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -17,10 +16,10 @@ namespace utils {
 namespace impl {
 
 template <typename T>
-using IsPointerLike = decltype(std::declval<T&>() ? std::addressof(*std::declval<T&&>()) : nullptr);
+concept IsPointerLike = requires(T& t) { t ? std::addressof(*std::declval<T&&>()) : nullptr; };
 
 template <typename T>
-inline constexpr bool kIsPointerLike = meta::IsDetected<IsPointerLike, T>;
+inline constexpr bool kIsPointerLike = IsPointerLike<T>;
 
 }  // namespace impl
 

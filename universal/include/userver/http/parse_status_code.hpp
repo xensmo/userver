@@ -10,8 +10,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace http {
 
-template <typename Value>
-requires formats::common::kIsFormatValue<Value>
+template <formats::common::kIsFormatValue Value>
 StatusCode Parse(const Value& value, formats::parse::To<StatusCode>) {
     using IntType = std::underlying_type_t<StatusCode>;
     constexpr IntType kMinCode = 100;

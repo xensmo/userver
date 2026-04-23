@@ -60,24 +60,24 @@ public:
 
 private:
     template <typename T = Item>
-    std::enable_if_t<std::is_same<T, ChannelSubscriptionQueueItem>::value, impl::SubscriptionToken>
-    GetSubscriptionToken(
+    requires std::is_same_v<T, ChannelSubscriptionQueueItem>
+    impl::SubscriptionToken GetSubscriptionToken(
         impl::SubscribeSentinel& subscribe_sentinel,
         std::string channel,
         const CommandControl& command_control
     );
 
     template <typename T = Item>
-    std::enable_if_t<std::is_same<T, PatternSubscriptionQueueItem>::value, impl::SubscriptionToken>
-    GetSubscriptionToken(
+    requires std::is_same_v<T, PatternSubscriptionQueueItem>
+    impl::SubscriptionToken GetSubscriptionToken(
         impl::SubscribeSentinel& subscribe_sentinel,
         std::string pattern,
         const CommandControl& command_control
     );
 
     template <typename T = Item>
-    std::enable_if_t<std::is_same<T, ShardedSubscriptionQueueItem>::value, impl::SubscriptionToken>
-    GetSubscriptionToken(
+    requires std::is_same_v<T, ShardedSubscriptionQueueItem>
+    impl::SubscriptionToken GetSubscriptionToken(
         impl::SubscribeSentinel& subscribe_sentinel,
         std::string channel,
         const CommandControl& command_control

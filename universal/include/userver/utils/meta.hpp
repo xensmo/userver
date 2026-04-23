@@ -29,29 +29,15 @@ template <typename T>
 using MappedType = typename T::mapped_type;
 
 template <typename T>
-requires std::is_same_v<
-             std::decay_t<decltype(begin(std::declval<T&>()))>,
-             std::decay_t<decltype(end(std::declval<T&>()))>>
-using IsRange = void;
+concept IsRange = requires(T& t) {
+    requires std::is_same_v<std::decay_t<decltype(begin(t))>, std::decay_t<decltype(end(t))>>;
+};
 
-template <typename T>
-requires IsDetected<IsRange, T>
+template <IsRange T>
 using IteratorType = decltype(begin(std::declval<T&>()));
 
 template <typename T>
-using RangeValueType = typename std::iterator_traits<DetectedType<IteratorType, T>>::value_type;
-
-template <typename T>
-using OstreamWriteResult = decltype(std::declval<std::ostream&>() << std::declval<const std::remove_reference_t<T>&>());
-
-template <typename T>
-using StdHashResult = decltype(std::hash<T>{}(std::declval<const T&>()));
-
-template <typename T>
-using AtResult = decltype(std::declval<const T&>().at(std::declval<typename T::key_type>()));
-
-template <typename T>
-using SubscriptOperatorResult = decltype(std::declval<T>()[std::declval<typename T::key_type>()]);
+using RangeValueType = typename std::iterator_traits<IteratorType<T>>::value_type;
 
 template <typename T>
 struct IsFixedSizeContainer : std::false_type {};
@@ -61,13 +47,7 @@ template <typename T, std::size_t Size, template <typename, std::size_t> typenam
 struct IsFixedSizeContainer<Array<T, Size>> : std::bool_constant<sizeof(Array<T, Size>) == sizeof(T) * Size> {};
 
 template <typename... Args>
-constexpr bool IsSingleRange() {
-    if constexpr (sizeof...(Args) == 1) {
-        return IsDetected<IsRange, Args...>;
-    } else {
-        return false;
-    }
-}
+concept IsSingleRange = (sizeof...(Args) == 1) && (impl::IsRange<Args> && ...);
 
 }  // namespace impl
 
@@ -77,19 +57,20 @@ template <typename T>
 concept kIsVector = kIsInstantiationOf<std::vector, T>;
 
 template <typename T>
-concept kIsRange = IsDetected<impl::IsRange, T>;
+concept kIsRange = impl::IsRange<T>;
 
 /// Returns true if T is an ordered or unordered map or multimap
 template <typename T>
-concept kIsMap = IsDetected<impl::IsRange, T> && IsDetected<impl::KeyType, T> && IsDetected<impl::MappedType, T>;
+concept kIsMap = kIsRange<T> && requires {
+    typename T::key_type;
+    typename T::mapped_type;
+};
 
 /// Returns true if T is a map (but not a multimap!)
 template <typename T>
-concept kIsUniqueMap =
-    kIsMap<T> &&
-    IsDetected<
-        impl::SubscriptOperatorResult,
-        T>;  // no operator[] in multimaps
+concept kIsUniqueMap = kIsMap<T> && requires(T& map, typename T::key_type key) {
+    map[key];  // no operator[] in multimaps
+};
 
 template <typename T>
 using MapKeyType = DetectedType<impl::KeyType, T>;
@@ -110,13 +91,21 @@ template <typename T>
 concept kIsOptional = kIsInstantiationOf<std::optional, T>;
 
 template <typename T>
-concept kIsOstreamWritable = std::is_same_v<DetectedType<impl::OstreamWriteResult, T>, std::ostream&>;
+concept kIsOstreamWritable = requires(std::ostream& os, const std::remove_reference_t<T>& val) {
+    {
+        os << val
+    } -> std::same_as<std::ostream&>;
+};
 
 template <typename T, typename U = T>
 concept kIsEqualityComparable = std::equality_comparable_with<T, U>;
 
 template <typename T>
-concept kIsStdHashable = std::is_same_v<DetectedType<impl::StdHashResult, T>, std::size_t> && kIsEqualityComparable<T>;
+concept kIsStdHashable = requires(const T& val) {
+    {
+        std::hash<T>{}(val)
+    } -> std::same_as<std::size_t>;
+} && kIsEqualityComparable<T>;
 
 /// @brief  Check if std::size is applicable to container
 template <typename T>

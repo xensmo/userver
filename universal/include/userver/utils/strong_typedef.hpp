@@ -352,13 +352,13 @@ std::string ToString(const StrongTypedef<Tag, std::string, Ops>& object) {
     return object.GetUnderlying();
 }
 
-template <typename Tag, typename T, StrongTypedefOps Ops, std::enable_if_t<meta::kIsInteger<T>, bool> = true>
+template <typename Tag, meta::kIsInteger T, StrongTypedefOps Ops>
 std::string ToString(const StrongTypedef<Tag, T, Ops>& object) {
     impl::strong_typedef::CheckIfAllowsLogging<StrongTypedef<Tag, std::string, Ops>>();
     return std::to_string(object.GetUnderlying());
 }
 
-template <typename Tag, typename T, StrongTypedefOps Ops, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
+template <typename Tag, std::floating_point T, StrongTypedefOps Ops>
 std::string ToString(const StrongTypedef<Tag, T, Ops>& object) {
     impl::strong_typedef::CheckIfAllowsLogging<StrongTypedef<Tag, std::string, Ops>>();
     return fmt::to_string(object.GetUnderlying());

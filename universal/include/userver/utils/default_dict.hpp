@@ -164,8 +164,7 @@ private:
     DictType dict_;
 };
 
-template <typename Value, typename T>
-requires formats::common::kIsFormatValue<Value>
+template <formats::common::kIsFormatValue Value, typename T>
 DefaultDict<T> Parse(const Value& value, formats::parse::To<DefaultDict<T>>) {
     return DefaultDict<T>{value.GetPath(), value.template As<typename DefaultDict<T>::DictType>()};
 }

@@ -75,9 +75,6 @@ void DoInsert(Set& set, Value&& value) {
     const_cast<SetValue&>(*iter) = std::forward<Value>(value);
 }
 
-template <typename T>
-using HasHasher = typename T::hasher;
-
 }  // namespace impl::projected_set
 
 /// @ingroup userver_universal
@@ -123,7 +120,7 @@ void ProjectedInsertOrAssign(Container& set, Value&& value) {
 /// @note Always returns const iterator, even for a non-const `set` parameter.
 template <typename Container, typename Key>
 auto ProjectedFind(Container& set, const Key& key) {
-    if constexpr (meta::IsDetected<impl::projected_set::HasHasher, std::decay_t<Container>>) {
+    if constexpr (requires { typename std::decay_t<Container>::hasher; }) {
         return utils::impl::FindTransparent(set, key);
     } else {
         return set.find(key);

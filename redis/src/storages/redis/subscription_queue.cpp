@@ -41,8 +41,8 @@ void SubscriptionQueue<Item>::Unsubscribe() {
 
 template <typename Item>
 template <typename T>
-std::enable_if_t<std::is_same<T, ChannelSubscriptionQueueItem>::value, impl::SubscriptionToken>
-SubscriptionQueue<Item>::GetSubscriptionToken(
+requires std::is_same_v<T, ChannelSubscriptionQueueItem>
+impl::SubscriptionToken SubscriptionQueue<Item>::GetSubscriptionToken(
     impl::SubscribeSentinel& subscribe_sentinel,
     std::string channel,
     const CommandControl& command_control
@@ -69,8 +69,8 @@ SubscriptionQueue<Item>::GetSubscriptionToken(
 
 template <typename Item>
 template <typename T>
-std::enable_if_t<std::is_same<T, PatternSubscriptionQueueItem>::value, impl::SubscriptionToken>
-SubscriptionQueue<Item>::GetSubscriptionToken(
+requires std::is_same_v<T, PatternSubscriptionQueueItem>
+impl::SubscriptionToken SubscriptionQueue<Item>::GetSubscriptionToken(
     impl::SubscribeSentinel& subscribe_sentinel,
     std::string pattern,
     const CommandControl& command_control
@@ -98,8 +98,8 @@ SubscriptionQueue<Item>::GetSubscriptionToken(
 
 template <typename Item>
 template <typename T>
-std::enable_if_t<std::is_same<T, ShardedSubscriptionQueueItem>::value, impl::SubscriptionToken>
-SubscriptionQueue<Item>::GetSubscriptionToken(
+requires std::is_same_v<T, ShardedSubscriptionQueueItem>
+impl::SubscriptionToken SubscriptionQueue<Item>::GetSubscriptionToken(
     impl::SubscribeSentinel& subscribe_sentinel,
     std::string channel,
     const CommandControl& command_control

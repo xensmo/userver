@@ -24,7 +24,7 @@ namespace impl {
 // Only the non-specialized IsDumpedAggregate struct is defined,
 // the specializations are declared without a definition
 template <typename T>
-using IsNotDumpedAggregate = decltype(sizeof(IsDumpedAggregate<T>));
+concept IsDumpedAggregateSpecialized = requires { sizeof(IsDumpedAggregate<T>); };
 
 template <typename T, std::size_t... Indices>
 constexpr bool AreAllDumpable(std::index_sequence<Indices...>) {
@@ -33,7 +33,7 @@ constexpr bool AreAllDumpable(std::index_sequence<Indices...>) {
 
 template <typename T>
 constexpr bool IsDumpableAggregate() {
-    if constexpr (std::is_aggregate_v<T> && !meta::IsDetected<IsNotDumpedAggregate, T>) {
+    if constexpr (std::is_aggregate_v<T> && !IsDumpedAggregateSpecialized<T>) {
         constexpr auto kSize = boost::pfr::tuple_size_v<T>;
         static_assert(
             AreAllDumpable<T>(std::make_index_sequence<kSize>{}),

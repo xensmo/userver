@@ -124,10 +124,11 @@ public:
     ///
     /// @note Use BulkSendException::GetExceptions method to get a list of occured nested exceptions.
     template <typename Messages>
-    std::enable_if_t<
-        std::is_convertible_v<decltype(std::declval<const Messages&>()[0]), std::string_view> &&
-        std::is_integral_v<decltype(std::declval<const Messages&>().size())> >
-    Send(
+        requires(
+            std::is_convertible_v<decltype(std::declval<const Messages&>()[0]), std::string_view> &&
+            std::is_integral_v<decltype(std::declval<const Messages&>().size())>
+        )
+    void Send(
         utils::zstring_view topic_name,
         std::string_view key,
         const Messages& messages,

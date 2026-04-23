@@ -28,7 +28,8 @@ formats::json::parser::DoubleParser ParserOf(Type<double>);
 
 formats::json::parser::StringParser ParserOf(Type<std::string>);
 
-template <typename Array, typename = std::enable_if_t<meta::kIsRange<Array> && !meta::kIsMap<Array>>>
+template <typename Array>
+requires(meta::kIsRange<Array> && !meta::kIsMap<Array>)
 auto ParserOf(Type<Array>)
 {
     using Value = typename Array::value_type;

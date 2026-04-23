@@ -7,6 +7,7 @@
 /// @ingroup userver_dump_read_write
 
 #include <chrono>
+#include <concepts>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -83,8 +84,7 @@ std::string Read(Reader& reader, To<std::string>);
 void Write(Writer& writer, const char* value);
 
 /// @brief Integral types serialization support
-template <typename T>
-requires meta::kIsInteger<T>
+template <meta::kIsInteger T>
 void Write(Writer& writer, T value) {
     if constexpr (sizeof(T) == 1) {
         impl::WriteTrivial(writer, value);
@@ -94,8 +94,7 @@ void Write(Writer& writer, T value) {
 }
 
 /// @brief Integral types deserialization support
-template <typename T>
-requires meta::kIsInteger<T>
+template <meta::kIsInteger T>
 T Read(Reader& reader, To<T>) {
     if constexpr (sizeof(T) == 1) {
         return impl::ReadTrivial<T>(reader);
@@ -111,15 +110,13 @@ T Read(Reader& reader, To<T>) {
 }
 
 /// @brief Floating-point serialization support
-template <typename T>
-requires std::is_floating_point_v<T>
+template <std::floating_point T>
 void Write(Writer& writer, T value) {
     impl::WriteTrivial(writer, value);
 }
 
 /// @brief Floating-point deserialization support
-template <typename T>
-requires std::is_floating_point_v<T>
+template <std::floating_point T>
 T Read(Reader& reader, To<T>) {
     return impl::ReadTrivial<T>(reader);
 }

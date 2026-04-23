@@ -64,7 +64,7 @@ using AddressV4 = AddressBase<4>;
 using AddressV6 = AddressBase<16>;
 
 template <typename T>
-inline constexpr bool kIsAddressType = std::is_same_v<T, AddressV4> || std::is_same_v<T, AddressV6>;
+concept IsAddressType = std::is_same_v<T, AddressV4> || std::is_same_v<T, AddressV6>;
 
 /// @brief Create an IPv4 address from an IP address string in dotted decimal form.
 /// @throw AddressSystemError
@@ -82,8 +82,7 @@ std::string AddressV6ToString(const AddressV6& address);
 /// @ingroup userver_containers
 ///
 /// @brief Base class for IPv4/IPv6 network
-template <typename Address>
-requires kIsAddressType<Address>
+template <IsAddressType Address>
 class NetworkBase final {
 public:
     using AddressType = Address;

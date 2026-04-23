@@ -9,7 +9,7 @@
 
 #include <userver/formats/json.hpp>
 #include <userver/utils/assert.hpp>
-#include <userver/utils/meta_light.hpp>
+#include <userver/utils/meta_light.hpp>  // for DetectedOr
 #include <userver/utils/str_icase.hpp>
 #include <userver/utils/void_t.hpp>
 
@@ -101,27 +101,21 @@ template <typename T>
 using IsExternalBodyFormatted = std::bool_constant<T::kIsExternalBodyFormatted>;
 
 template <typename T>
-using HasServiceCode = decltype(std::declval<const T&>().GetServiceCode());
+concept HasInternalMessage = requires(const T& t) { t.GetInternalMessage(); };
 
 template <typename T>
-using HasInternalMessage = decltype(std::declval<const T&>().GetInternalMessage());
+concept HasExternalBody = requires(const T& t) { t.GetExternalBody(); };
 
 template <typename T>
-inline constexpr bool kHasInternalMessage = meta::IsDetected<HasInternalMessage, T>;
+concept HasServiceCode = requires(const T& t) { t.GetServiceCode(); };
 
 template <typename T>
-using HasExternalBody = decltype(std::declval<const T&>().GetExternalBody());
-
-template <typename T>
-inline constexpr bool kHasExternalBody = meta::IsDetected<HasExternalBody, T>;
-
-template <typename T>
-inline constexpr bool kIsMessageBuilder = kHasExternalBody<T>;
+concept IsMessageBuilder = HasExternalBody<T>;
 
 template <typename T>
 struct MessageExtractor {
     static_assert(
-        meta::IsDetected<HasExternalBody, T>,
+        HasExternalBody<T>,
         "Please use your message builder to build external body for "
         "your error. See server::handlers::CustomHandlerException "
         "for more info"
@@ -134,7 +128,7 @@ struct MessageExtractor {
     }
 
     std::string GetServiceCode() const {
-        if constexpr (meta::IsDetected<HasServiceCode, T>) {
+        if constexpr (HasServiceCode<T>) {
             return builder.GetServiceCode();
         } else {
             return std::string{};
@@ -144,7 +138,7 @@ struct MessageExtractor {
     std::string GetExternalBody() const { return builder.GetExternalBody(); }
 
     std::string GetInternalMessage() const {
-        if constexpr (kHasInternalMessage<T>) {
+        if constexpr (HasInternalMessage<T>) {
             return builder.GetInternalMessage();
         } else {
             return std::string{};
@@ -270,7 +264,7 @@ public:
 
     /// @deprecated Use the variadic constructor above instead.
     template <typename MessageBuilder>
-    requires impl::kIsMessageBuilder<MessageBuilder>
+    requires impl::IsMessageBuilder<MessageBuilder>
     CustomHandlerException(MessageBuilder&& builder, HandlerErrorCode handler_code)
         : CustomHandlerException(impl::CustomHandlerExceptionData{std::forward<MessageBuilder>(builder), handler_code})
     {}

@@ -105,7 +105,7 @@ inline std::optional<std::size_t> WaitAnyFromTasks(Deadline) { return {}; }
 
 template <typename... Tasks>
 std::optional<std::size_t> WaitAnyUntil(Deadline deadline, Tasks&... tasks) {
-    if constexpr (meta::impl::IsSingleRange<Tasks...>()) {
+    if constexpr (meta::impl::IsSingleRange<Tasks...>) {
         return impl::WaitAnyFromContainer(deadline, tasks...);
     } else {
         return impl::WaitAnyFromTasks(deadline, tasks...);
@@ -201,7 +201,7 @@ void WaitAnyContext::AppendFromContainer(Container& awaitables) {
 
 template <typename Awaitable>
 void WaitAnyContext::AppendSingle(Awaitable& awaitable) {
-    if constexpr (meta::impl::IsSingleRange<Awaitable>()) {
+    if constexpr (meta::impl::IsSingleRange<Awaitable>) {
         AppendFromContainer(awaitable);
     } else {
         AppendAccessor(awaitable.TryGetContextAccessor());
