@@ -22,10 +22,7 @@ constexpr std::size_t kIterationsCount = 1024 * 16;
 
 boost::intrusive_ptr<TaskContext> MakeContext() {
     return engine::impl::MakeTask(
-               {engine::current_task::GetTaskProcessor(),
-                engine::Task::Importance::kNormal,
-                engine::Task::WaitMode::kSingleAwaiter,
-                {}},
+               {nullptr, engine::Task::Importance::kNormal, engine::Task::WaitMode::kSingleAwaiter, {}},
                [] {}
     ).Extract();
 }

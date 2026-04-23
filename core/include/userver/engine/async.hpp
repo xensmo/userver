@@ -28,7 +28,7 @@ template <template <typename> typename TaskType, typename Function, typename... 
     constexpr auto kWaitMode = TaskType<ResultType>::kWaitMode;
 
     return TaskType<ResultType>{MakeTask(
-        {task_processor, importance, kWaitMode, deadline},
+        {&task_processor, importance, kWaitMode, deadline},
         std::forward<Function>(f),
         std::forward<Args>(args)...
     )};

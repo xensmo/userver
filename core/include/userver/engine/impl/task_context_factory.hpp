@@ -20,7 +20,8 @@ std::size_t GetTaskContextSize() noexcept;
 inline constexpr std::size_t kTaskContextAlignment = 16;
 
 struct TaskConfig final {
-    engine::TaskProcessor& task_processor;
+    // nullptr means "use current task processor"
+    engine::TaskProcessor* task_processor{nullptr};
     Task::Importance importance{Task::Importance::kNormal};
     Task::WaitMode wait_mode{Task::WaitMode::kSingleAwaiter};
     engine::Deadline deadline;
