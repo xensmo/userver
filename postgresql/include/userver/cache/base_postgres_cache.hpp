@@ -140,7 +140,7 @@ template <HasRawValueType T>
 struct RawValueTypeImpl<T> : std::type_identity<typename T::RawValueType> {};
 
 template <typename T>
-using RawValueType = RawValueTypeImpl<T>::type;
+using RawValueType = typename RawValueTypeImpl<T>::type;
 
 template <typename PostgreCachePolicy>
 auto ExtractValue(RawValueType<PostgreCachePolicy>&& raw) {
@@ -310,7 +310,7 @@ template <HasUpdatedFieldType T>
 struct UpdatedFieldTypeImpl<T> : std::type_identity<typename T::UpdatedFieldType> {};
 
 template <typename T>
-using UpdatedFieldType = UpdatedFieldTypeImpl<T>::type;
+using UpdatedFieldType = typename UpdatedFieldTypeImpl<T>::type;
 
 template <typename T>
 constexpr bool CheckUpdatedFieldType() {
