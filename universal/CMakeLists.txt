@@ -268,7 +268,6 @@ endif()
 target_include_directories(
     ${PROJECT_NAME}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-           $<BUILD_INTERFACE:${USERVER_THIRD_PARTY_DIRS}/date/include>
            $<BUILD_INTERFACE:${USERVER_THIRD_PARTY_DIRS}/function_backports/include>
            $<BUILD_INTERFACE:${USERVER_THIRD_PARTY_DIRS}/move_only_function_backport/include>
            $<INSTALL_INTERFACE:include/userver/third_party>
@@ -287,8 +286,7 @@ _userver_directory_install(
 )
 _userver_directory_install(
     COMPONENT universal
-    DIRECTORY ${USERVER_THIRD_PARTY_DIRS}/date/include/date
-              ${USERVER_THIRD_PARTY_DIRS}/function_backports/include/function_backports
+    DIRECTORY ${USERVER_THIRD_PARTY_DIRS}/function_backports/include/function_backports
               ${USERVER_THIRD_PARTY_DIRS}/move_only_function_backport/include/function_backports
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/userver/third_party/
 )
