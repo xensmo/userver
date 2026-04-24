@@ -31,6 +31,7 @@ async def test_graceful_shutdown_headers(service_daemon_instance, grpc_client, s
         check_not_present(await call.trailing_metadata(), headers)
 
     service_daemon_instance.process.send_signal(SIGTERM)
+    await asyncio.sleep(1)  # Give the service time to process the signal.
 
     for headers_enabled, headers in params:
         await update_graceful_shutdown_headers(service_client, dynamic_config, headers_enabled, headers)
@@ -60,6 +61,7 @@ async def test_graceful_shutdown_headers_streams(service_daemon_instance, grpc_c
     end = f'{MD_TWO_RES}{MD_ONE_RES}'
 
     service_daemon_instance.process.send_signal(SIGTERM)
+    await asyncio.sleep(1)  # Give the service time to process the signal.
 
     call = grpc_client.SayHelloStreams(
         _prepare_requests(['Python', '!', '!', '!'], 0.1),

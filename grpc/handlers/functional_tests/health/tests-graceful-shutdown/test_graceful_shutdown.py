@@ -1,3 +1,4 @@
+import asyncio
 from signal import SIGTERM
 
 import pytest
@@ -11,6 +12,7 @@ except ImportError:
 @pytest.mark.uservice_oneshot
 async def test_graceful_shutdown_headers(service_daemon_instance, grpc_client, graceful_shutdown_headers):
     service_daemon_instance.process.send_signal(SIGTERM)
+    await asyncio.sleep(1)  # Give the service time to process the signal.
 
     request = health_pb2.HealthCheckRequest()
     call = grpc_client.Check(request)
