@@ -18,7 +18,7 @@
             static constexpr {{ userver }}::utils::TrivialSet
                 k{{type.cpp_global_struct_field_name()}}_PropertiesNames =
                 [](auto selector) {
-		    return selector().template Type<std::string_view>()
+                    return selector().template Type<std::string_view>()
                         {%- for fname in type.fields -%}
                             .Case("{{ fname }}")
                         {%- endfor -%}

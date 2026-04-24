@@ -126,8 +126,10 @@ def _get_template_includes(
             'userver/http/common_headers.hpp',
             'userver/http/content_type.hpp',
             'userver/logging/log.hpp',
+            'userver/chaotic/additional_properties.hpp',
             'userver/chaotic/openapi/parameters_read.hpp',
             'userver/chaotic/sax_parser.hpp',
+            'userver/utils/trivial_map.hpp',
             *[f'clients/{client_name}/{dep}'[:-4] + '_sax_parsers.hpp' for dep in graph],
             # TODO: hardcode
             *TYPES_INCLUDES,
@@ -251,16 +253,20 @@ def get_includes(client_name: str, schemas_dir: str) -> dict[str, list[str]]:
         output[f'include/clients/{client_name}/{stem}_parsers.ipp'] = [
             f'clients/{client_name}/{stem}.hpp',
             # TODO: hardcode
+            'userver/chaotic/additional_properties.hpp',
             'userver/chaotic/object.hpp',
             'userver/chaotic/primitive.hpp',
             'userver/chaotic/with_type.hpp',
             'userver/formats/parse/common_containers.hpp',
             'userver/formats/serialize/common_containers.hpp',
+            'userver/utils/trivial_map.hpp',
         ]
         output[f'include/clients/{client_name}/{stem}_sax_parsers.hpp'] = [
             f'clients/{client_name}/{stem}.hpp',
             f'clients/{client_name}/{stem}_parsers.ipp',
             # TODO: hardcode
+            'userver/chaotic/additional_properties.hpp',
+            'userver/utils/trivial_map.hpp',
             *TYPES_INCLUDES,
         ]
         output[f'src/clients/{client_name}/{stem}.cpp'] = [

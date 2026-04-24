@@ -1,7 +1,6 @@
 #pragma once
 
 #include "{{ pair_header }}.hpp"
-#include "{{ pair_header }}_parsers.ipp"
 {% for file in definition_includes(types.values()) %}
     #include <{{ file }}>
 {%- endfor %}

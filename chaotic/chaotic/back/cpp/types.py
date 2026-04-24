@@ -810,12 +810,8 @@ class CppStruct(CppType):
             'userver/chaotic/with_type.hpp',
         ]
         if self.extra_type or self.strict_parsing:
-            # for ExtractAdditionalProperties/ValidateNoAdditionalProperties
-            includes.append('userver/chaotic/object.hpp')
-
-        if self.extra_type:
-            # for kPropertiesNames
-            includes.append('userver/utils/trivial_map.hpp')
+            includes.append('userver/chaotic/additional_properties.hpp')
+            includes.append('userver/utils/trivial_map.hpp')  # for kPropertiesNames
         for field in self.fields.values():
             includes.extend(field.schema.definition_includes())
         if isinstance(self.extra_type, CppType):
@@ -936,6 +932,7 @@ class CppStructAllOf(CppType):
         return [
             'userver/formats/common/merge.hpp',
             'userver/chaotic/primitive.hpp',
+            'userver/chaotic/additional_properties.hpp',
         ] + flatten([item.definition_includes() for item in self.parents])
 
     def sax_parser_includes(self) -> list[str]:
@@ -1023,9 +1020,10 @@ class CppVariantWithDiscriminator(CppType):
         return includes + flatten([item.declaration_includes() for item in self.variants.values()])
 
     def definition_includes(self) -> list[str]:
-        return ['userver/formats/json/serialize_variant.hpp'] + flatten([
-            item.definition_includes() for item in self.variants.values()
-        ])
+        return [
+            'userver/formats/json/serialize_variant.hpp',
+            'userver/chaotic/additional_properties.hpp',
+        ] + flatten([item.definition_includes() for item in self.variants.values()])
 
     def sax_parser_includes(self) -> list[str]:
         return super().sax_parser_includes() + flatten([item.sax_parser_includes() for item in self.variants.values()])

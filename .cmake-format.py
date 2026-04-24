@@ -81,9 +81,13 @@ with section('parse'):  # noqa: F821
             'kwargs': {
                 'ARGS': '*',
                 'FORMAT': '*',
+                'INCLUDE_DIRS': '*',
+                'INSTALL_INCLUDES_COMPONENT': '*',
+                'LAYOUT': '*',
                 'OUTPUT_DIR': '*',
-                'SCHEMAS': '*',
+                'OUTPUT_PREFIX': '*',
                 'RELATIVE_TO': '*',
+                'SCHEMAS': '*',
             },
             'flags': [
                 'GENERATE_SERIALIZERS',

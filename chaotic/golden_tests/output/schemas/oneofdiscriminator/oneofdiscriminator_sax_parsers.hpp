@@ -1,6 +1,6 @@
 #pragma once
 
-#include <userver/chaotic/object.hpp>
+#include <userver/chaotic/additional_properties.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/sax_parser.hpp>
 #include <userver/chaotic/validators.hpp>
@@ -11,7 +11,6 @@
 #include <userver/utils/trivial_map.hpp>
 
 #include "oneofdiscriminator.hpp"
-#include "oneofdiscriminator_parsers.ipp"
 
 namespace ns {
 

@@ -1,8 +1,8 @@
 #pragma once
 
+#include <userver/chaotic/additional_properties.hpp>
 #include <userver/chaotic/array.hpp>
 #include <userver/chaotic/exception.hpp>
-#include <userver/chaotic/object.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
 #include <userver/chaotic/with_type.hpp>
