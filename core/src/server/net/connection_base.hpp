@@ -43,7 +43,7 @@ protected:
     bool IsResponseChainValid() const noexcept;
 
     std::vector<HttpRequestPtr>& GetRequests() noexcept;
-    std::string GetPeerName() const noexcept;
+    const std::string& GetPeerName() const noexcept;
     bool ReadSome() noexcept;
 
     engine::TaskWithResult<void> HandleQueueItem(const std::shared_ptr<http::HttpRequest>& request) noexcept;

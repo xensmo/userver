@@ -110,7 +110,7 @@ void ConnectionBase::Shutdown() noexcept {
     ++stats_.connections_closed;
 }
 
-std::string ConnectionBase::GetPeerName() const noexcept { return reader_.GetPeerName(); }
+const std::string& ConnectionBase::GetPeerName() const noexcept { return reader_.GetPeerName(); }
 
 bool ConnectionBase::ReadSome() noexcept {
     if (reader_.IsFull()) {
