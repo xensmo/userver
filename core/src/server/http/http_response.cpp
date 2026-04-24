@@ -50,12 +50,23 @@ void CheckHeaderName(std::string_view name) {
     };
     static constexpr auto bad_chars = init();
 
+    bool check_failed = false;
+
+    // this gets autovectorized, and we optimize for happy path here
     for (const char c : name) {
-        auto code = static_cast<uint8_t>(c);
-        if (bad_chars[code]) {
-            throw std::runtime_error(
-                fmt::format("invalid character in header name: '{}' (#{}), full header name: {}", c, code, name)
-            );
+        const auto code = static_cast<uint8_t>(c);
+        check_failed |= bad_chars[code];
+    }
+
+    if (check_failed) {
+        // in a presumably rare scenarios of the check failing we do a second loop
+        for (const char c : name) {
+            const auto code = static_cast<uint8_t>(c);
+            if (bad_chars[code]) {
+                throw std::runtime_error(
+                    fmt::format("invalid character in header name: '{}' (#{}), full header name: {}", c, code, name)
+                );
+            }
         }
     }
 }
