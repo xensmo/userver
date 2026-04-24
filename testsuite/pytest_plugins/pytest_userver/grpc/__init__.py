@@ -148,6 +148,9 @@ class Mockserver:
 
         @note `Mockserver` is usually obtained from
         @ref pytest_userver.plugins.grpc.mockserver.grpc_mockserver "grpc_mockserver".
+
+        An example on creating a custom scope for gRPC mocks:
+        @snippet grpc/functional_tests/middleware_client/tests/test_custom_mockserver_session_scope.py  global mock
         """
         assert experimental
         self._mockserver_session = mockserver_session

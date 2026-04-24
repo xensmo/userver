@@ -6,6 +6,7 @@ import samples.greeter_pb2 as greeter_protos
 import samples.greeter_pb2_grpc as greeter_services
 
 
+# /// [global mock]
 @pytest.fixture(scope='module')
 def global_grpc_mockserver(grpc_mockserver_session):
     with pytest_userver.grpc.Mockserver(
@@ -22,6 +23,7 @@ def global_greeter_mock(global_grpc_mockserver):
         return greeter_protos.GreetingResponse(greeting='Hello from session mock!')
 
     return session_mock
+    # /// [global mock]
 
 
 async def test_custom_session_mockserver_is_used_first(
