@@ -142,8 +142,6 @@ struct CommandControl {
         return network_timeout_ms == rhs.network_timeout_ms && statement_timeout_ms == rhs.statement_timeout_ms &&
                prepared_statements_enabled == rhs.prepared_statements_enabled;
     }
-
-    bool operator!=(const CommandControl& rhs) const { return !(*this == rhs); }
 };
 
 /// @brief storages::postgres::CommandControl that may not be set
@@ -301,8 +299,6 @@ struct ConnectionSettings {
     bool operator==(const ConnectionSettings& rhs) const {
         return !RequiresConnectionReset(rhs) && recent_errors_threshold == rhs.recent_errors_threshold;
     }
-
-    bool operator!=(const ConnectionSettings& rhs) const { return !(*this == rhs); }
 
     bool RequiresConnectionReset(const ConnectionSettings& rhs) const {
         // TODO: max_prepared_cache_size check could be relaxed

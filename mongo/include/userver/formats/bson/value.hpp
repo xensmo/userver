@@ -127,7 +127,6 @@ public:
     std::string GetPath() const;
 
     bool operator==(const Value&) const;
-    bool operator!=(const Value&) const;
 
     /// @brief Checks whether the selected element exists
     /// @note MemberMissingException is throws on nonexisting element access

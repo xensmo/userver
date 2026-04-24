@@ -78,8 +78,6 @@ public:
 
     bool operator==(const Range& rhs) const;
 
-    bool operator!=(const Range& rhs) const { return !(*this == rhs); }
-
     bool Empty() const { return !data_; }
 
     /// Make the range empty
@@ -143,8 +141,6 @@ private:
         bool operator==(const RangeData& rhs) const {
             return BoundEqual(rhs, RangeBound::kLower) && BoundEqual(rhs, RangeBound::kUpper);
         }
-
-        bool operator!=(const RangeData& rhs) const { return !(*this == rhs); }
 
         bool HasBound(RangeBounds side) const;
 
@@ -233,7 +229,6 @@ public:
     explicit BoundedRange(Range<U>&&);
 
     bool operator==(const BoundedRange& rhs) const;
-    bool operator!=(const BoundedRange& rhs) const { return !(*this == rhs); }
 
     const ValueType& GetLowerBound() const { return *value_.GetLowerBound(); }
     bool IsLowerBoundIncluded() const { return value_.IsLowerBoundIncluded(); }

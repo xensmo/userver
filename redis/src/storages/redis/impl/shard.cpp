@@ -52,8 +52,6 @@ void ConnectionInfoInt::Connect(Redis& instance) const {
 
 bool operator==(const ConnectionInfoInt& lhs, const ConnectionInfoInt& rhs) { return lhs.Fulltext() == rhs.Fulltext(); }
 
-bool operator!=(const ConnectionInfoInt& lhs, const ConnectionInfoInt& rhs) { return !(lhs == rhs); }
-
 bool operator<(const ConnectionInfoInt& lhs, const ConnectionInfoInt& rhs) { return lhs.Fulltext() < rhs.Fulltext(); }
 
 Shard::Shard(Options options)

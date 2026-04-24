@@ -215,8 +215,6 @@ bool operator==(const ContentType& lhs, const ContentType& rhs) {
            icase_equal(lhs.Charset(), rhs.Charset()) && lhs.Quality() == rhs.Quality();
 }
 
-bool operator!=(const ContentType& lhs, const ContentType& rhs) { return !(lhs == rhs); }
-
 bool operator<(const ContentType& lhs, const ContentType& rhs) {
     const utils::StrIcaseCompareThreeWay icase_cmp{};
     // */* has the lowest priority

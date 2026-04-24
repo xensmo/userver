@@ -72,10 +72,6 @@ bool PeriodicTask::Settings::operator==(const Settings& other) const noexcept {
     return TieSettings(*this) == TieSettings(other);
 }
 
-bool PeriodicTask::Settings::operator!=(const Settings& other) const noexcept {
-    return TieSettings(*this) != TieSettings(other);
-}
-
 PeriodicTask::PeriodicTask()
     : impl_()
 {}

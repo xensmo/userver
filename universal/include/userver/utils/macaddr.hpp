@@ -36,8 +36,6 @@ public:
         return a.GetOctets() == b.GetOctets();
     }
 
-    friend bool operator!=(const MacaddrBase<N>& a, const MacaddrBase<N>& b) noexcept { return !(a == b); }
-
 private:
     OctetsType macaddr_ = {0};
 };

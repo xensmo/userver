@@ -48,7 +48,6 @@ private:
 };
 
 bool operator==(const ConnectionInfoInt&, const ConnectionInfoInt&);
-bool operator!=(const ConnectionInfoInt&, const ConnectionInfoInt&);
 bool operator<(const ConnectionInfoInt&, const ConnectionInfoInt&);
 
 using ConnInfoMap = std::map<std::string, std::vector<ConnectionInfoInt>>;

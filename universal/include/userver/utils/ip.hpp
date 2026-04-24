@@ -132,8 +132,6 @@ public:
         return a.address_ == b.address_ && a.prefix_length_ == b.prefix_length_;
     }
 
-    friend bool operator!=(const NetworkBase<Address>& a, const NetworkBase<Address>& b) noexcept { return !(a == b); }
-
 private:
     AddressType address_;
     unsigned char prefix_length_ = 0;

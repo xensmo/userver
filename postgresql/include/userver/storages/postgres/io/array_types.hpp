@@ -505,8 +505,6 @@ public:
 
         bool operator==(const ChunkIterator& rhs) const { return current_ == rhs.current_; }
 
-        bool operator!=(const ChunkIterator& rhs) const { return !(*this == rhs); }
-
         value_type operator*() const { return {current_, NextStep()}; }
 
         ChunkIterator& operator++() {

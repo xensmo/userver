@@ -65,7 +65,6 @@ public:
     reference operator*() const;
 
     bool operator==(const HeadersIterator&) const;
-    bool operator!=(const HeadersIterator&) const;
 
 private:
     const rd_kafka_headers_s* headers_{nullptr};

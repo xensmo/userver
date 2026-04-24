@@ -150,8 +150,6 @@ public:
 
         bool operator==(const Iterator& rhs) const { return stream_ == rhs.stream_; }
 
-        bool operator!=(const Iterator& rhs) const { return !(*this == rhs); }
-
     private:
         ScanRequest* stream_;
     };

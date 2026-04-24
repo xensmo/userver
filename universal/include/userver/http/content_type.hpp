@@ -78,7 +78,6 @@ private:
 };
 
 bool operator==(const ContentType&, const ContentType&);
-bool operator!=(const ContentType&, const ContentType&);
 
 /// Weak ordering for Accept media-ranges checking.
 /// Positions less specific types before more specific, so that the most

@@ -157,8 +157,6 @@ public:
 
     bool operator==(const DefaultDict& r) const noexcept { return dict_ == r.dict_; }
 
-    bool operator!=(const DefaultDict& r) const noexcept { return !(*this == r); }
-
 private:
     std::string name_;
     DictType dict_;

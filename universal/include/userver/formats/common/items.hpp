@@ -67,8 +67,6 @@ public:
 
         bool operator==(const Iterator& other) const { return it_ == other.it_; }
 
-        bool operator!=(const Iterator& other) const { return !(*this == other); }
-
     private:
         RawIterator it_;
     };

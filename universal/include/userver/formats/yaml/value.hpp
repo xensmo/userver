@@ -110,7 +110,6 @@ public:
     /// @brief Compares values.
     /// @throw MemberMissingException if `*this` or `other` is missing.
     bool operator==(const Value& other) const;
-    bool operator!=(const Value& other) const;
 
     /// @brief Returns true if *this holds nothing. When `IsMissing()` returns
     /// `true` any attempt to get the actual value or iterate over *this will
