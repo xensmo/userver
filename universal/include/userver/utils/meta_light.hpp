@@ -36,8 +36,6 @@ struct IsInstantiationOf<Template, Template<Args...>> : std::true_type {};
 /// @see utils::meta::IsDetected
 struct NotDetected {};
 
-// NOLINTBEGIN(readability-identifier-naming)
-
 /// @brief Checks whether a trait is correct for the given template args
 ///
 /// Implements the pre-cpp20-concepts detection idiom.
@@ -72,30 +70,44 @@ using DetectedType = typename impl::Detector<NotDetected, Trait, Args...>::type;
 template <typename Default, template <typename...> typename Trait, typename... Args>
 using DetectedOr = typename impl::Detector<Default, Trait, Args...>::type;
 
-/// Helps in definitions of traits for utils::meta::IsDetected
-template <typename T, typename U>
-using ExpectSame = std::enable_if_t<std::is_same_v<T, U>>;
+/// @brief Returns `true` if the type is an instantiation of the specified template.
+template <typename T, template <typename...> typename Template>
+concept IsInstantiationOf = impl::IsInstantiationOf<Template, T>::value;
 
-/// Returns `true` if the type is an instantiation of the specified template.
-template <template <typename...> typename Template, typename T>
-concept kIsInstantiationOf = impl::IsInstantiationOf<Template, T>::value;
-
-/// Returns `true` if the type (with remove cv-qualifiers) is an instantiation of the specified template.
-template <template <typename...> typename Template, typename T>
-concept kIsCvInstantiationOf = kIsInstantiationOf<Template, std::remove_cv_t<T>>;
+/// @brief Returns `true` if the type (with remove cv-qualifiers) is an instantiation of the specified template.
+/// @deprecated Use @ref meta::IsCvInstantiationOf instead.
+template <typename T, template <typename...> typename Template>
+concept IsCvInstantiationOf = IsInstantiationOf<std::remove_cv_t<T>, Template>;
 
 /// Returns `true` if the type is a fundamental character type.
 /// `signed char` and `unsigned char` are not character types.
 template <typename T>
-concept kIsCharacter =
+concept IsCharacter =
     std::is_same_v<T, char> || std::is_same_v<T, wchar_t> || std::is_same_v<T, char16_t> || std::is_same_v<T, char32_t>;
 
 /// Returns `true` if the type is a true integer type (not `*char*` or `bool`)
 /// `signed char` and `unsigned char` are integer types
 template <typename T>
-concept kIsInteger = std::is_integral_v<T> && !kIsCharacter<T> && !std::is_same_v<T, bool>;
+concept IsInteger = std::is_integral_v<T> && !IsCharacter<T> && !std::is_same_v<T, bool>;
 
-// NOLINTEND(readability-identifier-naming)
+/// @brief Returns `true` if the type is an instantiation of the specified template.
+/// @deprecated Use @ref meta::IsInstantiationOf instead.
+template <template <typename...> typename Template, typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsInstantiationOf = IsInstantiationOf<T, Template>;
+
+/// @brief Returns `true` if the type (with remove cv-qualifiers) is an instantiation of the specified template.
+/// @deprecated Use @ref meta::IsCvInstantiationOf instead.
+template <template <typename...> typename Template, typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsCvInstantiationOf = IsCvInstantiationOf<T, Template>;
+
+/// @brief Returns `true` if the type is a true integer type (not `*char*` or `bool`)
+/// `signed char` and `unsigned char` are integer types
+/// @deprecated Use @ref meta::IsInteger instead.
+template <typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsInteger = IsInteger<T>;
 
 }  // namespace meta
 

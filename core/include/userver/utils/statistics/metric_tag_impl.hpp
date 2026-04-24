@@ -62,7 +62,7 @@ public:
 template <typename Metric>
 class MetricWrapper final : public MetricWrapperBase {
     static_assert(
-        HasDumpMetric<Metric> || kHasWriterSupport<Metric>,
+        HasDumpMetric<Metric> || utils::statistics::HasWriterSupport<Metric>,
         "Provide a `void DumpMetric(utils::statistics::Writer&, const Metric&)`"
         "function in the namespace of `Metric`."
     );
@@ -80,19 +80,19 @@ public:
     }
 
     formats::json::ValueBuilder DeprecatedJsonDump() override {
-        if constexpr (!kHasWriterSupport<Metric>) {
+        if constexpr (!utils::statistics::HasWriterSupport<Metric>) {
             return DumpMetric(data_);
         }
         return {};
     }
 
     void DumpToWriter(Writer& writer) override {
-        if constexpr (kHasWriterSupport<Metric>) {
+        if constexpr (utils::statistics::HasWriterSupport<Metric>) {
             writer = data_;
         }
     }
 
-    bool HasWriterSupport() const noexcept override { return kHasWriterSupport<Metric>; }
+    bool HasWriterSupport() const noexcept override { return utils::statistics::HasWriterSupport<Metric>; }
 
     void Reset() override {
         if constexpr (HasResetMetric<Metric>) {

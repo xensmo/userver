@@ -134,7 +134,7 @@ public:
             *this << UnsignedLongLong{value};
         } else if constexpr (std::is_base_of_v<std::exception, T>) {
             *this << static_cast<const std::exception&>(value);
-        } else if constexpr (meta::kIsOstreamWritable<T>) {
+        } else if constexpr (meta::IsOstreamWritable<T>) {
             // may throw a non std::exception based exception
             Stream() << value;
             FlushStream();

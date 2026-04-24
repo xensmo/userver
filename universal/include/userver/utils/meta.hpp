@@ -23,10 +23,10 @@ using std::begin;
 using std::end;
 
 template <typename T>
-using KeyType = typename T::key_type;
+concept HasKeyType = requires { typename T::key_type; };
 
 template <typename T>
-using MappedType = typename T::mapped_type;
+concept HasMappedType = requires { typename T::mapped_type; };
 
 template <typename T>
 concept IsRange = requires(T& t) {
@@ -51,91 +51,114 @@ concept IsSingleRange = (sizeof...(Args) == 1) && (impl::IsRange<Args> && ...);
 
 }  // namespace impl
 
-// NOLINTBEGIN(readability-identifier-naming)
+template <typename T>
+concept IsVector = kIsInstantiationOf<std::vector, T>;
 
 template <typename T>
-concept kIsVector = kIsInstantiationOf<std::vector, T>;
-
-template <typename T>
-concept kIsRange = impl::IsRange<T>;
+concept IsRange = impl::IsRange<T>;
 
 /// Returns true if T is an ordered or unordered map or multimap
 template <typename T>
-concept kIsMap = kIsRange<T> && requires {
+concept IsMap = IsRange<T> && requires {
     typename T::key_type;
     typename T::mapped_type;
 };
 
 /// Returns true if T is a map (but not a multimap!)
 template <typename T>
-concept kIsUniqueMap = kIsMap<T> && requires(T& map, typename T::key_type key) {
+concept IsUniqueMap = IsMap<T> && requires(T& map, typename T::key_type key) {
     map[key];  // no operator[] in multimaps
 };
 
-template <typename T>
-using MapKeyType = DetectedType<impl::KeyType, T>;
+template <impl::HasKeyType T>
+using MapKeyType = typename T::key_type;
+
+template <impl::HasMappedType T>
+using MapValueType = typename T::mapped_type;
+
+template <impl::IsRange T>
+using RangeValueType = impl::RangeValueType<T>;
 
 template <typename T>
-using MapValueType = DetectedType<impl::MappedType, T>;
+concept IsRecursiveRange = IsRange<T> && std::same_as<impl::RangeValueType<T>, T>;
 
 template <typename T>
-using RangeValueType = DetectedType<impl::RangeValueType, T>;
+concept IsIterator = requires { typename std::iterator_traits<T>::iterator_category; };
 
 template <typename T>
-concept kIsRecursiveRange = std::is_same_v<DetectedType<impl::RangeValueType, T>, T>;
+concept IsOptional = kIsInstantiationOf<std::optional, T>;
 
 template <typename T>
-concept kIsIterator = requires { typename std::iterator_traits<T>::iterator_category; };
-
-template <typename T>
-concept kIsOptional = kIsInstantiationOf<std::optional, T>;
-
-template <typename T>
-concept kIsOstreamWritable = requires(std::ostream& os, const std::remove_reference_t<T>& val) {
+concept IsOstreamWritable = requires(std::ostream& os, const std::remove_reference_t<T>& val) {
     {
         os << val
     } -> std::same_as<std::ostream&>;
 };
 
-template <typename T, typename U = T>
-concept kIsEqualityComparable = std::equality_comparable_with<T, U>;
-
 template <typename T>
-concept kIsStdHashable = requires(const T& val) {
+concept IsStdHashable = requires(const T& val) {
     {
         std::hash<T>{}(val)
     } -> std::same_as<std::size_t>;
-} && kIsEqualityComparable<T>;
+} && std::equality_comparable<T>;
 
 /// @brief  Check if std::size is applicable to container
 template <typename T>
-concept kIsSizable = requires(T value) { std::size(value); };
+concept IsSizable = requires(T value) { std::size(value); };
 
 /// @brief Check if a container has `reserve`
 template <typename T>
-concept kIsReservable = requires(T value) { value.reserve(1); };
+concept IsReservable = requires(T value) { value.reserve(1); };
 
 /// @brief Check if a container has 'push_back'
 template <typename T>
-concept kIsPushBackable = requires(T value) { value.push_back({}); };
+concept IsPushBackable = requires(T value) { value.push_back({}); };
 
 /// @brief Check if a container has fixed size (e.g. std::array)
 template <typename T>
-concept kIsFixedSizeContainer = impl::IsFixedSizeContainer<T>::value;
+concept IsFixedSizeContainer = impl::IsFixedSizeContainer<T>::value;
 
 /// @brief Returns default inserter for a container
 template <typename T>
 auto Inserter(T& container) {
-    if constexpr (kIsPushBackable<T>) {
+    if constexpr (IsPushBackable<T>) {
         return std::back_inserter(container);
-    } else if constexpr (kIsFixedSizeContainer<T>) {
+    } else if constexpr (IsFixedSizeContainer<T>) {
         return container.begin();
     } else {
         return std::inserter(container, container.end());
     }
 }
 
-// NOLINTEND(readability-identifier-naming)
+/// @deprecated Use @ref meta::IsVector instead.
+template <typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsVector = IsVector<T>;
+
+/// @deprecated Use @ref meta::IsRange instead.
+template <typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsRange = IsRange<T>;
+
+/// @deprecated Use @ref meta::IsMap instead.
+template <typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsMap = IsMap<T>;
+
+/// @deprecated Use @ref meta::IsOptional instead.
+template <typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsOptional = IsOptional<T>;
+
+/// @deprecated Use @ref meta::IsSizable instead.
+template <typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsSizable = IsSizable<T>;
+
+/// @deprecated Use @ref meta::IsReservable instead.
+template <typename T>
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kIsReservable = IsReservable<T>;
 
 }  // namespace meta
 

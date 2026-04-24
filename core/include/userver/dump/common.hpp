@@ -64,8 +64,8 @@ void WriteInteger(Writer& writer, std::uint64_t value);
 std::uint64_t ReadInteger(Reader& reader);
 
 template <typename Duration>
-inline constexpr bool kIsDumpedAsNanoseconds =
-    std::is_integral_v<typename Duration::rep> && (Duration::period::num == 1) &&
+concept IsDumpedAsNanoseconds =
+    std::integral<typename Duration::rep> && (Duration::period::num == 1) &&
     (Duration{1} <= std::chrono::milliseconds{1}) && (1'000'000'000 % Duration::period::den == 0);
 
 }  // namespace impl
@@ -149,7 +149,7 @@ void Write(Writer& writer, std::chrono::duration<Rep, Period> value) {
     // Durations, which on some systems represent
     // `std::chrono::*_clock::duration`, are serialized as `std::nanoseconds`
     // to avoid system dependency
-    if constexpr (impl::kIsDumpedAsNanoseconds<duration<Rep, Period>>) {
+    if constexpr (impl::IsDumpedAsNanoseconds<duration<Rep, Period>>) {
         const auto count = std::chrono::duration_cast<nanoseconds>(value).count();
 
         if (nanoseconds{count} != value) {
@@ -169,7 +169,7 @@ template <typename Rep, typename Period>
 std::chrono::duration<Rep, Period> Read(Reader& reader, To<std::chrono::duration<Rep, Period>>) {
     using std::chrono::duration, std::chrono::nanoseconds;
 
-    if constexpr (impl::kIsDumpedAsNanoseconds<duration<Rep, Period>>) {
+    if constexpr (impl::IsDumpedAsNanoseconds<duration<Rep, Period>>) {
         const auto count = impl::ReadTrivial<nanoseconds::rep>(reader);
         return std::chrono::duration_cast<duration<Rep, Period>>(nanoseconds{count});
     } else {

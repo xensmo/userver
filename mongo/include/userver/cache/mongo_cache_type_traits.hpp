@@ -29,9 +29,7 @@ template <typename T>
 concept HasKeyField = requires { T::kKeyField; };
 
 template <typename T>
-using DataType = typename T::DataType;
-template <typename T>
-inline constexpr bool kHasValidDataType = meta::kIsMap<meta::DetectedType<DataType, T>>;
+concept HasValidDataType = meta::kIsMap<typename T::DataType>;
 
 template <typename T>
 concept HasSecondaryPreferred = requires { T::kIsSecondaryPreferred; };
@@ -101,7 +99,7 @@ struct CheckTraits {
 
     static_assert(HasCollectionsField<MongoCacheTraits>, "Mongo cache traits must specify collections field");
     static_assert(HasKeyField<MongoCacheTraits>, "Mongo cache traits must specify key field");
-    static_assert(kHasValidDataType<MongoCacheTraits>, "Mongo cache traits must specify mapping data type");
+    static_assert(HasValidDataType<MongoCacheTraits>, "Mongo cache traits must specify mapping data type");
 
     static_assert(HasSecondaryPreferred<MongoCacheTraits>, "Mongo cache traits must specify read preference");
     static_assert(

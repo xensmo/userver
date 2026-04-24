@@ -229,7 +229,7 @@ json::Value Serialize(std::chrono::system_clock::time_point tp, formats::seriali
 
 /// Optimized maps of StrongTypedefs serialization for JSON
 template <typename T>
-requires(meta::kIsUniqueMap<T> && utils::IsStrongTypedefLoggable(T::key_type::kOps))
+requires(meta::IsUniqueMap<T> && utils::IsStrongTypedefLoggable(T::key_type::kOps))
 Value Serialize(const T& value, formats::serialize::To<Value>) {
     json::ValueBuilder builder(formats::common::Type::kObject);
     for (const auto& [key, value] : value) {
@@ -240,7 +240,7 @@ Value Serialize(const T& value, formats::serialize::To<Value>) {
 
 /// Optimized maps serialization for JSON
 template <typename T>
-requires meta::kIsUniqueMap<T> && std::is_convertible_v<typename T::key_type, std::string>
+requires meta::IsUniqueMap<T> && std::is_convertible_v<typename T::key_type, std::string>
 Value Serialize(const T& value, formats::serialize::To<Value>) {
     json::ValueBuilder builder(formats::common::Type::kObject);
     for (const auto& [key, value] : value) {

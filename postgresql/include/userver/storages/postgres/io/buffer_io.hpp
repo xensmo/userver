@@ -23,8 +23,8 @@ struct ParserRequiresTypeCategories<
     : std::true_type {};
 
 template <typename T>
-inline constexpr bool
-    kParserRequiresTypeCategories = ParserRequiresTypeCategories<typename traits::IO<T>::ParserType>::value;
+// NOLINTNEXTLINE(readability-identifier-naming)
+concept kParserRequiresTypeCategories = ParserRequiresTypeCategories<typename traits::IO<T>::ParserType>::value;
 
 #ifndef NDEBUG
 

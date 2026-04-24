@@ -802,7 +802,11 @@ struct IsDecimal<Decimal<Prec, RoundPolicy>> : std::true_type {};
 
 /// `true` if the type is an instantiation of `Decimal`
 template <typename T>
-inline constexpr bool kIsDecimal = impl::IsDecimal<T>::value;
+concept IsDecimal = impl::IsDecimal<T>::value;
+
+/// @deprecated Use @ref decimal64::IsDecimal instead.
+template <typename T>
+concept kIsDecimal = IsDecimal<T>;  // NOLINT(readability-identifier-naming)
 
 /// @brief Cast one `Decimal` to another `Decimal` type
 ///

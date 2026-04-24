@@ -131,11 +131,16 @@ template <typename T>
 concept HasValueType = requires { typename T::ValueType; };
 
 template <typename T>
-using RawValueTypeImpl = typename T::RawValueType;
+struct RawValueTypeImpl : std::type_identity<ValueType<T>> {};
+
 template <typename T>
 concept HasRawValueType = requires { typename T::RawValueType; };
+
+template <HasRawValueType T>
+struct RawValueTypeImpl<T> : std::type_identity<typename T::RawValueType> {};
+
 template <typename T>
-using RawValueType = meta::DetectedOr<ValueType<T>, RawValueTypeImpl, T>;
+using RawValueType = RawValueTypeImpl<T>::type;
 
 template <typename PostgreCachePolicy>
 auto ExtractValue(RawValueType<PostgreCachePolicy>&& raw) {
@@ -225,7 +230,7 @@ concept HasCacheInsertOrAssignFunction =
 template <typename T, typename = USERVER_NAMESPACE::utils::void_t<>>
 struct DataCacheContainer {
     static_assert(
-        meta::kIsStdHashable<KeyMemberType<T>>,
+        meta::IsStdHashable<KeyMemberType<T>>,
         "With default CacheContainer, key type must be std::hash-able"
     );
 
@@ -296,11 +301,16 @@ template <typename T>
 concept HasCustomUpdated = requires(const DataCacheContainerType<T>& cache) { T::GetLastKnownUpdated(cache); };
 
 template <typename T>
-using UpdatedFieldTypeImpl = typename T::UpdatedFieldType;
+struct UpdatedFieldTypeImpl : std::type_identity<storages::postgres::TimePointTz> {};
+
 template <typename T>
 concept HasUpdatedFieldType = requires { typename T::UpdatedFieldType; };
+
+template <HasUpdatedFieldType T>
+struct UpdatedFieldTypeImpl<T> : std::type_identity<typename T::UpdatedFieldType> {};
+
 template <typename T>
-using UpdatedFieldType = meta::DetectedOr<storages::postgres::TimePointTz, UpdatedFieldTypeImpl, T>;
+using UpdatedFieldType = UpdatedFieldTypeImpl<T>::type;
 
 template <typename T>
 constexpr bool CheckUpdatedFieldType() {

@@ -9,7 +9,6 @@
 
 #include <userver/formats/json.hpp>
 #include <userver/utils/assert.hpp>
-#include <userver/utils/meta_light.hpp>  // for DetectedOr
 #include <userver/utils/str_icase.hpp>
 #include <userver/utils/void_t.hpp>
 
@@ -98,7 +97,11 @@ struct ExtraHeaders {
 namespace impl {
 
 template <typename T>
-using IsExternalBodyFormatted = std::bool_constant<T::kIsExternalBodyFormatted>;
+concept HasExternalBodyFormatted = requires {
+    {
+        std::bool_constant<T::kIsExternalBodyFormatted>{}
+    } -> std::same_as<std::true_type>;
+};
 
 template <typename T>
 concept HasInternalMessage = requires(const T& t) { t.GetInternalMessage(); };
@@ -123,9 +126,7 @@ struct MessageExtractor {
 
     const T& builder;
 
-    constexpr bool IsExternalBodyFormatted() const {
-        return meta::DetectedOr<std::false_type, impl::IsExternalBodyFormatted, T>::value;
-    }
+    constexpr bool IsExternalBodyFormatted() const { return impl::HasExternalBodyFormatted<T>; }
 
     std::string GetServiceCode() const {
         if constexpr (HasServiceCode<T>) {

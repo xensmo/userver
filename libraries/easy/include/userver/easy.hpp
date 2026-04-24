@@ -62,11 +62,15 @@ template <class T>
 struct FirstFunctionArgument : FirstFunctionArgument<decltype(&std::decay_t<T>::operator())> {};
 
 template <typename T>
-using FromJsonStringDetector = decltype(FromJsonString(std::string_view{}, formats::parse::To<T>{}));
+concept HasFromJsonString = requires {
+    {
+        FromJsonString(std::string_view{}, formats::parse::To<T>{})
+    } -> std::same_as<T>;
+};
 
 template <typename T>
 T ParseFromJsonString(std::string_view json) {
-    if constexpr (std::is_same_v<meta::DetectedType<FromJsonStringDetector, T>, T>) {
+    if constexpr (HasFromJsonString<T>) {
         return FromJsonString(json, formats::parse::To<T>{});
     } else {
         return formats::json::FromString(json).As<T>();

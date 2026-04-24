@@ -32,7 +32,7 @@ template <typename... VectorArgs>
 struct IsByteaCompatible<std::vector<unsigned char, VectorArgs...>> : std::true_type {};
 
 template <typename T>
-inline constexpr bool kIsByteaCompatible = IsByteaCompatible<T>::value;
+concept kIsByteaCompatible = IsByteaCompatible<T>::value;  // NOLINT(readability-identifier-naming)
 
 template <typename T>
 using EnableIfByteaCompatible = std::enable_if_t<IsByteaCompatible<T>{}>;
