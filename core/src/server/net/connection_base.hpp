@@ -52,6 +52,7 @@ private:
     Stats& stats_;
     SocketBufferedReader reader_;
     std::unique_ptr<engine::io::RwBase> socket_;
+    const int fd_;
     const ConnectionConfig& config_;
     const http::RequestHandlerBase& request_handler_;
     bool is_accepting_requests_{true};
