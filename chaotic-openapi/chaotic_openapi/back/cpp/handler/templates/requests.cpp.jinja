@@ -1,0 +1,44 @@
+#include <handlers/{{ spec.service_name }}/{{ make_op_relpath(op) }}/requests.hpp>
+
+#include <userver/chaotic/openapi/parameters_read.hpp>
+{% if op.request_bodies %}
+#include <userver/formats/json/value.hpp>
+{% for include in op.request_body_definition_includes() %}
+#include <{{ include }}>
+{% endfor %}
+{% endif %}
+
+namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }} {
+
+{% set operation = op %}
+Request ParseRequest(const USERVER_NAMESPACE::server::http::HttpRequest& http_request) {
+    namespace openapi = USERVER_NAMESPACE::chaotic::openapi;
+
+    Request r{};
+    {% for param in operation.parameters %}
+        {% if param.required %}
+            r.{{ param.cpp_name }} = openapi::ReadParameter<{{ param.parser }}>(http_request);
+        {% else %}
+            r.{{ param.cpp_name }} = openapi::ReadParameterOptional<{{ param.parser }}>(http_request);
+        {% endif %}
+    {% endfor %}
+  
+    {% if operation.request_bodies %}
+        {% if operation.request_bodies | length > 1 %}{{ NOT_IMPLEMENTED(operation.request_bodies) }}{% endif %}
+        {% set body = operation.request_bodies[0] %}
+        {% if body.schema %}
+            {% if body.content_type == 'application/json' %}
+                {
+                    auto json = USERVER_NAMESPACE::formats::json::FromString(http_request.RequestBody());
+                    r.body = json.As<{{ body.schema.cpp_user_name() }}>();
+                }
+            {% else %}
+                {{ NOT_IMPLEMENTED(body) }}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+  
+    return r;
+}
+
+}  // namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }}

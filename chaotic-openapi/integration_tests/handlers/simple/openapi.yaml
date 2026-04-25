@@ -1,0 +1,30 @@
+openapi: 3.0.0
+info:
+    title: Handler integration test
+    version: '1.0'
+
+paths:
+    /greet:
+        get:
+            operationId: greetGet
+            parameters:
+              - in: query
+                name: name
+                required: true
+                schema:
+                    type: string
+              - in: query
+                name: count
+                schema:
+                    type: integer
+            responses:
+                200:
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                404:
+                    description: Not found
+
+components: {}

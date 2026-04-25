@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <userver/compiler/demangle.hpp>
+#include <userver/components/container.hpp>
 #include <userver/utils/any_storage.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/move_only_function.hpp>
@@ -259,6 +260,10 @@ T Factories::MakeData()
 
     return builder->data();
 }
+
+/// @brief Declares `Factories` as a `components::Container`-managed component
+/// with the fixed name `"chaotic-openapi-factories"`.
+constexpr std::string_view ContainerName(components::Of<Factories>) { return "chaotic-openapi-factories"; }
 
 }  // namespace chaotic::openapi::server::dependencies
 

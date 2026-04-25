@@ -1,13 +1,16 @@
 #pragma once
 
 #include <concepts>
+#include <optional>
+
+#include <fmt/format.h>
 
 #include <userver/chaotic/convert.hpp>
 #include <userver/chaotic/openapi/parameters.hpp>
-#include <userver/utils/function_ref.hpp>
-
+#include <userver/server/handlers/exceptions.hpp>
 #include <userver/server/http/http_request.hpp>
 #include <userver/utils/from_string.hpp>
+#include <userver/utils/function_ref.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -26,19 +29,39 @@ namespace chaotic::openapi {
  *
  */
 
-template <In TIn>
+template <In kIn>
 auto GetParameter(std::string_view name, const server::http::HttpRequest& source) {
-    if constexpr (TIn == In::kPath) {
+    if constexpr (kIn == In::kPath) {
         return source.GetPathArg(name);
-    } else if constexpr (TIn == In::kCookie) {
+    } else if constexpr (kIn == In::kCookie) {
         return source.GetCookie(std::string{name});
-    } else if constexpr (TIn == In::kHeader) {
+    } else if constexpr (kIn == In::kHeader) {
         return source.GetHeader(name);
-    } else if constexpr (TIn == In::kQuery) {
+    } else if constexpr (kIn == In::kQuery) {
         return source.GetArg(name);
     } else {
-        static_assert(TIn == In::kQueryExplode, "Unknown 'In'");
+        static_assert(kIn == In::kQueryExplode, "Unknown 'In'");
         return source.GetArgVector(name);
+    }
+}
+
+/// Returns true if the parameter is present in the request.
+///
+/// NOTE: for headers and cookies, an explicitly-provided empty value ("") is
+/// indistinguishable from an absent one and is treated as absent.
+template <In kIn>
+bool IsParameterPresent(std::string_view name, const server::http::HttpRequest& source) {
+    if constexpr (kIn == In::kPath) {
+        return true;  // routing guarantees path parameters are always present
+    } else if constexpr (kIn == In::kQuery) {
+        return source.HasArg(name);
+    } else if constexpr (kIn == In::kQueryExplode) {
+        return !source.GetArgVector(name).empty();
+    } else if constexpr (kIn == In::kHeader) {
+        return source.HasHeader(name);
+    } else {
+        static_assert(kIn == In::kCookie, "Unknown 'In'");
+        return source.HasCookie(std::string{name});
     }
 }
 
@@ -80,8 +103,8 @@ void SplitByDelimiter(std::string_view str, char delimiter, utils::function_ref<
 
 }
 
-template <In TIn, char Delimiter, typename RawType, typename UserType>
-struct ParseParameter<ArrayParameterBase<TIn, Delimiter, RawType, UserType>> {
+template <In kIn, char Delimiter, typename RawType, typename UserType>
+struct ParseParameter<ArrayParameterBase<kIn, Delimiter, RawType, UserType>> {
     static auto Parse(std::string&& str_value) {
         openapi::ParseParameter<TrivialParameterBase<RawType, UserType>> parser;
 
@@ -107,8 +130,27 @@ struct ParseParameter<ArrayParameterBase<In::kQueryExplode, Delimiter, RawType, 
     }
 };
 
+/// Reads a required parameter. Throws server::handlers::ClientError if the
+/// parameter is absent from the request.
 template <typename Parameter>
 typename Parameter::Base::UserType ReadParameter(const server::http::HttpRequest& source) {
+    if (!openapi::IsParameterPresent<Parameter::kIn>(Parameter::kName, source)) {
+        throw server::handlers::ClientError(server::handlers::ExternalBody{
+            fmt::format("Required parameter '{}' is missing", Parameter::kName)
+        });
+    }
+    auto str_or_array_value = openapi::GetParameter<Parameter::kIn>(Parameter::kName, source);
+    return openapi::ParseParameter<typename Parameter::Base>::Parse(std::move(str_or_array_value));
+}
+
+/// Reads an optional parameter. Returns std::nullopt if the parameter is
+/// absent; returns the parsed value (even if the raw string is empty) if
+/// present.
+template <typename Parameter>
+std::optional<typename Parameter::Base::UserType> ReadParameterOptional(const server::http::HttpRequest& source) {
+    if (!openapi::IsParameterPresent<Parameter::kIn>(Parameter::kName, source)) {
+        return std::nullopt;
+    }
     auto str_or_array_value = openapi::GetParameter<Parameter::kIn>(Parameter::kName, source);
     return openapi::ParseParameter<typename Parameter::Base>::Parse(std::move(str_or_array_value));
 }

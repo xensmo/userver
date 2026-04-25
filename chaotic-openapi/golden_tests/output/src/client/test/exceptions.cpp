@@ -17,9 +17,7 @@ TimeoutException::~TimeoutException() = default;
 
 namespace testme_post {
 
-const char* Exception::what() const noexcept { return HandleInfo().data(); }
-
-std::string_view Exception::HandleInfo() const noexcept { return kHandleInfo; }
+const char* Exception::what() const noexcept { return kHandlerInfo.c_str(); }
 
 HttpException::~HttpException() = default;
 

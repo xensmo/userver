@@ -1,0 +1,45 @@
+#pragma once
+
+#include <optional>
+#include <string>
+
+#include <userver/chaotic/openapi/parameters_read.hpp>
+#include <userver/server/http/http_request.hpp>
+{% for include in op.requests_declaration_includes() %}
+#include <{{ include }}>
+{% endfor %}
+
+{% for include in spec.cpp_type_includes() %}
+#include <{{ include }}>
+{% endfor %}
+
+namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }} {
+
+
+{% set operation = op %}
+{% for param in operation.parameters %}
+    static constexpr USERVER_NAMESPACE::chaotic::openapi::Name k{{ param.cpp_name }} = "{{ param.raw_name }}";
+{% endfor %}
+
+/// Request parsed from HttpRequest for this operation.
+struct Request final {
+    {% for param in operation.parameters %}
+        {% if param.cpp_type.nullable %}
+            std::optional<{{ param.cpp_type.cpp_user_name() }}> {{ param.cpp_name }};
+        {% else %}
+            {{ param.cpp_type.cpp_user_name() }} {{ param.cpp_name }};
+        {% endif %}
+    {% endfor %}
+    
+    {% if operation.request_bodies %}
+        {% if operation.request_bodies | length > 1 %}{{ NOT_IMPLEMENTED(operation.request_bodies) }}{% endif %}
+        {% set body = operation.request_bodies[0] %}
+        {% if body.schema %}
+            {{ body.schema.cpp_user_name() }} body;
+        {% endif %}
+    {% endif %}
+};
+
+Request ParseRequest(const USERVER_NAMESPACE::server::http::HttpRequest& http_request);
+
+}  // namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }}

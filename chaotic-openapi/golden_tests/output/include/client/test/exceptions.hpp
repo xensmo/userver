@@ -38,9 +38,7 @@ class Exception : public clients::test::Exception {
 public:
     const char* what() const noexcept override;
 
-    std::string_view HandleInfo() const noexcept final;
-
-    static constexpr char kHandleInfo[] = "POST /testme";
+    static constexpr USERVER_NAMESPACE::utils::zstring_view kHandlerInfo{"POST /testme"};
 };
 
 /// @brief Error response with ErrorKind for all client POST operations with URL '/testme'

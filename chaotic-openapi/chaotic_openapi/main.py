@@ -5,8 +5,10 @@ import sys
 import yaml
 
 from chaotic import error as chaotic_error
-from chaotic_openapi.back.cpp_client import renderer
-from chaotic_openapi.back.cpp_client import translator
+from chaotic_openapi.back.cpp.client import renderer as client_renderer
+from chaotic_openapi.back.cpp.client import translator as client_translator
+from chaotic_openapi.back.cpp.handler import renderer as handler_renderer
+from chaotic_openapi.back.cpp.handler import translator as handler_translator
 from chaotic_openapi.front import parser as front_parser
 from chaotic_openapi.front import ref_resolver
 
@@ -35,30 +37,48 @@ def do_main():
     for file, content in sorted_contents:
         parser.parse_schema(content, file, os.path.basename(file))
 
-    # translate
-    spec = translator.Translator(
-        parser.service(),
-        dynamic_config=args.dynamic_config,
-        cpp_namespace=(args.namespace or f'clients::{args.name}'),
-        include_dirs=args.include_dirs or [],
-        middleware_plugins=[],
-    ).spec()
-
-    # render
-    ctx = renderer.Context(
+    ctx = client_renderer.Context(
         generate_path='',
         clang_format_bin=args.clang_format,
         uservices_library_tvm_guard_hack=False,
     )
-    outputs = renderer.render(spec, ctx)
-    renderer.CppOutput.save(outputs, args.output_dir)
+
+    if args.gen == 'client':
+        spec = client_translator.Translator(
+            parser.service(),
+            dynamic_config=args.dynamic_config,
+            cpp_namespace=(args.namespace or f'clients::{args.name}'),
+            include_dirs=args.include_dirs or [],
+            middleware_plugins=[],
+        ).spec()
+        outputs = client_renderer.render(spec, ctx)
+        client_renderer.CppOutput.save(outputs, args.output_dir)
+
+    elif args.gen == 'handlers':
+        spec = handler_translator.HandlerTranslator(
+            parser.service(),
+            cpp_namespace=(args.namespace or f'handlers::{args.name}'),
+            include_dirs=args.include_dirs or [],
+        ).spec()
+        outputs = handler_renderer.render(spec, ctx)
+        client_renderer.CppOutput.save(outputs, args.output_dir)
+
+    else:
+        print(f'Unknown --gen value: {args.gen!r}', file=sys.stderr)
+        sys.exit(1)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', required=True, help='Client name')
+    parser.add_argument('--name', required=True, help='Client/Service name')
     parser.add_argument('-o', '--output-dir', required=True)
     parser.add_argument('--namespace', required=False)
+    parser.add_argument(
+        '--gen',
+        choices=['client', 'handlers'],
+        default='client',
+        help='What to generate: client code or handler base classes (default: client)',
+    )
     parser.add_argument('--dynamic-config', default='')
     parser.add_argument(
         '--clang-format',
