@@ -401,11 +401,12 @@ async def test_dp_timeout_not_retried(
 
 async def test_absolute_deadline_propagated_as_is(call, mockserver):
     epoch_us_deadline = _make_deadline_epoch_us(10.0)
-    captured = {}
+    captured_headers = None
 
     @mockserver.handler('/test')
     async def mock(request):
-        captured['headers'] = dict(request.headers)
+        nonlocal captured_headers
+        captured_headers = dict(request.headers)
         return mockserver.make_response('OK!')
 
     response = await call(
@@ -415,4 +416,5 @@ async def test_absolute_deadline_propagated_as_is(call, mockserver):
         },
     )
     assert response.status == 200
-    assert captured['headers'].get(DP_ABSOLUTE_DEADLINE) == epoch_us_deadline
+    assert captured_headers is not None
+    assert captured_headers.get(DP_ABSOLUTE_DEADLINE) == epoch_us_deadline

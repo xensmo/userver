@@ -10,6 +10,7 @@
 #include <userver/server/request/task_inherited_data.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
 
+#include <ugrpc/impl/rpc_metadata.hpp>
 #include <userver/ugrpc/impl/statistics_scope.hpp>
 #include <userver/ugrpc/impl/to_string.hpp>
 #include <userver/ugrpc/status_codes.hpp>
@@ -42,7 +43,7 @@ bool CheckAndSetupDeadline(
 
     std::optional<USERVER_NAMESPACE::server::request::TaskInheritedOriginalDeadline> absolute_original_deadline;
     const auto& client_metadata = server_context.client_metadata();
-    const auto absolute_deadline_it = client_metadata.find("x-request-deadline");
+    const auto absolute_deadline_it = client_metadata.find(ugrpc::impl::kXRequestDeadline);
     if (absolute_deadline_it != client_metadata.end()) {
         absolute_original_deadline = USERVER_NAMESPACE::server::request::impl::ParseXRequestDeadlineString(
             ugrpc::impl::ToString(absolute_deadline_it->second)

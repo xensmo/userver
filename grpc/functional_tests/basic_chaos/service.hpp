@@ -20,6 +20,8 @@
 #include <samples/greeter_client.usrv.pb.hpp>
 #include <samples/greeter_service.usrv.pb.hpp>
 
+#include "client.hpp"
+
 namespace samples {
 
 class GreeterServiceComponent final : public api::GreeterServiceBase::Component {
@@ -28,7 +30,8 @@ public:
 
     GreeterServiceComponent(const components::ComponentConfig& config, const components::ComponentContext& context)
         : api::GreeterServiceBase::Component(config, context),
-          prefix_(config["greeting-prefix"].As<std::string>())
+          prefix_(config["greeting-prefix"].As<std::string>()),
+          greeter_client_(context.FindComponent<GreeterClient>())
     {}
 
     inline SayHelloResult SayHello(CallContext& context, api::GreetingRequest&& request) final;
@@ -53,6 +56,7 @@ public:
 
 private:
     const std::string prefix_;
+    GreeterClient& greeter_client_;
 };
 
 GreeterServiceComponent::SayHelloResult GreeterServiceComponent::SayHello(
@@ -67,6 +71,10 @@ GreeterServiceComponent::SayHelloResult GreeterServiceComponent::SayHello(
             const engine::TaskCancellationBlocker block_cancel;
             TESTPOINT("testpoint_cancel", {});
         }
+    } else if (request.name() == "test_deadline_propagation") {
+        const auto greeting = greeter_client_.SayHello(request.name(), /*is_small_timeout=*/false);
+        response.set_greeting(greeting);
+        return response;
     }
 
     response.set_greeting(fmt::format("{}, {}!", prefix_, request.name()));

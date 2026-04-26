@@ -31,6 +31,8 @@ extern const grpc::string kXTestsuiteClientName;
 extern const grpc::string kTestsuiteNetworkCode;
 extern const grpc::string kTestsuiteTimeoutCode;
 
+extern const grpc::string kXRequestDeadline;
+
 }  // namespace ugrpc::impl
 
 USERVER_NAMESPACE_END

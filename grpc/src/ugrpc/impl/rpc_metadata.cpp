@@ -31,6 +31,8 @@ const grpc::string kXTestsuiteClientName = "x-testsuite-client-name";
 const grpc::string kTestsuiteNetworkCode = "network";
 const grpc::string kTestsuiteTimeoutCode = "timeout";
 
+const grpc::string kXRequestDeadline = "x-request-deadline";
+
 }  // namespace ugrpc::impl
 
 USERVER_NAMESPACE_END

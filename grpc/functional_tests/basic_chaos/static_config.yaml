@@ -83,7 +83,7 @@ components_manager:
         grpc-client-factory:
             middlewares:
                 grpc-client-deadline-propagation:
-                    enabled: false
+                    enabled: true
             channel-args: {}
         greeter-client:
             endpoint: '[::]:8081'
