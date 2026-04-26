@@ -4,7 +4,7 @@ from signal import SIGTERM
 import pytest
 
 try:
-    from src.proto.grpc.health.v1 import health_pb2
+    from grpc.health.v1 import health_pb2
 except ImportError:
     from health.v1 import health_pb2
 
