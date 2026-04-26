@@ -59,3 +59,10 @@ components_manager:
             testpoint-timeout: 10s
             testpoint-url: $mockserver/testpoint
             throttling_enabled: false
+
+        chaotic-openapi-factories: {}
+
+        handler-insecure-secret-post:
+            path: /insecure/secret
+            method: POST
+            task_processor: main-task-processor

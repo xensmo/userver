@@ -13,18 +13,20 @@ namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }} {
 namespace {
 
 {% for response in operation.responses %}
-std::string SerializeSpecificResponse(Response{{ response.status }}&& r, USERVER_NAMESPACE::server::http::HttpRequest& http_request) {
+std::string SerializeSpecificResponse(const Response{{ response.status }}& r,
+                                      {{ userver }}::server::http::HttpRequest& http_request) {
     http_request.GetHttpResponse().SetStatus(
-        static_cast<USERVER_NAMESPACE::server::http::HttpStatus>({{ response.status }})
+        static_cast<{{ userver }}::server::http::HttpStatus>({{ response.status }})
     );
     {% if response.body | length == 1 %}
         {% set content_type = response.body.keys() | list | first %}
         {% if content_type == 'application/json' %}
-            return USERVER_NAMESPACE::formats::json::ToString(
-                USERVER_NAMESPACE::formats::json::ValueBuilder(std::move(r.body)).ExtractValue()
+            return {{ userver }}::formats::json::ToString(
+                {{ userver }}::formats::json::ValueBuilder(r.body).ExtractValue()
             );
         {% else %}
-            return std::move(r.body);
+            http_request.GetHttpResponse().SetContentType("{{ content_type }}");
+            return r.body;
         {% endif %}
     {% elif response.body | length == 0 %}
         (void)r;
@@ -38,21 +40,21 @@ std::string SerializeSpecificResponse(Response{{ response.status }}&& r, USERVER
 
 }  // namespace
 
-std::string SerializeResponse(Response&& response, USERVER_NAMESPACE::server::http::HttpRequest& http_request) {
+std::string SerializeResponse(const Response& response, {{ userver }}::server::http::HttpRequest& http_request) {
     {% if operation.responses | length == 1 %}
-        return SerializeSpecificResponse(std::move(response), http_request);
+        return SerializeSpecificResponse(response, http_request);
     {% else %}
         return std::visit(
-            [&http_request](auto&& r) -> std::string {
-              return SerializeSpecificResponse(std::move(r), http_request);
+            [&http_request](const auto& r) -> std::string {
+              return SerializeSpecificResponse(r, http_request);
             },
-            std::move(response)
+            response
         );
     {% endif %}
 }
 
 {% if operation.iter_error_responses() | list %}
-std::string SerializeResponse(ErrorResponseBase&& response, USERVER_NAMESPACE::server::http::HttpRequest& http_request) {
+std::string SerializeResponse(ErrorResponseBase&& response, {{ userver }}::server::http::HttpRequest& http_request) {
     {% for response in operation.iter_error_responses() %}
         {% if not loop.first %}else {% endif %}
         if (response.GetStatus() == {{ response.status }}) {

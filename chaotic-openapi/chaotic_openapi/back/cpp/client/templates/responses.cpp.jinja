@@ -70,7 +70,7 @@ namespace {{ namespace }} {
                 namespace openapi = USERVER_NAMESPACE::chaotic::openapi;
                 static constexpr openapi::Name k{{ header.cpp_name }} = "{{ header.raw_name }}";
                 using Header = {{ header.parser }};
-                r.{{ header.cpp_name }} = openapi::ParseParameter<Header::Base>::Parse(std::string{it->second});
+                r.{{ header.cpp_name }} = openapi::ParameterParser<Header::Base>::Parse(std::string{it->second});
               }
             }
             {% endfor %}

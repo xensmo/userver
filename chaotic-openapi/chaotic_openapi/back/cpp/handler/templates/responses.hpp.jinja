@@ -4,6 +4,7 @@
 #include <string>
 #include <variant>
 
+#include <userver/http/status_code.hpp>
 #include <userver/server/http/http_request.hpp>
 {% for include in op.responses_declaration_includes() %}
 #include <{{ include }}>
@@ -18,7 +19,7 @@ namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }} {
 /// Base class for all error responses of this handler.
 /// May be caught to handle any error generically.
 struct ErrorResponseBase : public std::exception {
-    virtual int GetStatus() const noexcept = 0;
+    virtual {{ userver }}::http::StatusCode GetStatus() const noexcept = 0;
 };
 
 {% endif %}
@@ -30,8 +31,8 @@ struct ErrorResponseBase : public std::exception {
 {% if response.is_error() %}
 /// Error response — may be thrown from Handle() instead of returning via variant.
 struct Response{{ response.status }} final : public ErrorResponseBase {
-    static constexpr int kStatus = {{ response.status }};
-    int GetStatus() const noexcept override { return kStatus; }
+    static constexpr {{ userver }}::http::StatusCode kStatus{ {{ response.status }} };
+    {{ userver }}::http::StatusCode GetStatus() const noexcept override { return kStatus; }
     const char* what() const noexcept override { return "Response{{ response.status }}"; }
 {% else %}
 struct Response{{ response.status }} final {
@@ -68,9 +69,9 @@ struct Response{{ response.status }} final {
     >;
 {% endif %}
 
-std::string SerializeResponse(Response&& response, USERVER_NAMESPACE::server::http::HttpRequest& http_request);
+std::string SerializeResponse(const Response& response, {{ userver }}::server::http::HttpRequest& http_request);
 {% if op.iter_error_responses() | list %}
-std::string SerializeResponse(ErrorResponseBase&& response, USERVER_NAMESPACE::server::http::HttpRequest& http_request);
+std::string SerializeResponse(ErrorResponseBase&& response, {{ userver }}::server::http::HttpRequest& http_request);
 {% endif %}
 
 }  // namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }}

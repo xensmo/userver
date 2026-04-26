@@ -16,6 +16,13 @@ USERVER_NAMESPACE_BEGIN
 
 namespace chaotic::openapi {
 
+/// @brief ADL tag for `ParseRequest(HttpRequest, To<Request>)`.
+///
+/// Adding `To<Request>` as a second argument makes ADL search the namespace
+/// of `Request` (the handler's namespace), where `ParseRequest` is defined.
+template <typename T>
+struct To {};
+
 /*
  * All parameters are parsed according to the following pipeline:
  *
@@ -71,28 +78,28 @@ struct To {};
 }  // namespace parse
 
 template <std::integral T>
-T FromStr(std::string&& s, parse::To<T>) {
+T ParseParameter(std::string&& s, parse::To<T>) {
     return utils::FromString<T>(s);
 }
 
-std::string FromStr(std::string&& str_value, parse::To<std::string>);
+std::string ParseParameter(std::string&& str_value, parse::To<std::string>);
 
-bool FromStr(std::string&& str_value, parse::To<bool>);
+bool ParseParameter(std::string&& str_value, parse::To<bool>);
 
-double FromStr(std::string&& str_value, parse::To<double>);
+double ParseParameter(std::string&& str_value, parse::To<double>);
 
 template <typename Parameter>
-struct ParseParameter {
+struct ParameterParser {
     static std::string Parse(typename Parameter::RawType&& t) {
-        static_assert(!sizeof(t), "Cannot find `ParseParameter`");
+        static_assert(!sizeof(t), "Cannot find `ParameterParser`");
         return {};
     }
 };
 
 template <typename RawType, typename UserType>
-struct ParseParameter<TrivialParameterBase<RawType, UserType>> {
+struct ParameterParser<TrivialParameterBase<RawType, UserType>> {
     static UserType Parse(std::string&& str_value) {
-        auto raw_value = openapi::FromStr(std::move(str_value), parse::To<RawType>());
+        auto raw_value = openapi::ParseParameter(std::move(str_value), parse::To<RawType>());
         return Convert(std::move(raw_value), convert::To<UserType>());
     }
 };
@@ -104,9 +111,9 @@ void SplitByDelimiter(std::string_view str, char delimiter, utils::function_ref<
 }
 
 template <In kIn, char Delimiter, typename RawType, typename UserType>
-struct ParseParameter<ArrayParameterBase<kIn, Delimiter, RawType, UserType>> {
+struct ParameterParser<ArrayParameterBase<kIn, Delimiter, RawType, UserType>> {
     static auto Parse(std::string&& str_value) {
-        openapi::ParseParameter<TrivialParameterBase<RawType, UserType>> parser;
+        openapi::ParameterParser<TrivialParameterBase<RawType, UserType>> parser;
 
         std::vector<UserType> result;
         impl::SplitByDelimiter(str_value, Delimiter, [&result, &parser](std::string str) {
@@ -117,9 +124,9 @@ struct ParseParameter<ArrayParameterBase<kIn, Delimiter, RawType, UserType>> {
 };
 
 template <char Delimiter, typename RawType, typename UserType>
-struct ParseParameter<ArrayParameterBase<In::kQueryExplode, Delimiter, RawType, UserType>> {
+struct ParameterParser<ArrayParameterBase<In::kQueryExplode, Delimiter, RawType, UserType>> {
     static auto Parse(std::vector<std::string>&& str_value) {
-        openapi::ParseParameter<TrivialParameterBase<RawType, UserType>> parser;
+        openapi::ParameterParser<TrivialParameterBase<RawType, UserType>> parser;
 
         std::vector<UserType> result;
         result.reserve(str_value.size());
@@ -140,7 +147,7 @@ typename Parameter::Base::UserType ReadParameter(const server::http::HttpRequest
         });
     }
     auto str_or_array_value = openapi::GetParameter<Parameter::kIn>(Parameter::kName, source);
-    return openapi::ParseParameter<typename Parameter::Base>::Parse(std::move(str_or_array_value));
+    return openapi::ParameterParser<typename Parameter::Base>::Parse(std::move(str_or_array_value));
 }
 
 /// Reads an optional parameter. Returns std::nullopt if the parameter is
@@ -152,7 +159,7 @@ std::optional<typename Parameter::Base::UserType> ReadParameterOptional(const se
         return std::nullopt;
     }
     auto str_or_array_value = openapi::GetParameter<Parameter::kIn>(Parameter::kName, source);
-    return openapi::ParseParameter<typename Parameter::Base>::Parse(std::move(str_or_array_value));
+    return openapi::ParameterParser<typename Parameter::Base>::Parse(std::move(str_or_array_value));
 }
 
 }  // namespace chaotic::openapi

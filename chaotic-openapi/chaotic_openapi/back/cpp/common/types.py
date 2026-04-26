@@ -94,6 +94,12 @@ class Body:
             cpp_names.cpp_identifier(self.content_type),
         )
 
+    def cpp_type(self) -> str:
+        if self.content_type == 'application/octet-stream':
+            return self.cpp_name()
+        assert self.schema is not None
+        return self.schema.cpp_user_name()
+
 
 @dataclasses.dataclass
 class Response:

@@ -48,6 +48,7 @@ function(_userver_prepare_chaotic)
         UNIQUE
     )
     set_property(GLOBAL PROPERTY userver_chaotic_python_binary "${USERVER_CHAOTIC_PYTHON_BINARY}")
+    set_property(GLOBAL PROPERTY userver_chaotic_scripts_path "${USERVER_CHAOTIC_SCRIPTS_PATH}")
 endfunction()
 
 _userver_prepare_chaotic()
@@ -237,8 +238,8 @@ function(userver_target_generate_openapi_client TARGET)
     _userver_initialize_codegen_flag()
     add_custom_command(
         OUTPUT ${SCHEMAS}
-        COMMAND env "USERVER_PYTHON=${USERVER_CHAOTIC_PYTHON_BINARY}" "${CHAOTIC_OPENAPI_BIN}" ${CHAOTIC_EXTRA_ARGS}
-                ${PARSE_ARGS} --name "${PARSE_NAME}" -o "${PARSE_OUTPUT_DIR}" ${PARSE_SCHEMAS}
+        COMMAND ${CMAKE_COMMAND} -E env "USERVER_PYTHON=${USERVER_CHAOTIC_PYTHON_BINARY}" "${CHAOTIC_OPENAPI_BIN}" ${CHAOTIC_EXTRA_ARGS}
+                --gen client ${PARSE_ARGS} --name "${PARSE_NAME}" -o "${PARSE_OUTPUT_DIR}" ${PARSE_SCHEMAS}
         COMMENT "Generating OpenAPI client ${PARSE_NAME}"
         DEPENDS ${PARSE_SCHEMAS}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -249,6 +250,134 @@ function(userver_target_generate_openapi_client TARGET)
     target_link_libraries("${TARGET}" userver::chaotic-openapi)
     # target_include_directories("${TARGET}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
     target_include_directories("${TARGET}" PUBLIC "${PARSE_OUTPUT_DIR}/include")
+endfunction()
+
+# Generates ${TARGET} cmake target for C++ server-side handler code from OpenAPI YAML file(s).
+#
+# @arg TARGET target name
+# @param NAME - service name (--name); also used in include/src paths under handlers/NAME/
+# @param OUTPUT_DIR - where to put generated include/ and src/ trees
+# @param SRC_DIR - parent directory of handlers/NAME/; view stubs are written here (skipped if already present)
+# @multiparam SCHEMAS - OpenAPI YAML source files
+# @multiparam ARGS - extra arguments passed to chaotic-openapi-gen
+function(userver_target_generate_openapi_handlers TARGET)
+    set(OPTIONS)
+    set(ONE_VALUE_ARGS NAME OUTPUT_DIR SRC_DIR)
+    set(MULTI_VALUE_ARGS SCHEMAS ARGS)
+    cmake_parse_arguments(PARSE "${OPTIONS}" "${ONE_VALUE_ARGS}" "${MULTI_VALUE_ARGS}" ${ARGN})
+
+    get_property(CHAOTIC_OPENAPI_BIN GLOBAL PROPERTY userver_chaotic_openapi_bin)
+    get_property(CHAOTIC_EXTRA_ARGS GLOBAL PROPERTY userver_chaotic_extra_args)
+    get_property(USERVER_CHAOTIC_PYTHON_BINARY GLOBAL PROPERTY userver_chaotic_python_binary)
+    get_property(USERVER_CHAOTIC_SCRIPTS_PATH GLOBAL PROPERTY userver_chaotic_scripts_path)
+
+    if(NOT PARSE_NAME)
+        message(FATAL_ERROR "NAME is required")
+    endif()
+
+    if(NOT PARSE_SCHEMAS)
+        message(FATAL_ERROR "SCHEMAS is required")
+    endif()
+
+    if(NOT DEFINED PARSE_OUTPUT_DIR)
+        set(PARSE_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PARSE_NAME}")
+    endif()
+    file(MAKE_DIRECTORY "${PARSE_OUTPUT_DIR}")
+
+    # Extract operation relpaths from YAML at configure time so we can enumerate output files.
+    execute_process(
+        COMMAND
+            "${USERVER_CHAOTIC_PYTHON_BINARY}" "${USERVER_CHAOTIC_SCRIPTS_PATH}/openapi_operations.py"
+            ${PARSE_SCHEMAS}
+        OUTPUT_VARIABLE _OPERATIONS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        RESULT_VARIABLE _OPERATIONS_RESULT
+    )
+    if(NOT _OPERATIONS_RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to extract operation names from OpenAPI YAML: ${_OPERATIONS_RESULT}")
+    endif()
+
+    set(_HANDLER_FILES)
+    foreach(OP ${_OPERATIONS})
+        set(_OP_INC "${PARSE_OUTPUT_DIR}/include/handlers/${PARSE_NAME}/${OP}")
+        set(_OP_SRC "${PARSE_OUTPUT_DIR}/src/handlers/${PARSE_NAME}/${OP}")
+        list(
+            APPEND _HANDLER_FILES
+            "${_OP_INC}/handler.hpp"
+            "${_OP_INC}/requests.hpp"
+            "${_OP_INC}/responses.hpp"
+            "${_OP_SRC}/handler.cpp"
+            "${_OP_SRC}/requests.cpp"
+            "${_OP_SRC}/responses.cpp"
+        )
+    endforeach()
+
+    set(_SCHEMA_TYPE_FILES)
+    foreach(SCHEMA ${PARSE_SCHEMAS})
+        string(REGEX REPLACE "^.*/([^/]*)\\.([^.]*)\$" "\\1" _SCHEMA_STEM "${SCHEMA}")
+        list(
+            APPEND _SCHEMA_TYPE_FILES
+            "${PARSE_OUTPUT_DIR}/include/handlers/${PARSE_NAME}/${_SCHEMA_STEM}.hpp"
+            "${PARSE_OUTPUT_DIR}/src/handlers/${PARSE_NAME}/${_SCHEMA_STEM}.cpp"
+        )
+    endforeach()
+
+    set(_GEN_MODE "handlers")
+    # New view stubs that don't exist yet — declared as outputs of the command.
+    set(_NEW_VIEW_FILES)
+    # All view sources (existing or new) — compiled into the library.
+    set(_ALL_VIEW_SRCS)
+    if(PARSE_SRC_DIR)
+        set(_GEN_MODE "handlers+views")
+        foreach(OP ${_OPERATIONS})
+            set(_OP_VIEW "${PARSE_SRC_DIR}/handlers/${PARSE_NAME}/${OP}")
+            set(_VIEW_HPP "${_OP_VIEW}/view.hpp")
+            set(_VIEW_CPP "${_OP_VIEW}/view.cpp")
+            # Only declare view stubs as outputs if they don't already exist.
+            # save_views() skips existing files; listing them as outputs for
+            # cmake causes a rebuild cycle when the generator leaves them intact.
+            if(NOT EXISTS "${_VIEW_HPP}")
+                list(APPEND _NEW_VIEW_FILES "${_VIEW_HPP}")
+            endif()
+            if(NOT EXISTS "${_VIEW_CPP}")
+                list(APPEND _NEW_VIEW_FILES "${_VIEW_CPP}")
+            endif()
+            list(APPEND _ALL_VIEW_SRCS "${_VIEW_CPP}")
+        endforeach()
+    endif()
+
+    set(_ALL_OUTPUTS ${_HANDLER_FILES} ${_SCHEMA_TYPE_FILES} ${_NEW_VIEW_FILES})
+
+    set(_GEN_ARGS
+        --name "${PARSE_NAME}"
+        --gen "${_GEN_MODE}"
+        -o "${PARSE_OUTPUT_DIR}"
+        ${PARSE_ARGS}
+    )
+    if(PARSE_SRC_DIR)
+        list(APPEND _GEN_ARGS --src-dir "${PARSE_SRC_DIR}/handlers/${PARSE_NAME}")
+    endif()
+
+    _userver_initialize_codegen_flag()
+    add_custom_command(
+        OUTPUT ${_ALL_OUTPUTS}
+        COMMAND
+            ${CMAKE_COMMAND} -E env "USERVER_PYTHON=${USERVER_CHAOTIC_PYTHON_BINARY}"
+            "${CHAOTIC_OPENAPI_BIN}" ${CHAOTIC_EXTRA_ARGS} ${_GEN_ARGS} ${PARSE_SCHEMAS}
+        COMMENT "Generating OpenAPI handlers ${PARSE_NAME}"
+        DEPENDS ${PARSE_SCHEMAS}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        VERBATIM ${CODEGEN}
+    )
+    _userver_codegen_register_files("${_ALL_OUTPUTS}")
+
+    add_library("${TARGET}" ${_HANDLER_FILES} ${_SCHEMA_TYPE_FILES} ${_ALL_VIEW_SRCS})
+    target_link_libraries("${TARGET}" userver::chaotic-openapi)
+    target_include_directories("${TARGET}" PUBLIC "${PARSE_OUTPUT_DIR}/include")
+    if(PARSE_SRC_DIR)
+        target_include_directories("${TARGET}" PUBLIC "${PARSE_SRC_DIR}")
+    endif()
 endfunction()
 
 #TODO
@@ -283,7 +412,7 @@ function(userver_target_generate_chaotic_dynamic_configs TARGET SCHEMAS_REGEX)
 
     add_custom_command(
         OUTPUT ${OUTPUT_FILENAMES}
-        COMMAND env "USERVER_PYTHON=${USERVER_CHAOTIC_PYTHON_BINARY}" "${CHAOTIC_DYNAMIC_CONFIGS_BIN}"
+        COMMAND ${CMAKE_COMMAND} -E env "USERVER_PYTHON=${USERVER_CHAOTIC_PYTHON_BINARY}" "${CHAOTIC_DYNAMIC_CONFIGS_BIN}"
                 ${CHAOTIC_EXTRA_ARGS} -o "${OUTPUT_DIR}" ${CHGEN_FILENAMES}
         COMMENT "Generating dynamic configs${CONFIG_NAMES}"
         DEPENDS ${CHGEN_FILENAMES}

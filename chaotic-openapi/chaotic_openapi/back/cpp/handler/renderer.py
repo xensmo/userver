@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import re
 
@@ -24,6 +25,15 @@ HANDLER_TEMPLATE_NAMES = [
     'responses.cpp',
     'handler.hpp',
     'handler.cpp',
+]
+
+SPEC_TEMPLATE_NAMES = [
+    'chaotic_handlers_list.hpp',
+]
+
+VIEW_TEMPLATE_NAMES = [
+    'view.hpp',
+    'view.cpp',
 ]
 
 
@@ -68,24 +78,32 @@ def make_env() -> jinja2.Environment:
 JINJA_ENV = make_env()
 
 
-def render(spec: ServerSpec, context: Context) -> list[CppOutput]:
+def _render_template(name: str, clang_format_bin: str, rel_path: str, **env: object) -> CppOutput:
+    tpl = JINJA_ENV.get_template(f'templates/{name}.jinja')
+    assert tpl is not None, f'Template not found: templates/{name}.jinja'
+    pp = tpl.render(**env)
+    pp = cpp_format.format_pp(pp, binary=clang_format_bin)
+    return CppOutput(rel_path=rel_path, content=pp)
+
+
+def render(spec: ServerSpec, context: Context, userver_namespace: str) -> list[CppOutput]:
     output = []
 
     for op in spec.operations:
-        env = {'spec': spec, 'op': op}
+        env = {'spec': spec, 'op': op, 'userver': userver_namespace}
 
+        op_path = f'handlers/{spec.service_name}/{make_op_relpath(op)}'
         for name in HANDLER_TEMPLATE_NAMES:
-            tpl = JINJA_ENV.get_template(f'templates/{name}.jinja')
-            pp = tpl.render(**env)
-            pp = cpp_format.format_pp(pp, binary=context.clang_format_bin)
-
-            op_path = f'handlers/{spec.service_name}/{make_op_relpath(op)}'
             if name.endswith('.hpp'):
                 rel_path = f'include/{op_path}/{name}'
             else:
                 rel_path = f'src/{op_path}/{name}'
+            output.append(_render_template(name, context.clang_format_bin, rel_path, **env))
 
-            output.append(CppOutput(rel_path=rel_path, content=pp))
+    spec_env = {'spec': spec, 'userver': userver_namespace}
+    for name in SPEC_TEMPLATE_NAMES:
+        rel_path = f'include/handlers/{spec.service_name}/{name}'
+        output.append(_render_template(name, context.clang_format_bin, rel_path, **spec_env))
 
     # Schema type files are service-level (shared across all operations)
     vfilepath_map = {}
@@ -115,3 +133,23 @@ def render(spec: ServerSpec, context: Context) -> list[CppOutput]:
             )
 
     return output
+
+
+def render_views(spec: ServerSpec, context: Context, userver_namespace: str) -> list[CppOutput]:
+    output = []
+    for op in spec.operations:
+        env = {'spec': spec, 'op': op, 'userver': userver_namespace}
+        for name in VIEW_TEMPLATE_NAMES:
+            rel_path = f'{make_op_relpath(op)}/{name}'
+            output.append(_render_template(name, context.clang_format_bin, rel_path, **env))
+    return output
+
+
+def save_views(outputs: list[CppOutput], prefix: str) -> None:
+    for output in outputs:
+        path = os.path.join(prefix, output.rel_path)
+        if os.path.exists(path):
+            continue
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as ofile:
+            ofile.write(output.content.strip() + '\n')

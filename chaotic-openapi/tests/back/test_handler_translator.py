@@ -3,7 +3,6 @@ from chaotic_openapi.back.cpp.handler.renderer import component_name
 from chaotic_openapi.back.cpp.handler.renderer import make_op_relpath
 from chaotic_openapi.back.cpp.handler.types import ServerSpec
 from chaotic_openapi.front import parser as front_parser
-import pytest
 
 
 def _translate(schema, *, cpp_namespace='handlers::test') -> ServerSpec:
@@ -216,7 +215,7 @@ def test_multiple_operations_all_translated():
     assert len(spec.operations) == 2
 
 
-def test_multiple_content_type_body_raises():
+def test_multiple_content_type_body():
     schema = {
         'openapi': '3.0.0',
         'info': {'title': '', 'version': '1.0'},
@@ -226,7 +225,7 @@ def test_multiple_content_type_body_raises():
                     'requestBody': {
                         'content': {
                             'application/json': {'schema': {'type': 'string'}},
-                            'text/plain': {'schema': {'type': 'string'}},
+                            'application/octet-stream': {'schema': {'type': 'string'}},
                         },
                     },
                     'responses': {200: {'description': 'OK'}},
@@ -234,5 +233,9 @@ def test_multiple_content_type_body_raises():
             },
         },
     }
-    with pytest.raises(NotImplementedError):
-        _translate(schema)
+    spec = _translate(schema)
+    assert len(spec.operations) == 1
+    op = spec.operations[0]
+    assert len(op.request_bodies) == 2
+    assert op.request_bodies[0].content_type == 'application/json'
+    assert op.request_bodies[1].content_type == 'application/octet-stream'

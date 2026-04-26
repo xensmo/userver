@@ -8,6 +8,8 @@
 #include <string>
 #include <string_view>
 
+#include <fmt/core.h>
+
 #include <userver/logging/fwd.hpp>
 #include <userver/utils/str_icase.hpp>
 
@@ -102,3 +104,13 @@ extern const ContentType kTextPlain;
 }  // namespace http
 
 USERVER_NAMESPACE_END
+
+template <>
+struct fmt::formatter<USERVER_NAMESPACE::http::ContentType> {
+    constexpr static auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename FormatContext>
+    auto format(const USERVER_NAMESPACE::http::ContentType& value, FormatContext& ctx) const -> decltype(ctx.out()) {
+        return fmt::format_to(ctx.out(), "{}", value.ToString());
+    }
+};
