@@ -33,9 +33,6 @@ public:
 
     size_t GetPendingLogsCount();
 
-protected:
-    bool DoShouldLog(Level) const noexcept override;
-
 private:
     void DispatchItem(formatters::LogItem& msg, formatters::Base& formatter);
 

@@ -237,8 +237,6 @@ void Logger::PrependCommonTags(logging::impl::TagWriter writer) const {
     logging::impl::PrependCommonTags(writer, GetLevel());
 }
 
-bool Logger::DoShouldLog(logging::Level level) const noexcept { return logging::impl::DoShouldLog(level); }
-
 void Logger::Log(logging::Level level, logging::impl::formatters::LoggerItemRef item) {
     UASSERT(dynamic_cast<Item*>(&item));
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
