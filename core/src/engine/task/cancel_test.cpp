@@ -9,10 +9,12 @@
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future.hpp>
 #include <userver/engine/single_consumer_event.hpp>
+#include <userver/engine/single_use_event.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/task_with_result.hpp>
 #include <userver/utest/utest.hpp>
 #include <userver/utils/async.hpp>
+#include <userver/utils/fast_scope_guard.hpp>
 
 using namespace std::chrono_literals;
 
@@ -433,6 +435,65 @@ UTEST(Cancel, ParentCancelledSample) {
     UEXPECT_THROW(parent_cancelled::Parent(), engine::WaitInterruptedException);
     // Check that the cancellation worked on InterruptibleSleepFor in Child.
     EXPECT_FALSE(deadline.IsReached());
+}
+
+UTEST(Async, CancellationBeforeStartNormal) {
+    // The test relies on there only being a single TaskProcessor thread, otherwise there could be a race
+    // between `RequestCancel()` and the concurrent execution of the child task.
+    ASSERT_EQ(GetThreadCount(), 1);
+
+    bool captures_destroyed = false;
+    utils::FastScopeGuard guard([&captures_destroyed]() noexcept {
+        EXPECT_TRUE(engine::current_task::IsTaskProcessorThread());
+        captures_destroyed = true;
+    });
+
+    auto task = engine::AsyncNoSpan([guard = std::move(guard)] { ADD_FAILURE() << "The task body should not start"; });
+
+    EXPECT_FALSE(task.IsFinished());
+    EXPECT_FALSE(captures_destroyed);
+
+    // The task has not started by this point. This means that the task is cancelled before starting.
+    // This should cause the task body to be skipped, because this is a non-Critical task.
+    // See details on engine::TaskBase::State::kCancelled.
+    task.RequestCancel();
+
+    task.WaitFor(utest::kMaxTestWaitTime);
+    EXPECT_EQ(task.GetState(), engine::TaskBase::State::kCancelled);
+    UEXPECT_THROW(task.Get(), engine::TaskCancelledException);
+    // The task destructor should run even if the execution of the task body is skipped due to cancellation.
+    EXPECT_TRUE(captures_destroyed);
+}
+
+UTEST(Async, CancellationBeforeStartCritical) {
+    // The test relies on there only being a single TaskProcessor thread, otherwise there could be a race
+    // between `RequestCancel()` and the concurrent execution of the child task.
+    ASSERT_EQ(GetThreadCount(), 1);
+
+    engine::SingleUseEvent event;
+    auto task = engine::CriticalAsyncNoSpan([&event] {
+        // The task should start (proven by `return true;` below and `Get() -> true`.)
+
+        EXPECT_TRUE(engine::current_task::impl::IsCritical());
+
+        // The task is still cancelled, and any waiting operation will be interrupted.
+        EXPECT_TRUE(engine::current_task::IsCancelRequested());
+        EXPECT_TRUE(engine::current_task::ShouldCancel());
+        const auto deadline = engine::Deadline::FromDuration(utest::kMaxTestWaitTime);
+        EXPECT_EQ(event.WaitUntil(deadline), engine::FutureStatus::kCancelled);
+
+        return true;
+    });
+
+    EXPECT_FALSE(task.IsFinished());
+
+    // The task has not started by this point. This means that the task is cancelled before starting.
+    // But because the task is started as Critical, the task body should be executed anyway.
+    task.RequestCancel();
+
+    task.WaitFor(utest::kMaxTestWaitTime / 2);
+    EXPECT_EQ(task.GetState(), engine::TaskBase::State::kCompleted);
+    EXPECT_TRUE(task.Get());
 }
 
 USERVER_NAMESPACE_END
