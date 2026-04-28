@@ -23,54 +23,6 @@ void RethrowError(ContextAccessor& accessor) {
     }
 }
 
-FutureStatus DoWaitAllCheckedOld(utils::span<ContextAccessor*> targets, Deadline deadline) {
-    UASSERT_MSG(AreUniqueValues(targets), "Same tasks/futures were detected in WaitAny* call");
-    auto& current = current_task::GetCurrentTaskContext();
-
-    WaitAnyWaitStrategy wait_strategy{targets, current};
-    while (true) {
-        bool all_completed = true;
-        for (auto& target : targets) {
-            if (!target) {
-                continue;
-            }
-
-            const bool is_ready = target->IsReady();
-            if (is_ready) {
-                auto exception_ptr = target->GetErrorResult();
-                if (exception_ptr) {
-                    std::rethrow_exception(exception_ptr);
-                }
-                target = nullptr;
-            }
-            all_completed &= is_ready;
-        }
-        if (all_completed) {
-            break;
-        }
-
-        auto sleep_status = current.Sleep(wait_strategy, deadline);
-
-        switch (sleep_status) {
-            case TaskContext::WakeupSource::kNotify:
-                break;
-            case TaskContext::WakeupSource::kDeadlineTimer:
-                return FutureStatus::kTimeout;
-            case TaskContext::WakeupSource::kCancelRequest:
-                return FutureStatus::kCancelled;
-            case TaskContext::WakeupSource::kNone:
-                UASSERT_MSG(false, "Unexpected WakeupSource::kNone");
-                break;
-            case TaskContext::WakeupSource::kBootstrap:
-                UASSERT_MSG(false, "Unexpected WakeupSource::kBootstrap");
-                break;
-        }
-    }
-
-    UASSERT(std::all_of(targets.begin(), targets.end(), [](auto* target) { return !target; }));
-    return FutureStatus::kReady;
-}
-
 }  // namespace
 
 class WaitAllCheckedContext final {
@@ -189,9 +141,6 @@ void WaitAllCheckedContext::Impl::DoNotify(
 }
 
 FutureStatus DoWaitAllChecked(std::vector<ContextAccessor*>&& targets, Deadline deadline) {
-    if (!utils::impl::kWaitAllCheckedUpgradeExperiment.IsEnabled()) {
-        return DoWaitAllCheckedOld(targets, deadline);
-    }
     UASSERT_MSG(AreUniqueValues(targets), "Same tasks/futures were detected in WaitAny* call");
     WaitAllCheckedContext context{std::move(targets)};
     return context.WaitUntil(deadline);
