@@ -160,7 +160,7 @@ def traverse_dfs(path: str, data: Any):
         except (GeneratorExit, StopIteration):
             if feed:
                 items_to_remove.append(name)
-            if sticky_feed and item == {}:
+            elif sticky_feed and item == {}:
                 items_to_remove.append(name)
 
     for item in items_to_remove:
