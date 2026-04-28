@@ -10,7 +10,6 @@
 #else
 auto PQXisBusy(PGconn* conn, const PGresult*) { return ::PQisBusy(conn); }
 auto PQXgetResult(PGconn* conn, const PGresult*) { return ::PQgetResult(conn); }
-int PQXpipelinePutSync(PGconn*) { return 0; }
 auto PQXsendQueryPrepared(PGconn* conn, const char* stmtName, int nParams, const char* const* paramValues, const int* paramLengths, const int* paramFormats, int resultFormat, PGresult*) {
     return ::PQsendQueryPrepared(conn, stmtName, nParams, paramValues, paramLengths, paramFormats, resultFormat);
 }
@@ -1020,7 +1019,13 @@ void PGConnectionWrapper::PutPipelineSync() {
 #else
     if (PQpipelineStatus(conn_) != PQ_PIPELINE_OFF) {
         HandleSocketPostClose();
+#if LIBPQ_HAS_SEND_PIPELINE_SYNC
+        CheckError<CommandError>("PQsendPipelineSync", PQsendPipelineSync(conn_));
+#elif defined(USERVER_NO_LIBPQ_PATCHES)
+        CheckError<CommandError>("PQpipelineSync", PQpipelineSync(conn_));
+#else
         CheckError<CommandError>("PQXpipelinePutSync", PQXpipelinePutSync(conn_));
+#endif
         ++pipeline_sync_counter_;
     }
 #endif
