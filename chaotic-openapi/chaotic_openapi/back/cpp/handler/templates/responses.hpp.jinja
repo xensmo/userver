@@ -58,7 +58,9 @@ struct Response{{ response.status }} final {
 {% endfor %}
 
 /// All possible responses for this operation.
+{% if op.iter_error_responses() | list %}
 /// Error types (4xx/5xx) may also be thrown from Handle().
+{% endif %}
 {% if op.responses | length == 1 %}
     using Response = Response{{ op.responses[0].status }};
 {% else %}

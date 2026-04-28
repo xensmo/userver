@@ -180,18 +180,15 @@ private:
         HttpRequest& http_request,
         USERVER_NAMESPACE::server::request::RequestContext& context
     ) const {
-        try {
+        if constexpr (std::is_void_v<T>) {
             return DoHandle(request, http_request, context);
-        } catch (ErrorResponseBase& e) {
-            return SerializeResponse(std::move(e), http_request);
+        } else {
+            try {
+                return DoHandle(request, http_request, context);
+            } catch (ErrorResponseBase& e) {
+                return SerializeResponse(std::move(e), http_request);
+            }
         }
-    }
-
-    template <>
-    std::string HandleParsed<
-        void>(Request& request, HttpRequest& http_request, USERVER_NAMESPACE::server::request::RequestContext& context)
-        const {
-        return DoHandle(request, http_request, context);
     }
 
     std::string HandleRequest(HttpRequest& http_request, USERVER_NAMESPACE::server::request::RequestContext& context)

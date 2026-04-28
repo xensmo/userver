@@ -74,8 +74,13 @@ def do_main():
         ).spec()
 
         if args.gen in ('handlers', 'handlers+views'):
+            # handlers
             outputs = handler_renderer.render(spec, ctx, args.userver)
             client_renderer.CppOutput.save(outputs, args.output_dir)
+
+            # config.yaml
+            config_content = handler_renderer.render_config_yaml(spec)
+            handler_renderer.save_config_yaml(config_content, args.output_dir)
         if args.gen in ('handlers+views', 'views'):
             view_outputs = handler_renderer.render_views(spec, ctx, args.userver)
             handler_renderer.save_views(view_outputs, args.src_dir)

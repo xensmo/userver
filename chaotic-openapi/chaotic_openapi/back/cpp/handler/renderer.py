@@ -3,6 +3,7 @@ from pathlib import Path
 import re
 
 import jinja2
+import yaml
 
 from chaotic import cpp_format
 from chaotic import jinja_env
@@ -133,6 +134,30 @@ def render(spec: ServerSpec, context: Context, userver_namespace: str) -> list[C
             )
 
     return output
+
+
+def render_config_yaml(spec: ServerSpec) -> str:
+    components = {
+        component_name(op): {
+            'path': op.path,
+            'method': op.method.upper(),
+        }
+        for op in spec.operations
+    }
+    config = {
+        'components_manager': {
+            'components': components,
+        },
+    }
+    return yaml.dump(config, default_flow_style=False, sort_keys=False)
+
+
+def save_config_yaml(content: str, output_dir: str) -> None:
+    path = os.path.join(output_dir, 'config.chaotic.yaml')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    with open(path, 'w') as ofile:
+        ofile.write(content)
 
 
 def render_views(spec: ServerSpec, context: Context, userver_namespace: str) -> list[CppOutput]:

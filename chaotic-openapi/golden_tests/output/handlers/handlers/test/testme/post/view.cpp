@@ -1,6 +1,6 @@
 #include "view.hpp"
 
-namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }} {
+namespace handlers::test::testme::post {
 
 Response View::Handle(Request&& /*request*/, Deps&& /*deps*/) {
     // Handle request using dependencies from Deps (clients, caches, configs, databases...)
@@ -8,31 +8,26 @@ Response View::Handle(Request&& /*request*/, Deps&& /*deps*/) {
 }
 
 /*
-{% if op.request_bodies %}
-{% if op.request_bodies[0].content_type == 'application/json' %}
+
+
 std::string View::GetRequestBodyForLogging(
-    const {{ userver }}::formats::json::Value& body) {
+    const USERVER_NAMESPACE::formats::json::Value& body) {
     (void)body;
     return {};
 }
 
 std::string View::GetInvalidRequestBodyForLogging(
-    const {{ userver }}::server::http::HttpRequest& request) {
+    const USERVER_NAMESPACE::server::http::HttpRequest& request) {
     (void)request;
     return {};
 }
-{% else %}
-std::string View::GetRequestBodyForLogging(const std::string& body) {
-    (void)body;
-    return {};
-}
-{% endif %}
-{% endif %}
+
+
 
 std::string View::GetResponseForLogging(
     const Response& response,
     const std::string& serialized_response,
-    {{ userver }}::server::request::RequestContext& context) {
+    USERVER_NAMESPACE::server::request::RequestContext& context) {
     (void)response;
     (void)serialized_response;
     (void)context;
@@ -40,4 +35,4 @@ std::string View::GetResponseForLogging(
 }
 */
 
-}  // namespace {{ spec.cpp_namespace }}::{{ op.cpp_namespace() }}
+}  // namespace handlers::test::testme::post

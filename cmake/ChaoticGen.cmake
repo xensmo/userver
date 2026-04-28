@@ -347,7 +347,8 @@ function(userver_target_generate_openapi_handlers TARGET)
         endforeach()
     endif()
 
-    set(_ALL_OUTPUTS ${_HANDLER_FILES} ${_SCHEMA_TYPE_FILES} ${_NEW_VIEW_FILES})
+    set(_CONFIG_YAML_PATH "${PARSE_OUTPUT_DIR}/config.chaotic.yaml")
+    set(_ALL_OUTPUTS ${_HANDLER_FILES} ${_SCHEMA_TYPE_FILES} ${_NEW_VIEW_FILES} "${_CONFIG_YAML_PATH}")
 
     set(_GEN_ARGS
         --name "${PARSE_NAME}"
@@ -378,6 +379,72 @@ function(userver_target_generate_openapi_handlers TARGET)
     if(PARSE_SRC_DIR)
         target_include_directories("${TARGET}" PUBLIC "${PARSE_SRC_DIR}")
     endif()
+    set_property(TARGET "${TARGET}" APPEND PROPERTY
+        INTERFACE_USERVER_EXTRA_CONFIG_YAML_PATHS "${_CONFIG_YAML_PATH}")
+endfunction()
+
+# Merges BASE_CONFIGS (user-provided, applied last / highest priority) with
+# config.chaotic.yaml files collected transitively from BINARY_TARGET's link graph.
+# Writes the merged result to OUTPUT.
+#
+# @arg BINARY_TARGET  - executable/library that links handler targets
+# @multiparam BASE_CONFIGS - user config yaml files (applied last, highest priority)
+# @param OUTPUT       - path for the final merged config.yaml
+function(userver_generate_config_yaml BINARY_TARGET)
+    cmake_parse_arguments(PARSE "" "OUTPUT" "BASE_CONFIGS" ${ARGN})
+
+    if(NOT PARSE_OUTPUT)
+        message(FATAL_ERROR "OUTPUT is required")
+    endif()
+
+    get_property(USERVER_CHAOTIC_PYTHON_BINARY GLOBAL PROPERTY userver_chaotic_python_binary)
+    get_property(USERVER_CHAOTIC_SCRIPTS_PATH GLOBAL PROPERTY userver_chaotic_scripts_path)
+
+    _userver_collect_extra_config_yamls("${BINARY_TARGET}" _extra_configs)
+
+    add_custom_command(
+        OUTPUT "${PARSE_OUTPUT}"
+        COMMAND
+            "${USERVER_CHAOTIC_PYTHON_BINARY}"
+            "${USERVER_CHAOTIC_SCRIPTS_PATH}/merge_yaml_configs/main.py"
+            ${_extra_configs}
+            ${PARSE_BASE_CONFIGS}
+            -o "${PARSE_OUTPUT}"
+        DEPENDS ${_extra_configs} ${PARSE_BASE_CONFIGS}
+        COMMENT "Merging config.yaml for ${BINARY_TARGET}"
+        VERBATIM
+    )
+    add_custom_target("${BINARY_TARGET}_config" ALL DEPENDS "${PARSE_OUTPUT}")
+endfunction()
+
+function(_userver_collect_extra_config_yamls_impl TARGET)
+    get_property(_visited GLOBAL PROPERTY _userver_config_yaml_visited)
+    if("${TARGET}" IN_LIST _visited)
+        return()
+    endif()
+    set_property(GLOBAL APPEND PROPERTY _userver_config_yaml_visited "${TARGET}")
+
+    get_target_property(_prop "${TARGET}" INTERFACE_USERVER_EXTRA_CONFIG_YAML_PATHS)
+    if(_prop)
+        set_property(GLOBAL APPEND PROPERTY _userver_config_yaml_result "${_prop}")
+    endif()
+
+    get_target_property(_deps "${TARGET}" LINK_LIBRARIES)
+    if(_deps)
+        foreach(_dep IN LISTS _deps)
+            if(TARGET "${_dep}")
+                _userver_collect_extra_config_yamls_impl("${_dep}")
+            endif()
+        endforeach()
+    endif()
+endfunction()
+
+function(_userver_collect_extra_config_yamls TARGET RESULT_VAR)
+    set_property(GLOBAL PROPERTY _userver_config_yaml_result "")
+    set_property(GLOBAL PROPERTY _userver_config_yaml_visited "")
+    _userver_collect_extra_config_yamls_impl("${TARGET}")
+    get_property(_result GLOBAL PROPERTY _userver_config_yaml_result)
+    set(${RESULT_VAR} "${_result}" PARENT_SCOPE)
 endfunction()
 
 #TODO
