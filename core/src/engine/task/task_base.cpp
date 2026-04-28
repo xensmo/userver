@@ -165,6 +165,8 @@ void* GetRawCurrentTaskContext() noexcept { return current_task::GetCurrentTaskC
 
 bool IsCritical() { return GetCurrentTaskContext().WasStartedAsCritical(); }
 
+Deadline GetDeadline() noexcept { return GetCurrentTaskContext().GetCancelDeadline(); }
+
 }  // namespace impl
 
 }  // namespace current_task

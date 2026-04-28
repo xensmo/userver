@@ -1,14 +1,20 @@
 #include <userver/utest/utest.hpp>
 
 #include <atomic>
+#include <concepts>
 
 #include <userver/engine/async.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/cancel.hpp>
+#include <userver/engine/task/current_task.hpp>
+#include <userver/engine/task/inherited_variable.hpp>
+#include <userver/engine/task/task_with_result.hpp>
+#include <userver/tracing/span.hpp>
 #include <userver/utils/lazy_prvalue.hpp>
 
 #include <compiler/relax_cpu.hpp>
 #include <engine/task/task_context.hpp>
+#include <engine/tests/task_processor_utils.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -326,6 +332,80 @@ UTEST_MT(Async, CancelNotifyRace, 4) {
         // `task2`. It will be detected by Asan.
         UEXPECT_NO_THROW(task1.Get());
     }
+}
+
+namespace {
+
+engine::TaskInheritedVariable<int> kInheritedVariable;
+
+}  // namespace
+
+UTEST(Async, AsyncNoSpanCapturesExpectedContext) {
+    kInheritedVariable.Set(42);
+
+    auto task = engine::AsyncNoSpan([inherited = kInheritedVariable.Get()] {
+        EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
+        EXPECT_EQ(inherited, 42);
+        EXPECT_FALSE(engine::current_task::impl::IsCritical());
+        EXPECT_EQ(engine::current_task::impl::GetDeadline(), engine::Deadline{});
+        return true;
+    });
+    static_assert(std::same_as<decltype(task), engine::TaskWithResult<bool>>);
+
+    EXPECT_TRUE(task.Get());
+}
+
+TEST(Async, AsyncNoSpanWithTaskProcessorCapturesExpectedContext) {
+    engine::tests::TwoStandaloneTaskProcessors tp;
+    tp.RunBlocking([&] {
+        kInheritedVariable.Set(42);
+
+        auto task = engine::AsyncNoSpan(tp.GetSecondary(), [&, inherited = kInheritedVariable.Get()] {
+            EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
+            EXPECT_EQ(inherited, 42);
+            EXPECT_FALSE(engine::current_task::impl::IsCritical());
+            EXPECT_EQ(engine::current_task::impl::GetDeadline(), engine::Deadline{});
+            EXPECT_EQ(&engine::current_task::GetTaskProcessor(), &tp.GetSecondary());
+            return true;
+        });
+        static_assert(std::same_as<decltype(task), engine::TaskWithResult<bool>>);
+
+        EXPECT_TRUE(task.Get());
+    });
+}
+
+UTEST(Async, CriticalAsyncNoSpanCapturesExpectedContext) {
+    kInheritedVariable.Set(42);
+
+    auto task = engine::CriticalAsyncNoSpan([inherited = kInheritedVariable.Get()] {
+        EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
+        EXPECT_EQ(inherited, 42);
+        EXPECT_TRUE(engine::current_task::impl::IsCritical());
+        EXPECT_EQ(engine::current_task::impl::GetDeadline(), engine::Deadline{});
+        return true;
+    });
+    static_assert(std::same_as<decltype(task), engine::TaskWithResult<bool>>);
+
+    EXPECT_TRUE(task.Get());
+}
+
+TEST(Async, CriticalAsyncNoSpanWithTaskProcessorCapturesExpectedContext) {
+    engine::tests::TwoStandaloneTaskProcessors tp;
+    tp.RunBlocking([&] {
+        kInheritedVariable.Set(42);
+
+        auto task = engine::CriticalAsyncNoSpan(tp.GetSecondary(), [&, inherited = kInheritedVariable.Get()] {
+            EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
+            EXPECT_EQ(inherited, 42);
+            EXPECT_TRUE(engine::current_task::impl::IsCritical());
+            EXPECT_EQ(engine::current_task::impl::GetDeadline(), engine::Deadline{});
+            EXPECT_EQ(&engine::current_task::GetTaskProcessor(), &tp.GetSecondary());
+            return true;
+        });
+        static_assert(std::same_as<decltype(task), engine::TaskWithResult<bool>>);
+
+        EXPECT_TRUE(task.Get());
+    });
 }
 
 USERVER_NAMESPACE_END

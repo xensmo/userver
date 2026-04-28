@@ -169,6 +169,7 @@ public:
     void SetQueueWaitTimepoint(std::chrono::steady_clock::time_point tp) { task_queue_wait_timepoint_ = tp; }
 
     void SetCancelDeadline(Deadline deadline);
+    Deadline GetCancelDeadline() const noexcept { return cancel_deadline_; }
 
     bool HasLocalStorage() const noexcept;
     task_local::Storage& GetLocalStorage() noexcept;
