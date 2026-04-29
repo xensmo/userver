@@ -11,6 +11,7 @@
 #include <userver/storages/redis/base.hpp>
 #include <userver/storages/redis/exception.hpp>
 #include <userver/storages/redis/reply.hpp>
+#include <userver/storages/redis/topology_update_method.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/impl/userver_experiments.hpp>
@@ -72,7 +73,8 @@ Sentinel::Sentinel(
     KeyShardFactory key_shard_factory,
     CommandControl command_control,
     const testsuite::RedisControl& testsuite_redis_control,
-    std::size_t database_index
+    std::size_t database_index,
+    TopologyUpdateMethod topology_update_method
 )
     : shard_group_name_(shard_group_name),
       thread_pools_(thread_pools),
@@ -105,7 +107,8 @@ Sentinel::Sentinel(
             connection_security,
             std::move(key_shard_factory),
             dynamic_config_source,
-            database_index
+            database_index,
+            topology_update_method
         );
     });
 }
@@ -132,7 +135,8 @@ std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
     const std::string& client_name,
     KeyShardFactory key_shard_factory,
     const CommandControl& command_control,
-    const testsuite::RedisControl& testsuite_redis_control
+    const testsuite::RedisControl& testsuite_redis_control,
+    TopologyUpdateMethod topology_update_method
 ) {
     const auto& password = settings.password;
     const auto& sentinel_password = settings.sentinel_password;
@@ -174,7 +178,8 @@ std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
             std::move(key_shard_factory),
             command_control,
             testsuite_redis_control,
-            settings.database_index
+            settings.database_index,
+            topology_update_method
         );
         client->Start();
     }

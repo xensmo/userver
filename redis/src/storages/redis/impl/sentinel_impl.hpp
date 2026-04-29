@@ -19,6 +19,7 @@
 #include <storages/redis/impl/redis_stats.hpp>
 #include <userver/storages/redis/client.hpp>
 #include <userver/storages/redis/fwd.hpp>
+#include <userver/storages/redis/topology_update_method.hpp>
 #include <userver/storages/redis/wait_connected_mode.hpp>
 
 #include "shard.hpp"
@@ -66,7 +67,8 @@ public:
         ConnectionSecurity connection_security,
         KeyShardFactory&& key_shard_factory,
         dynamic_config::Source dynamic_config_source,
-        std::size_t database_index
+        std::size_t database_index,
+        TopologyUpdateMethod topology_update_method
     );
     ~SentinelImpl();
 

@@ -45,7 +45,8 @@ SubscribeSentinel::SubscribeSentinel(
     KeyShardFactory key_shard_factory,
     bool is_cluster_mode,
     CommandControl command_control,
-    const testsuite::RedisControl& testsuite_redis_control
+    const testsuite::RedisControl& testsuite_redis_control,
+    TopologyUpdateMethod topology_update_method
 )
     : Sentinel(
           thread_pools,
@@ -59,7 +60,8 @@ SubscribeSentinel::SubscribeSentinel(
           std::move(key_shard_factory),
           command_control,
           testsuite_redis_control,
-          kSubscriptionDatabaseIndex
+          kSubscriptionDatabaseIndex,
+          topology_update_method
       ),
       storage_(CreateSubscriptionStorage(thread_pools, shards, is_cluster_mode))
 {
@@ -79,7 +81,8 @@ std::shared_ptr<SubscribeSentinel> SubscribeSentinel::Create(
     const std::string& client_name,
     storages::redis::ShardingStrategy sharding_strategy,
     const CommandControl& command_control,
-    const testsuite::RedisControl& testsuite_redis_control
+    const testsuite::RedisControl& testsuite_redis_control,
+    TopologyUpdateMethod topology_update_method
 ) {
     const auto& password = settings.password;
     const auto& sentinel_password = settings.sentinel_password;
@@ -127,7 +130,8 @@ std::shared_ptr<SubscribeSentinel> SubscribeSentinel::Create(
         std::move(keys_shard_factory),
         is_cluster_mode,
         command_control,
-        testsuite_redis_control
+        testsuite_redis_control,
+        topology_update_method
     );
     subscribe_sentinel->Start();
     return subscribe_sentinel;
