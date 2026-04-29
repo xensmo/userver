@@ -844,6 +844,7 @@ class CppStruct(CppType):
 class CppArrayValidator:
     minItems: int | None = None
     maxItems: int | None = None
+    uniqueItems: bool = False
 
     def is_none(self) -> bool:
         return self == CppArrayValidator()
@@ -876,6 +877,8 @@ class CppArray(CppType):
             validators += f', USERVER_NAMESPACE::chaotic::MinItems<{self.validators.minItems}>'
         if self.validators.maxItems is not None:
             validators += f', USERVER_NAMESPACE::chaotic::MaxItems<{self.validators.maxItems}>'
+        if self.validators.uniqueItems:
+            validators += ', USERVER_NAMESPACE::chaotic::UniqueItems'
 
         parser_type = (
             'USERVER_NAMESPACE::chaotic::Array'

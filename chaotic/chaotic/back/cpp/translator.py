@@ -568,6 +568,12 @@ class Generator:
         # TODO: name?
         items = self._generate_type(name.add_suffix('A'), schema.items)
 
+        if schema.uniqueItems and not isinstance(schema.items, (types.Integer, types.String, types.Boolean)):
+            self._raise(
+                schema,
+                'uniqueItems is only supported for integer, string, and boolean item types',
+            )
+
         user_cpp_type = self._extract_user_cpp_type(schema)
         container = self._extract_container(schema)
 
@@ -585,6 +591,7 @@ class Generator:
             validators=cpp_types.CppArrayValidator(
                 minItems=schema.minItems,
                 maxItems=schema.maxItems,
+                uniqueItems=schema.uniqueItems,
             ),
         )
 

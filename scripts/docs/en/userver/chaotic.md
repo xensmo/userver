@@ -283,6 +283,7 @@ Array type is mapped to different C++ types depending on `x-usrv-cpp-container` 
 Array supports the following validators:
 * `minItems`
 * `maxItems`
+* `uniqueItems`
 
 Example:
 
