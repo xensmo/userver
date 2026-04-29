@@ -60,10 +60,9 @@ components_manager:
             task_processor: main-task-processor
             throttling_enabled: false
 
-        handler-log-level:
-            monitor-handler: true
-            path: /log-level/{level}
+        handler-delaying:
             method: GET
+            path: /test
             task_processor: main-task-processor
 
         tests-control:
