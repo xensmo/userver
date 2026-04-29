@@ -17,6 +17,7 @@
 #include <userver/ugrpc/client/impl/async_methods.hpp>
 #include <userver/ugrpc/client/impl/call_params.hpp>
 #include <userver/ugrpc/client/impl/call_state.hpp>
+#include <userver/ugrpc/client/impl/deadline_propagation_detect.hpp>
 #include <userver/ugrpc/client/impl/middleware_hooks.hpp>
 #include <userver/ugrpc/client/impl/prepare_async_call.hpp>
 #include <userver/ugrpc/client/impl/retry_backoff.hpp>
@@ -37,15 +38,6 @@ inline bool IsRetryable(const CompletionStatus& completion_status) noexcept {
 inline bool AccountCompletion(RetryLimiter& retry_limiter, const CompletionStatus& completion_status) {
     retry_limiter.AccountCompletion(completion_status);
     return retry_limiter.CanRetry();
-}
-
-inline bool IsTaskCancelledByDeadlinePropagation() noexcept {
-    UASSERT(engine::current_task::ShouldCancel());
-    return USERVER_NAMESPACE::server::request::GetTaskInheritedDeadline().IsReached();
-}
-
-inline bool IsRequestCancelledByDeadlinePropagation(const grpc::Status& status, const CallState& state) noexcept {
-    return grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() && state.IsDeadlinePropagated();
 }
 
 void AccountStatistics(ugrpc::impl::RpcStatisticsScope& stats, CompletionStatus completion_status) noexcept;
