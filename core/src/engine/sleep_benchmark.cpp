@@ -4,6 +4,7 @@
 #include <userver/engine/async.hpp>
 #include <userver/engine/run_standalone.hpp>
 #include <userver/engine/sleep.hpp>
+#include <userver/utils/task_builder.hpp>
 
 using namespace std::chrono_literals;
 
@@ -48,11 +49,13 @@ void UnreachedTaskDeadlineBenchmark(benchmark::State& state, bool has_task_deadl
     engine::RunStandalone([&] {
         for ([[maybe_unused]] auto _ : state) {
             const auto sleep_deadline = engine::Deadline::FromDuration(20s);
-            const auto task_deadline_raw = engine::Deadline::FromDuration(40s);
+            auto task_deadline_raw = engine::Deadline::FromDuration(40s);
             benchmark::DoNotOptimize(task_deadline_raw);
             const auto task_deadline = has_task_deadline ? task_deadline_raw : engine::Deadline{};
 
-            auto task = engine::AsyncNoSpan(task_deadline, [&] { engine::InterruptibleSleepUntil(sleep_deadline); });
+            auto task = utils::TaskBuilder{}.NoSpan().Background().Deadline(task_deadline).Build([&] {
+                engine::InterruptibleSleepUntil(sleep_deadline);
+            });
             engine::Yield();
             task.SyncCancel();
         }

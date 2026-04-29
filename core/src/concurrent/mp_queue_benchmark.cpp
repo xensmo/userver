@@ -2,6 +2,7 @@
 
 #include <userver/concurrent/mpsc_queue.hpp>
 #include <userver/concurrent/queue.hpp>
+#include <userver/engine/async.hpp>
 #include <userver/engine/run_standalone.hpp>
 #include <userver/utils/async.hpp>
 

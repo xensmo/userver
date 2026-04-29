@@ -12,6 +12,7 @@
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/engine/task/task.hpp>
+#include <userver/utils/task_builder.hpp>
 #include <utils/sys_info.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -261,7 +262,7 @@ UTEST_MT(Task, MultiWait, 4) {
     const auto test_deadline = engine::Deadline::FromDuration(utest::kMaxTestWaitTime);
 
     engine::SingleConsumerEvent event;
-    auto shared_task = engine::SharedAsyncNoSpan([&event, test_deadline] {
+    auto shared_task = utils::TaskBuilder{}.NoSpan().Background().BuildShared([&event, test_deadline] {
         EXPECT_TRUE(event.WaitForEventUntil(test_deadline));
     });
 

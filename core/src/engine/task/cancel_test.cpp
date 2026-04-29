@@ -15,6 +15,7 @@
 #include <userver/utest/utest.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/fast_scope_guard.hpp>
+#include <userver/utils/task_builder.hpp>
 
 using namespace std::chrono_literals;
 
@@ -121,7 +122,9 @@ void CheckUserCancelled(engine::TaskWithResult<int>& task) {
 UTEST(Cancel, DeadlineBeforeTaskStarted) {
     const auto passed_deadline = engine::Deadline::FromDuration(-1s);
 
-    auto task = engine::AsyncNoSpan(passed_deadline, [] { FAIL() << "This task's body should not run"; });
+    auto task = utils::TaskBuilder{}.NoSpan().Background().Deadline(passed_deadline).Build([] {
+        FAIL() << "This task's body should not run";
+    });
 
     CheckDeadlineCancelled(task);
 }
@@ -130,7 +133,7 @@ UTEST(Cancel, DeadlineBeforeTaskStartedCritical) {
     const auto passed_deadline = engine::Deadline::FromDuration(-1s);
     const engine::SingleConsumerEvent infinity;
 
-    auto task = engine::CriticalAsyncNoSpan(passed_deadline, [&] {
+    auto task = utils::TaskBuilder{}.NoSpan().Background().Critical().Deadline(passed_deadline).Build([&] {
         // Critical should ensure that the task is started, but should still allow
         // the cancellations to work within the task body.
         EXPECT_TRUE(engine::current_task::ShouldCancel());
@@ -143,7 +146,7 @@ UTEST(Cancel, DeadlineBeforeTaskStartedCritical) {
 UTEST(Cancel, DeadlineShouldCancel) {
     const auto deadline = engine::Deadline::FromDuration(kSmallDuration);
 
-    auto task = engine::CriticalAsyncNoSpan(deadline, [] {
+    auto task = utils::TaskBuilder{}.NoSpan().Background().Critical().Deadline(deadline).Build([] {
         while (!engine::current_task::ShouldCancel()) {
             // Normally, some CPU-bound work should go here
         }
@@ -156,7 +159,7 @@ UTEST(Cancel, DeadlineShouldCancel) {
 UTEST(Cancel, DeadlineCancellationPoint) {
     const auto deadline = engine::Deadline::FromDuration(kSmallDuration);
 
-    auto task = engine::CriticalAsyncNoSpan(deadline, [] {
+    auto task = utils::TaskBuilder{}.NoSpan().Background().Critical().Deadline(deadline).Build([] {
         while (true) {
             engine::current_task::CancellationPoint();
             // Normally, some CPU-bound work should go here
@@ -172,7 +175,7 @@ UTEST(Cancel, DeadlineNotReached) {
     engine::SingleConsumerEvent delayed_event;
     engine::SingleConsumerEvent infinity;
 
-    auto task = engine::AsyncNoSpan(deadline, [&] {
+    auto task = utils::TaskBuilder{}.NoSpan().Background().Deadline(deadline).Build([&] {
         EXPECT_FALSE(infinity.WaitForEventFor(kSmallDuration));
         EXPECT_FALSE(engine::current_task::IsCancelRequested());
 
@@ -241,7 +244,7 @@ UTEST(Cancel, DeadlinePropagationParentToChild) {
     bool wait_interrupted_exception_thrown = false;
     bool child_finished_ok = false;
 
-    auto parent_task = engine::CriticalAsyncNoSpan(deadline, [&] {
+    auto parent_task = utils::TaskBuilder{}.NoSpan().Background().Critical().Deadline(deadline).Build([&] {
         try {
             auto child_task = engine::CriticalAsyncNoSpan([&] {
                 engine::InterruptibleSleepUntil(engine::Deadline::FromDuration(utest::kMaxTestWaitTime));
@@ -268,9 +271,13 @@ UTEST(Cancel, DeadlinePropagationNotChildToParent) {
     const auto deadline = engine::Deadline::FromDuration(kSmallDuration);
     engine::Promise<int> promise;
 
-    auto child_task = engine::CriticalAsyncNoSpan(deadline, [&, future = promise.get_future()]() mutable {
-        return future.get();
-    });
+    auto child_task =
+        utils::TaskBuilder{}
+            .NoSpan()
+            .Background()
+            .Critical()
+            .Deadline(deadline)
+            .Build([&, future = promise.get_future()]() mutable { return future.get(); });
 
     // Deadline set for a child task does not affect the parent task directly.
     // However, it is expected that the child task will signal the failure in some

@@ -1,5 +1,6 @@
 #include <boost/stacktrace.hpp>
 
+#include <userver/engine/async.hpp>
 #include <userver/engine/condition_variable.hpp>
 #include <userver/engine/mutex.hpp>
 #include <userver/engine/run_standalone.hpp>

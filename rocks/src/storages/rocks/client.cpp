@@ -4,6 +4,7 @@
 
 #include <fmt/format.h>
 
+#include <userver/engine/async.hpp>
 #include <userver/storages/rocks/exception.hpp>
 #include <userver/utils/async.hpp>
 

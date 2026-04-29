@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include <userver/concurrent/async_event_channel.hpp>
+#include <userver/engine/async.hpp>
 #include <userver/engine/single_consumer_event.hpp>
 #include <userver/engine/sleep.hpp>
 

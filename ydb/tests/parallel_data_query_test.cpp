@@ -1,5 +1,6 @@
 #include <string>
 
+#include <userver/engine/async.hpp>
 #include <userver/engine/get_all.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/utest/utest.hpp>

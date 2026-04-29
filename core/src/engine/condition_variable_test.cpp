@@ -6,6 +6,7 @@
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/utest/utest.hpp>
+#include <userver/utils/task_builder.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -381,7 +382,7 @@ UTEST(ConditionVariable, CancelledOnTaskDeadline) {
     engine::Mutex mutex;
     engine::ConditionVariable cond_var;
 
-    auto task = engine::CriticalAsyncNoSpan(deadline, [&] {
+    auto task = utils::TaskBuilder{}.NoSpan().Background().Critical().Deadline(deadline).Build([&] {
         std::unique_lock lock(mutex);
         const auto result = cond_var.WaitFor(lock, utest::kMaxTestWaitTime);
         EXPECT_EQ(result, engine::CvStatus::kCancelled);

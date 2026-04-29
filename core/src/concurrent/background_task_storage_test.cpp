@@ -5,6 +5,7 @@
 #include <engine/tests/task_processor_utils.hpp>
 #include <userver/concurrent/background_task_storage.hpp>
 #include <userver/concurrent/background_task_storage_fwd.hpp>
+#include <userver/engine/async.hpp>
 #include <userver/engine/single_consumer_event.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/cancel.hpp>

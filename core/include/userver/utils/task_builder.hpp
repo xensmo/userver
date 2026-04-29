@@ -162,7 +162,7 @@ public:
 
     /// The following call to @ref Build will spawn a task with
     /// @ref tracing::Span with the passed name.
-    TaskBuilderWithSpan SpanName(std::string&& name)
+    [[nodiscard]] TaskBuilderWithSpan SpanName(std::string&& name)
     requires std::same_as<TaskBuilder, TaskBuilderBase>
     {
         return TaskBuilderWithSpan{*this, impl::TaskBuilderWithSpanOptions{.span_name = std::move(name)}};
@@ -172,7 +172,7 @@ public:
     /// but with @ref logging::Level::kNone log level (it hides the span log
     /// itself, but not logs within the span). Logs will then be linked
     /// to the nearest span that is written out.
-    TaskBuilderHideSpan HideSpan()
+    [[nodiscard]] TaskBuilderHideSpan HideSpan()
     requires std::same_as<TaskBuilder, TaskBuilderBase>
     {
         return TaskBuilderHideSpan{*this, impl::TaskBuilderHideSpanOptions{}};
@@ -181,7 +181,7 @@ public:
     /// The following call to @ref Build will spawn a task without
     /// any @ref tracing::Span.
     /// @see @ref engine::AsyncNoSpan()
-    TaskBuilderNoSpan NoSpan()
+    [[nodiscard]] TaskBuilderNoSpan NoSpan()
     requires std::same_as<TaskBuilder, TaskBuilderBase>
     {
         return TaskBuilderNoSpan{*this, impl::TaskBuilderNoSpanOptions{}};
@@ -226,7 +226,7 @@ public:
     /// wrap it in `std::ref / std::cref` or capture the arguments using a lambda.
     /// @returns engine::TaskWithResult
     template <typename Function, typename... Args>
-    auto Build(Function&& f, Args&&... args);
+    auto Build(Function&& f, Args&&... args) const;
 
     /// Setup and return the task. It doesn't drop the previous settings,
     /// so it can be called multiple times.
@@ -236,7 +236,7 @@ public:
     /// wrap it in `std::ref / std::cref` or capture the arguments using a lambda.
     /// @returns engine::SharedTaskWithResult
     template <typename Function, typename... Args>
-    auto BuildShared(Function&& f, Args&&... args);
+    auto BuildShared(Function&& f, Args&&... args) const;
 
 private:
     template <typename OtherOptions>
@@ -257,7 +257,7 @@ TaskBuilder() -> TaskBuilder<impl::TaskBuilderWithoutSelectedSpanOptions>;
 
 template <typename OptionsImpl>
 template <typename Function, typename... Args>
-auto TaskBuilder<OptionsImpl>::Build(Function&& f, Args&&... args) {
+auto TaskBuilder<OptionsImpl>::Build(Function&& f, Args&&... args) const {
     using Task = engine::TaskWithResult<std::invoke_result_t<Function, Args...>>;
     return impl::BuildTask<Task>(
         options_,
@@ -270,7 +270,7 @@ auto TaskBuilder<OptionsImpl>::Build(Function&& f, Args&&... args) {
 
 template <typename OptionsImpl>
 template <typename Function, typename... Args>
-auto TaskBuilder<OptionsImpl>::BuildShared(Function&& f, Args&&... args) {
+auto TaskBuilder<OptionsImpl>::BuildShared(Function&& f, Args&&... args) const {
     using Task = engine::SharedTaskWithResult<std::invoke_result_t<Function, Args...>>;
     return impl::BuildTask<Task>(
         options_,

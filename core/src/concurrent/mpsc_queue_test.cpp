@@ -2,6 +2,7 @@
 
 #include <gmock/gmock.h>
 
+#include <userver/engine/async.hpp>
 #include <userver/engine/exception.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/logging/log.hpp>
@@ -10,6 +11,7 @@
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/fixed_array.hpp>
+#include <userver/utils/task_builder.hpp>
 
 #include "mp_queue_test.hpp"
 
@@ -99,9 +101,10 @@ public:
     {
         // There is no use for a Span in a task that lives until the service stops.
         // The task should be Critical, because the whole service (not just a single request) depends on it.
-        consumer_task_ = engine::CriticalAsyncNoSpan([&, consumer = queue_->GetConsumer()] {
-            ConsumerTaskLoop(consumer);
-        });
+        consumer_task_ =
+            utils::TaskBuilder{}.NoSpan().Background().Critical().Build([&, consumer = queue_->GetConsumer()] {
+                ConsumerTaskLoop(consumer);
+            });
     }
 
     ~FooProcessor() {

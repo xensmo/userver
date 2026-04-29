@@ -6,6 +6,7 @@
 #include <boost/range/irange.hpp>
 
 #include <concurrent/mp_queue_test.hpp>
+#include <userver/engine/async.hpp>
 #include <userver/engine/mutex.hpp>
 #include <userver/utest/utest.hpp>
 #include <userver/utils/async.hpp>

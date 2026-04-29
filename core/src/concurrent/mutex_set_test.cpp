@@ -1,8 +1,8 @@
 #include <userver/utest/utest.hpp>
 
 #include <userver/concurrent/mutex_set.hpp>
+#include <userver/engine/async.hpp>
 #include <userver/engine/sleep.hpp>
-#include <userver/utils/async.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -83,7 +83,7 @@ UTEST(MutexSet, Notify) {
     auto m1 = ms.GetMutexForKey("123");
     std::unique_lock lock(m1);
 
-    auto task = utils::Async("test", [&ms] {
+    auto task = engine::AsyncNoSpan([&ms] {
         auto m2 = ms.GetMutexForKey("123");
         const std::lock_guard lock(m2);
     });

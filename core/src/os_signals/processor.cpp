@@ -2,6 +2,7 @@
 
 #include <csignal>  // for SIGUSR1, SIGUSR2
 
+#include <userver/engine/async.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/strerror.hpp>
@@ -18,7 +19,7 @@ static_assert(SIGUSR2 == kSigUsr2);
 }  // namespace
 
 Processor::Processor(engine::TaskProcessor& task_processor)
-    : channel_(kOsSignalProcessorChannelName.data()),
+    : channel_(kOsSignalProcessorChannelName),
       task_processor_(task_processor)
 {}
 

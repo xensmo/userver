@@ -18,6 +18,7 @@
 #include <userver/clients/dns/resolver.hpp>
 #include <userver/clients/http/connect_to.hpp>
 #include <userver/clients/http/websocket_response.hpp>
+#include <userver/engine/async.hpp>
 #include <userver/http/common_headers.hpp>
 #include <userver/http/url.hpp>
 #include <userver/server/request/task_inherited_data.hpp>

@@ -11,6 +11,7 @@
 #include <userver/engine/task/task_with_result.hpp>
 #include <userver/tracing/span.hpp>
 #include <userver/utils/lazy_prvalue.hpp>
+#include <userver/utils/task_builder.hpp>
 
 #include <compiler/relax_cpu.hpp>
 #include <engine/task/task_context.hpp>
@@ -205,7 +206,8 @@ UTEST(Task, CurrentTaskSetDeadline) {
 UTEST(Async, WithDeadline) {
     auto start = std::chrono::steady_clock::now();
     std::atomic<bool> started{false};
-    auto task = engine::AsyncNoSpan(engine::Deadline::FromDuration(kDeadlineTestsTimeout), [&started] {
+    const auto deadline = engine::Deadline::FromDuration(kDeadlineTestsTimeout);
+    auto task = utils::TaskBuilder{}.NoSpan().Background().Deadline(deadline).Build([&started] {
         started = true;
         EXPECT_FALSE(engine::current_task::IsCancelRequested());
         engine::InterruptibleSleepFor(utest::kMaxTestWaitTime);
@@ -225,9 +227,9 @@ UTEST(Async, WithDeadlineDetach) {
     std::atomic<bool> finished{false};
     auto task = engine::AsyncNoSpan([&started, &finished] {
         auto start = std::chrono::steady_clock::now();
-        engine::DetachUnscopedUnsafe(engine::AsyncNoSpan(
-            engine::Deadline::FromDuration(kDeadlineTestsTimeout),
-            [start, &started, &finished] {
+        const auto deadline = engine::Deadline::FromDuration(kDeadlineTestsTimeout);
+        engine::DetachUnscopedUnsafe(
+            utils::TaskBuilder{}.NoSpan().Background().Deadline(deadline).Build([start, &started, &finished] {
                 started = true;
                 EXPECT_FALSE(engine::current_task::IsCancelRequested());
                 engine::InterruptibleSleepFor(utest::kMaxTestWaitTime);
@@ -238,8 +240,8 @@ UTEST(Async, WithDeadlineDetach) {
                 EXPECT_GE(duration, kDeadlineTestsTimeout);
                 EXPECT_LT(duration, kMaxTestDuration);
                 finished = true;
-            }
-        ));
+            })
+        );
     });
     UEXPECT_NO_THROW(task.Get());
     EXPECT_TRUE(started.load());
