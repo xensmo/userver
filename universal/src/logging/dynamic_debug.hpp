@@ -33,7 +33,7 @@ struct LogEntryContent {
     std::atomic<EntryState> state{EntryState{}};
     const int line;
     const char* const path;
-    LogEntryContentHook hook;
+    LogEntryContentHook hook{};
 };
 
 bool operator<(const LogEntryContent& x, const LogEntryContent& y) noexcept;
