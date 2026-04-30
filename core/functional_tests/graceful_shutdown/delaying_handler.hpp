@@ -21,7 +21,7 @@ public:
         const auto& delay_arg = request.GetArg("delay");
         const auto delay = !delay_arg.empty() ? utils::StringToDuration(delay_arg) : std::chrono::milliseconds::zero();
         if (delay > std::chrono::milliseconds::zero()) {
-            LOG_INFO() << "Delaying response for " << delay << " ms";
+            LOG_INFO() << "Delaying response for " << delay;
             engine::InterruptibleSleepFor(delay);
         }
         return "OK";
