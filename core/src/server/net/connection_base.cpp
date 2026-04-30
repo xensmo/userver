@@ -191,6 +191,7 @@ engine::TaskWithResult<void> ConnectionBase::HandleQueueItem(const std::shared_p
         }
     } catch (const engine::WaitInterruptedException&) {
         LOG_DEBUG() << "Request processing interrupted";
+        request_task.SyncCancel();
         is_response_chain_valid_ = false;
     } catch (const std::exception& e) {
         LOG_WARNING() << "Request failed with unhandled exception: " << e;

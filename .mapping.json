@@ -808,6 +808,8 @@
   "core/functional_tests/graceful_shutdown/delaying_handler.hpp":"taxi/uservices/userver/core/functional_tests/graceful_shutdown/delaying_handler.hpp",
   "core/functional_tests/graceful_shutdown/main.cpp":"taxi/uservices/userver/core/functional_tests/graceful_shutdown/main.cpp",
   "core/functional_tests/graceful_shutdown/static_config.yaml":"taxi/uservices/userver/core/functional_tests/graceful_shutdown/static_config.yaml",
+  "core/functional_tests/graceful_shutdown/tests-correct-shutdown/conftest.py":"taxi/uservices/userver/core/functional_tests/graceful_shutdown/tests-correct-shutdown/conftest.py",
+  "core/functional_tests/graceful_shutdown/tests-correct-shutdown/test_correct_shutdown.py":"taxi/uservices/userver/core/functional_tests/graceful_shutdown/tests-correct-shutdown/test_correct_shutdown.py",
   "core/functional_tests/graceful_shutdown/tests/conftest.py":"taxi/uservices/userver/core/functional_tests/graceful_shutdown/tests/conftest.py",
   "core/functional_tests/graceful_shutdown/tests/test_graceful_shutdown.py":"taxi/uservices/userver/core/functional_tests/graceful_shutdown/tests/test_graceful_shutdown.py",
   "core/functional_tests/http2server/CMakeLists.txt":"taxi/uservices/userver/core/functional_tests/http2server/CMakeLists.txt",

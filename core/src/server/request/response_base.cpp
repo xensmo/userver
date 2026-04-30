@@ -78,6 +78,7 @@ ResponseBase::~ResponseBase() noexcept {
 }
 
 void ResponseBase::SetData(std::string data) {
+    UASSERT(!is_sent_);
     create_time_ = std::chrono::steady_clock::now();
     data_ = std::move(data);
     guard_.emplace(accounter_, create_time_, data_.size());
