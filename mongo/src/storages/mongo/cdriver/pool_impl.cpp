@@ -495,6 +495,7 @@ CDriverPoolImpl::ConnPtr CDriverPoolImpl::Pop() {
                   << "' has too many establishing connections. " << MakeQueueDeadlineMessage(inherited_timeout);
             }
             conn = Create();
+            TESTPOINT("mongo-connection-created", {});
         }
     }
 
