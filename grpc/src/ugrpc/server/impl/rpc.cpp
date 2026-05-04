@@ -1,5 +1,7 @@
 #include <userver/ugrpc/server/impl/rpc.hpp>
 
+#include <fmt/format.h>
+
 #include <boost/range/adaptor/reversed.hpp>
 
 #include <userver/ugrpc/impl/statistics_storage.hpp>
@@ -9,6 +11,25 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::server::impl {
+
+grpc::Status MakeUninitializedResponseStatus(const google::protobuf::Message& response) {
+    return {
+        grpc::StatusCode::INTERNAL,
+        fmt::format(
+            "Cannot send uninitialized protobuf message '{}': missing required fields: {}",
+            response.GetTypeName(),
+            response.InitializationErrorString()
+        ),
+    };
+}
+
+void ValidateResponseIsInitialized(const google::protobuf::Message& response) {
+    if (response.IsInitialized()) {
+        return;
+    }
+
+    throw ErrorWithStatus{MakeUninitializedResponseStatus(response)};
+}
 
 std::unique_lock<engine::SingleWaitingTaskMutex> ResponderBase::TakeMutexIfBidirectional() {
     if (RpcType::kBidiStreaming == state_.rpc_type) {

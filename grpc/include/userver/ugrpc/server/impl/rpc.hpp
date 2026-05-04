@@ -15,6 +15,10 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::server::impl {
 
+grpc::Status MakeUninitializedResponseStatus(const google::protobuf::Message& response);
+
+void ValidateResponseIsInitialized(const google::protobuf::Message& response);
+
 /// @brief A non-typed base class for any gRPC call.
 class ResponderBase {
 protected:
@@ -149,6 +153,7 @@ void Responder<CallTraits>::DoWrite(Response& response, const grpc::WriteOptions
     UINVARIANT(!is_interrupted_, "'Write' called on an interrupted stream");
 
     if constexpr (std::is_base_of_v<google::protobuf::Message, Response>) {
+        impl::ValidateResponseIsInitialized(response);
         ApplyResponseHook(response);
     }
 
@@ -191,6 +196,13 @@ template <typename CallTraits>
 template <typename CallTraits>
 [[nodiscard]] bool Responder<CallTraits>::Finish(const Response& response) {
     UINVARIANT(!is_finished_, "'Finish' called on a finished stream");
+
+    if constexpr (std::is_base_of_v<google::protobuf::Message, Response>) {
+        // Final responses from handlers are validated and converted to an error status in
+        // CallProcessor before running server middlewares.
+        UASSERT(response.IsInitialized());
+    }
+
     is_finished_ = true;
 
     if constexpr (IsSingleResponseMethod(CallTraits::kRpcType)) {

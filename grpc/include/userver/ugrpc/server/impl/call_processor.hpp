@@ -55,6 +55,16 @@ void UnpackResult(StreamingResult<Response>&& result, std::optional<Response>& r
 }
 
 template <typename CallTraits>
+void ValidateResponse(std::optional<typename CallTraits::Response>& response, grpc::Status& status) {
+    if constexpr (std::is_base_of_v<google::protobuf::Message, typename CallTraits::Response>) {
+        if (status.ok() && response.has_value() && !response->IsInitialized()) {
+            status = MakeUninitializedResponseStatus(*response);
+            response.reset();
+        }
+    }
+}
+
+template <typename CallTraits>
 [[nodiscard]] bool Finish(
     impl::Responder<CallTraits>& responder,
     const std::optional<typename CallTraits::Response>& response,
@@ -127,6 +137,7 @@ public:
                 auto result = CallHandler();
                 impl::UnpackResult(std::move(result), response, status_);
             });
+            impl::ValidateResponse<CallTraits>(response, status_);
         }
 
         if (!engine::current_task::ShouldCancel() && !responder_.IsInterrupted()) {
