@@ -173,6 +173,46 @@ TEST(UtilsAsync, AsyncWithTaskProcessorCapturesExpectedContext) {
     });
 }
 
+UTEST(UtilsAsync, AsyncHideSpanCapturesExpectedContext) {
+    kInheritedVariable.Set(42);
+    const auto parent_trace_id = tracing::Span::CurrentSpan().GetTraceId();
+
+    auto task = utils::AsyncHideSpan([&, inherited = kInheritedVariable.Get()] {
+        EXPECT_TRUE(tracing::Span::CurrentSpanUnchecked());
+        EXPECT_EQ(tracing::Span::CurrentSpan().GetTraceId(), parent_trace_id);
+        EXPECT_EQ(tracing::Span::CurrentSpan().GetLogLevel(), logging::Level::kNone);
+        EXPECT_EQ(inherited, 42);
+        EXPECT_FALSE(engine::current_task::impl::IsCritical());
+        EXPECT_FALSE(engine::current_task::IsCancelRequested());
+        return true;
+    });
+    static_assert(std::same_as<decltype(task), engine::TaskWithResult<bool>>);
+
+    EXPECT_TRUE(task.Get());
+}
+
+TEST(UtilsAsync, AsyncHideSpanWithTaskProcessorCapturesExpectedContext) {
+    engine::tests::TwoStandaloneTaskProcessors tp;
+    tp.RunBlocking([&] {
+        kInheritedVariable.Set(42);
+        const auto parent_trace_id = tracing::Span::CurrentSpan().GetTraceId();
+
+        auto task = utils::AsyncHideSpan(tp.GetSecondary(), [&, inherited = kInheritedVariable.Get()] {
+            EXPECT_TRUE(tracing::Span::CurrentSpanUnchecked());
+            EXPECT_EQ(tracing::Span::CurrentSpan().GetTraceId(), parent_trace_id);
+            EXPECT_EQ(tracing::Span::CurrentSpan().GetLogLevel(), logging::Level::kNone);
+            EXPECT_EQ(inherited, 42);
+            EXPECT_FALSE(engine::current_task::impl::IsCritical());
+            EXPECT_FALSE(engine::current_task::IsCancelRequested());
+            EXPECT_EQ(&engine::current_task::GetTaskProcessor(), &tp.GetSecondary());
+            return true;
+        });
+        static_assert(std::same_as<decltype(task), engine::TaskWithResult<bool>>);
+
+        EXPECT_TRUE(task.Get());
+    });
+}
+
 TEST(UtilsAsync, CriticalAsyncWithTaskProcessorCapturesExpectedContext) {
     engine::tests::TwoStandaloneTaskProcessors tp;
     tp.RunBlocking([&] {

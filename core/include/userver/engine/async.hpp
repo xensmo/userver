@@ -20,9 +20,9 @@ namespace engine {
 /// If you create a span there manually, it will be disconnected from the outside trace.
 /// **Prefer utils::Async by default instead.**
 ///
-/// @warning To hide a spammy span from traces, use @ref engine::TaskBuilder
-/// with @ref engine::TaskBuilder::HideSpan instead.
+/// @warning To hide a spammy span from traces, use @ref utils::AsyncHideSpan instead.
 /// Logs will then be linked to the nearest span that is written out.
+/// For complex cases, use @ref engine::TaskBuilder with @ref engine::TaskBuilder::HideSpan.
 ///
 /// @warning Some clients may call tracing::Span::CurrentSpan unconditionally, so don't be too surprised
 /// if they won't work without a span scope. Do write tests.

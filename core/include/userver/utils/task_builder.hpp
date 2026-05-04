@@ -226,7 +226,7 @@ public:
     /// wrap it in `std::ref / std::cref` or capture the arguments using a lambda.
     /// @returns engine::TaskWithResult
     template <typename Function, typename... Args>
-    auto Build(Function&& f, Args&&... args) const;
+    [[nodiscard]] auto Build(Function&& f, Args&&... args) const;
 
     /// Setup and return the task. It doesn't drop the previous settings,
     /// so it can be called multiple times.
@@ -236,7 +236,7 @@ public:
     /// wrap it in `std::ref / std::cref` or capture the arguments using a lambda.
     /// @returns engine::SharedTaskWithResult
     template <typename Function, typename... Args>
-    auto BuildShared(Function&& f, Args&&... args) const;
+    [[nodiscard]] auto BuildShared(Function&& f, Args&&... args) const;
 
 private:
     template <typename OtherOptions>
@@ -257,7 +257,7 @@ TaskBuilder() -> TaskBuilder<impl::TaskBuilderWithoutSelectedSpanOptions>;
 
 template <typename OptionsImpl>
 template <typename Function, typename... Args>
-auto TaskBuilder<OptionsImpl>::Build(Function&& f, Args&&... args) const {
+[[nodiscard]] auto TaskBuilder<OptionsImpl>::Build(Function&& f, Args&&... args) const {
     using Task = engine::TaskWithResult<std::invoke_result_t<Function, Args...>>;
     return impl::BuildTask<Task>(
         options_,
@@ -270,7 +270,7 @@ auto TaskBuilder<OptionsImpl>::Build(Function&& f, Args&&... args) const {
 
 template <typename OptionsImpl>
 template <typename Function, typename... Args>
-auto TaskBuilder<OptionsImpl>::BuildShared(Function&& f, Args&&... args) const {
+[[nodiscard]] auto TaskBuilder<OptionsImpl>::BuildShared(Function&& f, Args&&... args) const {
     using Task = engine::SharedTaskWithResult<std::invoke_result_t<Function, Args...>>;
     return impl::BuildTask<Task>(
         options_,

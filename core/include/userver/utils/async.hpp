@@ -84,6 +84,61 @@ template <typename Function, typename... Args>
 /// @overload
 /// @ingroup userver_concurrency
 ///
+/// Starts an asynchronous task with a hidden tracing::Span. The span has
+/// @ref logging::Level::kNone log level, while logs within the span remain
+/// linked to the nearest visible span.
+///
+/// Task execution may be cancelled before the function starts execution
+/// in case of TaskProcessor overload.
+///
+/// @param f Function to execute asynchronously
+/// @param args Arguments to pass to the function
+/// @returns engine::TaskWithResult
+template <typename Function, typename... Args>
+[[nodiscard]] auto AsyncHideSpan(Function&& f, Args&&... args) {
+    return engine::impl::MakeTaskWithResult<engine::TaskWithResult>(
+        engine::impl::TaskConfig{},
+        utils::impl::SpanLazyPrvalue(
+            std::string{},
+            utils::impl::SpanWrapCall::InheritVariables::kYes,
+            utils::impl::SpanWrapCall::HideSpan::kYes
+        ),
+        std::forward<Function>(f),
+        std::forward<Args>(args)...
+    );
+}
+
+/// @overload
+/// @ingroup userver_concurrency
+///
+/// Starts an asynchronous task with a hidden tracing::Span. The span has
+/// @ref logging::Level::kNone log level, while logs within the span remain
+/// linked to the nearest visible span.
+///
+/// Task execution may be cancelled before the function starts execution
+/// in case of TaskProcessor overload.
+///
+/// @param task_processor Task processor to run on
+/// @param f Function to execute asynchronously
+/// @param args Arguments to pass to the function
+/// @returns engine::TaskWithResult
+template <typename Function, typename... Args>
+[[nodiscard]] auto AsyncHideSpan(engine::TaskProcessor& task_processor, Function&& f, Args&&... args) {
+    return engine::impl::MakeTaskWithResult<engine::TaskWithResult>(
+        engine::impl::TaskConfig{.task_processor = &task_processor},
+        utils::impl::SpanLazyPrvalue(
+            std::string{},
+            utils::impl::SpanWrapCall::InheritVariables::kYes,
+            utils::impl::SpanWrapCall::HideSpan::kYes
+        ),
+        std::forward<Function>(f),
+        std::forward<Args>(args)...
+    );
+}
+
+/// @overload
+/// @ingroup userver_concurrency
+///
 /// Execution of function is guaranteed to start regardless
 /// of engine::TaskProcessor load limits. Prefer utils::Async by default.
 ///
