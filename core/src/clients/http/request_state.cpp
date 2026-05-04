@@ -979,6 +979,16 @@ void RequestState::UpdateTimeoutHeader() {
             deadline_header,
             curl::easy::DuplicateHeaderAction::kReplace
         );
+    } else if (deadline_.IsReachable()) {
+        const auto absolute_deadline =
+            std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()) +
+            std::chrono::duration_cast<std::chrono::microseconds>(deadline_.TimeLeft());
+        const auto deadline_header = std::to_string(absolute_deadline.time_since_epoch().count());
+        easy().add_header(
+            USERVER_NAMESPACE::http::headers::kXRequestDeadline,
+            deadline_header,
+            curl::easy::DuplicateHeaderAction::kReplace
+        );
     }
 }
 

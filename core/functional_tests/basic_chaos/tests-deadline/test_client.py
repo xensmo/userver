@@ -418,3 +418,20 @@ async def test_absolute_deadline_propagated_as_is(call, mockserver):
     assert response.status == 200
     assert captured_headers is not None
     assert captured_headers.get(DP_ABSOLUTE_DEADLINE) == epoch_us_deadline
+
+
+async def test_absolute_deadline_synthesized_when_only_duration_propagated(call, mockserver):
+    captured_headers = None
+
+    @mockserver.handler('/test')
+    async def mock(request):
+        nonlocal captured_headers
+        captured_headers = dict(request.headers)
+        return mockserver.make_response('OK!')
+
+    response = await call(
+        headers={DP_TIMEOUT_MS: '500'},
+    )
+    assert captured_headers is not None
+    assert response.status == 200
+    assert DP_ABSOLUTE_DEADLINE in captured_headers
