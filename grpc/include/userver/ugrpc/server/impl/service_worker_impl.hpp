@@ -333,7 +333,7 @@ private:
 
 template <typename GrpcppService, typename ServiceMethod>
 void ListenAsync(const MethodData<GrpcppService, CallTraits<ServiceMethod>>& method_data) {
-    engine::DetachUnscopedUnsafe(engine::CriticalAsyncNoSpan(
+    engine::DetachUnscopedUnsafe(engine::CriticalAsyncNoTracing(
         method_data.service_data.internals.task_processor,
         utils::LazyPrvalue([&] { return CallAcceptor{method_data}; })
     ));

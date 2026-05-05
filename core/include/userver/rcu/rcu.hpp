@@ -160,7 +160,7 @@ public:
             SyncDeleter{}.Delete(std::move(handle));
         } else {
             try {
-                engine::DetachUnscopedUnsafe(engine::CriticalAsyncNoSpan(
+                engine::DetachUnscopedUnsafe(engine::CriticalAsyncNoTracing(
                     // The order of captures is important, 'handle' must be destroyed before 'token'.
                     [token = wait_token_storage_.GetToken(), handle = std::move(handle)]() mutable {}
                 ));

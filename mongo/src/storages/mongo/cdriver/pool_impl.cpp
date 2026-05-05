@@ -306,7 +306,7 @@ void CreateGlobalInitializer() {
     const std::lock_guard lock(mutex);
 
     static std::optional<GlobalInitializer> init_mongoc;
-    engine::CriticalAsyncNoSpan(engine::current_task::GetBlockingTaskProcessor(), [] {
+    engine::CriticalAsyncNoTracing(engine::current_task::GetBlockingTaskProcessor(), [] {
         if (!init_mongoc) {
             init_mongoc.emplace();
         }

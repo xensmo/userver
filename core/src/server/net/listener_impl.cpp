@@ -37,7 +37,7 @@ ListenerImpl::ListenerImpl(
       data_accounter_(data_accounter)
 {
     for (const auto& port : endpoint_info_->listener_config.ports) {
-        socket_listener_tasks_.push_back(engine::CriticalAsyncNoSpan(
+        socket_listener_tasks_.push_back(engine::CriticalAsyncNoTracing(
             task_processor_,
             [this](engine::io::Socket&& request_socket) {
                 while (!engine::current_task::ShouldCancel()) {
@@ -89,7 +89,7 @@ void ListenerImpl::AcceptConnection(engine::io::Socket& request_socket, const Po
 
     // In case of TaskProcessor overload we wish to keep the connection,
     // as reopening it is CPU consuming
-    connections_.Detach(engine::CriticalAsyncNoSpan(
+    connections_.Detach(engine::CriticalAsyncNoTracing(
         task_processor_,
         [this, &port_config](auto peer_socket, auto /*guard*/) {
             ProcessConnection(std::move(peer_socket), port_config);

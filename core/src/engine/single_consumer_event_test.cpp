@@ -212,7 +212,7 @@ UTEST_MT(SingleConsumerEvent, ParallelSend, 3) {
     std::vector<engine::TaskWithResult<void>> producers;
     producers.reserve(kProducersCount);
     for (std::size_t i = 0; i < kProducersCount; ++i) {
-        producers.push_back(engine::CriticalAsyncNoSpan([&] {
+        producers.push_back(engine::CriticalAsyncNoTracing([&] {
             while (!engine::current_task::ShouldCancel()) {
                 event.Send();
                 engine::Yield();
@@ -238,7 +238,7 @@ UTEST_MT(SingleConsumerEvent, AsConditionVariable, 4) {
     /// [CV init]
 
     auto incrementors = utils::GenerateFixedArray(GetThreadCount() - 1, [&](std::size_t) {
-        return engine::CriticalAsyncNoSpan([&count, &event] {
+        return engine::CriticalAsyncNoTracing([&count, &event] {
             while (!engine::current_task::ShouldCancel()) {
                 /// [CV notifier]
                 // First, mutate the state.

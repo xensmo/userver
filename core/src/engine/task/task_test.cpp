@@ -63,7 +63,7 @@ UTEST(Task, EarlyCancelResourceCleanup) {
 }
 
 UTEST(Task, EarlyCancelCritical) {
-    auto task = engine::CriticalAsyncNoSpan([] { return true; });
+    auto task = engine::CriticalAsyncNoTracing([] { return true; });
     task.RequestCancel();
     task.WaitFor(100ms);
     EXPECT_TRUE(task.IsFinished());

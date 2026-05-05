@@ -131,7 +131,7 @@ using TaskBuilderBase = TaskBuilder<impl::TaskBuilderWithoutSelectedSpanOptions>
 /// @brief Builder class for @ref engine::Task and @ref engine::TaskWithResult.
 ///
 /// Use it if you want to build a task with complex properties or even the property values are determined at runtime.
-/// If you just want to start a task, use @ref utils::Async or @ref engine::AsyncNoSpan.
+/// If you just want to start a task, use @ref utils::Async or @ref engine::AsyncNoTracing.
 ///
 /// To use, first default-construct as `utils::TaskBuilder{}`.
 ///
@@ -180,7 +180,7 @@ public:
 
     /// The following call to @ref Build will spawn a task without
     /// any @ref tracing::Span.
-    /// @see @ref engine::AsyncNoSpan()
+    /// @see @ref engine::AsyncNoTracing()
     [[nodiscard]] TaskBuilderNoSpan NoSpan()
     requires std::same_as<TaskBuilder, TaskBuilderBase>
     {

@@ -233,7 +233,7 @@ engine::Task PGConnectionWrapper::Close() {
     PGconn* tmp_conn = std::exchange(conn_, nullptr);
 
     // NOLINTNEXTLINE(cppcoreguidelines-slicing)
-    return engine::CriticalAsyncNoSpan(
+    return engine::CriticalAsyncNoTracing(
         bg_task_processor_,
         [tmp_conn, socket = std::move(tmp_sock), is_broken = is_broken_, sl = std::move(pool_size_lock_)]() mutable {
             int fd = -1;
@@ -315,7 +315,7 @@ void PGConnectionWrapper::StartAsyncConnect(const ConnectParams& params) {
     }
 
     // PQconnectStart() may access /etc/hosts, ~/.pgpass, /etc/passwd, etc.
-    engine::CriticalAsyncNoSpan(bg_task_processor_, [&params, this] {
+    engine::CriticalAsyncNoTracing(bg_task_processor_, [&params, this] {
         boost::container::small_vector<const char*, 8> keywords{"dbname"};
         boost::container::small_vector<const char*, 8> values{params.dsn.GetUnderlying().c_str()};
 
@@ -401,7 +401,7 @@ void PGConnectionWrapper::WaitConnectionFinish(Deadline deadline, const Dsn& dsn
         }
 
         // PQconnectPoll() may access /tmp/krb5cc* files
-        poll_res = engine::CriticalAsyncNoSpan(bg_task_processor_, [this] { return PQconnectPoll(conn_); }).Get();
+        poll_res = engine::CriticalAsyncNoTracing(bg_task_processor_, [this] { return PQconnectPoll(conn_); }).Get();
 
         // Handled here so as not to loose the error message
         if (poll_res == PGRES_POLLING_FAILED) {

@@ -247,7 +247,7 @@ void Logging::TryReopenFiles() {
     std::unordered_map<std::string_view, engine::TaskWithResult<void>> tasks;
     tasks.reserve(loggers_.size() + 1);
     for (const auto& [name, logger] : loggers_) {
-        tasks.emplace(name, engine::CriticalAsyncNoSpan(fs_task_processor_, ReopenLoggerFile, logger));
+        tasks.emplace(name, engine::CriticalAsyncNoTracing(fs_task_processor_, ReopenLoggerFile, logger));
     }
 
     std::string result_messages;

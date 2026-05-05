@@ -216,7 +216,7 @@ Logger::Logger(
     SetLevel(config_.log_level);
     std::fputs("OTLP logger has started\n", stderr);
 
-    sender_task_ = engine::CriticalAsyncNoSpan(
+    sender_task_ = engine::CriticalAsyncNoTracing(
         [this,
          consumer = queue_->GetConsumer(),
          log_client = std::move(client),

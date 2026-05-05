@@ -111,7 +111,7 @@ YdbComponent::YdbComponent(const components::ComponentConfig& config, const comp
         }
 
         databases_
-            .emplace(dbname, engine::CriticalAsyncNoSpan(engine::current_task::GetBlockingTaskProcessor(), [&] {
+            .emplace(dbname, engine::CriticalAsyncNoTracing(engine::current_task::GetBlockingTaskProcessor(), [&] {
                                  return DatabaseUtils::Make(
                                      dbname,
                                      dbconfig,

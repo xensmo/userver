@@ -37,7 +37,7 @@ constexpr std::size_t kDefaultHwThreadsEstimate = 512;
 template <typename Func>
 auto RunInCoro(engine::TaskProcessor& task_processor, Func&& func) {
     UASSERT(!engine::current_task::IsTaskProcessorThread());
-    auto task = engine::CriticalAsyncNoSpan(task_processor, std::forward<Func>(func));
+    auto task = engine::CriticalAsyncNoTracing(task_processor, std::forward<Func>(func));
     task.BlockingWait();
     return task.Get();
 }
@@ -219,7 +219,7 @@ Manager::Manager(std::unique_ptr<ManagerConfig>&& config, std::chrono::steady_cl
 }
 
 engine::TaskWithResult<void> Manager::StartComponentSystem(const ComponentList& component_list, bool signal_on_stop) {
-    return engine::CriticalAsyncNoSpan(*default_task_processor_, [this, &component_list, signal_on_stop]() {
+    return engine::CriticalAsyncNoTracing(*default_task_processor_, [this, &component_list, signal_on_stop]() {
         try {
             CreateComponentContext(component_list);
             if (!config_->disable_phdr_cache) {

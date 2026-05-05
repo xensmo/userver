@@ -58,7 +58,7 @@ UTEST(Cancel, UnwindWorksInDtorSubtask) {
 UTEST(Cancel, CancelDuringInterruptibleSleep) {
     engine::SingleConsumerEvent task_started;
 
-    auto task = engine::CriticalAsyncNoSpan([&] {
+    auto task = engine::CriticalAsyncNoTracing([&] {
         EXPECT_FALSE(engine::current_task::IsCancelRequested());
         task_started.Send();
 
@@ -246,7 +246,7 @@ UTEST(Cancel, DeadlinePropagationParentToChild) {
 
     auto parent_task = utils::TaskBuilder{}.NoSpan().Background().Critical().Deadline(deadline).Build([&] {
         try {
-            auto child_task = engine::CriticalAsyncNoSpan([&] {
+            auto child_task = engine::CriticalAsyncNoTracing([&] {
                 engine::InterruptibleSleepUntil(engine::Deadline::FromDuration(utest::kMaxTestWaitTime));
                 child_finished_ok = true;
             });
@@ -291,7 +291,7 @@ UTEST(Cancel, DeadlinePropagationNotChildToParent) {
 
 UTEST(Cancel, CancellationTokenRequestCancel) {
     engine::SingleConsumerEvent event;
-    auto task = engine::CriticalAsyncNoSpan([&event] {
+    auto task = engine::CriticalAsyncNoTracing([&event] {
         EXPECT_FALSE(event.WaitForEvent());
         engine::current_task::CancellationPoint();
         return kTaskResult;
@@ -306,7 +306,7 @@ UTEST(Cancel, CancellationTokenRequestCancel) {
 
 UTEST(Cancel, CancellationTokenDtorNoWait) {
     engine::SingleConsumerEvent event;
-    auto task = engine::CriticalAsyncNoSpan([&event] {
+    auto task = engine::CriticalAsyncNoTracing([&event] {
         EXPECT_TRUE(event.WaitForEvent());
         return kTaskResult;
     });
@@ -326,7 +326,7 @@ UTEST(Cancel, CancellationTokenDtorNoWait) {
 }
 
 UTEST(Cancel, CancellationTokenCancelSelf) {
-    auto task = engine::CriticalAsyncNoSpan([] {
+    auto task = engine::CriticalAsyncNoTracing([] {
         auto token = engine::current_task::GetCancellationToken();
         token.RequestCancel();
         EXPECT_TRUE(token.IsCancelRequested());
@@ -343,7 +343,7 @@ UTEST(Cancel, CancellationTokenLifetime) {
     engine::TaskCancellationToken token;
 
     {
-        auto task = engine::CriticalAsyncNoSpan([] { return kTaskResult; });
+        auto task = engine::CriticalAsyncNoTracing([] { return kTaskResult; });
 
         token = engine::TaskCancellationToken{task};
         EXPECT_TRUE(token.IsValid());
@@ -478,7 +478,7 @@ UTEST(Async, CancellationBeforeStartCritical) {
     ASSERT_EQ(GetThreadCount(), 1);
 
     engine::SingleUseEvent event;
-    auto task = engine::CriticalAsyncNoSpan([&event] {
+    auto task = engine::CriticalAsyncNoTracing([&event] {
         // The task should start (proven by `return true;` below and `Get() -> true`.)
 
         EXPECT_TRUE(engine::current_task::impl::IsCritical());

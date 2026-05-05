@@ -251,7 +251,7 @@ UTEST(Async, WithDeadlineDetach) {
 }
 
 UTEST(Async, Critical) {
-    auto task = engine::CriticalAsyncNoSpan([] { return true; });
+    auto task = engine::CriticalAsyncNoTracing([] { return true; });
     task.RequestCancel();
     task.WaitFor(std::chrono::milliseconds(100));
     EXPECT_TRUE(task.Get());
@@ -279,7 +279,7 @@ UTEST(Async, Emplace) {
         return "x"s;
     };
 
-    auto task = engine::CriticalAsyncNoSpan(utils::LazyPrvalue(append_y_factory), utils::LazyPrvalue(x_factory));
+    auto task = engine::CriticalAsyncNoTracing(utils::LazyPrvalue(append_y_factory), utils::LazyPrvalue(x_factory));
 
     EXPECT_EQ(task.Get(), "xy"s);
 }
@@ -313,7 +313,7 @@ UTEST_MT(Async, CancelNotifyRace, 4) {
     while (!test_deadline.IsReached()) {
         auto task1 = engine::AsyncNoSpan([] { delay(); });
 
-        auto task2 = engine::CriticalAsyncNoSpan([&task1] {
+        auto task2 = engine::CriticalAsyncNoTracing([&task1] {
             try {
                 task1.Wait();
             } catch (const engine::WaitInterruptedException&) {
@@ -376,10 +376,10 @@ TEST(Async, AsyncNoSpanWithTaskProcessorCapturesExpectedContext) {
     });
 }
 
-UTEST(Async, CriticalAsyncNoSpanCapturesExpectedContext) {
+UTEST(Async, CriticalAsyncNoTracingCapturesExpectedContext) {
     kInheritedVariable.Set(42);
 
-    auto task = engine::CriticalAsyncNoSpan([inherited = kInheritedVariable.Get()] {
+    auto task = engine::CriticalAsyncNoTracing([inherited = kInheritedVariable.Get()] {
         EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
         EXPECT_EQ(inherited, 42);
         EXPECT_TRUE(engine::current_task::impl::IsCritical());
@@ -391,12 +391,12 @@ UTEST(Async, CriticalAsyncNoSpanCapturesExpectedContext) {
     EXPECT_TRUE(task.Get());
 }
 
-TEST(Async, CriticalAsyncNoSpanWithTaskProcessorCapturesExpectedContext) {
+TEST(Async, CriticalAsyncNoTracingWithTaskProcessorCapturesExpectedContext) {
     engine::tests::TwoStandaloneTaskProcessors tp;
     tp.RunBlocking([&] {
         kInheritedVariable.Set(42);
 
-        auto task = engine::CriticalAsyncNoSpan(tp.GetSecondary(), [&, inherited = kInheritedVariable.Get()] {
+        auto task = engine::CriticalAsyncNoTracing(tp.GetSecondary(), [&, inherited = kInheritedVariable.Get()] {
             EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
             EXPECT_EQ(inherited, 42);
             EXPECT_TRUE(engine::current_task::impl::IsCritical());

@@ -108,7 +108,7 @@ By @ref engine::TaskBase::Importance ("critical-ness"):
   run at all.
 * If the whole service's health (not just one request) depends on the task
   being run, then functions from `utils::*CriticalAsync*` and
-  `engine::*CriticalAsyncNoSpan*` families can be used. There, execution of
+  `engine::*CriticalAsyncNoTracing*` families can be used. There, execution of
   the function is guaranteed to start regardless of @ref engine::TaskProcessor
   load limits
 

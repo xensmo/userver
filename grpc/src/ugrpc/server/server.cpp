@@ -341,7 +341,7 @@ void Server::Impl::DoStart() {
     }
 
     server_ =
-        engine::CriticalAsyncNoSpan(engine::current_task::GetBlockingTaskProcessor(), [this] {
+        engine::CriticalAsyncNoTracing(engine::current_task::GetBlockingTaskProcessor(), [this] {
             return server_builder_->BuildAndStart();
         }).Get();
     UINVARIANT(server_, "See grpcpp logs for details");

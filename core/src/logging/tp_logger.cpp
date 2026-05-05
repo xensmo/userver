@@ -77,7 +77,7 @@ void TpLogger::StartConsumerTask(
         queue_consumer_ = {};
     });
 
-    consuming_task_ = engine::CriticalAsyncNoSpan(task_processor, [this, guard = std::move(exit_async_guard)] {
+    consuming_task_ = engine::CriticalAsyncNoTracing(task_processor, [this, guard = std::move(exit_async_guard)] {
         ProcessingLoop();
     });
 }

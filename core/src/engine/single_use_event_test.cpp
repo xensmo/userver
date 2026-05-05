@@ -132,7 +132,7 @@ UTEST_MT(SingleUseEvent, SimpleTaskQueue, 5) {
 UTEST(SingleUseEvent, Cancellation) {
     engine::SingleUseEvent event;
 
-    auto waiter = engine::CriticalAsyncNoSpan([&event] {
+    auto waiter = engine::CriticalAsyncNoTracing([&event] {
         const auto deadline = engine::Deadline::FromDuration(utest::kMaxTestWaitTime);
         EXPECT_EQ(event.WaitUntil(deadline), engine::FutureStatus::kCancelled);
         UEXPECT_THROW(event.Wait(), engine::WaitInterruptedException);
@@ -161,7 +161,7 @@ UTEST_MT(SingleUseEvent, SendWaitRace, 2) {
     while (!test_deadline.IsReached()) {
         engine::SingleUseEvent event;
 
-        auto waiter = engine::CriticalAsyncNoSpan([&event] {
+        auto waiter = engine::CriticalAsyncNoTracing([&event] {
             std::this_thread::yield();
             return event.WaitUntil(engine::Deadline{});
         });
@@ -182,12 +182,12 @@ UTEST_MT(SingleUseEvent, SendCancelRace, 3) {
     while (!test_deadline.IsReached() || !is_ready_status_achieved || !is_cancel_status_achieved) {
         engine::SingleUseEvent event;
 
-        auto waiter = engine::CriticalAsyncNoSpan([&event] {
+        auto waiter = engine::CriticalAsyncNoTracing([&event] {
             std::this_thread::yield();
             return event.WaitUntil(engine::Deadline{});
         });
 
-        auto canceller = engine::CriticalAsyncNoSpan([&waiter] {
+        auto canceller = engine::CriticalAsyncNoTracing([&waiter] {
             std::this_thread::yield();
             waiter.RequestCancel();
         });
@@ -273,12 +273,12 @@ UTEST_P_MT(SingleUseEventWaitAny, SendCancelRace, 3) {
     while (!test_deadline.IsReached() || !is_ready_status_achieved || !is_cancel_status_achieved) {
         auto events = utils::FixedArray<engine::SingleUseEvent>(kEventCount);
 
-        auto waiter = engine::CriticalAsyncNoSpan([&events] {
+        auto waiter = engine::CriticalAsyncNoTracing([&events] {
             std::this_thread::yield();
             return engine::WaitAny(events);
         });
 
-        auto canceller = engine::CriticalAsyncNoSpan([&waiter] {
+        auto canceller = engine::CriticalAsyncNoTracing([&waiter] {
             std::this_thread::yield();
             waiter.RequestCancel();
         });

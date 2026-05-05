@@ -97,8 +97,13 @@ void ExecuteTestpointBlocking(
     TestpointClientBase::Callback callback,
     engine::TaskProcessor& task_processor
 ) {
-    auto task =
-        engine::CriticalAsyncNoSpan(task_processor, ExecuteTestpointCoro, name, std::cref(json), std::cref(callback));
+    auto task = engine::CriticalAsyncNoTracing(
+        task_processor,
+        ExecuteTestpointCoro,
+        name,
+        std::cref(json),
+        std::cref(callback)
+    );
     task.BlockingWait();
     task.Get();
 }

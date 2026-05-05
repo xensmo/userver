@@ -31,7 +31,7 @@ UTEST_P(PostgreConnection, Cancel) {
     };
 
     // sleep on postgres side for 1 minute
-    auto task = engine::CriticalAsyncNoSpan([&conn, &cmd_ctrl]() {
+    auto task = engine::CriticalAsyncNoTracing([&conn, &cmd_ctrl]() {
         LOG_DEBUG() << "Enter pg_sleep";
         conn->Execute("select pg_sleep(60)", /*query_params*/ {}, cmd_ctrl);
         LOG_DEBUG() << "Return from pg_sleep";
