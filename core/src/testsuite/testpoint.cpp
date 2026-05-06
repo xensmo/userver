@@ -87,6 +87,7 @@ void ExecuteTestpointCoro(
     }
 
     const utils::trx_tracker::CheckDisabler disabler;
+    const engine::TaskCancellationBlocker task_cancellation_blocker;
     const server::request::DeadlinePropagationBlocker deadline_propagation_blocker;
     tp_scope.GetClient().Execute(name, json, callback);
 }
