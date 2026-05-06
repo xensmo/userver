@@ -9,6 +9,7 @@
 #include <userver/ugrpc/tests/service_fixtures.hpp>
 #include <userver/utest/log_capture_fixture.hpp>
 #include <userver/utest/utest.hpp>
+#include <userver/utils/algo.hpp>
 
 #include <tests/unit_test_client.usrv.pb.hpp>
 #include <tests/unit_test_service.usrv.pb.hpp>
@@ -73,7 +74,8 @@ UTEST_F(OriginMetadataClientTest, UnaryCall) {
     EXPECT_CALL(GetService(), SayHello)
         .WillOnce([](const ugrpc::server::CallContext& context, sample::ugrpc::GreetingRequest&&) {
             EXPECT_THAT(
-                ugrpc::server::GetRepeatedMetadata(context, "x-origin"),
+                utils::AsContainer<
+                    std::vector<std::string_view>>(ugrpc::server::GetRepeatedMetadata(context, "x-origin")),
                 testing::ElementsAre(kSampleUserAgent)
             );
             return sample::ugrpc::GreetingResponse{};

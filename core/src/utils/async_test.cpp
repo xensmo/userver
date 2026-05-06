@@ -1,10 +1,8 @@
 #include <userver/utils/async.hpp>
 
 #include <concepts>
+#include <numeric>
 #include <vector>
-
-#include <boost/range/adaptor/transformed.hpp>
-#include <boost/range/numeric.hpp>
 
 #include <userver/concurrent/variable.hpp>
 #include <userver/engine/sleep.hpp>
@@ -119,10 +117,8 @@ void AsyncRequestProcessor::FooAsync(Request&& request) {
 /// [AsyncBackground FooAsync]
 
 Response AsyncRequestProcessor::WaitAndGetAggregate() {
-    using boost::adaptors::transformed;
     auto tasks = tasks_.Lock();
-    auto get_result = transformed([](auto& task) { return task.Get(); });
-    return boost::accumulate(*tasks | get_result, 0);
+    return std::accumulate(tasks->begin(), tasks->end(), 0, [](int sum, auto& task) { return sum + task.Get(); });
 }
 
 Response AsyncRequestProcessor::Foo(Request&& request) { return request * 2; }

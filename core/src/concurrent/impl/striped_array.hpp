@@ -53,13 +53,13 @@ public:
     const std::intptr_t& operator[](std::size_t index) const noexcept { return array_.GetBase()[kStride * index]; }
 
     auto Elements() {
-        return utils::span<std::intptr_t>(array_.GetBase(), array_.GetBase() + GetRseqArraySizeUnsafe() * kStride) |
+        return utils::span<std::intptr_t>(array_.GetBase(), array_.GetBase() + (GetRseqArraySizeUnsafe() * kStride)) |
                boost::adaptors::strided(kStride);
     }
 
     auto Elements() const {
         return utils::span<
-                   const std::intptr_t>(array_.GetBase(), array_.GetBase() + GetRseqArraySizeUnsafe() * kStride) |
+                   const std::intptr_t>(array_.GetBase(), array_.GetBase() + (GetRseqArraySizeUnsafe() * kStride)) |
                boost::adaptors::strided(kStride);
     }
 

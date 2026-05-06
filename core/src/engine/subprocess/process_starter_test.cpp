@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <ranges>
 #include <string>
 #include <thread>
 #include <utility>
@@ -19,7 +20,6 @@
 #endif
 
 #include <gmock/gmock.h>
-#include <boost/range/adaptors.hpp>
 
 #include <engine/ev/thread_control.hpp>
 #include <engine/ev/thread_pool.hpp>

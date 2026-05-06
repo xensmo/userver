@@ -1,12 +1,14 @@
 #include "component_context_component_info.hpp"
 
+#include <ranges>
+
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <boost/range/adaptor/transformed.hpp>
 
 #include <userver/components/component_context.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/tracing/span.hpp>
+#include <userver/utils/algo.hpp>
 #include <userver/utils/string_literal.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -21,10 +23,9 @@ constexpr utils::StringLiteral kOnAllComponentsAreStopping = "on_all_components_
 
 template <typename Range>
 std::string JoinNamesFromInfoImpl(const Range& component_info_refs, std::string_view separator) {
-    return fmt::to_string(fmt::join(
-        component_info_refs | boost::adaptors::transformed([](auto info) { return info->GetName(); }),
-        separator
-    ));
+    return fmt::to_string(
+        fmt::join(component_info_refs | std::views::transform([](auto info) { return info->GetName(); }), separator)
+    );
 }
 
 }  // namespace
@@ -222,8 +223,8 @@ std::unique_ptr<RawComponentBase> ComponentInfo::ExtractComponent() {
 }
 
 std::unordered_set<std::string> ExtractNamesFromInfo(const std::vector<ConstComponentInfoRef>& container) {
-    auto v = container | boost::adaptors::transformed([](auto info) { return std::string{info->GetName()}; });
-    return boost::copy_range<std::unordered_set<std::string>>(v);
+    auto v = container | std::views::transform([](auto info) { return std::string{info->GetName()}; });
+    return utils::AsContainer<std::unordered_set<std::string>>(v);
 }
 
 std::string JoinNamesFromInfo(const std::vector<ConstComponentInfoRef>& container, std::string_view separator) {

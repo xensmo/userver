@@ -1,14 +1,13 @@
 #include <components/manager.hpp>
 
 #include <chrono>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <thread>
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
-#include <boost/range/adaptor/map.hpp>
-#include <boost/range/adaptor/transformed.hpp>
 
 #include <components/component_context_impl.hpp>
 #include <components/manager_config.hpp>
@@ -143,8 +142,8 @@ void Manager::TaskProcessorsStorage::Add(std::string name, std::unique_ptr<engin
 
 void Manager::TaskProcessorsStorage::WaitForAllTasksBlocking() const noexcept {
     const auto indicators =
-        task_processors_map_ | boost::adaptors::map_values |
-        boost::adaptors::transformed([](const auto& task_processor_ptr) -> const auto& {
+        task_processors_map_ | std::views::values |
+        std::views::transform([](const auto& task_processor_ptr) -> const auto& {
             const engine::TaskProcessor& task_processor = *task_processor_ptr;
             return task_processor.GetTaskCounter();
         });

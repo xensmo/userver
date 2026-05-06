@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <ranges>
 #include <string_view>
 
 #include <cryptopp/osrng.h>
@@ -10,8 +11,6 @@
 #include <fmt/ranges.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
-#include <boost/range/adaptor/map.hpp>
-#include <boost/range/adaptor/transformed.hpp>
 
 #include <curl-ev/error_code.hpp>
 #include <userver/baggage/baggage.hpp>
@@ -706,7 +705,7 @@ void RequestState::ParseHeader(char* ptr, size_t size) try
 
     if (IsHttpStatusLineStart(ptr, size)) {
         if (!response()->headers().empty()) {
-            LOG_INFO() << "Drop headers: " << (response_->headers() | boost::adaptors::map_keys);
+            LOG_INFO() << "Drop headers: " << (response_->headers() | std::views::keys);
             // In case of redirect drop 1st response headers
             response_->headers().clear();
         }
@@ -1266,8 +1265,7 @@ void RequestState::ResolveTargetAddress(clients::dns::Resolver& resolver) {
     }
 
     const auto addrs = resolver.Resolve(hostname, deadline);
-    auto addr_strings =
-        addrs | boost::adaptors::transformed([](const auto& addr) { return addr.PrimaryAddressString(); });
+    auto addr_strings = addrs | std::views::transform([](const auto& addr) { return addr.PrimaryAddressString(); });
 
     easy().add_resolve(hostname, target.Get().GetPortPtr().get(), fmt::to_string(fmt::join(addr_strings, ",")));
 }

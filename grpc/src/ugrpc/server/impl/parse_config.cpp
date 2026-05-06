@@ -1,7 +1,8 @@
 #include <ugrpc/server/impl/parse_config.hpp>
 
+#include <ranges>
+
 #include <boost/container/flat_map.hpp>
-#include <boost/range/adaptor/transformed.hpp>
 
 #include <userver/formats/parse/common_containers.hpp>
 #include <userver/fs/blocking/read.hpp>

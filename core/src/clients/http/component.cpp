@@ -1,6 +1,6 @@
 #include <userver/clients/http/component.hpp>
 
-#include <boost/range/adaptor/transformed.hpp>
+#include <ranges>
 
 #include <userver/clients/http/middlewares/component.hpp>
 
@@ -39,7 +39,7 @@ std::vector<utils::NotNull<clients::http::MiddlewareBase*>> FindMiddlewares(
         return lhs->GetIndex(utils::impl::InternalTag{}) < rhs->GetIndex(utils::impl::InternalTag{});
     });
     return utils::AsContainer<std::vector<utils::NotNull<
-        clients::http::MiddlewareBase*>>>(components | boost::adaptors::transformed([](const auto& component) {
+        clients::http::MiddlewareBase*>>>(components | std::views::transform([](const auto& component) {
                                               return &component->GetMiddleware();
                                           }));
 }

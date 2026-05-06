@@ -1,8 +1,8 @@
 #include <userver/ugrpc/server/impl/rpc.hpp>
 
-#include <fmt/format.h>
+#include <ranges>
 
-#include <boost/range/adaptor/reversed.hpp>
+#include <fmt/format.h>
 
 #include <userver/ugrpc/impl/statistics_storage.hpp>
 #include <userver/ugrpc/server/impl/exceptions.hpp>
@@ -66,7 +66,7 @@ void ResponderBase::ApplyResponseHook(google::protobuf::Message& response) {
     auto lock = TakeMutexIfBidirectional();
     grpc::Status status;
     MiddlewareCallContext middleware_call_context{utils::impl::InternalTag{}, state_, status};
-    for (const auto& middleware : boost::adaptors::reverse(state_.middlewares)) {
+    for (const auto& middleware : std::views::reverse(state_.middlewares)) {
         middleware->PreSendMessage(middleware_call_context, response);
         if (!status.ok()) {
             throw impl::MiddlewareRpcInterruptionError(std::move(status));

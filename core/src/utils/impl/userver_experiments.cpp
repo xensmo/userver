@@ -1,10 +1,9 @@
 #include <userver/utils/impl/userver_experiments.hpp>
 
+#include <ranges>
 #include <unordered_map>
 
 #include <fmt/format.h>
-#include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/adaptor/map.hpp>
 
 #include <userver/logging/log.hpp>
 #include <userver/utils/algo.hpp>
@@ -40,10 +39,10 @@ void RegisterExperiment(UserverExperiment& experiment) {
 }
 
 auto GetEnabledUserverExperiments() {
-    return utils::AsContainer<std::vector<ExperimentPtr>>(
-        GetExperimentsInfo() | boost::adaptors::map_values |
-        boost::adaptors::filtered([](ExperimentPtr ptr) { return ptr->IsEnabled(); })
-    );
+    return utils::AsContainer<std::vector<
+        ExperimentPtr>>(GetExperimentsInfo() | std::views::values | std::views::filter([](ExperimentPtr ptr) {
+                            return ptr->IsEnabled();
+                        }));
 }
 
 }  // namespace

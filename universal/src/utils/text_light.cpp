@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <ranges>
 #include <sstream>
 #include <unordered_map>
 
@@ -9,7 +10,6 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/range/adaptor/transformed.hpp>
 
 #include <userver/utils/assert.hpp>
 

@@ -1,5 +1,6 @@
 #include <userver/storages/redis/component.hpp>
 
+#include <ranges>
 #include <stdexcept>
 #include <vector>
 
@@ -37,8 +38,6 @@
 #include "subscribe_client_impl.hpp"
 #include "userver/storages/redis/base.hpp"
 #include "userver/storages/redis/wait_connected_mode.hpp"
-
-#include <boost/range/adaptor/map.hpp>
 
 #ifndef ARCADIA_ROOT
 #include "generated/src/storages/redis/component.yaml.hpp"  // Y_IGNORE
@@ -156,7 +155,7 @@ std::shared_ptr<storages::redis::Client> Redis::GetClient(
         throw std::runtime_error(fmt::format(
             "{} redis client not found. Available clients: [{}]",
             name,
-            fmt::join(clients_ | boost::adaptors::map_keys, ", ")
+            fmt::join(clients_ | std::views::keys, ", ")
         ));
     }
     it->second->WaitConnectedOnce(wait_connected);
@@ -169,7 +168,7 @@ std::shared_ptr<storages::redis::impl::Sentinel> Redis::Client(const std::string
         throw std::runtime_error(fmt::format(
             "{} redis client not found. Available clients: [{}]",
             name,
-            fmt::join(clients_ | boost::adaptors::map_keys, ", ")
+            fmt::join(clients_ | std::views::keys, ", ")
         ));
     }
     return it->second;
@@ -185,7 +184,7 @@ std::shared_ptr<storages::redis::SubscribeClient> Redis::GetSubscribeClient(
             "{} redis subscribe-client not found. Available subscribe-clients: "
             "[{}]",
             name,
-            fmt::join(subscribe_clients_ | boost::adaptors::map_keys, ", ")
+            fmt::join(subscribe_clients_ | std::views::keys, ", ")
         ));
     }
     it->second->WaitConnectedOnce(wait_connected);

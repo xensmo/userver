@@ -371,10 +371,8 @@ public:
     Iterator operator++(int);
     Iterator& operator++();
 
-    reference operator*();
-    const_reference operator*() const;
-    pointer operator->();
-    const_pointer operator->() const;
+    reference operator*() const;
+    pointer operator->() const;
 
     bool operator==(const Iterator& other) const;
     bool operator!=(const Iterator& other) const;
@@ -414,9 +412,7 @@ public:
     ConstIterator operator++(int);
     ConstIterator& operator++();
 
-    reference operator*();
     const_reference operator*() const;
-    pointer operator->();
     const_pointer operator->() const;
 
     bool operator==(const ConstIterator& other) const;
