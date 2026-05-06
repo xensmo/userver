@@ -245,7 +245,7 @@ UTEST_MT(SpscQueue, DeadConsumerRace, 3) {
         auto consumer = queue->GetConsumer();
         auto producer = queue->GetProducer();
 
-        auto consumer_task = engine::AsyncNoSpan([consumer = std::move(consumer)]() mutable {
+        auto consumer_task = engine::AsyncNoTracing([consumer = std::move(consumer)]() mutable {
             std::this_thread::yield();
             std::move(consumer).Reset();
         });
@@ -360,7 +360,7 @@ TYPED_UTEST_MT(MpMcQueueFixture, MultiConsumerToken, kProducersCount + kConsumer
     auto consumer = queue->GetMultiConsumer();
 
     auto producer_tasks = utils::GenerateFixedArray(kProducersCount, [&](std::size_t producer_id) {
-        return engine::AsyncNoSpan([&, producer_id] {
+        return engine::AsyncNoTracing([&, producer_id] {
             for (const auto message :
                  boost::irange<Message>(kMessageCount * producer_id, kMessageCount * (producer_id + 1)))
             {
@@ -370,7 +370,7 @@ TYPED_UTEST_MT(MpMcQueueFixture, MultiConsumerToken, kProducersCount + kConsumer
     });
 
     auto consumer_tasks = utils::GenerateFixedArray(kConsumersCount, [&](std::size_t /*consumer_id*/) {
-        return engine::AsyncNoSpan([&] {
+        return engine::AsyncNoTracing([&] {
             ReceivedMessages received_messages;
             Message message{};
             while (consumer.Pop(message)) {

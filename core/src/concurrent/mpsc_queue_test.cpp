@@ -308,7 +308,7 @@ UTEST_MT(MpscQueue, ProducerRace, kProducersCount + 1) {
     auto producers = utils::GenerateFixedArray(kProducersCount, [&](std::size_t) { return queue->GetProducer(); });
 
     while (!test_deadline.IsReached()) {
-        auto consumer_task = engine::AsyncNoSpan([&consumer] {
+        auto consumer_task = engine::AsyncNoTracing([&consumer] {
             for (std::size_t i = 0; i < kProducersCount; ++i) {
                 std::size_t item{};
                 // If there queue is buggy (loses wakeups), then we'll eventually hang here until the deadline.
@@ -319,7 +319,7 @@ UTEST_MT(MpscQueue, ProducerRace, kProducersCount + 1) {
         std::atomic<bool> go{false};
 
         auto producer_tasks = utils::GenerateFixedArray(kProducersCount, [&](std::size_t i) {
-            return engine::AsyncNoSpan([&producers, &go, i] {
+            return engine::AsyncNoTracing([&producers, &go, i] {
                 while (!go.load()) {
                     // Busy loop
                 }

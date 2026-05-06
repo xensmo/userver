@@ -323,7 +323,7 @@ UTEST_P_MT(GrpcClientMultichannelTest, MultiThreadedClientTest, 4) {
     tasks.reserve(GetThreadCount());
 
     for (std::size_t i = 0; i < GetThreadCount(); ++i) {
-        tasks.push_back(engine::AsyncNoSpan([&] {
+        tasks.push_back(engine::AsyncNoTracing([&] {
             sample::ugrpc::GreetingRequest out;
             out.set_name("userver");
 

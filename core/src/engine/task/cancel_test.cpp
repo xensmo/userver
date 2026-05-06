@@ -31,7 +31,7 @@ UTEST(Cancel, UnwindWorksInDtorSubtask) {
         {}
 
         ~DetachingRaii() {
-            detached_task_ = engine::AsyncNoSpan([] {
+            detached_task_ = engine::AsyncNoTracing([] {
                 engine::InterruptibleSleepFor(utest::kMaxTestWaitTime);
                 engine::current_task::CancellationPoint();
                 ADD_FAILURE() << "Cancelled task ran past cancellation point";
@@ -46,7 +46,7 @@ UTEST(Cancel, UnwindWorksInDtorSubtask) {
 
     engine::TaskWithResult<void> detached_task;
     engine::SingleConsumerEvent task_detached_event;
-    auto task = engine::AsyncNoSpan([&] { const DetachingRaii raii(task_detached_event, detached_task); });
+    auto task = engine::AsyncNoTracing([&] { const DetachingRaii raii(task_detached_event, detached_task); });
     ASSERT_TRUE(task_detached_event.WaitForEvent());
     task.Wait();
 
@@ -194,7 +194,7 @@ UTEST(Cancel, SetDeadline) {
     engine::SingleConsumerEvent delayed_event;
     engine::SingleConsumerEvent infinity;
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         engine::current_task::SetDeadline(engine::Deadline::FromDuration(utest::kMaxTestWaitTime));
 
         // This wait should succeed without reaching the task deadline
@@ -219,7 +219,7 @@ UTEST(Cancel, CancellationBlocker) {
     engine::SingleConsumerEvent delayed_event;
     engine::SingleConsumerEvent infinity;
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         engine::current_task::SetDeadline(engine::Deadline::FromDuration(-1s));
 
         {
@@ -455,7 +455,8 @@ UTEST(Async, CancellationBeforeStartNormal) {
         captures_destroyed = true;
     });
 
-    auto task = engine::AsyncNoSpan([guard = std::move(guard)] { ADD_FAILURE() << "The task body should not start"; });
+    auto task = engine::AsyncNoTracing([guard = std::move(guard)] { ADD_FAILURE() << "The task body should not start"; }
+    );
 
     EXPECT_FALSE(task.IsFinished());
     EXPECT_FALSE(captures_destroyed);

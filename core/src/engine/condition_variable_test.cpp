@@ -48,7 +48,7 @@ UTEST(ConditionVariable, Satisfy1) {
     engine::ConditionVariable cv;
     bool ok = false;
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         std::unique_lock<engine::Mutex> lock(mutex);
         EXPECT_TRUE(cv.Wait(lock, [&ok] { return ok; }));
     });
@@ -71,7 +71,7 @@ UTEST_MT(ConditionVariable, SatisfyMultiple, 10) {
     std::vector<engine::TaskWithResult<void>> tasks;
     tasks.reserve(40);
     for (int i = 0; i < 40; i++) {
-        tasks.push_back(engine::AsyncNoSpan([&] {
+        tasks.push_back(engine::AsyncNoTracing([&] {
             for (int j = 0; j < 10; j++) {
                 std::unique_lock<engine::Mutex> lock(mutex);
                 EXPECT_TRUE(cv.Wait(lock, [&ok] { return ok; }));
@@ -97,7 +97,7 @@ UTEST(ConditionVariable, WaitStatus) {
     engine::ConditionVariable cv;
     SpinEvent has_started_event;
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.Wait(lock);
@@ -110,7 +110,7 @@ UTEST(ConditionVariable, WaitStatus) {
         EXPECT_EQ(engine::CvStatus::kNoTimeout, task.Get());
     }
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.Wait(lock);
@@ -130,7 +130,7 @@ UTEST(ConditionVariable, WaitPredicateStatus) {
     SpinEvent has_started_event;
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.Wait(lock, [&] { return flag; });
@@ -145,7 +145,7 @@ UTEST(ConditionVariable, WaitPredicateStatus) {
     }
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.Wait(lock, [&] { return flag; });
@@ -164,7 +164,7 @@ UTEST(ConditionVariable, WaitForStatus) {
     engine::ConditionVariable cv;
     SpinEvent has_started_event;
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.WaitFor(lock, kWaitPeriod);
@@ -177,7 +177,7 @@ UTEST(ConditionVariable, WaitForStatus) {
         EXPECT_EQ(engine::CvStatus::kNoTimeout, task.Get());
     }
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.WaitFor(lock, kWaitPeriod);
@@ -186,7 +186,7 @@ UTEST(ConditionVariable, WaitForStatus) {
         EXPECT_EQ(engine::CvStatus::kTimeout, task.Get());
     }
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.WaitFor(lock, kWaitPeriod);
@@ -206,7 +206,7 @@ UTEST(ConditionVariable, WaitForPredicateStatus) {
     SpinEvent has_started_event;
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.WaitFor(lock, kWaitPeriod, [&] { return flag; });
@@ -222,7 +222,7 @@ UTEST(ConditionVariable, WaitForPredicateStatus) {
     }
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.WaitFor(lock, kWaitPeriod, [&] { return flag; });
@@ -232,7 +232,7 @@ UTEST(ConditionVariable, WaitForPredicateStatus) {
     }
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             return cv.WaitFor(lock, kWaitPeriod, [&] { return flag; });
@@ -251,7 +251,7 @@ UTEST(ConditionVariable, BlockedCancelWait) {
     engine::ConditionVariable cv;
     SpinEvent has_started_event;
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             const engine::TaskCancellationBlocker block_cancel;
@@ -278,7 +278,7 @@ UTEST(ConditionVariable, BlockedCancelWaitPredicate) {
     SpinEvent has_started_event;
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             const engine::TaskCancellationBlocker block_cancel;
@@ -295,7 +295,7 @@ UTEST(ConditionVariable, BlockedCancelWaitPredicate) {
     }
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             const engine::TaskCancellationBlocker block_cancel;
@@ -323,7 +323,7 @@ UTEST(ConditionVariable, BlockedCancelWaitFor) {
     engine::ConditionVariable cv;
     SpinEvent has_started_event;
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             const engine::TaskCancellationBlocker block_cancel;
@@ -338,7 +338,7 @@ UTEST(ConditionVariable, BlockedCancelWaitFor) {
         EXPECT_EQ(engine::CvStatus::kNoTimeout, task.Get());
     }
     {
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             const engine::TaskCancellationBlocker block_cancel;
@@ -359,7 +359,7 @@ UTEST(ConditionVariable, BlockedCancelWaitForPredicate) {
     SpinEvent has_started_event;
     {
         bool flag = false;
-        auto task = engine::AsyncNoSpan([&] {
+        auto task = engine::AsyncNoTracing([&] {
             std::unique_lock<engine::Mutex> lock(mutex);
             has_started_event.Send();
             const engine::TaskCancellationBlocker block_cancel;

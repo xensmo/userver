@@ -145,7 +145,7 @@ UTEST(Poller, ReadWriteAsync) {
     Poller poller;
     poller.Add(pipe.In(), Poller::Event::kRead);
 
-    auto task = engine::AsyncNoSpan([&]() {
+    auto task = engine::AsyncNoTracing([&]() {
         Poller::Event event{};
         ASSERT_EQ(poller.NextEvent(event, engine::Deadline::FromDuration(kReadTimeout)), Poller::Status::kSuccess);
         EXPECT_EQ(event.type, Poller::Event::kRead);
@@ -163,7 +163,7 @@ UTEST(Poller, ReadWriteTorture) {
     Pipe pipe;
 
     for (unsigned i = 0; i < kRepetitions; ++i) {
-        auto task = engine::AsyncNoSpan([&]() {
+        auto task = engine::AsyncNoTracing([&]() {
             Poller poller;
             poller.Add(pipe.In(), Poller::Event::kRead);
             Poller::Event event{};
@@ -186,7 +186,7 @@ UTEST(Poller, ReadWriteMultipleTorture) {
     bool pipes_read_from[kPipesCount] = {false};
 
     for (unsigned i = 0; i < kRepetitions; ++i) {
-        auto task = engine::AsyncNoSpan([&]() {
+        auto task = engine::AsyncNoTracing([&]() {
             Poller poller;
             for (auto& pipe : pipes) {
                 poller.Add(pipe.In(), Poller::Event::kRead);
@@ -274,7 +274,7 @@ UTEST(Poller, Interrupt) {
     Poller poller;
 
     poller.Add(pipe.In(), Poller::Event::kRead);
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         Poller::Event event{};
         ASSERT_EQ(poller.NextEvent(event, engine::Deadline::FromDuration(kReadTimeout)), Poller::Status::kInterrupt);
         ASSERT_EQ(poller.NextEventNoblock(event), Poller::Status::kNoEvents);

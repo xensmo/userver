@@ -255,7 +255,7 @@ UTEST_P(PostgrePool, BlockWaitingOnAvailableConnection) {
 
     UASSERT_NO_THROW(conn = pool->Acquire(MakeDeadline())) << "Obtained connection from pool";
     // Free up connection asynchronously
-    engine::DetachUnscopedUnsafe(engine::AsyncNoSpan(
+    engine::DetachUnscopedUnsafe(engine::AsyncNoTracing(
         GetTaskProcessor(),
         [](pg::detail::ConnectionPtr conn) { conn = pg::detail::ConnectionPtr(nullptr); },
         std::move(conn)

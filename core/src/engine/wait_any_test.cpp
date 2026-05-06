@@ -148,7 +148,7 @@ TYPED_UTEST(WaitAny, VectorTasks) {
     tasks.reserve(kTaskCount);
 
     for (std::size_t i = 0; i < kTaskCount; i++) {
-        tasks.push_back(engine::AsyncNoSpan([&finished_counter, i] {
+        tasks.push_back(engine::AsyncNoTracing([&finished_counter, i] {
             const std::size_t order = (i + kTaskCount - kTaskOrderShift) % kTaskCount;
             while (finished_counter < order) {
                 engine::Yield();
@@ -178,11 +178,11 @@ TYPED_UTEST(WaitAny, Cancelled) {
     static constexpr std::size_t kTaskCount = 3;
 
     std::atomic<bool> started{false};
-    auto task = engine::AsyncNoSpan([&started, this]() {
+    auto task = engine::AsyncNoTracing([&started, this]() {
         std::vector<engine::TaskWithResult<void>> tasks;
         tasks.reserve(kTaskCount);
         for (size_t i = 0; i < kTaskCount; i++) {
-            tasks.push_back(engine::AsyncNoSpan([] {
+            tasks.push_back(engine::AsyncNoTracing([] {
                 for (;;) {
                     engine::Yield();
                     engine::current_task::CancellationPoint();
@@ -203,7 +203,7 @@ TYPED_UTEST(WaitAny, Cancelled) {
 
 TYPED_UTEST(WaitAny, VectorWithCancelledTask) {
     std::vector<engine::TaskWithResult<std::string>> tasks;
-    tasks.push_back(engine::AsyncNoSpan([] { return std::string{"some_value"}; }));
+    tasks.push_back(engine::AsyncNoTracing([] { return std::string{"some_value"}; }));
     tasks[0].RequestCancel();
 
     auto task_idx_opt = this->MakeWaitAnyProxy().WaitAny(tasks);
@@ -214,13 +214,13 @@ TYPED_UTEST(WaitAny, VectorWithCancelledTask) {
 
 TYPED_UTEST(WaitAny, WaitAnyFor) {
     engine::TaskWithResult<void> tasks[] = {
-        engine::AsyncNoSpan([] {
+        engine::AsyncNoTracing([] {
             for (;;) {
                 engine::Yield();
                 engine::current_task::CancellationPoint();
             }
         }),
-        engine::AsyncNoSpan([] {}),
+        engine::AsyncNoTracing([] {}),
     };
 
     engine::Yield();
@@ -244,7 +244,7 @@ TYPED_UTEST(WaitAny, WaitAnyUntil) {
     std::vector<engine::TaskWithResult<void>> tasks;
     tasks.reserve(kTaskCount);
     for (size_t i = 0; i < kTaskCount; i++) {
-        tasks.push_back(engine::AsyncNoSpan([i] {
+        tasks.push_back(engine::AsyncNoTracing([i] {
             if (i == 1) {
                 engine::SleepFor(10ms);
                 return;
@@ -269,11 +269,11 @@ TYPED_UTEST(WaitAny, WaitAnyUntil) {
 }
 
 TYPED_UTEST(WaitAny, DistinctTypes) {
-    auto task0 = engine::AsyncNoSpan([] {
+    auto task0 = engine::AsyncNoTracing([] {
         engine::SleepFor(30ms);
         return 1;
     });
-    auto task1 = engine::AsyncNoSpan([] {
+    auto task1 = engine::AsyncNoTracing([] {
         engine::SleepFor(10ms);
         return std::string{"abc"};
     });
@@ -295,7 +295,7 @@ TYPED_UTEST(WaitAny, DistinctTypes) {
 
 TYPED_UTEST(WaitAny, Sample) {
     /// [sample waitany]
-    auto task0 = engine::AsyncNoSpan([] { return 1; });
+    auto task0 = engine::AsyncNoTracing([] { return 1; });
 
     auto task1 = utils::Async("long_task", [] {
         engine::InterruptibleSleepFor(20s);
@@ -314,7 +314,7 @@ TYPED_UTEST(WaitAny, Throwing) {
     std::vector<engine::TaskWithResult<void>> tasks;
     tasks.reserve(kTaskCount);
     for (std::size_t i = 0; i < kTaskCount; i++) {
-        tasks.push_back(engine::AsyncNoSpan([i] {
+        tasks.push_back(engine::AsyncNoTracing([i] {
             if (i == 1) {
                 throw std::runtime_error("test");
             }
@@ -343,7 +343,7 @@ UTEST_DEATH(WaitAnyDeathTest, DuplicateTask) {
     std::vector<engine::TaskWithResult<void>> tasks;
     tasks.reserve(kTaskCount);
     for (std::size_t i = 0; i < kTaskCount; i++) {
-        tasks.push_back(engine::AsyncNoSpan([] { engine::SleepFor(10ms); }));
+        tasks.push_back(engine::AsyncNoTracing([] { engine::SleepFor(10ms); }));
     }
 
     UEXPECT_DEATH(engine::WaitAny(tasks[0], tasks[1], tasks[0]), "");
@@ -371,7 +371,7 @@ TYPED_UTEST(WaitAny, NoTasks) {
 TYPED_UTEST(WaitAny, HeterogenousWait) {
     constexpr int kExpectedValue = 42;
 
-    auto task = engine::AsyncNoSpan([expected_value = kExpectedValue] {
+    auto task = engine::AsyncNoTracing([expected_value = kExpectedValue] {
         engine::InterruptibleSleepFor(utest::kMaxTestWaitTime);
         return expected_value;
     });
@@ -379,7 +379,7 @@ TYPED_UTEST(WaitAny, HeterogenousWait) {
     engine::Promise<int> promise;
     auto future = promise.get_future();
 
-    auto notifier_task = engine::AsyncNoSpan([&] {
+    auto notifier_task = engine::AsyncNoTracing([&] {
         engine::SleepFor(20ms);
         promise.set_value(kExpectedValue);
     });
@@ -445,7 +445,7 @@ UTEST(WaitAnyContext, WaitAnyContextSingleVector) {
     tasks.reserve(kTaskCount);
 
     for (std::size_t i = 0; i < kTaskCount; i++) {
-        tasks.push_back(engine::AsyncNoSpan([&finished_counter, i] {
+        tasks.push_back(engine::AsyncNoTracing([&finished_counter, i] {
             const std::size_t order = (i + kTaskCount - kTaskOrderShift) % kTaskCount;
             while (finished_counter < order) {
                 engine::Yield();

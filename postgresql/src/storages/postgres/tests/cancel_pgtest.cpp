@@ -61,7 +61,7 @@ void CleanupConnectionTest(storages::postgres::detail::ConnectionPtr& conn, bool
     const DefaultCommandControlScope scope(pg::CommandControl{utest::kMaxTestWaitTime, utest::kMaxTestWaitTime});
 
     engine::SingleConsumerEvent task_started;
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         task_started.Send();
         UEXPECT_THROW(conn->Execute("select pg_sleep(1)"), pg::ConnectionInterrupted);
     });

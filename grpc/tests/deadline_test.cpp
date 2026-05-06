@@ -418,7 +418,7 @@ UTEST_F(UnitTestClientInfiniteTest, NegativeDeadline) {
     ugrpc::client::CallOptions call_options;
     call_options.SetDeadline(engine::Deadline::FromDuration(std::chrono::milliseconds{-10}));
 
-    auto task = engine::AsyncNoSpan([&] { return GetClient().SayHello({}, std::move(call_options)); });
+    auto task = engine::AsyncNoTracing([&] { return GetClient().SayHello({}, std::move(call_options)); });
 
     // Check that SayHello did not hang.
     const auto wait_status = task.WaitNothrowUntil(engine::Deadline::FromDuration(utest::kMaxTestWaitTime / 2));

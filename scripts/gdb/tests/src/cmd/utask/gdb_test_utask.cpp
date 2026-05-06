@@ -105,7 +105,7 @@ __attribute__((noinline)) static void TestSleepingCoroutine(bool no_span = false
             DoNotOptimize(root_frames_addrs);
         };
         if (no_span) {
-            engine::AsyncNoSpan(payload).Wait();
+            engine::AsyncNoTracing(payload).Wait();
         } else {
             utils::Async("new_coro", payload).Wait();
         }

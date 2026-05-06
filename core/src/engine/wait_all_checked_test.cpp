@@ -16,7 +16,7 @@ USERVER_NAMESPACE_BEGIN
 namespace {
 
 engine::TaskWithResult<void> SlowSuccessfulTask() {
-    return engine::AsyncNoSpan([] {
+    return engine::AsyncNoTracing([] {
         engine::InterruptibleSleepFor(utest::kMaxTestWaitTime);
         engine::current_task::CancellationPoint();
         FAIL() << "This task should have been cancelled";
@@ -24,18 +24,18 @@ engine::TaskWithResult<void> SlowSuccessfulTask() {
 }
 
 engine::TaskWithResult<void> FastFailingTask() {
-    return engine::AsyncNoSpan([] {
+    return engine::AsyncNoTracing([] {
         engine::InterruptibleSleepFor(20ms);
         throw std::runtime_error{"failfast_exception"};
     });
 }
 
 engine::TaskWithResult<void> FastSuccessfulTask() {
-    return engine::AsyncNoSpan([] { engine::InterruptibleSleepFor(20ms); });
+    return engine::AsyncNoTracing([] { engine::InterruptibleSleepFor(20ms); });
 }
 
 engine::TaskWithResult<int> FastSuccessfulTask(int i) {
-    return engine::AsyncNoSpan([i] {
+    return engine::AsyncNoTracing([i] {
         engine::InterruptibleSleepFor(20ms);
         return i;
     });
@@ -130,7 +130,7 @@ UTEST(WaitAllChecked, SequentialWakeups) {
     std::vector<engine::TaskWithResult<void>> tasks;
     tasks.reserve(kTaskCount);
     for (std::size_t i = 0; i < kTaskCount; ++i) {
-        tasks.push_back(engine::AsyncNoSpan([i, &events] {
+        tasks.push_back(engine::AsyncNoTracing([i, &events] {
             if (i + 1 < kTaskCount) {
                 ASSERT_TRUE(events[i + 1].WaitForEventFor(utest::kMaxTestWaitTime));
             }
@@ -166,7 +166,7 @@ UTEST(WaitAllChecked, HeterogenousWait) {
     engine::Promise<int> promise;
     auto future = promise.get_future();
 
-    auto notifier_task = engine::AsyncNoSpan([&] {
+    auto notifier_task = engine::AsyncNoTracing([&] {
         engine::SleepFor(20ms);
         promise.set_value(kExpectedValue);
     });

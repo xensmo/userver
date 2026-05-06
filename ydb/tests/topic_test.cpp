@@ -152,7 +152,7 @@ TYPED_UTEST(YdbTopicReadSessionWithDataHandler, CommitDataEventsPersistence) {
             commit_data_event
         );
 
-        auto task = engine::AsyncNoSpan([&session] {
+        auto task = engine::AsyncNoTracing([&session] {
             UASSERT_NO_THROW(session.GetNativeTopicReadSession()->WaitEvent().Wait(std::chrono::milliseconds{1000}));
         });
         task.WaitFor(std::chrono::milliseconds{1000});
@@ -186,7 +186,7 @@ UTEST_F(YdbTopicFixture, TopicReadSessionGetEvents) {
 
     const auto get_and_handle_events = [&] {
         std::vector<NYdb::NTopic::TReadSessionEvent::TEvent> events;
-        auto task = engine::AsyncNoSpan([&events, &session] { UASSERT_NO_THROW(events = session.GetEvents()); });
+        auto task = engine::AsyncNoTracing([&events, &session] { UASSERT_NO_THROW(events = session.GetEvents()); });
         task.WaitFor(utest::kMaxTestWaitTime);
         ASSERT_TRUE(task.IsFinished());
 

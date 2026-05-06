@@ -33,7 +33,7 @@ UTEST(SingleUseEvent, IsReady) {
 
 UTEST(SingleUseEvent, WaitAndSend) {
     engine::SingleUseEvent event;
-    auto task = engine::AsyncNoSpan([&] { UEXPECT_NO_THROW(event.Wait()); });
+    auto task = engine::AsyncNoTracing([&] { UEXPECT_NO_THROW(event.Wait()); });
 
     engine::Yield();  // force a context switch to 'task'
     EXPECT_FALSE(task.IsFinished());
@@ -46,7 +46,7 @@ UTEST(SingleUseEvent, SendAndWait) {
     engine::SingleUseEvent event;
     std::atomic<bool> is_event_sent{false};
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         while (!is_event_sent) {
             engine::Yield();
         }
@@ -146,7 +146,7 @@ UTEST(SingleUseEvent, Cancellation) {
 UTEST(SingleUseEvent, Deadline) {
     engine::SingleUseEvent event;
 
-    auto waiter = engine::AsyncNoSpan([&event] {
+    auto waiter = engine::AsyncNoTracing([&event] {
         const auto deadline = engine::Deadline::FromDuration(10ms);
         EXPECT_EQ(event.WaitUntil(deadline), engine::FutureStatus::kTimeout);
         return deadline.IsReached();
@@ -231,7 +231,7 @@ UTEST_P(SingleUseEventWaitAny, Basic) {
     const auto event_to_notify = GetParam();
     auto events = utils::FixedArray<engine::SingleUseEvent>(kEventCount);
 
-    auto notifier = engine::AsyncNoSpan([&events, event_to_notify] {
+    auto notifier = engine::AsyncNoTracing([&events, event_to_notify] {
         engine::SleepFor(50ms);
         events[event_to_notify].Send();
     });
@@ -249,7 +249,7 @@ UTEST_P_MT(SingleUseEventWaitAny, WaitSendRace, 2) {
     while (!test_deadline.IsReached()) {
         auto events = utils::FixedArray<engine::SingleUseEvent>(kEventCount);
 
-        auto notifier = engine::AsyncNoSpan([&events, event_to_notify] {
+        auto notifier = engine::AsyncNoTracing([&events, event_to_notify] {
             std::this_thread::yield();
             events[event_to_notify].Send();
         });

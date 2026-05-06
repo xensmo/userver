@@ -278,13 +278,13 @@ void PGConnectionWrapper::CloseWithError(ExceptionType&& ex) {
 engine::Task PGConnectionWrapper::Cancel() {
     if (!conn_) {
         // NOLINTNEXTLINE(cppcoreguidelines-slicing)
-        return engine::AsyncNoSpan(bg_task_processor_, [] {});
+        return engine::AsyncNoTracing(bg_task_processor_, [] {});
     }
     PGCW_LOG_DEBUG() << "Cancel current request";
     std::unique_ptr<PGcancel, decltype(&PQfreeCancel)> cancel{PQgetCancel(conn_), &PQfreeCancel};
 
     // NOLINTNEXTLINE(cppcoreguidelines-slicing)
-    return engine::AsyncNoSpan([this, cancel = std::move(cancel)] {
+    return engine::AsyncNoTracing([this, cancel = std::move(cancel)] {
         try {
             detail::Cancel(cancel.get(), engine::Deadline::FromDuration(std::chrono::seconds(5)));
         } catch (const std::exception& e) {

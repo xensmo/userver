@@ -243,7 +243,7 @@ TEST(BackgroundTaskStorage, StrongTaskProcessorBinding) {
         engine::SingleConsumerEvent finished;
         concurrent::BackgroundTaskStorage bts;
 
-        engine::AsyncNoSpan(tp.GetSecondary(), [&] {
+        engine::AsyncNoTracing(tp.GetSecondary(), [&] {
             bts.AsyncDetach("", [&] {
                 EXPECT_EQ(&engine::current_task::GetTaskProcessor(), &tp.GetMain());
                 finished.Send();

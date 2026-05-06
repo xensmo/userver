@@ -308,7 +308,7 @@ UTEST_F(ProducerTest, WaitingForMessageDelivery) {
     /// queue_buffering_max is set to 1 seconds, therefore SendAsyncs waits for
     /// at least 1 second, so `producer.reset()` are invoked faster than
     /// SendAsyncs deliver the message.
-    auto destroy_task = engine::AsyncNoSpan([producer = std::move(producer)]() mutable { producer.reset(); });
+    auto destroy_task = engine::AsyncNoTracing([producer = std::move(producer)]() mutable { producer.reset(); });
 
     UEXPECT_NO_THROW(destroy_task.Get());
     UEXPECT_NO_THROW(engine::WaitAllChecked(send_tasks));

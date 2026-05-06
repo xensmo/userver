@@ -413,12 +413,14 @@ dynamic_config::Source ConnectionPool::GetConfigSource() const { return config_s
 const Dsn& ConnectionPool::GetDsn() const { return dsn_; }
 
 engine::TaskWithResult<bool> ConnectionPool::Connect(engine::SemaphoreLock lock, ConnectionSettings&& conn_settings) {
-    return engine::AsyncNoSpan([this, size_lock = std::move(lock), conn_settings = std::move(conn_settings)]() mutable {
-        if (!size_lock) {
-            size_lock = engine::SemaphoreLock{size_semaphore_, kConnectingTimeout};
+    return engine::AsyncNoTracing(
+        [this, size_lock = std::move(lock), conn_settings = std::move(conn_settings)]() mutable {
+            if (!size_lock) {
+                size_lock = engine::SemaphoreLock{size_semaphore_, kConnectingTimeout};
+            }
+            return DoConnect(std::move(size_lock), std::move(conn_settings));
         }
-        return DoConnect(std::move(size_lock), std::move(conn_settings));
-    });
+    );
 }
 
 bool ConnectionPool::DoConnect(engine::SemaphoreLock size_lock, ConnectionSettings&& conn_settings) {

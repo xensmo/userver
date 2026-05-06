@@ -107,7 +107,7 @@ UTEST_MT(StripedIntrusivePool, TortureTest, 12) {
     tasks.reserve(GetThreadCount() - 1);
 
     for (std::size_t i = 0; i < GetThreadCount() - 1; ++i) {
-        tasks.push_back(engine::AsyncNoSpan([&] {
+        tasks.push_back(engine::AsyncNoTracing([&] {
             std::size_t nodes_created = 0;
             std::vector<std::unique_ptr<CheckedInt>> nodes_we_could_pop;
 

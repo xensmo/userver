@@ -96,7 +96,7 @@ UTEST(Task, ArgumentsLifetime) {
     std::atomic<int> count = 0;
 
     EXPECT_EQ(0, count.load());
-    auto task = engine::AsyncNoSpan([](CountGuard) {}, CountGuard(count));
+    auto task = engine::AsyncNoTracing([](CountGuard) {}, CountGuard(count));
     EXPECT_EQ(1, count.load());
 
     engine::Yield();
@@ -110,7 +110,7 @@ UTEST(Task, ArgumentsLifetimeThrow) {
     std::atomic<int> count = 0;
 
     EXPECT_EQ(0, count.load());
-    auto task = engine::AsyncNoSpan([](CountGuard) { throw std::runtime_error("123"); }, CountGuard(count));
+    auto task = engine::AsyncNoTracing([](CountGuard) { throw std::runtime_error("123"); }, CountGuard(count));
     EXPECT_EQ(1, count.load());
 
     engine::Yield();
@@ -124,7 +124,7 @@ UTEST(Task, FunctionLifetime) {
     std::atomic<int> count = 0;
 
     EXPECT_EQ(0, count.load());
-    auto task = engine::AsyncNoSpan([guard = CountGuard(count)] {});
+    auto task = engine::AsyncNoTracing([guard = CountGuard(count)] {});
     EXPECT_EQ(1, count.load());
 
     engine::Yield();
@@ -138,7 +138,7 @@ UTEST(Task, FunctionLifetimeThrow) {
     std::atomic<int> count = 0;
 
     EXPECT_EQ(0, count.load());
-    auto task = engine::AsyncNoSpan([guard = CountGuard(count)] { throw std::runtime_error("123"); });
+    auto task = engine::AsyncNoTracing([guard = CountGuard(count)] { throw std::runtime_error("123"); });
     EXPECT_EQ(1, count.load());
 
     engine::Yield();
@@ -153,40 +153,40 @@ UTEST(Async, OverloadSelection) {
     OverloadedFunc tst{counters};
     std::string arg;
 
-    engine::AsyncNoSpan(std::ref(tst)).Wait();
+    engine::AsyncNoTracing(std::ref(tst)).Wait();
     EXPECT_EQ(counters.ref_func, 1);
 
-    engine::AsyncNoSpan(std::cref(tst)).Wait();
+    engine::AsyncNoTracing(std::cref(tst)).Wait();
     EXPECT_EQ(counters.cref_func, 1);
 
-    engine::AsyncNoSpan(tst).Wait();
-    engine::AsyncNoSpan(std::as_const(tst)).Wait();
-    engine::AsyncNoSpan(std::move(tst)).Wait();
+    engine::AsyncNoTracing(tst).Wait();
+    engine::AsyncNoTracing(std::as_const(tst)).Wait();
+    engine::AsyncNoTracing(std::move(tst)).Wait();
     EXPECT_EQ(counters.move_func, 3);
 
-    engine::AsyncNoSpan(tst, std::ref(arg)).Wait();
+    engine::AsyncNoTracing(tst, std::ref(arg)).Wait();
     EXPECT_EQ(counters.ref_arg, 1);
 
-    engine::AsyncNoSpan(tst, std::cref(arg)).Wait();
+    engine::AsyncNoTracing(tst, std::cref(arg)).Wait();
     EXPECT_EQ(counters.cref_arg, 1);
 
-    engine::AsyncNoSpan(tst, arg).Wait();
-    engine::AsyncNoSpan(tst, std::as_const(arg)).Wait();
-    engine::AsyncNoSpan(tst, std::move(arg)).Wait();
+    engine::AsyncNoTracing(tst, arg).Wait();
+    engine::AsyncNoTracing(tst, std::as_const(arg)).Wait();
+    engine::AsyncNoTracing(tst, std::move(arg)).Wait();
     EXPECT_EQ(counters.move_arg, 3);
 
-    UEXPECT_NO_THROW(engine::AsyncNoSpan(&ByPtrFunction).Wait());
-    UEXPECT_NO_THROW(engine::AsyncNoSpan(ByRefFunction).Wait());
+    UEXPECT_NO_THROW(engine::AsyncNoTracing(&ByPtrFunction).Wait());
+    UEXPECT_NO_THROW(engine::AsyncNoTracing(ByRefFunction).Wait());
 }
 
 UTEST(Async, ResourceDeallocation) {
-    engine::AsyncNoSpan(CountingConstructions{}).Wait();
+    engine::AsyncNoTracing(CountingConstructions{}).Wait();
     EXPECT_EQ(CountingConstructions::constructions, CountingConstructions::destructions);
 }
 
 UTEST(Task, CurrentTaskSetDeadline) {
     auto start = std::chrono::steady_clock::now();
-    auto task = engine::AsyncNoSpan([] {
+    auto task = engine::AsyncNoTracing([] {
         engine::current_task::SetDeadline(engine::Deadline::FromDuration(utest::kMaxTestWaitTime));
         engine::InterruptibleSleepFor(std::chrono::milliseconds(2));
         EXPECT_FALSE(engine::current_task::IsCancelRequested());
@@ -225,7 +225,7 @@ UTEST(Async, WithDeadline) {
 UTEST(Async, WithDeadlineDetach) {
     std::atomic<bool> started{false};
     std::atomic<bool> finished{false};
-    auto task = engine::AsyncNoSpan([&started, &finished] {
+    auto task = engine::AsyncNoTracing([&started, &finished] {
         auto start = std::chrono::steady_clock::now();
         const auto deadline = engine::Deadline::FromDuration(kDeadlineTestsTimeout);
         engine::DetachUnscopedUnsafe(
@@ -291,7 +291,7 @@ UTEST(Async, FromNonWorkerThread) {
     auto& task_processor = engine::current_task::GetTaskProcessor();
     engine::TaskWithResult<void> task;
 
-    ev_thread.RunInEvLoopSync([&task_processor, &task] { task = engine::AsyncNoSpan(task_processor, [] {}); });
+    ev_thread.RunInEvLoopSync([&task_processor, &task] { task = engine::AsyncNoTracing(task_processor, [] {}); });
 
     task.Wait();
 }
@@ -311,7 +311,7 @@ UTEST_MT(Async, CancelNotifyRace, 4) {
     };
 
     while (!test_deadline.IsReached()) {
-        auto task1 = engine::AsyncNoSpan([] { delay(); });
+        auto task1 = engine::AsyncNoTracing([] { delay(); });
 
         auto task2 = engine::CriticalAsyncNoTracing([&task1] {
             try {
@@ -342,10 +342,10 @@ engine::TaskInheritedVariable<int> kInheritedVariable;
 
 }  // namespace
 
-UTEST(Async, AsyncNoSpanCapturesExpectedContext) {
+UTEST(Async, AsyncNoTracingCapturesExpectedContext) {
     kInheritedVariable.Set(42);
 
-    auto task = engine::AsyncNoSpan([inherited = kInheritedVariable.Get()] {
+    auto task = engine::AsyncNoTracing([inherited = kInheritedVariable.Get()] {
         EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
         EXPECT_EQ(inherited, 42);
         EXPECT_FALSE(engine::current_task::impl::IsCritical());
@@ -357,12 +357,12 @@ UTEST(Async, AsyncNoSpanCapturesExpectedContext) {
     EXPECT_TRUE(task.Get());
 }
 
-TEST(Async, AsyncNoSpanWithTaskProcessorCapturesExpectedContext) {
+TEST(Async, AsyncNoTracingWithTaskProcessorCapturesExpectedContext) {
     engine::tests::TwoStandaloneTaskProcessors tp;
     tp.RunBlocking([&] {
         kInheritedVariable.Set(42);
 
-        auto task = engine::AsyncNoSpan(tp.GetSecondary(), [&, inherited = kInheritedVariable.Get()] {
+        auto task = engine::AsyncNoTracing(tp.GetSecondary(), [&, inherited = kInheritedVariable.Get()] {
             EXPECT_FALSE(tracing::Span::CurrentSpanUnchecked());
             EXPECT_EQ(inherited, 42);
             EXPECT_FALSE(engine::current_task::impl::IsCritical());

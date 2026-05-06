@@ -44,7 +44,7 @@ UTEST_P_MT(GrpcChannels, TryWaitForConnected, 2) {
 
     const auto port = ugrpc::tests::GetFreeIpv6Port();
 
-    auto client_task = engine::AsyncNoSpan([&] {
+    auto client_task = engine::AsyncNoTracing([&] {
         ugrpc::client::ClientFactorySettings settings;
         settings.channel_args.SetInt("grpc.testing.fixed_reconnect_backoff_ms", 100);
         settings.channel_count = GetParam();

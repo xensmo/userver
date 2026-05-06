@@ -55,11 +55,11 @@ UTEST(TaskBuilder, MultipleAwaitOnShared) {
         return 1;
     });
 
-    auto first_res = engine::AsyncNoSpan([&first_ready, &task] {
+    auto first_res = engine::AsyncNoTracing([&first_ready, &task] {
         first_ready.Send();
         EXPECT_EQ(task.Get(), 1);
     });
-    auto second_res = engine::AsyncNoSpan([&second_ready, &task] {
+    auto second_res = engine::AsyncNoTracing([&second_ready, &task] {
         second_ready.Send();
         EXPECT_EQ(task.Get(), 1);
     });

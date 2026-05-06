@@ -29,14 +29,14 @@ Client::Client(const std::string& db_path, engine::TaskProcessor& blocking_task_
 }
 
 void Client::Put(std::string_view key, std::string_view value) {
-    engine::AsyncNoSpan(blocking_task_processor_, [this, key, value] {
+    engine::AsyncNoTracing(blocking_task_processor_, [this, key, value] {
         const rocksdb::Status status = db_->Put(rocksdb::WriteOptions(), key, value);
         CheckStatus(status, "Put");
     }).Get();
 }
 
 std::string Client::Get(std::string_view key) {
-    return engine::AsyncNoSpan(
+    return engine::AsyncNoTracing(
                blocking_task_processor_,
                [this, key] {
                    std::string res;
@@ -48,7 +48,7 @@ std::string Client::Get(std::string_view key) {
 }
 
 void Client::Delete(std::string_view key) {
-    engine::AsyncNoSpan(blocking_task_processor_, [this, key] {
+    engine::AsyncNoTracing(blocking_task_processor_, [this, key] {
         const rocksdb::Status status = db_->Delete(rocksdb::WriteOptions(), key);
         CheckStatus(status, "Delete");
     }).Get();

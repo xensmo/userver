@@ -33,7 +33,7 @@ void Processor::Notify(int signum, utils::impl::InternalTag) {
     if (engine::current_task::IsTaskProcessorThread()) {
         channel_.SendEvent(signum);
     } else {
-        engine::AsyncNoSpan(task_processor_, [this, signum] { channel_.SendEvent(signum); }).BlockingWait();
+        engine::AsyncNoTracing(task_processor_, [this, signum] { channel_.SendEvent(signum); }).BlockingWait();
     }
 }
 

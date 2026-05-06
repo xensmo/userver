@@ -74,7 +74,7 @@ UTEST(Socket, ListenConnect) {
     uint16_t first_client_port = 0;
     uint16_t second_client_port = 0;
     uint16_t third_client_port = 0;
-    auto listen_task = engine::AsyncNoSpan([&] {
+    auto listen_task = engine::AsyncNoTracing([&] {
         auto first_client = listener.socket.Accept(test_deadline);
         EXPECT_TRUE(first_client.IsValid());
         auto second_client = listener.socket.Accept(test_deadline);
@@ -181,7 +181,7 @@ UTEST(Socket, SendAllVector) {
 
     size_t bytes_read = 0;
     auto sockets = listener.MakeSocketPair(deadline);
-    auto listen_task = engine::AsyncNoSpan([&sockets, &deadline, &bytes_read] {
+    auto listen_task = engine::AsyncNoTracing([&sockets, &deadline, &bytes_read] {
         std::array<char, 18> buf = {};
         bytes_read = sockets.first.ReadSome(buf.data(), buf.size(), deadline);
         EXPECT_EQ(std::string(buf.data(), bytes_read), "datachunk 1chunk 2");
@@ -254,7 +254,7 @@ UTEST(Socket, SendAllVectorHeap) {
 
     size_t bytes_read = 0;
     auto sockets = listener.MakeSocketPair(deadline);
-    auto listen_task = engine::AsyncNoSpan([&sockets, &deadline, &bytes_read] {
+    auto listen_task = engine::AsyncNoTracing([&sockets, &deadline, &bytes_read] {
         std::array<char, 141> buf{};
         bytes_read = sockets.first.ReadSome(buf.data(), buf.size(), deadline);
         EXPECT_EQ(
@@ -289,7 +289,7 @@ UTEST(Socket, Cancel) {
 
     engine::SingleConsumerEvent has_started_event;
     auto check_is_cancelling = [&](const char* io_op_text, auto io_op) {
-        auto io_task = engine::AsyncNoSpan([&] {
+        auto io_task = engine::AsyncNoTracing([&] {
             has_started_event.Send();
             io_op();
         });
@@ -372,7 +372,7 @@ UTEST(Socket, DgramBound) {
     EXPECT_EQ(listener.Port(), listener.socket.Getsockname().Port());
 
     std::atomic<uint16_t> client_port{0};
-    auto listen_task = engine::AsyncNoSpan([&] {
+    auto listen_task = engine::AsyncNoTracing([&] {
         auto& server = listener.socket;
         char c = 0;
         auto server_recvfrom = server.RecvSomeFrom(&c, 1, test_deadline);
@@ -409,7 +409,7 @@ UTEST(Socket, DgramUnbound) {
     EXPECT_EQ("::1", listener.socket.Getsockname().PrimaryAddressString());
     EXPECT_EQ(listener.Port(), listener.socket.Getsockname().Port());
 
-    auto listen_task = engine::AsyncNoSpan([&] {
+    auto listen_task = engine::AsyncNoTracing([&] {
         auto& server = listener.socket;
         char c = 0;
         auto server_recvfrom = server.RecvSomeFrom(&c, 1, test_deadline);
@@ -447,7 +447,7 @@ UTEST_MT(Socket, ConcurrentReadWriteUdp, 2) {
     /// [send self concurrent]
     // Sending and receiving data from self on the same socket
     engine::io::Socket& socket = listener.socket;
-    auto read_task = engine::AsyncNoSpan([&socket, &deadline] {
+    auto read_task = engine::AsyncNoTracing([&socket, &deadline] {
         for (char expected_data = 0; expected_data <= 100; ++expected_data) {
             char c = 0;
             const auto recvfrom = socket.RecvSomeFrom(&c, 1, deadline);
@@ -569,7 +569,7 @@ UTEST_MT(Socket, UdpIpMreqMultipleReceiversIPv6, 3) {
         receiver->Bind(io::Sockaddr(&any));
         io::AddMembership(*receiver, mreq);
 
-        tasks.push_back(engine::AsyncNoSpan([receiver, deadline] {
+        tasks.push_back(engine::AsyncNoTracing([receiver, deadline] {
             char c{};
             for (int packet_idx = 0; packet_idx < packets_count; ++packet_idx) {
                 const auto result = receiver->RecvSomeFrom(&c, 1, deadline);
@@ -594,7 +594,7 @@ UTEST_MT(Socket, UdpIpMreqMultipleReceiversIPv6, 3) {
         const auto& receiver = receivers[i];
         io::DropMembership(*receiver, mreq);
 
-        tasks.push_back(engine::AsyncNoSpan([receiver] {
+        tasks.push_back(engine::AsyncNoTracing([receiver] {
             auto short_deadline = Deadline::FromDuration(std::chrono::milliseconds(300));
             char c{};
             const auto result = receiver->RecvSomeFrom(&c, 1, short_deadline);

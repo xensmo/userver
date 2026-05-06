@@ -263,7 +263,7 @@ void ProcessAsync(
     const MethodData<GrpcppService, CallTraits>& method_data,
     boost::intrusive_ptr<CallData<CallTraits>>&& calld
 ) {
-    engine::DetachUnscopedUnsafe(engine::AsyncNoSpan(
+    engine::DetachUnscopedUnsafe(engine::AsyncNoTracing(
         method_data.service_data.internals.task_processor,
         utils::LazyPrvalue([&]() mutable { return ProcessWrapper{method_data, std::move(calld)}; })
     ));

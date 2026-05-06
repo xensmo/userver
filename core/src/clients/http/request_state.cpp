@@ -893,7 +893,7 @@ void RequestState::PerformRequest(curl::easy::handler_type handler) {
 
     if (resolver_ && retry_.current == 1) {
         engine::DetachUnscopedUnsafe(
-            engine::AsyncNoSpan([this, holder = shared_from_this(), handler = std::move(handler)]() mutable {
+            engine::AsyncNoTracing([this, holder = shared_from_this(), handler = std::move(handler)]() mutable {
                 auto exception_handler = utils::Overloaded{
                     [](FullBufferedData& data) { data.promise.set_exception(std::current_exception()); },
                     [](WebSocketHandshakeData& data) { data.promise.set_exception(std::current_exception()); },

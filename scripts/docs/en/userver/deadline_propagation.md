@@ -169,7 +169,7 @@ mechanisms:
 
 - @ref concurrent::BackgroundTaskStorage::AsyncDetach()
 - @ref utils::AsyncBackground
-- @ref engine::AsyncNoSpan (don't use it if you are not sure that you need it!)
+- @ref engine::AsyncNoTracing (don't use it if you are not sure that you need it!)
 
 @warning when creating background tasks via `utils::Async` (instead of `utils::AsyncBackground`), requests performed
 in them will be interrupted along with the parent task**

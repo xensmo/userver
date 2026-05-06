@@ -97,9 +97,10 @@ By shared-ness:
 
 * By default, functions return @ref engine::TaskWithResult, which can be awaited
   from 1 task at once. This is a reasonable choice for most cases.
-* Functions from `utils::Shared*Async*` and `engine::Shared*AsyncNoSpan`
-  families return @ref engine::SharedTaskWithResult, which can be awaited
-  from multiple tasks at the same time, at the cost of some overhead.
+* Functions from `utils::Shared*Async*` family return @ref engine::SharedTaskWithResult,
+  which can be awaited from multiple tasks at the same time, at the cost of some overhead.
+  For tasks without tracing, the same shared-ness is available via
+  `engine::TaskBuilder::NoSpan().BuildShared(...)`.
 
 By @ref engine::TaskBase::Importance ("critical-ness"):
 
@@ -118,7 +119,7 @@ By tracing::Span:
   create tracing::Span with inherited `trace_id` and `link`, a new `span_id`
   and the specified `stopwatch_name`, which ensures that logs from the task
   are categorized correctly and will not get lost.
-* Functions from `engine::*AsyncNoSpan*` family create span-less tasks:
+* Functions from `engine::*AsyncNoTracing*` family create tasks without tracing:
     * A possible usage scenario is to create a task that will mostly wait
       in the background and do various unrelated work every now and then.
       In this case it might make sense to trace execution of work items,
@@ -132,7 +133,7 @@ By the propagation of @ref engine::TaskInheritedVariable instances:
 
 * Functions from `utils::*Async*` family (which you should use by default)
   inherit all task-inherited variables from the parent task.
-* Functions from `engine::*AsyncNoSpan*` family do not inherit any
+* Functions from `engine::*AsyncNoTracing*` family do not inherit any
   task-inherited variables.
 
 By deadline: some `utils::*Async*` functions accept an @ref engine::Deadline

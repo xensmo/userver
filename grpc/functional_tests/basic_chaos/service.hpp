@@ -138,7 +138,7 @@ GreeterServiceComponent::SayHelloIndependentStreamsResult GreeterServiceComponen
     constexpr std::chrono::milliseconds kTimeIntervalWrite{300};
 
     std::string final_string{};
-    auto read_task = engine::AsyncNoSpan([&final_string, &stream, &kTimeIntervalRead] {
+    auto read_task = engine::AsyncNoTracing([&final_string, &stream, &kTimeIntervalRead] {
         api::GreetingRequest request;
         while (stream.Read(request)) {
             final_string.append(request.name());
@@ -146,7 +146,7 @@ GreeterServiceComponent::SayHelloIndependentStreamsResult GreeterServiceComponen
         }
     });
 
-    auto write_task = engine::AsyncNoSpan([&stream, prefix = prefix_, &kTimeIntervalWrite] {
+    auto write_task = engine::AsyncNoTracing([&stream, prefix = prefix_, &kTimeIntervalWrite] {
         const std::array names =
             {"Python", "C++", "linux", "userver", "grpc", "kernel", "developer", "core", "anonymous", "user"};
         for (const auto& name : names) {

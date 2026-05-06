@@ -196,7 +196,7 @@ void BatchOfUnaryRPC(benchmark::State& state) {
 
             for (auto _ : state) {
                 auto tasks = utils::GenerateFixedArray(kBatchSize, [&clients](auto i) {
-                    return engine::AsyncNoSpan(UnaryRPCPayloadRepeated, std::ref(clients[i]));
+                    return engine::AsyncNoTracing(UnaryRPCPayloadRepeated, std::ref(clients[i]));
                 });
                 engine::GetAll(tasks);
             }
@@ -221,7 +221,7 @@ void BatchOfUnaryRPCNewClient(benchmark::State& state) {
 
             for (auto _ : state) {
                 auto tasks = utils::GenerateFixedArray(kBatchSize, [&client_factory](auto) {
-                    return engine::AsyncNoSpan([&client_factory] {
+                    return engine::AsyncNoTracing([&client_factory] {
                         auto client = client_factory.MakeClient<sample::ugrpc::UnitTestServiceClient>();
                         UnaryRPCPayloadRepeated(client);
                     });
@@ -248,7 +248,7 @@ void BatchOfNewClient(benchmark::State& state) {
 
             for (auto _ : state) {
                 auto tasks = utils::GenerateFixedArray(kBatchSize, [&client_factory](auto) {
-                    return engine::AsyncNoSpan(NewClientRepeated, std::ref(client_factory));
+                    return engine::AsyncNoTracing(NewClientRepeated, std::ref(client_factory));
                 });
                 engine::GetAll(tasks);
             }

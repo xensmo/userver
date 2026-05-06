@@ -34,7 +34,7 @@ BENCHMARK(RunInEvLoopBenchmark);
 [[maybe_unused]] void SuccessfulWaitForBenchmark(benchmark::State& state) {
     engine::RunStandalone([&] {
         for ([[maybe_unused]] auto _ : state) {
-            auto task = engine::AsyncNoSpan([] { engine::Yield(); });
+            auto task = engine::AsyncNoTracing([] { engine::Yield(); });
             task.WaitFor(20ms);
 
             if (!task.IsFinished()) {

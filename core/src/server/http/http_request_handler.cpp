@@ -57,7 +57,7 @@ engine::TaskWithResult<void> HttpRequestHandler::StartFailsafeTask(std::shared_p
 ) const {
     const auto* handler = http_request->GetHttpHandler();
 
-    return engine::AsyncNoSpan([request = std::move(http_request), handler]() {
+    return engine::AsyncNoTracing([request = std::move(http_request), handler]() {
         request->SetTaskStartTime();
         if (handler) {
             handler->ReportMalformedRequest(*request);
@@ -167,7 +167,7 @@ engine::TaskWithResult<void> HttpRequestHandler::StartRequestTask(std::shared_pt
     };
 
     if (!is_monitor_ && throttling_enabled) {
-        return engine::AsyncNoSpan(*task_processor, std::move(payload));
+        return engine::AsyncNoTracing(*task_processor, std::move(payload));
     } else {
         return engine::CriticalAsyncNoTracing(*task_processor, std::move(payload));
     }
