@@ -14,7 +14,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace ydb {
 
-enum class TransactionMode { kSerializableRW, kOnlineRO, kStaleRO, kSnapshotRO, kSnapshotRW };
+enum class TransactionMode { kSerializableRW, kOnlineRO, kStaleRO, kSnapshotRO, kSnapshotRW, kImplicitTx };
 
 /// @brief Settings for a single request.
 struct OperationSettings final {

@@ -24,7 +24,7 @@ namespace ydb {
 
 namespace {
 
-NYdb::NQuery::TTxSettings MakeTxSettings(TransactionMode tx_mode) {
+std::optional<NYdb::NQuery::TTxSettings> MakeTxSettings(TransactionMode tx_mode) {
     switch (tx_mode) {
         case TransactionMode::kSerializableRW:
             return NYdb::NQuery::TTxSettings::SerializableRW();
@@ -36,6 +36,8 @@ NYdb::NQuery::TTxSettings MakeTxSettings(TransactionMode tx_mode) {
             return NYdb::NQuery::TTxSettings::SnapshotRO();
         case TransactionMode::kSnapshotRW:
             return NYdb::NQuery::TTxSettings::SnapshotRW();
+        case TransactionMode::kImplicitTx:
+            return std::nullopt;
     }
 }
 
@@ -51,6 +53,8 @@ NYdb::NTable::TTxSettings MakeTableTxSettings(TransactionMode tx_mode) {
             return NYdb::NTable::TTxSettings::SnapshotRO();
         case TransactionMode::kSnapshotRW:
             return NYdb::NTable::TTxSettings::SnapshotRW();
+        case TransactionMode::kImplicitTx:
+            throw std::invalid_argument("ImplicitTx is not supported for table client");
     }
 }
 
@@ -350,11 +354,14 @@ Transaction TableClient::Begin(DynamicTransactionName transaction_name, Operatio
     impl::RequestContext context{*this, query, OperationSettings{settings}};
 
     if (use_query_client_) {
-        auto tx_settings = MakeTxSettings(context.settings.tx_mode.value());
+        auto tx_settings_opt = MakeTxSettings(context.settings.tx_mode.value());
+        if (!tx_settings_opt) {
+            throw std::runtime_error("ImplicitTx is meaningless for begin transaction");
+        }
 
         auto future = impl::RetryQuery(
             context,
-            [tx_settings = std::move(tx_settings),
+            [tx_settings = std::move(*tx_settings_opt),
              settings = context.settings,
              deadline = context.deadline,
              trace_id = std::string{context.span.GetTraceId()}](NYdb::NQuery::TSession session) {
@@ -468,7 +475,9 @@ ExecuteResponse TableClient::ExecuteQuery(
          trace_id = std::string{context.span.GetTraceId()}](NYdb::NQuery::TSession session) mutable {
             impl::ApplyToRequestSettings(exec_settings, settings, deadline, trace_id);
             const auto tx_settings = MakeTxSettings(settings.tx_mode.value());
-            const auto tx = NYdb::NQuery::TTxControl::BeginTx(tx_settings).CommitTx();
+            const auto tx =
+                tx_settings ? NYdb::NQuery::TTxControl::BeginTx(*tx_settings).CommitTx()
+                            : NYdb::NQuery::TTxControl::NoTx().CommitTx();
             return session.ExecuteQuery(impl::ToString(query.GetStatementView()), tx, params, exec_settings);
         }
     );
@@ -525,7 +534,11 @@ void TableClient::RetryTx(DynamicTransactionName transaction_name, RetryTxSettin
          &guard](NYdb::NQuery::TSession session, engine::Deadline deadline) mutable {
             ++attempt;
 
-            TxActor tx_actor{table_client, session, MakeTxSettings(tx_mode), deadline, attempt};
+            auto tx_settings_opt = MakeTxSettings(tx_mode);
+            if (!tx_settings_opt) {
+                throw std::runtime_error("ImplicitTx is meaningless for retry transaction");
+            }
+            TxActor tx_actor{table_client, session, std::move(*tx_settings_opt), deadline, attempt};
 
             TxAction action = TxAction::kRollback;
             std::exception_ptr exception;
