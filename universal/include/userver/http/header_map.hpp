@@ -50,7 +50,15 @@ public:
 
     /// The exception being thrown in case of capacity overflow
     class TooManyHeadersException final : public std::runtime_error {
+    public:
         using std::runtime_error::runtime_error;
+
+        TooManyHeadersException(const TooManyHeadersException&) = default;
+        TooManyHeadersException(TooManyHeadersException&&) = default;
+        TooManyHeadersException& operator=(const TooManyHeadersException&) = default;
+        TooManyHeadersException& operator=(TooManyHeadersException&&) = default;
+
+        ~TooManyHeadersException() override;
     };
 
     /// Default constructor.

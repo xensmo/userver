@@ -20,7 +20,15 @@ namespace http {
 
 /// @brief Content-Type parsing error
 class MalformedContentType : public std::runtime_error {
+public:
     using std::runtime_error::runtime_error;
+
+    MalformedContentType(const MalformedContentType&) = default;
+    MalformedContentType(MalformedContentType&&) = default;
+    MalformedContentType& operator=(const MalformedContentType&) = default;
+    MalformedContentType& operator=(MalformedContentType&&) = default;
+
+    ~MalformedContentType() override;
 };
 
 /// @ingroup userver_universal userver_containers

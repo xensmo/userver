@@ -20,7 +20,7 @@ public:
         : msg_(std::move(msg))
     {}
 
-    const char* what() const noexcept final { return msg_.c_str(); }
+    const char* what() const noexcept final;
 
     std::string_view GetMessage() const noexcept { return msg_; }
 
@@ -31,6 +31,13 @@ private:
 class ParseException : public Exception {
 public:
     using Exception::Exception;
+
+    ParseException(const ParseException&) = default;
+    ParseException(ParseException&&) = default;
+    ParseException& operator=(const ParseException&) = default;
+    ParseException& operator=(ParseException&&) = default;
+
+    ~ParseException() override;
 };
 
 class ExceptionWithPath : public Exception {

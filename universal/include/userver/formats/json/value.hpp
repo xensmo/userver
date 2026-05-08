@@ -8,6 +8,7 @@
 #include <string_view>
 #include <type_traits>
 
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/formats/common/items.hpp>
 #include <userver/formats/common/meta.hpp>
 #include <userver/formats/json/exception.hpp>
@@ -349,7 +350,7 @@ private:
 };
 
 template <typename T>
-auto Value::As() const {
+USERVER_IMPL_NODEBUG auto Value::As() const {
     static_assert(
         formats::common::impl::HasParse<Value, T>,
         "There is no `Parse(const Value&, formats::parse::To<T>)` in namespace of `T` or `formats::parse`. "
@@ -401,7 +402,7 @@ auto Value::As(Value::DefaultConstructed) const {
 }
 
 template <typename T>
-T Value::ConvertTo() const {
+USERVER_IMPL_NODEBUG T Value::ConvertTo() const {
     if constexpr (formats::common::impl::HasConvert<Value, T>) {
         return Convert(*this, formats::parse::To<T>{});
     } else if constexpr (formats::common::impl::HasParse<Value, T>) {

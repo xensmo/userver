@@ -14,6 +14,7 @@
 #include <fmt/format.h>
 
 #include <userver/compiler/demangle.hpp>
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/string_literal.hpp>
 
@@ -233,7 +234,7 @@ private:
 template <typename First, typename Second>
 class SwitchByFirst final {
 public:
-    constexpr explicit SwitchByFirst(First search) noexcept : state_(search) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit SwitchByFirst(First search) noexcept : state_(search) {}
 
     constexpr SwitchByFirst& Case(First first, Second second) noexcept {
         if (!state_.IsFound() && state_.GetKey() == first) {
@@ -256,7 +257,7 @@ private:
 template <typename First>
 class SwitchByFirst<First, void> final {
 public:
-    constexpr explicit SwitchByFirst(First search) noexcept : state_(search) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit SwitchByFirst(First search) noexcept : state_(search) {}
 
     constexpr SwitchByFirst& Case(First first) noexcept {
         if (!state_.IsFound() && state_.GetKey() == first) {
@@ -279,7 +280,7 @@ private:
 template <typename Second>
 class SwitchByFirstICase final {
 public:
-    constexpr explicit SwitchByFirstICase(std::string_view search) noexcept : state_(search) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit SwitchByFirstICase(std::string_view search) noexcept : state_(search) {}
 
     constexpr SwitchByFirstICase& Case(std::string_view first, Second second) noexcept {
         UASSERT_MSG(
@@ -308,7 +309,7 @@ private:
 template <>
 class SwitchByFirstICase<void> final {
 public:
-    constexpr explicit SwitchByFirstICase(std::string_view search) noexcept : state_(search) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit SwitchByFirstICase(std::string_view search) noexcept : state_(search) {}
 
     constexpr SwitchByFirstICase& Case(std::string_view first) noexcept {
         UASSERT_MSG(
@@ -337,7 +338,7 @@ private:
 template <typename First>
 class SwitchBySecondICase final {
 public:
-    constexpr explicit SwitchBySecondICase(std::string_view search) noexcept : state_(search) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit SwitchBySecondICase(std::string_view search) noexcept : state_(search) {}
 
     constexpr SwitchBySecondICase& Case(First first, std::string_view second) noexcept {
         UASSERT_MSG(
@@ -366,7 +367,7 @@ private:
 template <typename First, typename Second>
 class SwitchBySecond final {
 public:
-    constexpr explicit SwitchBySecond(Second search) noexcept : state_(search) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit SwitchBySecond(Second search) noexcept : state_(search) {}
 
     constexpr SwitchBySecond& Case(First first, Second second) noexcept {
         if (!state_.IsFound() && state_.GetKey() == second) {
@@ -538,7 +539,7 @@ private:
 template <typename First, typename Second>
 class CaseGetValuesByIndex final {
 public:
-    explicit constexpr CaseGetValuesByIndex(std::size_t search_index)
+    USERVER_IMPL_NODEBUG_INLINE_FUNC explicit constexpr CaseGetValuesByIndex(std::size_t search_index)
         : index_(search_index + 1)
     {}
 
@@ -573,8 +574,8 @@ private:
     };
 
     union Lazy {
-        constexpr Lazy() noexcept : empty{} {}
-        constexpr Lazy(Storage s) noexcept : storage{s} {}
+        USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr Lazy() noexcept : empty{} {}
+        USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr Lazy(Storage s) noexcept : storage{s} {}
 
         char empty;
         Storage storage;
@@ -585,7 +586,7 @@ private:
 template <typename First>
 class CaseFirstIndexer final {
 public:
-    constexpr explicit CaseFirstIndexer(First search_value) noexcept : state_(search_value) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit CaseFirstIndexer(First search_value) noexcept : state_(search_value) {}
 
     constexpr CaseFirstIndexer& Case(First first) noexcept {
         if (!state_.IsFound() && state_.GetKey() == first) {
@@ -610,7 +611,7 @@ private:
 template <typename First>
 class CaseFirstIndexerICase final {
 public:
-    constexpr explicit CaseFirstIndexerICase(First search_value) noexcept : state_(search_value) {}
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit CaseFirstIndexerICase(First search_value) noexcept : state_(search_value) {}
 
     constexpr CaseFirstIndexerICase& Case(First first) noexcept {
         if (!state_.IsFound() && state_.GetKey().size() == first.size() &&
@@ -681,12 +682,11 @@ public:
         Second second;
     };
 
-    /// Returns Second if T is convertible to First, otherwise returns Second
-    /// type.
+    /// Returns Second if T is convertible to First, otherwise returns Second type.
     template <class T>
     using MappedTypeFor = std::conditional_t<std::is_convertible_v<T, DecayToStringView<First>>, Second, First>;
 
-    constexpr TrivialBiMap(BuilderFunc&& func) noexcept : func_(std::move(func)) {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr TrivialBiMap(BuilderFunc&& func) noexcept : func_(std::move(func)) {
         static_assert(std::is_empty_v<BuilderFunc>, "Mapping function should not capture variables");
         static_assert(std::is_trivially_copyable_v<First>, "First type in Case must be trivially copyable");
         static_assert(
@@ -860,7 +860,7 @@ public:
     using First = typename TypesPair::first_type;
     using Second = typename TypesPair::second_type;
 
-    constexpr TrivialSet(BuilderFunc&& func) noexcept : func_(std::move(func)) {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr TrivialSet(BuilderFunc&& func) noexcept : func_(std::move(func)) {
         static_assert(std::is_empty_v<BuilderFunc>, "Mapping function should not capture variables");
         static_assert(std::is_trivially_copyable_v<First>, "First type in Case must be trivially copyable");
         static_assert(std::is_void_v<Second>, "Second type in Case should be skipped in utils::TrivialSet");
@@ -1000,14 +1000,14 @@ struct TrivialSetMultiCaseDispatch {
 
 /// @brief Zips two global `constexpr` arrays into an utils::TrivialBiMap.
 template <const auto& Keys, const auto& Values>
-constexpr auto MakeTrivialBiMap() {
+consteval auto MakeTrivialBiMap() {
     static_assert(std::size(Keys) == std::size(Values));
     static_assert(std::size(Keys) >= 1);
     return TrivialBiMap(impl::TrivialBiMapMultiCaseDispatch<Keys, Values>{});
 }
 
 template <const auto& Values>
-constexpr auto MakeTrivialSet() {
+consteval auto MakeTrivialSet() {
     return TrivialSet(impl::TrivialSetMultiCaseDispatch<Values>{});
 }
 

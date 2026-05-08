@@ -2,6 +2,7 @@
 
 #include <http/header_map/map.hpp>
 
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/formats/json/value.hpp>
 #include <userver/formats/parse/common_containers.hpp>
 
@@ -32,6 +33,9 @@ const std::string& DoAt(HeaderMap::ConstIterator it, HeaderMap::ConstIterator en
 }
 
 }  // namespace
+
+// vtable anchor functions
+USERVER_IMPL_NODEBUG HeaderMap::TooManyHeadersException::~TooManyHeadersException() = default;
 
 HeaderMap::HeaderMap() = default;
 

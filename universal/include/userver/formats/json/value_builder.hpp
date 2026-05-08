@@ -7,6 +7,7 @@
 #include <string_view>
 #include <type_traits>
 
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/formats/common/meta.hpp>
 #include <userver/formats/common/transfer_tag.hpp>
 #include <userver/formats/json/impl/mutable_value_wrapper.hpp>
@@ -16,8 +17,6 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace formats::json {
-
-// clang-format off
 
 /// @ingroup userver_universal userver_containers userver_formats
 ///
@@ -35,9 +34,6 @@ namespace formats::json {
 /// @snippet formats/json/value_builder_test.cpp  Sample Customization formats::json::ValueBuilder usage
 ///
 /// @see @ref scripts/docs/en/userver/formats.md
-
-// clang-format on
-
 class ValueBuilder final {
 public:
     struct IterTraits {
@@ -196,27 +192,25 @@ private:
     impl::Value& AddMember(std::string_view key, CheckMemberExists);
 
     template <typename T>
-    static Value DoSerialize(const T& t);
+    USERVER_IMPL_NODEBUG_INLINE_FUNC static Value DoSerialize(const T& t) {
+        static_assert(
+            formats::common::impl::HasSerialize<Value, T>,
+            "There is no `Serialize(const T&, formats::serialize::To<json::Value>)` "
+            "in namespace of `T` or `formats::serialize`. "
+            ""
+            "Probably you forgot to include the <userver/formats/serialize/common_containers.hpp> header "
+            "or one of the <formats/json/serialize_*.hpp> headers or you have not provided a `Serialize` function "
+            "overload."
+        );
+
+        return Serialize(t, formats::serialize::To<Value>());
+    }
 
     impl::MutableValueWrapper value_;
 
     friend class Iterator<IterTraits, common::IteratorDirection::kForward>;
     friend class Iterator<IterTraits, common::IteratorDirection::kReverse>;
 };
-
-template <typename T>
-Value ValueBuilder::DoSerialize(const T& t) {
-    static_assert(
-        formats::common::impl::HasSerialize<Value, T>,
-        "There is no `Serialize(const T&, formats::serialize::To<json::Value>)` "
-        "in namespace of `T` or `formats::serialize`. "
-        ""
-        "Probably you forgot to include the <userver/formats/serialize/common_containers.hpp> header "
-        "or one of the <formats/json/serialize_*.hpp> headers or you have not provided a `Serialize` function overload."
-    );
-
-    return Serialize(t, formats::serialize::To<Value>());
-}
 
 template <typename T>
 requires(std::is_integral<T>::value && sizeof(T) <= sizeof(int64_t))

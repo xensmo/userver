@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <vector>
 
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/utils/meta_light.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -34,10 +35,10 @@ concept IsRange = requires(T& t) {
 };
 
 template <IsRange T>
-using IteratorType = decltype(begin(std::declval<T&>()));
+using IteratorType USERVER_IMPL_NODEBUG = decltype(begin(std::declval<T&>()));
 
 template <typename T>
-using RangeValueType = typename std::iterator_traits<IteratorType<T>>::value_type;
+using RangeValueType USERVER_IMPL_NODEBUG = typename std::iterator_traits<IteratorType<T>>::value_type;
 
 template <typename T>
 struct IsFixedSizeContainer : std::false_type {};

@@ -15,6 +15,7 @@
 
 #include <fmt/core.h>
 
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/formats/common/meta.hpp>
 #include <userver/logging/fwd.hpp>
 #include <userver/logging/level.hpp>
@@ -113,7 +114,7 @@ public:
 
     /// @cond
     template <typename... Args>
-    LogHelper& AsLvalue(fmt::format_string<Args...> fmt, Args&&... args) noexcept {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC LogHelper& AsLvalue(fmt::format_string<Args...> fmt, Args&&... args) noexcept {
         VFormat(fmt::string_view(fmt), fmt::make_format_args(args...));
         return *this;
     }
@@ -122,7 +123,7 @@ public:
     bool IsLimitReached() const noexcept;
 
     template <typename T>
-    LogHelper& operator<<(const T& value) {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC LogHelper& operator<<(const T& value) {
         if constexpr (std::is_constructible_v<std::string_view, T>) {
             // noexcept if the conversion is noexcept
             *this << std::string_view{value};
@@ -178,7 +179,10 @@ public:
     /// @param args Arguments to be formatted into the log message.
     /// @return A reference to the LogHelper object for chaining.
     template <typename... Args>
-    LogHelper& Format(fmt::format_string<Args...> fmt, Args&&... args) noexcept;
+    USERVER_IMPL_NODEBUG_INLINE_FUNC LogHelper& Format(fmt::format_string<Args...> fmt, Args&&... args) noexcept {
+        VFormat(fmt::string_view(fmt), fmt::make_format_args(args...));
+        return *this;
+    }
 
     /// @cond
     // For internal use only!
@@ -356,12 +360,6 @@ void LogHelper::PutRange(const T& range) {
     }
 
     *this << ']';
-}
-
-template <typename... Args>
-LogHelper& LogHelper::Format(fmt::format_string<Args...> fmt, Args&&... args) noexcept {
-    VFormat(fmt::string_view(fmt), fmt::make_format_args(args...));
-    return *this;
 }
 
 }  // namespace logging
