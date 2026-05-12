@@ -613,6 +613,9 @@ class CppStructField:
         default = self._get_default()
         if isinstance(default, int):
             return f'std::int64_t{{{default}}}'
+        elif isinstance(default, str) and default.startswith('"'):
+            # TODO: return f'USERVER_NAMESPACE::utils::StringLiteral{{{default}}}'
+            return f'std::string_view{{{default}}}'
         else:
             return f'{default}'
 
@@ -627,7 +630,7 @@ class CppStructField:
             elif isinstance(default, int):
                 default = f'{default}LL'
             type_ = self.schema.user_cpp_type
-            return f'Convert({default}, USERVER_NAMESPACE::chaotic::convert::To<{type_}>{{}})'
+            return f'USERVER_NAMESPACE::chaotic::ConvertTo<{type_}>({default})'
 
         return f'{default}'
 
@@ -747,7 +750,7 @@ class CppStruct(CppType):
             case False:
                 unknown_fields = f'{ch}::UnknownFields::Forbid'
             case _:
-                unknown_fields = f'{ch}::UnknownFields::StoreTyped<{self.extra_type.cpp_user_name()}>'
+                unknown_fields = f'{ch}::UnknownFields::StoreTyped<{self.extra_type.parser_type(ch, name)}>'
 
         fields = [
             self.fields[field].descriptor_type(
@@ -807,12 +810,8 @@ class CppStruct(CppType):
             'userver/chaotic/with_type.hpp',
         ]
         if self.extra_type or self.strict_parsing:
-            # for ExtractAdditionalProperties/ValidateNoAdditionalProperties
-            includes.append('userver/chaotic/object.hpp')
-
-        if self.extra_type:
-            # for kPropertiesNames
-            includes.append('userver/utils/trivial_map.hpp')
+            includes.append('userver/chaotic/additional_properties.hpp')
+            includes.append('userver/utils/trivial_map.hpp')  # for kPropertiesNames
         for field in self.fields.values():
             includes.extend(field.schema.definition_includes())
         if isinstance(self.extra_type, CppType):
@@ -845,6 +844,7 @@ class CppStruct(CppType):
 class CppArrayValidator:
     minItems: int | None = None
     maxItems: int | None = None
+    uniqueItems: bool = False
 
     def is_none(self) -> bool:
         return self == CppArrayValidator()
@@ -877,6 +877,8 @@ class CppArray(CppType):
             validators += f', USERVER_NAMESPACE::chaotic::MinItems<{self.validators.minItems}>'
         if self.validators.maxItems is not None:
             validators += f', USERVER_NAMESPACE::chaotic::MaxItems<{self.validators.maxItems}>'
+        if self.validators.uniqueItems:
+            validators += ', USERVER_NAMESPACE::chaotic::UniqueItems'
 
         parser_type = (
             'USERVER_NAMESPACE::chaotic::Array'
@@ -933,6 +935,7 @@ class CppStructAllOf(CppType):
         return [
             'userver/formats/common/merge.hpp',
             'userver/chaotic/primitive.hpp',
+            'userver/chaotic/additional_properties.hpp',
         ] + flatten([item.definition_includes() for item in self.parents])
 
     def sax_parser_includes(self) -> list[str]:
@@ -1020,9 +1023,10 @@ class CppVariantWithDiscriminator(CppType):
         return includes + flatten([item.declaration_includes() for item in self.variants.values()])
 
     def definition_includes(self) -> list[str]:
-        return ['userver/formats/json/serialize_variant.hpp'] + flatten([
-            item.definition_includes() for item in self.variants.values()
-        ])
+        return [
+            'userver/formats/json/serialize_variant.hpp',
+            'userver/chaotic/additional_properties.hpp',
+        ] + flatten([item.definition_includes() for item in self.variants.values()])
 
     def sax_parser_includes(self) -> list[str]:
         return super().sax_parser_includes() + flatten([item.sax_parser_includes() for item in self.variants.values()])

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <userver/chaotic/object.hpp>
+#include <userver/chaotic/additional_properties.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
 #include <userver/chaotic/with_type.hpp>
@@ -27,7 +27,9 @@ A Parse(Value value, USERVER_NAMESPACE::formats::parse::To<A>) {
   res.type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
   res.a_prop = value["a_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
 
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__A_PropertiesNames);
+  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
+      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
+      k__ns__A_PropertiesNames);
 
   return res;
 }
@@ -46,7 +48,9 @@ B Parse(Value value, USERVER_NAMESPACE::formats::parse::To<B>) {
   res.type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
   res.b_prop = value["b_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
 
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__B_PropertiesNames);
+  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
+      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
+      k__ns__B_PropertiesNames);
 
   return res;
 }

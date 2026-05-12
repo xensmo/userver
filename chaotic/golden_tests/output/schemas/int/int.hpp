@@ -24,6 +24,8 @@ Int Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::forma
 
 Int Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<Int>);
 
+Int FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Int>);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Int& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 

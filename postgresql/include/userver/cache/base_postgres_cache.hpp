@@ -128,18 +128,23 @@ namespace pg_cache::detail {
 template <typename T>
 using ValueType = typename T::ValueType;
 template <typename T>
-inline constexpr bool kHasValueType = meta::IsDetected<ValueType, T>;
+concept HasValueType = requires { typename T::ValueType; };
 
 template <typename T>
-using RawValueTypeImpl = typename T::RawValueType;
+struct RawValueTypeImpl : std::type_identity<ValueType<T>> {};
+
 template <typename T>
-inline constexpr bool kHasRawValueType = meta::IsDetected<RawValueTypeImpl, T>;
+concept HasRawValueType = requires { typename T::RawValueType; };
+
+template <HasRawValueType T>
+struct RawValueTypeImpl<T> : std::type_identity<typename T::RawValueType> {};
+
 template <typename T>
-using RawValueType = meta::DetectedOr<ValueType<T>, RawValueTypeImpl, T>;
+using RawValueType = typename RawValueTypeImpl<T>::type;
 
 template <typename PostgreCachePolicy>
 auto ExtractValue(RawValueType<PostgreCachePolicy>&& raw) {
-    if constexpr (kHasRawValueType<PostgreCachePolicy>) {
+    if constexpr (HasRawValueType<PostgreCachePolicy>) {
         return Convert(std::move(raw), formats::parse::To<ValueType<PostgreCachePolicy>>());
     } else {
         return std::move(raw);
@@ -148,85 +153,84 @@ auto ExtractValue(RawValueType<PostgreCachePolicy>&& raw) {
 
 // Component name in policy
 template <typename T>
-using HasNameImpl = std::enable_if_t<!std::string_view{T::kName}.empty()>;
-template <typename T>
-inline constexpr bool kHasName = meta::IsDetected<HasNameImpl, T>;
+concept HasName = requires {
+    requires !std::string_view { T::kName }
+    .empty();
+};
 
 // Component query in policy
 template <typename T>
-using HasQueryImpl = decltype(T::kQuery);
-template <typename T>
-inline constexpr bool kHasQuery = meta::IsDetected<HasQueryImpl, T>;
+concept HasQuery = requires { T::kQuery; };
 
 // Component GetQuery in policy
 template <typename T>
-using HasGetQueryImpl = decltype(T::GetQuery());
-template <typename T>
-inline constexpr bool kHasGetQuery = meta::IsDetected<HasGetQueryImpl, T>;
+concept HasGetQuery = requires { T::GetQuery(); };
 
 // Component kWhere in policy
 template <typename T>
-using HasWhere = decltype(T::kWhere);
-template <typename T>
-inline constexpr bool kHasWhere = meta::IsDetected<HasWhere, T>;
+concept HasWhere = requires { T::kWhere; };
 
 // Component kOrderBy in policy
 template <typename T>
-using HasOrderBy = decltype(T::kOrderBy);
+concept HasOrderBy = requires { T::kOrderBy; };
+
+// Component kTag in policy
 template <typename T>
-inline constexpr bool kHasOrderBy = meta::IsDetected<HasOrderBy, T>;
+concept HasTag = requires { T::kTag; };
+
+template <typename PostgreCachePolicy>
+auto GetTag() {
+    if constexpr (HasTag<PostgreCachePolicy>) {
+        return PostgreCachePolicy::kTag;
+    } else {
+        return storages::postgres::kRowTag;
+    }
+}
 
 // Update field
 template <typename T>
-using HasUpdatedField = decltype(T::kUpdatedField);
-template <typename T>
-inline constexpr bool kHasUpdatedField = meta::IsDetected<HasUpdatedField, T>;
+concept HasUpdatedField = requires { T::kUpdatedField; };
 
 template <typename T>
-using WantIncrementalUpdates = std::enable_if_t<!std::string_view{T::kUpdatedField}.empty()>;
-template <typename T>
-inline constexpr bool kWantIncrementalUpdates = meta::IsDetected<WantIncrementalUpdates, T>;
+concept WantIncrementalUpdates = requires {
+    {
+        std::integral_constant<bool, !std::string_view{T::kUpdatedField}.empty()>{}
+    } -> std::same_as<std::true_type>;
+};
 
 // Key member in policy
 template <typename T>
-using KeyMemberTypeImpl = std::decay_t<std::invoke_result_t<decltype(T::kKeyMember), ValueType<T>>>;
+concept HasKeyMember = requires { T::kKeyMember; } && std::invocable<decltype(T::kKeyMember), ValueType<T>>;
+
 template <typename T>
-inline constexpr bool kHasKeyMember = meta::IsDetected<KeyMemberTypeImpl, T>;
-template <typename T>
-using KeyMemberType = meta::DetectedType<KeyMemberTypeImpl, T>;
+using KeyMemberType = std::decay_t<std::invoke_result_t<decltype(T::kKeyMember), ValueType<T>>>;
 
 // size method in custom container in policy
 template <typename T>
-using SizeMethodInvokeResultImpl = decltype(std::declval<T>().size());
-template <typename T>
-inline constexpr bool kHasSizeMethod =
-    meta::IsDetected<SizeMethodInvokeResultImpl, T> &&
-    std::is_convertible_v<SizeMethodInvokeResultImpl<T>, std::size_t>;
+concept HasSizeMethod = requires(T t) {
+    {
+        t.size()
+    } -> std::convertible_to<std::size_t>;
+};
 
 // insert_or_assign method in custom container in policy
 template <typename T>
-using InsertOrAssignMethodInvokeResultImpl =
-    decltype(std::declval<typename T::CacheContainer>()
-                 .insert_or_assign(std::declval<KeyMemberTypeImpl<T>>(), std::declval<ValueType<T>>()));
-template <typename T>
-inline constexpr bool kHasInsertOrAssignMethod = meta::IsDetected<InsertOrAssignMethodInvokeResultImpl, T>;
+concept HasInsertOrAssignMethod = requires(typename T::CacheContainer& c, KeyMemberType<T> key, ValueType<T> val) {
+    c.insert_or_assign(std::move(key), std::move(val));
+};
 
 // CacheInsertOrAssign function for custom container in policy
 template <typename T>
-using CacheInsertOrAssignFunctionInvokeResultImpl = decltype(CacheInsertOrAssign(
-    std::declval<typename T::CacheContainer&>(),
-    std::declval<ValueType<T>>(),
-    std::declval<KeyMemberTypeImpl<T>>()
-));
-template <typename T>
-inline constexpr bool
-    kHasCacheInsertOrAssignFunction = meta::IsDetected<CacheInsertOrAssignFunctionInvokeResultImpl, T>;
+concept HasCacheInsertOrAssignFunction =
+    requires(typename T::CacheContainer& c, ValueType<T> val, KeyMemberType<T> key) {
+        CacheInsertOrAssign(c, std::move(val), std::move(key));
+    };
 
 // Data container for cache
 template <typename T, typename = USERVER_NAMESPACE::utils::void_t<>>
 struct DataCacheContainer {
     static_assert(
-        meta::kIsStdHashable<KeyMemberType<T>>,
+        meta::IsStdHashable<KeyMemberType<T>>,
         "With default CacheContainer, key type must be std::hash-able"
     );
 
@@ -235,9 +239,9 @@ struct DataCacheContainer {
 
 template <typename T>
 struct DataCacheContainer<T, USERVER_NAMESPACE::utils::void_t<typename T::CacheContainer>> {
-    static_assert(kHasSizeMethod<typename T::CacheContainer>, "Custom CacheContainer must provide `size` method");
+    static_assert(HasSizeMethod<typename T::CacheContainer>, "Custom CacheContainer must provide `size` method");
     static_assert(
-        kHasInsertOrAssignMethod<T> || kHasCacheInsertOrAssignFunction<T>,
+        HasInsertOrAssignMethod<T> || HasCacheInsertOrAssignFunction<T>,
         "Custom CacheContainer must provide `insert_or_assign`  method similar to std::unordered_map's "
         "one or CacheInsertOrAssign function"
     );
@@ -287,36 +291,35 @@ void CacheInsertOrAssign(Container& container, Value&& value, const KeyMember& k
 }
 
 template <typename T>
-using HasOnWritesDoneImpl = decltype(std::declval<T&>().OnWritesDone());
-
-template <typename T>
 void OnWritesDone(T& container) {
-    if constexpr (meta::IsDetected<HasOnWritesDoneImpl, T>) {
+    if constexpr (requires(T& c) { c.OnWritesDone(); }) {
         container.OnWritesDone();
     }
 }
 
 template <typename T>
-using HasCustomUpdatedImpl = decltype(T::GetLastKnownUpdated(std::declval<DataCacheContainerType<T>>()));
+concept HasCustomUpdated = requires(const DataCacheContainerType<T>& cache) { T::GetLastKnownUpdated(cache); };
 
 template <typename T>
-inline constexpr bool kHasCustomUpdated = meta::IsDetected<HasCustomUpdatedImpl, T>;
+struct UpdatedFieldTypeImpl : std::type_identity<storages::postgres::TimePointTz> {};
 
 template <typename T>
-using UpdatedFieldTypeImpl = typename T::UpdatedFieldType;
+concept HasUpdatedFieldType = requires { typename T::UpdatedFieldType; };
+
+template <HasUpdatedFieldType T>
+struct UpdatedFieldTypeImpl<T> : std::type_identity<typename T::UpdatedFieldType> {};
+
 template <typename T>
-inline constexpr bool kHasUpdatedFieldType = meta::IsDetected<UpdatedFieldTypeImpl, T>;
-template <typename T>
-using UpdatedFieldType = meta::DetectedOr<storages::postgres::TimePointTz, UpdatedFieldTypeImpl, T>;
+using UpdatedFieldType = typename UpdatedFieldTypeImpl<T>::type;
 
 template <typename T>
 constexpr bool CheckUpdatedFieldType() {
-    if constexpr (kHasUpdatedFieldType<T>) {
+    if constexpr (HasUpdatedFieldType<T>) {
 #if USERVER_POSTGRES_ENABLE_LEGACY_TIMESTAMP
         static_assert(
             std::is_same_v<typename T::UpdatedFieldType, storages::postgres::TimePointTz> ||
                 std::is_same_v<typename T::UpdatedFieldType, storages::postgres::TimePointWithoutTz> ||
-                std::is_same_v<typename T::UpdatedFieldType, storages::postgres::TimePoint> || kHasCustomUpdated<T>,
+                std::is_same_v<typename T::UpdatedFieldType, storages::postgres::TimePoint> || HasCustomUpdated<T>,
             "Invalid UpdatedFieldType, must be either TimePointTz or "
             "TimePointWithoutTz"
             "or (legacy) system_clock::time_point"
@@ -325,14 +328,14 @@ constexpr bool CheckUpdatedFieldType() {
         static_assert(
             std::is_same_v<typename T::UpdatedFieldType, storages::postgres::TimePointTz> ||
                 std::is_same_v<typename T::UpdatedFieldType, storages::postgres::TimePointWithoutTz> ||
-                kHasCustomUpdated<T>,
+                HasCustomUpdated<T>,
             "Invalid UpdatedFieldType, must be either TimePointTz or "
             "TimePointWithoutTz"
         );
 #endif
     } else {
         static_assert(
-            !kWantIncrementalUpdates<T>,
+            !WantIncrementalUpdates<T>,
             "UpdatedFieldType must be explicitly specified when using "
             "incremental updates"
         );
@@ -342,11 +345,8 @@ constexpr bool CheckUpdatedFieldType() {
 
 // Cluster host type policy
 template <typename T>
-using HasClusterHostTypeImpl = decltype(T::kClusterHostType);
-
-template <typename T>
 constexpr storages::postgres::ClusterHostTypeFlags ClusterHostType() {
-    if constexpr (meta::IsDetected<HasClusterHostTypeImpl, T>) {
+    if constexpr (requires { T::kClusterHostType; }) {
         return T::kClusterHostType;
     } else {
         return storages::postgres::ClusterHostType::kSlave;
@@ -355,11 +355,8 @@ constexpr storages::postgres::ClusterHostTypeFlags ClusterHostType() {
 
 // May return null policy
 template <typename T>
-using HasMayReturnNull = decltype(T::kMayReturnNull);
-
-template <typename T>
 constexpr bool MayReturnNull() {
-    if constexpr (meta::IsDetected<HasMayReturnNull, T>) {
+    if constexpr (requires { T::kMayReturnNull; }) {
         return T::kMayReturnNull;
     } else {
         return false;
@@ -369,26 +366,26 @@ constexpr bool MayReturnNull() {
 template <typename PostgreCachePolicy>
 struct PolicyChecker {
     // Static assertions for cache traits
-    static_assert(kHasName<PostgreCachePolicy>, "The PosgreSQL cache policy must contain a static member `kName`");
-    static_assert(kHasValueType<PostgreCachePolicy>, "The PosgreSQL cache policy must define a type alias `ValueType`");
+    static_assert(HasName<PostgreCachePolicy>, "The PosgreSQL cache policy must contain a static member `kName`");
+    static_assert(HasValueType<PostgreCachePolicy>, "The PosgreSQL cache policy must define a type alias `ValueType`");
     static_assert(
-        kHasKeyMember<PostgreCachePolicy>,
+        HasKeyMember<PostgreCachePolicy>,
         "The PostgreSQL cache policy must contain a static member `kKeyMember` "
         "with a pointer to a data or a function member with the object's key"
     );
     static_assert(
-        kHasQuery<PostgreCachePolicy> || kHasGetQuery<PostgreCachePolicy>,
+        HasQuery<PostgreCachePolicy> || HasGetQuery<PostgreCachePolicy>,
         "The PosgreSQL cache policy must contain a static data member "
         "`kQuery` with a select statement or a static member function "
         "`GetQuery` returning the query"
     );
     static_assert(
-        !(kHasQuery<PostgreCachePolicy> && kHasGetQuery<PostgreCachePolicy>),
+        !(HasQuery<PostgreCachePolicy> && HasGetQuery<PostgreCachePolicy>),
         "The PosgreSQL cache policy must define `kQuery` or "
         "`GetQuery`, not both"
     );
     static_assert(
-        kHasUpdatedField<PostgreCachePolicy>,
+        HasUpdatedField<PostgreCachePolicy>,
         "The PosgreSQL cache policy must contain a static member "
         "`kUpdatedField`. If you don't want to use incremental updates, "
         "please set its value to `nullptr`"
@@ -402,7 +399,7 @@ struct PolicyChecker {
     );
 
     static storages::postgres::Query GetQuery() {
-        if constexpr (kHasGetQuery<PostgreCachePolicy>) {
+        if constexpr (HasGetQuery<PostgreCachePolicy>) {
             return PostgreCachePolicy::GetQuery();
         } else {
             return PostgreCachePolicy::kQuery;
@@ -444,7 +441,7 @@ public:
     using BaseType = typename PolicyCheckerType::BaseType;
 
     // Calculated constants
-    constexpr static bool kIncrementalUpdates = pg_cache::detail::kWantIncrementalUpdates<PolicyType>;
+    constexpr static bool kIncrementalUpdates = pg_cache::detail::WantIncrementalUpdates<PolicyType>;
     constexpr static auto kClusterHostTypeFlags = pg_cache::detail::ClusterHostType<PolicyType>();
     constexpr static auto kName = PolicyType::kName;
 
@@ -551,7 +548,7 @@ PostgreCache<PostgreCachePolicy>::PostgreCache(const ComponentConfig& config, co
 
 template <typename PostgreCachePolicy>
 std::string PostgreCache<PostgreCachePolicy>::GetWhereClause() {
-    if constexpr (pg_cache::detail::kHasWhere<PostgreCachePolicy>) {
+    if constexpr (pg_cache::detail::HasWhere<PostgreCachePolicy>) {
         return fmt::format(FMT_COMPILE("where {}"), PostgreCachePolicy::kWhere);
     } else {
         return "";
@@ -560,7 +557,7 @@ std::string PostgreCache<PostgreCachePolicy>::GetWhereClause() {
 
 template <typename PostgreCachePolicy>
 std::string PostgreCache<PostgreCachePolicy>::GetDeltaWhereClause() {
-    if constexpr (pg_cache::detail::kHasWhere<PostgreCachePolicy>) {
+    if constexpr (pg_cache::detail::HasWhere<PostgreCachePolicy>) {
         return fmt::format(
             FMT_COMPILE("where ({}) and {} >= $1"),
             PostgreCachePolicy::kWhere,
@@ -573,7 +570,7 @@ std::string PostgreCache<PostgreCachePolicy>::GetDeltaWhereClause() {
 
 template <typename PostgreCachePolicy>
 std::string PostgreCache<PostgreCachePolicy>::GetOrderByClause() {
-    if constexpr (pg_cache::detail::kHasOrderBy<PostgreCachePolicy>) {
+    if constexpr (pg_cache::detail::HasOrderBy<PostgreCachePolicy>) {
         return fmt::format(FMT_COMPILE("order by {}"), PostgreCachePolicy::kOrderBy);
     } else {
         return "";
@@ -602,7 +599,7 @@ storages::postgres::Query PostgreCache<PostgreCachePolicy>::GetDeltaQuery() {
 template <typename PostgreCachePolicy>
 std::chrono::milliseconds PostgreCache<PostgreCachePolicy>::ParseCorrection(const ComponentConfig& config) {
     static constexpr std::string_view kUpdateCorrection = "update-correction";
-    if (pg_cache::detail::kHasCustomUpdated<PostgreCachePolicy> ||
+    if (pg_cache::detail::HasCustomUpdated<PostgreCachePolicy> ||
         this->GetAllowedUpdateTypes() == cache::AllowedUpdateTypes::kOnlyFull)
     {
         return config[kUpdateCorrection].As<std::chrono::milliseconds>(0);
@@ -616,7 +613,7 @@ typename PostgreCache<PostgreCachePolicy>::UpdatedFieldType PostgreCache<Postgre
     [[maybe_unused]] std::chrono::system_clock::time_point last_update,
     const DataType& cache
 ) const {
-    if constexpr (pg_cache::detail::kHasCustomUpdated<PostgreCachePolicy>) {
+    if constexpr (pg_cache::detail::HasCustomUpdated<PostgreCachePolicy>) {
         return PostgreCachePolicy::GetLastKnownUpdated(cache);
     } else {
         return UpdatedFieldType{last_update - correction_};
@@ -740,7 +737,7 @@ void PostgreCache<PostgreCachePolicy>::CacheResults(
     cache::UpdateStatisticsScope& stats_scope,
     tracing::ScopeTime& scope
 ) {
-    auto values = res.AsSetOf<RawValueType>(storages::postgres::kRowTag);
+    auto values = res.AsSetOf<RawValueType>(pg_cache::detail::GetTag<PostgreCachePolicy>());
     utils::CpuRelax relax{cpu_relax_iterations_parse_, &scope};
     for (auto p = values.begin(); p != values.end(); ++p) {
         relax.Relax();

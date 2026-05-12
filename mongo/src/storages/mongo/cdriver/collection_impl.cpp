@@ -134,6 +134,20 @@ void SetMaxServerTime(
     }
 }
 
+std::optional<std::chrono::milliseconds> GetTimeoutOrThrow(
+    const dynamic_config::Snapshot& dynamic_config,
+    stats::OperationStatisticsItem& stats,
+    tracing::Span& span
+) {
+    const auto time_left = GetDeadlineTimeLeft(dynamic_config);
+    if (time_left && time_left <= std::chrono::seconds{0}) {
+        stats.Account(stats::ErrorType::kCancelled);
+        span.AddTag(kCancelledByDeadlineTag, true);
+        throw CancelledException(CancelledException::ByDeadlinePropagation{});
+    }
+    return time_left;
+}
+
 }  // namespace
 
 CDriverCollectionImpl::CDriverCollectionImpl(
@@ -616,20 +630,21 @@ RequestContext CDriverCollectionImpl::MakeRequestContext(std::string&& span_name
     auto stats = statistics_->items[stats_key];
     auto dynamic_config = pool_impl_->GetConfig();
 
-    const auto inherited_deadline = GetDeadlineTimeLeft(dynamic_config);
-    if (inherited_deadline && inherited_deadline <= std::chrono::seconds{0}) {
-        stats->Account(stats::ErrorType::kCancelled);
-        span.AddTag(kCancelledByDeadlineTag, true);
-        throw CancelledException(CancelledException::ByDeadlinePropagation{});
-    }
-
-    if (inherited_deadline) {
-        span.AddTag(tracing::kTimeoutMs, inherited_deadline->count());
+    // first deadline check, to make sure we dont get/wait for client if deadline is already reached.
+    auto timeout_ms = GetTimeoutOrThrow(dynamic_config, *stats, span);
+    if (timeout_ms) {
+        span.AddTag(tracing::kTimeoutMs, timeout_ms->count());
     }
 
     auto client = GetClient(*stats);
     cdriver::CollectionPtr
         collection(mongoc_client_get_collection(client.get(), GetDatabaseName().c_str(), GetCollectionName().c_str()));
+
+    // The second deadline check, to make sure we did not hit deadline after waiting or creating a new client.
+    timeout_ms = timeout_ms ? GetTimeoutOrThrow(dynamic_config, *stats, span) : timeout_ms;
+    if (timeout_ms) {
+        span.AddTag(tracing::kTimeoutMs, timeout_ms->count());
+    }
 
     return RequestContext{
         std::move(stats),
@@ -637,7 +652,7 @@ RequestContext CDriverCollectionImpl::MakeRequestContext(std::string&& span_name
         std::move(client),
         std::move(collection),
         std::move(span),
-        inherited_deadline,
+        timeout_ms,
     };
 }
 

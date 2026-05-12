@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file userver/utils/scope.hpp
+/// @file userver/utils/resource_scopes.hpp
 /// @brief @copybrief utils::ResourceScopeStorage
 
 #include <functional>
@@ -62,13 +62,13 @@ using ScopePtr = std::unique_ptr<impl::ScopeBase>;
 
 }  // namespace impl
 
-/// @brief Smart collection of @ref ScopePtr.
+/// @brief Smart collection of resource registration and release scopes.
 /// It is a helper class used in component system or in a component-less
 /// unit tests.
 class ResourceScopeStorage final {
 public:
     /// @brief Registers a functor to register some resource that will be
-    /// called after the component is succesfully created (including all
+    /// called after the component is successfully created (including all
     /// class descendants) or after the component creation is emulated in
     /// unit tests. The functor must return a RAII-style handle object
     /// that unregisters the previously registered resource. The returned handle's

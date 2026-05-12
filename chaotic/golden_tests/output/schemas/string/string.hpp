@@ -24,6 +24,8 @@ String Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::fo
 
 String Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<String>);
 
+String FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<String>);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const String& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 

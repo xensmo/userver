@@ -138,6 +138,7 @@ and make sure that it builds and passes tests.
 * @ref scripts/docs/en/userver/stack.md
 * @ref scripts/docs/en/userver/dump_coroutines.md
 * @ref scripts/docs/en/userver/long_transactions.md
+* @ref scripts/docs/en/userver/graceful_shutdown.md
 
 
 ## Caches
@@ -148,7 +149,7 @@ and make sure that it builds and passes tests.
 
 
 ## PostgreSQL
-* @ref pg_driver
+* @ref scripts/docs/en/userver/pg_driver.md
 * @ref pg_transactions
 * @ref pg_run_queries
 * @ref pg_process_results

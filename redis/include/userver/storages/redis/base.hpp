@@ -77,8 +77,6 @@ struct MetricsSettings {
             return timings_enabled == rhs.timings_enabled && command_timings_enabled == rhs.command_timings_enabled &&
                    request_sizes_enabled == rhs.request_sizes_enabled && reply_sizes_enabled == rhs.reply_sizes_enabled;
         }
-
-        constexpr bool operator!=(const DynamicSettings& rhs) const { return !(*this == rhs); }
     };
 
     DynamicSettings dynamic_settings;
@@ -94,8 +92,6 @@ struct MetricsSettings {
 
     constexpr bool operator==(const MetricsSettings& rhs) const { return dynamic_settings == rhs.dynamic_settings; }
 
-    constexpr bool operator!=(const MetricsSettings& rhs) const { return !(*this == rhs); }
-
     bool IsTimingsEnabled() const { return dynamic_settings.timings_enabled; }
     bool IsCommandTimingsEnabled() const { return dynamic_settings.command_timings_enabled; }
     bool IsRequestSizesEnabled() const { return dynamic_settings.request_sizes_enabled; }
@@ -108,8 +104,6 @@ struct PubsubMetricsSettings {
     constexpr bool operator==(const PubsubMetricsSettings& rhs) const {
         return per_shard_stats_enabled == rhs.per_shard_stats_enabled;
     }
-
-    constexpr bool operator!=(const PubsubMetricsSettings& rhs) const { return !(*this == rhs); }
 };
 
 struct ReplicationMonitoringSettings {

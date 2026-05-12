@@ -288,7 +288,7 @@ void StateBase::OnActorDestroy(const Actor& actor) {
 void State::OnCycleFound(const std::vector<const Actor*>& cycle) {
     utils::AbortWithStacktrace(fmt::format(
         "Found cycle: {}",
-        fmt::join(cycle | boost::adaptors::transformed([](const Actor* v) { return ToAssertString(*v); }), " => ")
+        fmt::join(cycle | std::views::transform([](const Actor* v) { return ToAssertString(*v); }), " => ")
     ));
 }
 

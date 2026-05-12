@@ -157,7 +157,7 @@ PostgreConnectionBaseFixture::PostgreConnectionBaseFixture() = default;
 
 PostgreConnectionBaseFixture::~PostgreConnectionBaseFixture() {
     // force connection cleanup to avoid leaving detached tasks behind
-    engine::AsyncNoSpan(GetTaskProcessor(), [] {}).Wait();
+    engine::AsyncNoTracing(GetTaskProcessor(), [] {}).Wait();
 }
 
 storages::postgres::detail::ConnectionPtr PostgreConnectionBaseFixture::MakeConn(

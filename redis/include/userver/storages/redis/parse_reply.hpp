@@ -109,8 +109,8 @@ Parse(ReplyData&& reply_data, const std::string& request_description, To<std::un
 ReplyData Parse(ReplyData&& reply_data, const std::string& request_description, To<ReplyData>);
 
 template <typename Result, typename ReplyType = Result>
-std::enable_if_t<impl::HasParseFunctionFromRedisReply<Result, ReplyType>::value, ReplyType>
-Parse(ReplyData&& reply_data, const std::string& request_description, To<Result, ReplyType>) {
+requires impl::HasParseFunctionFromRedisReply<Result, ReplyType>::value
+ReplyType Parse(ReplyData&& reply_data, const std::string& request_description, To<Result, ReplyType>) {
     return Result::Parse(std::move(reply_data), request_description);
 }
 

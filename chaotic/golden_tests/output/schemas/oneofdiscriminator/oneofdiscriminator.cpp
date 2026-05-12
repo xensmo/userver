@@ -2,8 +2,14 @@
 
 #include "oneofdiscriminator.hpp"
 #include "oneofdiscriminator_parsers.ipp"
+#include "oneofdiscriminator_sax_parsers.hpp"
 
 namespace ns {
+
+A FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<A>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      A, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<A>>>(json);
+}
 
 bool operator==(const A& lhs, const A& rhs) {
   return lhs.type == rhs.type && lhs.a_prop == rhs.a_prop && lhs.extra == rhs.extra &&
@@ -19,9 +25,13 @@ A Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats
   return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<A>) was not generated: ::ns::A has JSON-specific field "extra" */
+A Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<A> to) {
+  return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
+}
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<A>) was not generated: ::ns::A has JSON-specific field "extra" */
+A Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<A> to) {
+  return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+}
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     [[maybe_unused]] const A& value,
@@ -39,6 +49,11 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+B FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<B>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      B, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<B>>>(json);
+}
+
 bool operator==(const B& lhs, const B& rhs) {
   return lhs.type == rhs.type && lhs.b_prop == rhs.b_prop && lhs.extra == rhs.extra &&
 
@@ -53,9 +68,13 @@ B Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats
   return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<B>) was not generated: ::ns::B has JSON-specific field "extra" */
+B Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<B> to) {
+  return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
+}
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<B>) was not generated: ::ns::B has JSON-specific field "extra" */
+B Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<B> to) {
+  return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+}
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     [[maybe_unused]] const B& value,
@@ -71,6 +90,11 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   }
 
   return vb.ExtractValue();
+}
+
+C FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<C>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      C, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<C>>>(json);
 }
 
 bool operator==(const C& lhs, const C& rhs) { return lhs.version == rhs.version && true; }
@@ -103,6 +127,11 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+D FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<D>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      D, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<D>>>(json);
+}
+
 bool operator==(const D& lhs, const D& rhs) { return lhs.version == rhs.version && true; }
 
 USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::LogHelper& lh, const D& value) {
@@ -131,6 +160,13 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   }
 
   return vb.ExtractValue();
+}
+
+IntegerOneOfDiscriminator FromJsonString(std::string_view json,
+                                         USERVER_NAMESPACE::formats::parse::To<IntegerOneOfDiscriminator>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      IntegerOneOfDiscriminator, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                                     USERVER_NAMESPACE::chaotic::sax::Parser<IntegerOneOfDiscriminator>>>(json);
 }
 
 bool operator==(const IntegerOneOfDiscriminator& lhs, const IntegerOneOfDiscriminator& rhs) {
@@ -166,6 +202,12 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   }
 
   return vb.ExtractValue();
+}
+
+OneOfDiscriminator FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<OneOfDiscriminator>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      OneOfDiscriminator, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
+                              USERVER_NAMESPACE::chaotic::sax::Parser<OneOfDiscriminator>>>(json);
 }
 
 bool operator==(const OneOfDiscriminator& lhs, const OneOfDiscriminator& rhs) { return lhs.foo == rhs.foo && true; }

@@ -382,7 +382,7 @@ auto HedgeRequestsBulk(std::vector<RequestStrategy> inputs, HedgingSettings hedg
                 /// timeout - need to process plan
                 auto plan_entry = context.PopPlan();
                 if (!plan_entry.has_value()) {
-                    /// Timeout but we don't have planed actions any more
+                    /// Timeout but we don't have planned actions any more
                     break;
                 }
                 const auto [timestamp, request_index, attempt_id, action] = *plan_entry;

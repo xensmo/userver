@@ -46,6 +46,12 @@ protected:
 
     const MiddlewareMock& Middleware(std::size_t index) const { return *middlewares_[index]; }
 
+    const MiddlewareMock& Middleware() const
+    requires(N == 1)
+    {
+        return Middleware(0);
+    }
+
 private:
     ServiceType service_;
     std::optional<ClientType> client_;

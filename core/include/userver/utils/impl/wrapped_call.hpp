@@ -3,6 +3,7 @@
 /// @file userver/utils/impl/wrapped_call.hpp
 /// @brief @copybrief utils::impl::WrappedCall
 
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <new>
@@ -30,7 +31,7 @@ public:
     /// Returns (or rethrows) the result of wrapped call invocation
     decltype(auto) Get() const& { return result_.Get(); }
 
-    void RethrowErrorResult() const final { (void)result_.Get(); }
+    std::exception_ptr GetException() const noexcept final { return result_.GetException(); }
 
 protected:
     WrappedCall() noexcept = default;
@@ -80,13 +81,14 @@ using DecayUnref = typename UnrefImpl<std::decay_t<T>>::type;
 // Stores passed arguments and function. Invokes function later with argument
 // types exactly matching the initial types of arguments passed to WrapCall.
 template <typename Function, typename... Args>
+requires std::invocable<Function&&, Args&&...>
 class WrappedCallImpl final : public WrappedCall<std::invoke_result_t<Function&&, Args&&...>> {
 public:
     using ResultType = std::invoke_result_t<Function&&, Args&&...>;
 
-    template <typename RawFunction, typename RawArgsTuple>
-    explicit WrappedCallImpl(RawFunction&& func, RawArgsTuple&& args)
-        : data_(std::in_place, std::forward<RawFunction>(func), std::forward<RawArgsTuple>(args))
+    template <typename RawFunction, typename... RawArgs>
+    explicit WrappedCallImpl(RawFunction&& func, RawArgs&&... args)
+        : data_(std::in_place, std::forward<RawFunction>(func), std::forward<RawArgs>(args)...)
     {}
 
     void Perform() override {
@@ -115,11 +117,11 @@ public:
 private:
     struct Data final {
         // TODO remove after paren-init for aggregates in C++20
-        template <typename RawFunction, typename RawArgsTuple>
-        explicit Data(RawFunction&& func, RawArgsTuple&& args)
+        template <typename RawFunction, typename... RawArgs>
+        explicit Data(RawFunction&& func, RawArgs&&... args)
             // NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
             : func(std::forward<RawFunction>(func)),
-              args(std::forward<RawArgsTuple>(args))
+              args(std::forward<RawArgs>(args)...)
         {}
 
         Function func;
@@ -141,10 +143,8 @@ template <typename Function, typename... Args>
         (!std::is_array_v<std::remove_reference_t<Args>> && ...),
         "Passing C arrays to Async is forbidden. Use std::array instead"
     );
-
-    return *new (storage) WrappedCallImplType<
-        Function,
-        Args...>(std::forward<Function>(f), std::forward_as_tuple(std::forward<Args>(args)...));
+    return *new (storage
+    ) WrappedCallImplType<Function, Args...>(std::forward<Function>(f), std::forward<Args>(args)...);
 }
 
 }  // namespace utils::impl

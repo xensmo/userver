@@ -157,16 +157,13 @@ public:
 
     bool operator==(const DefaultDict& r) const noexcept { return dict_ == r.dict_; }
 
-    bool operator!=(const DefaultDict& r) const noexcept { return !(*this == r); }
-
 private:
     std::string name_;
     DictType dict_;
 };
 
-template <typename Value, typename T>
-std::enable_if_t<formats::common::kIsFormatValue<Value>, DefaultDict<T>>
-Parse(const Value& value, formats::parse::To<DefaultDict<T>>) {
+template <formats::common::kIsFormatValue Value, typename T>
+DefaultDict<T> Parse(const Value& value, formats::parse::To<DefaultDict<T>>) {
     return DefaultDict<T>{value.GetPath(), value.template As<typename DefaultDict<T>::DictType>()};
 }
 

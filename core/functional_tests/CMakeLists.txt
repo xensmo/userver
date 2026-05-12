@@ -29,6 +29,9 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-https-no-passphrase)
 add_subdirectory(metrics)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-metrics)
 
+add_subdirectory(sharded_http_handler_metrics)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-sharded-http-handler-metrics)
+
 add_subdirectory(static_service)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-static-service)
 

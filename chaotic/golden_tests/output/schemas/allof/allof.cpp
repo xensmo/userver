@@ -2,8 +2,16 @@
 
 #include "allof.hpp"
 #include "allof_parsers.ipp"
+#include "allof_sax_parsers.hpp"
 
 namespace ns {
+
+AllOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<AllOf>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      AllOf,
+      USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<AllOf>>>(
+      json);
+}
 
 bool operator==(const AllOf::Foo__P0& lhs, const AllOf::Foo__P0& rhs) {
   return lhs.foo == rhs.foo && lhs.extra == rhs.extra &&
@@ -60,11 +68,41 @@ AllOf Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::for
   return Parse<USERVER_NAMESPACE::formats::json::Value>(json, to);
 }
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<AllOf>) was not generated: ::ns::AllOf::Foo__P0 has JSON-specific
- * field "extra" */
+AllOf::Foo__P0 Parse(USERVER_NAMESPACE::formats::yaml::Value json,
+                     USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P0> to) {
+  return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
+}
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<AllOf>) was not generated: ::ns::AllOf::Foo__P0 has JSON-specific
- * field "extra" */
+AllOf::Foo__P1 Parse(USERVER_NAMESPACE::formats::yaml::Value json,
+                     USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P1> to) {
+  return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
+}
+
+AllOf::Foo Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo> to) {
+  return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
+}
+
+AllOf Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf> to) {
+  return Parse<USERVER_NAMESPACE::formats::yaml::Value>(json, to);
+}
+
+AllOf::Foo__P0 Parse(USERVER_NAMESPACE::yaml_config::Value json,
+                     USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P0> to) {
+  return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+}
+
+AllOf::Foo__P1 Parse(USERVER_NAMESPACE::yaml_config::Value json,
+                     USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P1> to) {
+  return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+}
+
+AllOf::Foo Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo> to) {
+  return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+}
+
+AllOf Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf> to) {
+  return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+}
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     [[maybe_unused]] const AllOf::Foo__P0& value,

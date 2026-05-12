@@ -225,7 +225,8 @@ SentinelImpl::SentinelImpl(
     ConnectionSecurity connection_security,
     KeyShardFactory&& key_shard_factory,
     dynamic_config::Source dynamic_config_source,
-    std::size_t database_index
+    std::size_t database_index,
+    TopologyUpdateMethod topology_update_method
 )
     : sentinel_obj_(sentinel),
       ev_thread_(sentinel_thread_control),
@@ -255,7 +256,8 @@ SentinelImpl::SentinelImpl(
                 password,
                 shards,
                 conns,
-                connection_security
+                connection_security,
+                topology_update_method
             );
         } else if (key_shard_type == ShardingStrategy::kRedisStandalone) {
             LOG_DEBUG() << log_extra_ << "Construct Standalone topology holder";
@@ -264,7 +266,7 @@ SentinelImpl::SentinelImpl(
             return std::make_unique<StandaloneTopologyHolder>(
                 ev_thread_,
                 redis_thread_pool,
-                shard_group_name,
+                shard_group_name_,
                 password,
                 database_index_,
                 conns.front()

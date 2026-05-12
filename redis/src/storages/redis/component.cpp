@@ -1,5 +1,6 @@
 #include <userver/storages/redis/component.hpp>
 
+#include <ranges>
 #include <stdexcept>
 #include <vector>
 
@@ -24,7 +25,9 @@
 
 #include <userver/storages/redis/client.hpp>
 #include <userver/storages/redis/redis_config.hpp>
+#include <userver/storages/redis/sharding_strategies.hpp>
 #include <userver/storages/redis/subscribe_client.hpp>
+#include <userver/storages/redis/topology_update_method.hpp>
 
 #include <storages/redis/impl/keyshard_impl.hpp>
 #include <storages/redis/impl/sentinel.hpp>
@@ -35,8 +38,6 @@
 #include "subscribe_client_impl.hpp"
 #include "userver/storages/redis/base.hpp"
 #include "userver/storages/redis/wait_connected_mode.hpp"
-
-#include <boost/range/adaptor/map.hpp>
 
 #ifndef ARCADIA_ROOT
 #include "generated/src/storages/redis/component.yaml.hpp"  // Y_IGNORE
@@ -73,6 +74,7 @@ struct RedisGroup {
     std::string config_name;
     storages::redis::ShardingStrategy sharding_strategy{storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32};
     bool allow_reads_from_master{false};
+    storages::redis::TopologyUpdateMethod topology_update_method{storages::redis::TopologyUpdateMethod::kClusterSlots};
 };
 
 RedisGroup Parse(const yaml_config::YamlConfig& value, formats::parse::To<RedisGroup>) {
@@ -82,6 +84,8 @@ RedisGroup Parse(const yaml_config::YamlConfig& value, formats::parse::To<RedisG
     config.sharding_strategy =
         storages::redis::ToShardingStrategy(value["sharding_strategy"].As<std::string>("KeyShardTaximeterCrc32"));
     config.allow_reads_from_master = value["allow_reads_from_master"].As<bool>(false);
+    config.topology_update_method =
+        storages::redis::ToTopologyUpdateMethod(value["topology_update_method"].As<std::string>("cluster_slots"));
     return config;
 }
 
@@ -90,6 +94,7 @@ struct SubscribeRedisGroup {
     std::string config_name;
     storages::redis::ShardingStrategy sharding_strategy{storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32};
     bool allow_reads_from_master{false};
+    storages::redis::TopologyUpdateMethod topology_update_method{storages::redis::TopologyUpdateMethod::kClusterSlots};
 };
 
 SubscribeRedisGroup Parse(const yaml_config::YamlConfig& value, formats::parse::To<SubscribeRedisGroup>) {
@@ -99,6 +104,8 @@ SubscribeRedisGroup Parse(const yaml_config::YamlConfig& value, formats::parse::
     config.sharding_strategy =
         storages::redis::ToShardingStrategy(value["sharding_strategy"].As<std::string>("KeyShardTaximeterCrc32"));
     config.allow_reads_from_master = value["allow_reads_from_master"].As<bool>(false);
+    config.topology_update_method =
+        storages::redis::ToTopologyUpdateMethod(value["topology_update_method"].As<std::string>("cluster_slots"));
     return config;
 }
 
@@ -148,7 +155,7 @@ std::shared_ptr<storages::redis::Client> Redis::GetClient(
         throw std::runtime_error(fmt::format(
             "{} redis client not found. Available clients: [{}]",
             name,
-            fmt::join(clients_ | boost::adaptors::map_keys, ", ")
+            fmt::join(clients_ | std::views::keys, ", ")
         ));
     }
     it->second->WaitConnectedOnce(wait_connected);
@@ -161,7 +168,7 @@ std::shared_ptr<storages::redis::impl::Sentinel> Redis::Client(const std::string
         throw std::runtime_error(fmt::format(
             "{} redis client not found. Available clients: [{}]",
             name,
-            fmt::join(clients_ | boost::adaptors::map_keys, ", ")
+            fmt::join(clients_ | std::views::keys, ", ")
         ));
     }
     return it->second;
@@ -177,7 +184,7 @@ std::shared_ptr<storages::redis::SubscribeClient> Redis::GetSubscribeClient(
             "{} redis subscribe-client not found. Available subscribe-clients: "
             "[{}]",
             name,
-            fmt::join(subscribe_clients_ | boost::adaptors::map_keys, ", ")
+            fmt::join(subscribe_clients_ | std::views::keys, ", ")
         ));
     }
     it->second->WaitConnectedOnce(wait_connected);
@@ -214,7 +221,8 @@ void Redis::Connect(
             redis_group.db,
             redis_group.sharding_strategy,
             cc,
-            testsuite_redis_control
+            testsuite_redis_control,
+            redis_group.topology_update_method
         );
         if (sentinel) {
             sentinels_.emplace(redis_group.db, sentinel);
@@ -247,7 +255,8 @@ void Redis::Connect(
             redis_group.db,
             redis_group.sharding_strategy,
             cc,
-            testsuite_redis_control
+            testsuite_redis_control,
+            redis_group.topology_update_method
         );
         if (sentinel) {
             subscribe_clients_

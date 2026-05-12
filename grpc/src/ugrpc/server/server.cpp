@@ -6,6 +6,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <thread>
 #include <vector>
 
 #include <fmt/format.h>
@@ -21,6 +22,7 @@
 #include <ugrpc/impl/grpc_native_logging.hpp>
 #include <ugrpc/server/impl/generic_service_worker.hpp>
 #include <ugrpc/server/impl/parse_config.hpp>
+#include <userver/engine/single_use_event.hpp>
 #include <userver/ugrpc/impl/statistics_storage.hpp>
 #include <userver/ugrpc/impl/to_string.hpp>
 #include <userver/ugrpc/server/impl/completion_queue_pool.hpp>
@@ -117,6 +119,8 @@ private:
     void AddListeningUnixSocket(std::string_view path, const TlsConfig& tls_config);
 
     void DoStart();
+
+    void ShutdownServer() noexcept;
 
     State state_{State::kConfiguration};
     std::optional<grpc::ServerBuilder> server_builder_;
@@ -276,9 +280,8 @@ void Server::Impl::Stop() noexcept {
 
     // Must shutdown server, then ServiceWorkers, then queues before anything
     // else
-    if (server_) {
-        LOG_INFO() << "Stopping the gRPC server";
-        server_->Shutdown(engine::Deadline::FromDuration(kShutdownGracePeriod));
+    if (server_ && state_ != State::kServingStopped) {
+        ShutdownServer();
     }
     service_workers_.clear();
     generic_service_workers_.clear();
@@ -291,8 +294,7 @@ void Server::Impl::Stop() noexcept {
 void Server::Impl::StopServing() noexcept {
     UASSERT(state_ != State::kStopped);
     if (server_) {
-        LOG_INFO() << "Stopping serving on the gRPC server";
-        server_->Shutdown(engine::Deadline::FromDuration(kShutdownGracePeriod));
+        ShutdownServer();
     }
     service_workers_.clear();
     generic_service_workers_.clear();
@@ -339,7 +341,7 @@ void Server::Impl::DoStart() {
     }
 
     server_ =
-        engine::CriticalAsyncNoSpan(engine::current_task::GetBlockingTaskProcessor(), [this] {
+        engine::CriticalAsyncNoTracing(engine::current_task::GetBlockingTaskProcessor(), [this] {
             return server_builder_->BuildAndStart();
         }).Get();
     UINVARIANT(server_, "See grpcpp logs for details");
@@ -357,6 +359,20 @@ void Server::Impl::DoStart() {
     } else {
         LOG_INFO() << "gRPC server started without using AddListeningPort";
     }
+}
+
+void Server::Impl::ShutdownServer() noexcept {
+    LOG_INFO() << "Stopping the gRPC server";
+    const auto deadline = engine::Deadline::FromDuration(kShutdownGracePeriod);
+
+    // Shutdown blocks thread.
+    engine::SingleUseEvent finished;
+    std::thread thread([&] {
+        server_->Shutdown(deadline);
+        finished.Send();
+    });
+    finished.WaitNonCancellable();
+    thread.join();
 }
 
 Server::Server(

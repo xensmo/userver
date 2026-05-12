@@ -15,6 +15,7 @@
 #include <userver/storages/redis/base.hpp>
 #include <userver/storages/redis/command_options.hpp>
 #include <userver/storages/redis/fwd.hpp>
+#include <userver/storages/redis/topology_update_method.hpp>
 #include <userver/storages/redis/wait_connected_mode.hpp>
 
 #include <storages/redis/impl/keyshard.hpp>
@@ -69,7 +70,8 @@ public:
         KeyShardFactory key_shard_factory,
         CommandControl command_control,
         const testsuite::RedisControl& testsuite_redis_control,
-        std::size_t database_index
+        std::size_t database_index,
+        TopologyUpdateMethod topology_update_method
     );
     virtual ~Sentinel();
 
@@ -99,7 +101,8 @@ public:
         const std::string& client_name,
         KeyShardFactory key_shard_factory,
         const CommandControl& command_control = {},
-        const testsuite::RedisControl& testsuite_redis_control = {}
+        const testsuite::RedisControl& testsuite_redis_control = {},
+        TopologyUpdateMethod topology_update_method = TopologyUpdateMethod::kClusterSlots
     );
 
     void AsyncCommand(CommandPtr command, bool master = true, size_t shard = 0);

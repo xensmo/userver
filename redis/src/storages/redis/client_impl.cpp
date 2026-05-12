@@ -190,6 +190,40 @@ RequestEvalShaCommon ClientImpl::EvalShaCommon(
     ));
 }
 
+RequestEvalCommon ClientImpl::EvalReadOnlyCommon(
+    std::string script,
+    std::vector<std::string> keys,
+    std::vector<std::string> args,
+    const CommandControl& command_control
+) {
+    UASSERT(!keys.empty());
+    auto shard = ShardByKey(keys.at(0), command_control);
+    size_t keys_size = keys.size();
+    return CreateRequest<RequestEvalCommon>(MakeRequest(
+        CmdArgs{"eval_ro", std::move(script), keys_size, std::move(keys), std::move(args)},
+        shard,
+        false,
+        GetCommandControl(command_control)
+    ));
+}
+
+RequestEvalShaCommon ClientImpl::EvalShaReadOnlyCommon(
+    std::string script_hash,
+    std::vector<std::string> keys,
+    std::vector<std::string> args,
+    const CommandControl& command_control
+) {
+    UASSERT(!keys.empty());
+    auto shard = ShardByKey(keys.at(0), command_control);
+    size_t keys_size = keys.size();
+    return CreateRequest<RequestEvalShaCommon>(MakeRequest(
+        CmdArgs{"evalsha_ro", std::move(script_hash), keys_size, std::move(keys), std::move(args)},
+        shard,
+        false,
+        GetCommandControl(command_control)
+    ));
+}
+
 RequestGenericCommon ClientImpl::GenericCommon(
     std::string command,
     std::vector<std::string> args,

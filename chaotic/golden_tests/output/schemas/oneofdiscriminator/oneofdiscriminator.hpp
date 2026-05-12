@@ -28,9 +28,11 @@ USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::Lo
 
 A Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<A>);
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<A>) was not generated: ::ns::A has JSON-specific field "extra" */
+A Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<A>);
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<A>) was not generated: ::ns::A has JSON-specific field "extra" */
+A Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<A>);
+
+A FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<A>);
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const A& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
@@ -50,9 +52,11 @@ USERVER_NAMESPACE::logging::LogHelper& operator<<(USERVER_NAMESPACE::logging::Lo
 
 B Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<B>);
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<B>) was not generated: ::ns::B has JSON-specific field "extra" */
+B Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<B>);
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<B>) was not generated: ::ns::B has JSON-specific field "extra" */
+B Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<B>);
+
+B FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<B>);
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const B& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
@@ -72,6 +76,8 @@ C Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats
 
 C Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<C>);
 
+C FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<C>);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const C& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
@@ -89,6 +95,8 @@ D Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats
 D Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<D>);
 
 D Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<D>);
+
+D FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<D>);
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const D& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
@@ -118,6 +126,9 @@ IntegerOneOfDiscriminator Parse(USERVER_NAMESPACE::formats::json::Value json,
 /* Parse(USERVER_NAMESPACE::yaml_config::Value, To<IntegerOneOfDiscriminator>) was not generated:
  * ::ns::IntegerOneOfDiscriminator::Foo has JSON-specific field "extra" */
 
+IntegerOneOfDiscriminator FromJsonString(std::string_view json,
+                                         USERVER_NAMESPACE::formats::parse::To<IntegerOneOfDiscriminator>);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const IntegerOneOfDiscriminator& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
@@ -146,6 +157,8 @@ OneOfDiscriminator Parse(USERVER_NAMESPACE::formats::json::Value json,
 
 /* Parse(USERVER_NAMESPACE::yaml_config::Value, To<OneOfDiscriminator>) was not generated: ::ns::OneOfDiscriminator::Foo
  * has JSON-specific field "extra" */
+
+OneOfDiscriminator FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<OneOfDiscriminator>);
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const OneOfDiscriminator& value,

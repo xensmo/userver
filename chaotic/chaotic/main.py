@@ -75,6 +75,11 @@ def parse_args() -> argparse.Namespace:
         action='store_true',
         help='Generate JSON serializers for generated types',
     )
+    parser.add_argument(
+        '--no-sax-parse',
+        action='store_true',
+        help='Do not generate JSON SAX parsers',
+    )
 
     parser.add_argument(
         '-o',
@@ -155,7 +160,7 @@ def traverse_dfs(path: str, data: Any):
         except (GeneratorExit, StopIteration):
             if feed:
                 items_to_remove.append(name)
-            if sticky_feed and item == {}:
+            elif sticky_feed and item == {}:
                 items_to_remove.append(name)
 
     for item in items_to_remove:
@@ -271,6 +276,7 @@ def main() -> None:
         clang_format_bin=args.clang_format,
         parse_extra_formats=args.parse_extra_formats,
         generate_serializer=args.generate_serializers,
+        generate_sax_parser=not args.no_sax_parse,
     ).render(types)
     for output in outputs:
         if output.filepath_wo_ext.startswith('/'):

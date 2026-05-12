@@ -27,6 +27,16 @@ class StatementError : public RuntimeError {
     using RuntimeError::RuntimeError;
 };
 
+/// Thrown when the operation is aborted because an @ref engine::Deadline has expired
+/// (including task-inherited request deadlines).
+class OperationInterrupted : public RuntimeError {
+    using RuntimeError::RuntimeError;
+};
+
+class TransactionException : public LogicError {
+    using LogicError::LogicError;
+};
+
 class ResultSetError : public RuntimeError {
     using RuntimeError::RuntimeError;
 };

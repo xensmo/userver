@@ -49,7 +49,7 @@ TEST(TransparentSet, FindTransparent) {
 TEST(TransparentMap, FindTransparent) {
     using Map = utils::impl::TransparentMap<std::string, int>;
     using Entry = std::pair<const std::string, int>;
-    static_assert(meta::kIsUniqueMap<Map>);
+    static_assert(meta::IsUniqueMap<Map>);
 
     Map map;
     map.emplace("foo", 4);
@@ -88,7 +88,7 @@ TEST(TransparentMap, FindTransparentOrNullptr) {
 
 TEST(TransparentMap, CustomValue) {
     using Map = utils::impl::TransparentMap<StringViewable, int>;
-    static_assert(meta::kIsUniqueMap<Map>);
+    static_assert(meta::IsUniqueMap<Map>);
 
     Map map;
     map.emplace(StringViewable{"foo"}, 4);
@@ -102,7 +102,7 @@ TEST(TransparentMap, CustomValue) {
 
 TEST(TransparentMap, CustomTransparentHash) {
     using Map = utils::impl::TransparentMap<std::string, int, utils::StrIcaseHash, utils::StrIcaseEqual>;
-    static_assert(meta::kIsUniqueMap<Map>);
+    static_assert(meta::IsUniqueMap<Map>);
 
     Map map;
     map.emplace("foo", 4);

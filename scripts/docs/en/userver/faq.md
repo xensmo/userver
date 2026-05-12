@@ -51,7 +51,7 @@ Otherwise, there could be enough information to reproduce the problem.
   a `noexcept` function. See the trace for the place where that happened and add
   `try`+`catch` block in your sources, to catch and print the exception that
   is thrown.
-* Take a closer look at the utils::Async and @ref engine::AsyncNoSpan usage in
+* Take a closer look at the utils::Async and @ref engine::AsyncNoTracing usage in
   your code. Captured by reference variables in lambdas should outlive the
   returned task.
 
@@ -63,7 +63,7 @@ Otherwise, there could be enough information to reproduce the problem.
   std::string data = "I store some heap allocated data";
   task1 = utils::Async("task1", [&data](){ function1(data); });
   task2 = utils::Async("task2", [&data](){ function2(data); });
-  
+
   task2.Get(); // oops! The exception from Get() would call the destructor
                // of `data` while `task1` still uses it.
   ```
@@ -72,7 +72,7 @@ Otherwise, there could be enough information to reproduce the problem.
   std::string data = "I store some heap allocated data";
   auto task1 = utils::Async("task1", [&data](){ function1(data); });
   auto task2 = utils::Async("task2", [&data](){ function2(data); });
-  
+
   task2.Get(); // `task1` and `task2` cancelled, waited and destroyed
                // before destruction of `data`.
   ```

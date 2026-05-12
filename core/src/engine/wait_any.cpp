@@ -2,12 +2,15 @@
 
 #include <deque>
 
+#include <boost/intrusive/slist.hpp>
+
 #include <engine/impl/wait_any_utils.hpp>
 #include <engine/task/task_context.hpp>
 #include <userver/concurrent/impl/intrusive_mpsc_queue.hpp>
 #include <userver/engine/impl/awaiter.hpp>
 #include <userver/engine/single_consumer_event.hpp>
 #include <userver/utils/enumerate.hpp>
+#include <userver/utils/impl/intrusive_link_mode.hpp>
 #include <userver/utils/make_intrusive_ptr.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -60,38 +63,45 @@ public:
 
     void Append(impl::ContextAccessor* awaitable);
 
-    std::optional<std::size_t> WaitUntil(Deadline deadline);
+    std::optional<std::uint64_t> WaitUntil(Deadline deadline);
 
-    std::size_t GetCount() const noexcept { return context_accessors_.size(); }
+    std::size_t GetSize() const noexcept { return subscribed_count_ + pending_subscription_.size(); }
 
-    void Reserve(std::size_t count);
+    std::uint64_t GetNextIndex() const noexcept { return next_index_; }
 
     void Unsubscribe() noexcept;
 
 private:
-    struct QueueItem : concurrent::impl::SinglyLinkedBaseHook {
-        explicit QueueItem(std::size_t index)
-            : index(index)
+    // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
+    struct QueueItem
+        : public concurrent::impl::SinglyLinkedBaseHook,
+          public boost::intrusive::slist_base_hook<utils::impl::IntrusiveLinkMode> {
+        explicit QueueItem(impl::ContextAccessor* context_accessor, std::uint64_t index)
+            : context_accessor(context_accessor),
+              index(index)
         {}
 
-        std::size_t index;
+        impl::ContextAccessor* context_accessor;
+        std::uint64_t index;
         bool subscribed{false};
     };
 
     using Queue = concurrent::impl::IntrusiveMpscQueue<QueueItem>;
 
-    void DoNotify(std::uintptr_t context) noexcept override;
+    void DoNotify(boost::intrusive_ptr<impl::PolymorphicAwaiter> self, std::uintptr_t context) noexcept override;
 
     void Destroy() noexcept override { delete this; }
 
-    std::optional<std::size_t> TryProcessQueue() noexcept;
+    std::optional<std::uint64_t> TryProcessQueue() noexcept;
 
-    std::optional<std::size_t> TrySubscribe();
+    std::optional<std::uint64_t> TrySubscribe();
 
     bool ProcessNotified(QueueItem& item) noexcept;
 
-    std::vector<impl::ContextAccessor*> context_accessors_;
-    std::size_t subscribed_awaiters_count_{0};
+    std::uint64_t next_index_{0};
+    std::size_t subscribed_count_{0};
+    boost::intrusive::slist<QueueItem, boost::intrusive::constant_time_size<true>> pending_subscription_;
+    boost::intrusive::slist<QueueItem, boost::intrusive::constant_time_size<false>> unused_;
     std::deque<QueueItem> queue_items_;
     Queue notified_;
     engine::SingleConsumerEvent queue_non_empty_{engine::SingleConsumerEvent::NoAutoReset{}};
@@ -101,12 +111,27 @@ WaitAnyContext::Impl::Impl()
     : PolymorphicAwaiter(Awaiter::InitialRefCounter::kOne)
 {}
 
-void WaitAnyContext::Impl::Append(impl::ContextAccessor* awaitable) { context_accessors_.push_back(awaitable); }
+void WaitAnyContext::Impl::Append(impl::ContextAccessor* awaitable) {
+    if (awaitable == nullptr) {
+        ++next_index_;
+        return;
+    }
+    if (unused_.empty()) {
+        auto& item = queue_items_.emplace_back(awaitable, next_index_++);
+        pending_subscription_.push_front(item);
+        return;
+    }
+    auto& item = unused_.front();
+    unused_.pop_front();
+    item.context_accessor = awaitable;
+    item.index = next_index_++;
+    pending_subscription_.push_front(item);
+}
 
-std::optional<std::size_t> WaitAnyContext::Impl::WaitUntil(Deadline deadline) {
+std::optional<std::uint64_t> WaitAnyContext::Impl::WaitUntil(Deadline deadline) {
     for (;;) {
         queue_non_empty_.Reset();
-        if (subscribed_awaiters_count_ > 0) {
+        if (subscribed_count_ != 0) {
             auto result = TryProcessQueue();
             if (result.has_value()) {
                 return result;
@@ -118,7 +143,7 @@ std::optional<std::size_t> WaitAnyContext::Impl::WaitUntil(Deadline deadline) {
             return result;
         }
 
-        if (subscribed_awaiters_count_ == 0) {
+        if (subscribed_count_ == 0) {
             return std::nullopt;
         }
 
@@ -128,25 +153,32 @@ std::optional<std::size_t> WaitAnyContext::Impl::WaitUntil(Deadline deadline) {
     }
 }
 
-void WaitAnyContext::Impl::Reserve(std::size_t count) { context_accessors_.reserve(count); }
-
 void WaitAnyContext::Impl::Unsubscribe() noexcept {
-    for (std::size_t i = 0; i < queue_items_.size() && subscribed_awaiters_count_ > 0; ++i) {
-        auto context_accessor = context_accessors_[i];
-        if (context_accessor == nullptr || !queue_items_[i].subscribed) {
+    pending_subscription_.clear();
+    unused_.clear();
+
+    if (subscribed_count_ == 0) {
+        return;
+    }
+    for (auto& item : queue_items_) {
+        if (!item.subscribed) {
             continue;
         }
-        context_accessor->RemoveAwaiter(*this, reinterpret_cast<std::uintptr_t>(&queue_items_[i]));
-        --subscribed_awaiters_count_;
+        UASSERT(item.context_accessor != nullptr);
+        item.context_accessor->RemoveAwaiter(*this, reinterpret_cast<std::uintptr_t>(&item));
+        if (--subscribed_count_ == 0) {
+            break;
+        }
     }
 }
 
-void WaitAnyContext::Impl::DoNotify(std::uintptr_t context) noexcept {
+void WaitAnyContext::Impl::DoNotify(boost::intrusive_ptr<impl::PolymorphicAwaiter> /*self*/, std::uintptr_t context)
+    noexcept {
     notified_.Push(*reinterpret_cast<QueueItem*>(context));
     queue_non_empty_.Send();
 }
 
-std::optional<std::size_t> WaitAnyContext::Impl::TryProcessQueue() noexcept {
+std::optional<std::uint64_t> WaitAnyContext::Impl::TryProcessQueue() noexcept {
     for (;;) {
         QueueItem* const item = notified_.TryPopBlocking();
         if (item == nullptr) {
@@ -159,38 +191,37 @@ std::optional<std::size_t> WaitAnyContext::Impl::TryProcessQueue() noexcept {
     }
 }
 
-std::optional<std::size_t> WaitAnyContext::Impl::TrySubscribe() {
-    while (queue_items_.size() < context_accessors_.size()) {
-        const std::size_t index = queue_items_.size();
-        auto& item = queue_items_.emplace_back(index);
-        if (context_accessors_[index] == nullptr) {
-            continue;
-        }
+std::optional<std::uint64_t> WaitAnyContext::Impl::TrySubscribe() {
+    while (!pending_subscription_.empty()) {
+        auto& item = pending_subscription_.front();
+        pending_subscription_.pop_front();
 
-        if (context_accessors_[index]->TryAppendAwaiter(*this, reinterpret_cast<std::uintptr_t>(&item)) ==
-            impl::EarlyNotify{true})
-        {
-            return index;
+        UASSERT(item.context_accessor);
+
+        boost::intrusive_ptr<impl::Awaiter> awaiter_ptr{this};
+        item.context_accessor->TryAppendAwaiter(awaiter_ptr, reinterpret_cast<std::uintptr_t>(&item));
+        if (awaiter_ptr != nullptr) {  // context_accessor is already ready.
+            unused_.push_front(item);
+            return item.index;
         }
 
         item.subscribed = true;
-        ++subscribed_awaiters_count_;
+        ++subscribed_count_;
     }
     return std::nullopt;
 }
 
 bool WaitAnyContext::Impl::ProcessNotified(QueueItem& item) noexcept {
-    UASSERT(subscribed_awaiters_count_ > 0);
-    UASSERT(item.index < context_accessors_.size());
-    UASSERT(context_accessors_[item.index]);
+    UASSERT(item.index < next_index_);
+    UASSERT(item.context_accessor);
+    UASSERT(item.subscribed);
 
+    item.subscribed = false;
+    --subscribed_count_;
+    unused_.push_front(item);
     // The caller might have already changed the awaitable's state between Wait* calls.
     // So, we check the ready flag to avoid erroneous wakeups on non-ready awaitables.
-    const bool result = context_accessors_[item.index]->IsReady();
-    context_accessors_[item.index] = nullptr;
-    item.subscribed = false;
-    --subscribed_awaiters_count_;
-    return result;
+    return item.context_accessor->IsReady();
 }
 
 WaitAnyContext::WaitAnyContext()
@@ -216,21 +247,21 @@ WaitAnyContext& WaitAnyContext::operator=(WaitAnyContext&& other) noexcept {
     return *this;
 }
 
-std::optional<std::size_t> WaitAnyContext::Wait() { return WaitUntil(Deadline{}); }
+std::optional<std::uint64_t> WaitAnyContext::Wait() { return WaitUntil(Deadline{}); }
 
-std::optional<std::size_t> WaitAnyContext::WaitUntil(Deadline deadline) {
+std::optional<std::uint64_t> WaitAnyContext::WaitUntil(Deadline deadline) {
     UASSERT(impl_ != nullptr);
     return impl_->WaitUntil(deadline);
 }
 
-std::size_t WaitAnyContext::GetCount() const noexcept {
+std::size_t WaitAnyContext::GetSize() const noexcept {
     UASSERT(impl_ != nullptr);
-    return impl_->GetCount();
+    return impl_->GetSize();
 }
 
-void WaitAnyContext::Reserve(std::size_t count) {
+std::uint64_t WaitAnyContext::GetNextIndex() const noexcept {
     UASSERT(impl_ != nullptr);
-    impl_->Reserve(count);
+    return impl_->GetNextIndex();
 }
 
 void WaitAnyContext::AppendAccessor(impl::ContextAccessor* awaitable) {

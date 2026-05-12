@@ -8,6 +8,7 @@
 
 #include <storages/redis/impl/statistics_holder.hpp>
 #include <storages/redis/impl/topology_holder_base.hpp>
+#include <userver/storages/redis/topology_update_method.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -28,7 +29,8 @@ public:
         Password password,
         const std::vector<std::string>& /*shards*/,
         const std::vector<ConnectionInfo>& conns,
-        ConnectionSecurity connection_security
+        ConnectionSecurity connection_security,
+        TopologyUpdateMethod topology_update_method
     );
 
     ~ClusterTopologyHolder() override = default;
@@ -64,6 +66,7 @@ private:
     concurrent::Variable<Password, std::mutex> password_;
     std::shared_ptr<const std::vector<std::string>> shards_names_;
     const std::vector<ConnectionInfo> conns_;
+    const TopologyUpdateMethod topology_update_method_;
     std::shared_ptr<Shard> sentinels_;
 
     StatisticsHolder statistics_holder_;

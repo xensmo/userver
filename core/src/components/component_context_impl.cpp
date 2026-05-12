@@ -13,6 +13,7 @@
 #include <userver/tracing/tracer.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
+#include <userver/utils/task_builder.hpp>
 
 #include <components/component_context_component_info.hpp>
 #include <components/manager.hpp>
@@ -431,7 +432,7 @@ void ComponentContextImpl::ProcessAllComponentLifetimeStageSwitchings(ComponentL
     std::vector<std::pair<ComponentInfoRef, engine::TaskWithResult<void>>> tasks;
     tasks.reserve(components_.size());
     for (auto& component_info : components_) {
-        tasks.emplace_back(*component_info, engine::CriticalAsyncNoSpan([&] {
+        tasks.emplace_back(*component_info, utils::TaskBuilder{}.NoSpan().Background().Critical().Build([&] {
             ProcessSingleComponentLifetimeStageSwitching(*component_info, params);
         }));
     }
@@ -578,7 +579,7 @@ void ComponentContextImpl::CancelComponentLifetimeStageSwitching() {
 }
 
 void ComponentContextImpl::StartPrintAddingComponentsTask() {
-    print_adding_components_task_ = engine::CriticalAsyncNoSpan([this]() {
+    print_adding_components_task_ = utils::TaskBuilder{}.NoSpan().Background().Critical().Build([this]() {
         for (;;) {
             {
                 auto data = shared_data_.UniqueLock();

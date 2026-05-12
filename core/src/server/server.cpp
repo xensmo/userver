@@ -292,8 +292,6 @@ RequestsView& ServerImpl::GetRequestsView() {
     return requests_view_;
 }
 
-void Server::SetLimit(std::optional<size_t> new_limit) { SetRpsRatelimit(new_limit); }
-
 void ServerImpl::WriteTotalHandlerStatistics(utils::statistics::Writer& writer) const {
     handlers::HttpHandlerStatisticsSnapshot total;
 
@@ -309,8 +307,9 @@ void ServerImpl::WriteTotalHandlerStatistics(utils::statistics::Writer& writer) 
 
         for (const auto& handler_ptr : *handlers) {
             for (const auto method : handler_ptr->GetAllowedMethods()) {
-                total.Add(handlers::HttpHandlerStatisticsSnapshot{handler_ptr->GetHandlerStatistics().GetByMethod(method
-                )});
+                total.Add(handlers::HttpHandlerStatisticsSnapshot{
+                    handler_ptr->GetHandlerStatistics().GetOverallStatistics().GetByMethod(method)
+                });
             }
         }
     }
@@ -381,8 +380,6 @@ void Server::AddHandler(const handlers::HttpHandlerBase& handler, engine::TaskPr
     pimpl_->AddHandler(handler, task_processor);
 }
 
-size_t Server::GetThrottlableHandlersCount() const { return pimpl_->GetThrottlableHandlersCount(); }
-
 const http::HttpRequestHandler& Server::GetHttpRequestHandler(bool is_monitor) const {
     return pimpl_->GetHttpRequestHandler(is_monitor);
 }
@@ -403,6 +400,10 @@ void Server::Start() {
 void Server::Stop() { pimpl_->Stop(); }
 
 RequestsView& Server::GetRequestsView() { return pimpl_->GetRequestsView(); }
+
+void Server::SetLimit(std::optional<size_t> new_limit) { SetRpsRatelimit(new_limit); }
+
+size_t Server::GetLimitableHandlersCount() const { return pimpl_->GetThrottlableHandlersCount(); }
 
 void Server::SetRpsRatelimit(std::optional<size_t> rps) { pimpl_->SetRpsRatelimit(rps); }
 

@@ -64,11 +64,25 @@ AllOf::Foo Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE
 
 AllOf Parse(USERVER_NAMESPACE::formats::json::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf>);
 
-/* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<AllOf>) was not generated: ::ns::AllOf::Foo__P0 has JSON-specific
- * field "extra" */
+AllOf::Foo__P0 Parse(USERVER_NAMESPACE::formats::yaml::Value json,
+                     USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P0>);
 
-/* Parse(USERVER_NAMESPACE::yaml_config::Value, To<AllOf>) was not generated: ::ns::AllOf::Foo__P0 has JSON-specific
- * field "extra" */
+AllOf::Foo__P1 Parse(USERVER_NAMESPACE::formats::yaml::Value json,
+                     USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P1>);
+
+AllOf::Foo Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo>);
+
+AllOf Parse(USERVER_NAMESPACE::formats::yaml::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf>);
+
+AllOf::Foo__P0 Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P0>);
+
+AllOf::Foo__P1 Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P1>);
+
+AllOf::Foo Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo>);
+
+AllOf Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::formats::parse::To<AllOf>);
+
+AllOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<AllOf>);
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const AllOf::Foo__P0& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);

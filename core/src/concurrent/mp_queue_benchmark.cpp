@@ -2,6 +2,7 @@
 
 #include <userver/concurrent/mpsc_queue.hpp>
 #include <userver/concurrent/queue.hpp>
+#include <userver/engine/async.hpp>
 #include <userver/engine/run_standalone.hpp>
 #include <userver/utils/async.hpp>
 
@@ -11,7 +12,7 @@ namespace {
 
 template <typename Producer>
 auto GetProducerTask(Producer producer, const std::atomic<bool>& run) {
-    return engine::CriticalAsyncNoSpan([producer = std::move(producer), &run] {
+    return engine::CriticalAsyncNoTracing([producer = std::move(producer), &run] {
         std::size_t message = 0;
         while (run && producer.Push(std::size_t{message++})) {
         }
@@ -20,7 +21,7 @@ auto GetProducerTask(Producer producer, const std::atomic<bool>& run) {
 
 template <typename Consumer>
 auto GetConsumerTask(Consumer consumer) {
-    return engine::CriticalAsyncNoSpan([consumer = std::move(consumer)] {
+    return engine::CriticalAsyncNoTracing([consumer = std::move(consumer)] {
         std::size_t value{};
         while (consumer.Pop(value)) {
             benchmark::DoNotOptimize(value);

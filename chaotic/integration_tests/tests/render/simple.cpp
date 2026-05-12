@@ -11,23 +11,34 @@
 #include <userver/formats/json/value_builder.hpp>
 #include <userver/formats/parse/to.hpp>
 #include <userver/formats/serialize/variant.hpp>
+#include <userver/formats/yaml/serialize.hpp>
+#include <userver/formats/yaml/value.hpp>
+#include <userver/formats/yaml/value_builder.hpp>
 
 #include <schemas/all_of.hpp>
+#include <schemas/all_of_sax_parsers.hpp>
 #include <schemas/date.hpp>
 #include <schemas/extra_container.hpp>
 #include <schemas/indirect.hpp>
+#include <schemas/indirect_sax_parsers.hpp>
 #include <schemas/object_empty.hpp>
 #include <schemas/object_name.hpp>
 #include <schemas/object_object.hpp>
 #include <schemas/object_single_field.hpp>
 #include <schemas/object_single_field_sax_parsers.hpp>
 #include <schemas/one_of.hpp>
+#include <schemas/one_of_sax_parsers.hpp>
 #include <schemas/oneofdiscriminator.hpp>
+#include <schemas/oneofdiscriminator_sax_parsers.hpp>
 #include <schemas/string64.hpp>
 #include <schemas/uri.hpp>
 #include <schemas/uuid.hpp>
 
 USERVER_NAMESPACE_BEGIN
+
+// Make sure that chaotic and SAX parser exceptions have common base
+static_assert(std::is_base_of_v<formats::json::Exception, chaotic::Error<formats::json::Value>>);
+static_assert(std::is_base_of_v<formats::json::Exception, formats::json::parser::ParseError>);
 
 TEST(Simple, Empty) {
     auto json = formats::json::MakeObject();
@@ -120,7 +131,7 @@ TEST(Simple, ObjectTypes) {
 
 template <typename T>
 T ParseToType(std::string_view input) {
-    using Parser = decltype(ParserOf(std::declval<T&>()));
+    using Parser = chaotic::sax::Parser<T>;
     return formats::json::parser::ParseToType<T, Parser>(input);
 }
 
@@ -133,6 +144,18 @@ TEST(Simple, ObjectWithAdditionalPropertiesInt) {
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, ParseObjectWithAdditionalPropertiesIntFromYaml) {
+    auto yaml = formats::yaml::FromString(R"(
+one: 1
+two: 2
+three: 3
+    )");
+    auto obj = yaml.As<ns::ObjectWithAdditionalPropertiesInt>();
+
+    EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesIntSax) {
@@ -155,6 +178,19 @@ TEST(Simple, ObjectWithAdditionalPropertiesTrue) {
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, ParseObjectWithAdditionalPropertiesTrueFromYaml) {
+    auto yaml = formats::yaml::FromString(R"(
+one: 1
+two: 2
+three: 3
+object: {}
+        )");
+    auto obj = yaml.As<ns::ObjectWithAdditionalPropertiesTrue>();
+
+    EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesTrueSax) {
@@ -222,8 +258,28 @@ TEST(Simple, IntegerEnum) {
     std::size_t index = 0;
     for (const auto& value : ns::kIntegerEnumValues) {
         EXPECT_EQ(value, values[index]);
+        EXPECT_EQ(chaotic::ConvertTo<ns::IntegerEnum>(value), value);
+        EXPECT_EQ(chaotic::ConvertTo<ns::IntegerEnum>(static_cast<std::int64_t>(value)), value);
+        EXPECT_EQ(Convert(static_cast<std::int64_t>(value), chaotic::convert::To<ns::IntegerEnum>{}), value);
+        EXPECT_EQ(TryConvert(static_cast<std::int64_t>(value), chaotic::convert::To<ns::IntegerEnum>{}), value);
+
         ++index;
     }
+}
+
+TEST(Simple, IntegerEnumSax) {
+    auto obj = ParseToType<ns::IntegerEnum>("1");
+    EXPECT_EQ(obj, ns::IntegerEnum::k1);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back.As<int>(), 1) << ToString(json_back);
+
+    auto json2 = formats::json::MakeObject("one", 5);
+    UEXPECT_THROW_MSG(
+        ParseToType<ns::IntegerEnum>("5"),
+        formats::json::parser::ParseError,
+        "Parse error at pos 1, path '': Invalid enum value (5) for type ::ns::IntegerEnum, the latest token was 5"
+    );
 }
 
 TEST(Simple, StringEnum) {
@@ -245,9 +301,18 @@ TEST(Simple, StringEnum) {
     EXPECT_EQ("bar", ToString(ns::StringEnum::kBar));
     EXPECT_EQ("some!thing", ToString(ns::StringEnum::kSomeThing));
 
-    EXPECT_EQ(FromString("foo", formats::parse::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
+    EXPECT_EQ(TryConvert("foo", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
+    EXPECT_EQ(TryConvert("bar", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kBar);
+    EXPECT_EQ(TryConvert("some!thing", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kSomeThing);
+    EXPECT_FALSE(TryConvert("invalid", chaotic::convert::To<ns::StringEnum>{}));
+
+    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("foo"), ns::StringEnum::kFoo);
+    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("bar"), ns::StringEnum::kBar);
+    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("some!thing"), ns::StringEnum::kSomeThing);
+
+    EXPECT_EQ(Convert("foo", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
     UEXPECT_THROW_MSG(
-        FromString("zoo", formats::parse::To<ns::StringEnum>{}),
+        Convert("zoo", chaotic::convert::To<ns::StringEnum>{}),
         std::runtime_error,
         "Invalid enum value (zoo) for type ::ns::StringEnum"
     );
@@ -267,6 +332,21 @@ TEST(Simple, StringEnum) {
         EXPECT_EQ(value, values[index]);
         ++index;
     }
+}
+
+TEST(Simple, StringEnumSax) {
+    auto obj = ParseToType<ns::StringEnum>("\"foo\"");
+    EXPECT_EQ(obj, ns::StringEnum::kFoo);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back.As<std::string>(), "foo") << ToString(json_back);
+
+    UEXPECT_THROW_MSG(
+        ParseToType<ns::StringEnum>("\"zoo\""),
+        formats::json::parser::ParseError,
+        "Parse error at pos 5, path '': Invalid enum value (zoo) for type ::ns::StringEnum, the "
+        "latest token was \"zoo\""
+    );
 }
 
 TEST(Simple, StringEnumPgInteraction) {
@@ -296,6 +376,17 @@ TEST(Simple, AllOf) {
     EXPECT_EQ(json_back, json) << ToString(json_back);
 }
 
+TEST(Simple, AllOfSax) {
+    auto json = formats::json::MakeObject("foo", 1, "bar", 2);
+    auto obj = ParseToType<ns::AllOf>(ToString(json));
+
+    EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(obj.bar, 2);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
 TEST(Simple, OneOf) {
     auto json = formats::json::MakeObject();
     auto obj = json.As<ns::OneOf>();
@@ -306,9 +397,29 @@ TEST(Simple, OneOf) {
     EXPECT_EQ(json_back, json) << ToString(json_back);
 }
 
+TEST(Simple, OneOfSax) {
+    auto json = formats::json::MakeObject();
+    auto obj = ParseToType<ns::OneOf>(ToString(json));
+
+    EXPECT_EQ(std::get<ns::OneOf__O2>(obj), ns::OneOf__O2());
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
 TEST(Simple, OneOfWithDiscriminator) {
     auto json = formats::json::MakeObject("oneof", formats::json::MakeObject("type", "ObjectFoo", "foo", 42));
     auto obj = json.As<ns::ObjectOneOfWithDiscriminator>();
+    EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
+    EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, OneOfWithDiscriminatorSax) {
+    auto json = formats::json::MakeObject("oneof", formats::json::MakeObject("type", "ObjectFoo", "foo", 42));
+    auto obj = ParseToType<ns::ObjectOneOfWithDiscriminator>(ToString(json));
     EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
     EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
 
@@ -332,6 +443,22 @@ TEST(Simple, Indirect) {
     );
 
     auto obj = json.As<ns::TreeNode>();
+    EXPECT_EQ(obj.data, "smth");
+    EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
+    EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));
+}
+
+TEST(Simple, IndirectSax) {
+    auto json = formats::json::MakeObject(
+        "data",
+        "smth",
+        "left",
+        formats::json::MakeObject("data", "left"),
+        "right",
+        formats::json::MakeObject("data", "right", "left", formats::json::MakeObject("data", "rightleft"))
+    );
+
+    auto obj = ParseToType<ns::TreeNode>(ToString(json));
     EXPECT_EQ(obj.data, "smth");
     EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
     EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));

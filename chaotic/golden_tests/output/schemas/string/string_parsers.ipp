@@ -1,11 +1,12 @@
 #pragma once
 
-#include <userver/chaotic/object.hpp>
+#include <userver/chaotic/additional_properties.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
 #include <userver/chaotic/with_type.hpp>
 #include <userver/formats/parse/common_containers.hpp>
 #include <userver/formats/serialize/common_containers.hpp>
+#include <userver/utils/trivial_map.hpp>
 
 #include "string.hpp"
 

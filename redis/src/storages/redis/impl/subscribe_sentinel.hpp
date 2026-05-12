@@ -8,6 +8,7 @@
 
 #include <storages/redis/impl/sentinel.hpp>
 #include <storages/redis/impl/subscription_storage.hpp>
+#include <userver/storages/redis/topology_update_method.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -27,7 +28,8 @@ public:
         KeyShardFactory key_shard_factory,
         bool is_cluster_mode,
         CommandControl command_control,
-        const testsuite::RedisControl& testsuite_redis_control
+        const testsuite::RedisControl& testsuite_redis_control,
+        TopologyUpdateMethod topology_update_method
     );
     ~SubscribeSentinel() override;
 
@@ -39,7 +41,8 @@ public:
         const std::string& client_name,
         storages::redis::ShardingStrategy sharding_strategy,
         const CommandControl& command_control,
-        const testsuite::RedisControl& testsuite_redis_control
+        const testsuite::RedisControl& testsuite_redis_control,
+        TopologyUpdateMethod topology_update_method = TopologyUpdateMethod::kClusterSlots
     );
 
     SubscriptionToken Subscribe(

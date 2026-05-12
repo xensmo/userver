@@ -111,7 +111,7 @@ UTEST_P_MT(GrpcClientValidatorTest, AllValid, 2) {
 
     // check streaming method
     auto stream = GetClient().CheckConstraintsStreaming();
-    auto write_task = engine::AsyncNoSpan([&stream, &requests] {
+    auto write_task = engine::AsyncNoTracing([&stream, &requests] {
         for (const auto& request : requests) {
             const bool success = stream.Write(request);
             if (!success) {
@@ -159,7 +159,7 @@ UTEST_P_MT(GrpcClientValidatorTest, AllInvalid, 2) {
 
     // check streaming method
     auto stream = GetClient().CheckConstraintsStreaming();
-    auto write_task = engine::AsyncNoSpan([&stream, &requests] {
+    auto write_task = engine::AsyncNoTracing([&stream, &requests] {
         for (const auto& request : requests) {
             const bool success = stream.Write(request);
             if (!success) {

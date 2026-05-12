@@ -25,9 +25,39 @@ std::vector<NYdb::NTopic::TReadSessionEvent::TEvent> TopicReadSession::GetEvents
     return read_session_->GetEvents(false, max_events_count, max_size_bytes);
 }
 
+std::vector<NYdb::NTopic::TReadSessionEvent::TEvent> TopicReadSession::GetEvents(
+    const NYdb::NTopic::TReadSessionGetEventSettings& settings
+) {
+    impl::GetFutureValue(read_session_->WaitEvent());
+    return read_session_->GetEvents(settings);
+}
+
 bool TopicReadSession::Close(std::chrono::milliseconds timeout) { return read_session_->Close(timeout); }
 
 std::shared_ptr<NYdb::NTopic::IReadSession> TopicReadSession::GetNativeTopicReadSession() { return read_session_; }
+
+TopicWriteSession::TopicWriteSession(std::shared_ptr<NYdb::NTopic::IWriteSession> write_session)
+    : write_session_(std::move(write_session))
+{
+    UASSERT(write_session_);
+}
+
+std::optional<NYdb::NTopic::TWriteSessionEvent::TEvent> TopicWriteSession::GetEvent() {
+    impl::GetFutureValue(write_session_->WaitEvent());
+    return write_session_->GetEvent(/*block=*/false);
+}
+
+std::optional<NYdb::NTopic::TWriteSessionEvent::TEvent> TopicWriteSession::TryGetEvent() {
+    return write_session_->GetEvent(/*block=*/false);
+}
+
+void TopicWriteSession::Write(NYdb::NTopic::TContinuationToken&& token, NYdb::NTopic::TWriteMessage&& message) {
+    write_session_->Write(std::move(token), std::move(message));
+}
+
+bool TopicWriteSession::Close(std::chrono::milliseconds timeout) { return write_session_->Close(timeout); }
+
+std::shared_ptr<NYdb::NTopic::IWriteSession> TopicWriteSession::GetNativeTopicWriteSession() { return write_session_; }
 
 TopicClient::TopicClient(std::shared_ptr<impl::Driver> driver, [[maybe_unused]] impl::TopicSettings settings)
     : driver_{std::move(driver)},
@@ -46,6 +76,10 @@ NYdb::NTopic::TDescribeTopicResult TopicClient::DescribeTopic(const std::string&
 
 TopicReadSession TopicClient::CreateReadSession(const NYdb::NTopic::TReadSessionSettings& settings) {
     return TopicReadSession{topic_client_.CreateReadSession(settings)};
+}
+
+TopicWriteSession TopicClient::CreateWriteSession(const NYdb::NTopic::TWriteSessionSettings& settings) {
+    return TopicWriteSession{topic_client_.CreateWriteSession(settings)};
 }
 
 NYdb::NTopic::TTopicClient& TopicClient::GetNativeTopicClient() { return topic_client_; }

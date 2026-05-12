@@ -77,7 +77,7 @@ UTEST_F(CongestionControlTest, Basic) {
 
     UEXPECT_THROW(future.Get(), ugrpc::client::ResourceExhaustedError);
 
-    const auto& metadata = future.GetContext().GetClientContext().GetServerInitialMetadata();
+    const auto& metadata = future.GetContext().GetClientContext().GetServerTrailingMetadata();
     ASSERT_EQ(
         ugrpc::impl::kCongestionControlRatelimitReason,
         utils::FindOrDefault(metadata, ugrpc::impl::kXYaTaxiRatelimitReason)
@@ -91,7 +91,7 @@ UTEST_F(CongestionControlCustomCodeTest, CustomCode) {
 
     UEXPECT_THROW(future.Get(), ugrpc::client::InternalError);
 
-    const auto& metadata = future.GetContext().GetClientContext().GetServerInitialMetadata();
+    const auto& metadata = future.GetContext().GetClientContext().GetServerTrailingMetadata();
     ASSERT_EQ(
         ugrpc::impl::kCongestionControlRatelimitReason,
         utils::FindOrDefault(metadata, ugrpc::impl::kXYaTaxiRatelimitReason)

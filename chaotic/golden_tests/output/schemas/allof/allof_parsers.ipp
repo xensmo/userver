@@ -1,6 +1,6 @@
 #pragma once
 
-#include <userver/chaotic/object.hpp>
+#include <userver/chaotic/additional_properties.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
 #include <userver/chaotic/with_type.hpp>
@@ -34,7 +34,9 @@ AllOf::Foo__P0 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::F
 
   res.foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
 
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__AllOf__Foo__P0_PropertiesNames);
+  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
+      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
+      k__ns__AllOf__Foo__P0_PropertiesNames);
 
   return res;
 }
@@ -48,7 +50,9 @@ AllOf::Foo__P1 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::F
 
   res.bar = value["bar"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
 
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__AllOf__Foo__P1_PropertiesNames);
+  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
+      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
+      k__ns__AllOf__Foo__P1_PropertiesNames);
 
   return res;
 }

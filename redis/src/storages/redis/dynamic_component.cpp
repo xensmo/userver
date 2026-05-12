@@ -1,5 +1,6 @@
 #include <userver/storages/redis/dynamic_component.hpp>
 
+#include <ranges>
 #include <stdexcept>
 
 #include <fmt/ranges.h>
@@ -32,8 +33,6 @@
 #include "redis_secdist.hpp"
 #include "userver/storages/redis/base.hpp"
 #include "userver/storages/redis/wait_connected_mode.hpp"
-
-#include <boost/range/adaptor/map.hpp>
 
 #ifndef ARCADIA_ROOT
 #include "generated/src/storages/redis/dynamic_component.yaml.hpp"  // Y_IGNORE

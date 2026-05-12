@@ -47,19 +47,15 @@ std::optional<double> CpuLimitRtc() {
         return {};
     }
 
-    const std::string cpu_limit(cpu_limit_c_str);
+    const std::string_view cpu_limit{cpu_limit_c_str};
     LOG_DEBUG() << "CPU_LIMIT='" << cpu_limit << "'";
 
-    try {
-        size_t end{0};
-        auto cpu_f = std::stod(cpu_limit, &end);
-        if (!cpu_limit.empty() && cpu_limit.substr(end) != "c") {
-            return {};
+    if (!cpu_limit.empty() && cpu_limit.back() == 'c') {
+        try {
+            return utils::FromString<double>(cpu_limit.substr(0, cpu_limit.size() - 1));
+        } catch (const std::exception& e) {
+            LOG_ERROR() << "Failed to parse CPU_LIMIT: " << e;
         }
-
-        return {cpu_f};
-    } catch (const std::exception& e) {
-        LOG_ERROR() << "Failed to parse CPU_LIMIT: " << e;
     }
     LOG_ERROR() << "CPU_LIMIT env is invalid (" << cpu_limit << "), ignoring it";
 

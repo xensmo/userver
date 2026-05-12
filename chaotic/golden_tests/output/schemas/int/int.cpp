@@ -2,8 +2,15 @@
 
 #include "int.hpp"
 #include "int_parsers.ipp"
+#include "int_sax_parsers.hpp"
 
 namespace ns {
+
+Int FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Int>) {
+  return USERVER_NAMESPACE::formats::json::parser::ParseToType<
+      Int, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<Int> > >(
+      json);
+}
 
 bool operator==(const Int& lhs, const Int& rhs) { return lhs.foo == rhs.foo && true; }
 

@@ -50,8 +50,6 @@ public:
 
     void AddHandler(const handlers::HttpHandlerBase& handler, engine::TaskProcessor& task_processor);
 
-    size_t GetThrottlableHandlersCount() const;
-
     const http::HttpRequestHandler& GetHttpRequestHandler(bool is_monitor = false) const;
 
     void StartMonitorPort();
@@ -62,6 +60,8 @@ public:
     RequestsView& GetRequestsView();
 
     void SetLimit(std::optional<size_t> new_limit) override;
+
+    size_t GetLimitableHandlersCount() const override;
 
     void SetRpsRatelimit(std::optional<size_t> rps);
 

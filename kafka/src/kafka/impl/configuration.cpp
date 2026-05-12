@@ -153,7 +153,7 @@ SecurityConfiguration Parse(const yaml_config::YamlConfig& config, formats::pars
 
     if (protocol == kSSLProtocol) {
         security.security_protocol.emplace<SecurityConfiguration::Ssl>(SecurityConfiguration::Ssl{
-            /*ssl_ca_location=*/config["ssl_ca_location"].As<std::string>(),
+            .ssl_ca_location = config["ssl_ca_location"].As<std::string>(),
         });
         return security;
     }
@@ -165,12 +165,12 @@ SecurityConfiguration Parse(const yaml_config::YamlConfig& config, formats::pars
 
     if (protocol == kSaslPlainTextProtocol) {
         security.security_protocol.emplace<SecurityConfiguration::SaslPlaintext>(SecurityConfiguration::SaslPlaintext{
-            /*security_mechanism=*/mechanism,
+            .security_mechanism = mechanism,
         });
     } else if (protocol == kSaslSSLProtocol) {
         security.security_protocol.emplace<SecurityConfiguration::SaslSsl>(SecurityConfiguration::SaslSsl{
-            /*security_mechanism=*/mechanism,
-            /*ssl_ca_location=*/config["ssl_ca_location"].As<std::string>(),
+            .security_mechanism = mechanism,
+            .ssl_ca_location = config["ssl_ca_location"].As<std::string>(),
         });
     }
 

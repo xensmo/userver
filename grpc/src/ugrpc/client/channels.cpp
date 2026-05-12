@@ -59,7 +59,7 @@ namespace {
     std::vector<engine::TaskWithResult<bool>> tasks{};
     tasks.reserve(channels.size());
     for (auto& channel : channels) {
-        tasks.emplace_back(engine::AsyncNoSpan(
+        tasks.emplace_back(engine::AsyncNoTracing(
             blocking_task_processor,
             DoTryWaitForConnected,
             std::ref(*channel),
@@ -80,7 +80,7 @@ std::shared_ptr<grpc::Channel> MakeChannel(
 ) {
     // Spawn a blocking task creating a gRPC channel
     // This is third party code, no use of span inside it
-    return engine::AsyncNoSpan(
+    return engine::AsyncNoTracing(
                blocking_task_processor,
                grpc::CreateChannel,
                ugrpc::impl::ToGrpcString(endpoint),

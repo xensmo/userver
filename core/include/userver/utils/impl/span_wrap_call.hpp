@@ -18,8 +18,8 @@ namespace utils::impl {
 // A wrapper that obtains a Span from args, attaches it to current coroutine,
 // and applies a function to the rest of arguments.
 struct SpanWrapCall {
-    enum class InheritVariables { kYes, kNo };
-    enum class HideSpan { kYes, kNo };
+    enum class InheritVariables : bool { kNo = false, kYes = true };
+    enum class HideSpan : bool { kNo = false, kYes = true };
 
     explicit SpanWrapCall(
         std::string&& name,
