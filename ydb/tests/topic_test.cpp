@@ -344,7 +344,7 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionGetNative) {
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteSingle) {
     auto session = CreateWriteSession();
 
-    auto task = engine::AsyncNoSpan([&] { UASSERT_NO_THROW(WriteAndAck(session, "hello")); });
+    auto task = engine::AsyncNoTracing([&] { UASSERT_NO_THROW(WriteAndAck(session, "hello")); });
     task.WaitFor(utest::kMaxTestWaitTime);
     ASSERT_TRUE(task.IsFinished());
 
@@ -354,7 +354,7 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteSingle) {
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteMultiple) {
     auto session = CreateWriteSession();
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         for (const std::string_view msg : {"msg-1", "msg-2", "msg-3"}) {
             UASSERT_NO_THROW(WriteAndAck(session, msg));
         }
@@ -368,7 +368,7 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteMultiple) {
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionTryGetEventEmpty) {
     auto session = CreateWriteSession();
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         // Drain TReadyToAcceptEvent so the session is established
         // and the event queue is empty.
         auto event = session.GetEvent();
