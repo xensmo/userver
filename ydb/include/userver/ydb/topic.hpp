@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <ydb-cpp-sdk/client/topic/client.h>
@@ -152,13 +153,14 @@ public:
 
 private:
     std::shared_ptr<impl::Driver> driver_;
-    // Owned executors that we explicitly Stop() in the destructor to join
-    // background threads (compression / event handlers) before the rest of
-    // topic_client_ is destroyed. This avoids a use-after-destroy race in
-    // ydb-cpp-sdk's process-shutdown path (e.g. SEGV in TCodecMap).
+    // Owned executors: Stop() only after `topic_client_` is destroyed (see
+    // ~TopicClient). Joining these threads after the native client is gone
+    // avoids atexit use-after-destroy (e.g. SEGV in TCodecMap). Stopping them
+    // while TTopicClient is still alive would deadlock or stall writes.
     NYdb::IExecutor::TPtr compression_executor_;
     NYdb::IExecutor::TPtr handlers_executor_;
-    NYdb::NTopic::TTopicClient topic_client_;
+    // `reset()` in ~TopicClient runs before Stop() on the executors above.
+    std::optional<NYdb::NTopic::TTopicClient> topic_client_;
 };
 
 }  // namespace ydb

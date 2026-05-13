@@ -44,6 +44,7 @@ FederatedTopicClient::FederatedTopicClient(
       compression_executor_{NYdb::CreateThreadPoolExecutor(2)},
       handlers_executor_{NYdb::CreateThreadPoolExecutor(1)},
       topic_client_{
+          std::in_place,
           driver_->GetNativeDriver(),
           NYdb::NFederatedTopic::TFederatedTopicClientSettings()
               .DefaultCompressionExecutor(compression_executor_)
@@ -52,6 +53,9 @@ FederatedTopicClient::FederatedTopicClient(
 {}
 
 FederatedTopicClient::~FederatedTopicClient() {
+    // Destroy the native client first so sessions flush and no longer post to
+    // the executors; then join executor threads.
+    topic_client_.reset();
     // Joins background threads of the compression and handlers thread pools.
     // Without this, posted tasks may still be running while the
     // ydb-cpp-sdk's globals (e.g. TCodecMap singleton in codecs.h) are torn
@@ -64,10 +68,13 @@ FederatedTopicClient::~FederatedTopicClient() {
 FederatedTopicReadSession FederatedTopicClient::CreateReadSession(
     const NYdb::NFederatedTopic::TFederatedReadSessionSettings& settings
 ) {
-    return FederatedTopicReadSession{topic_client_.CreateReadSession(settings)};
+    return FederatedTopicReadSession{topic_client_->CreateReadSession(settings)};
 }
 
-NYdb::NFederatedTopic::TFederatedTopicClient& FederatedTopicClient::GetNativeTopicClient() { return topic_client_; }
+NYdb::NFederatedTopic::TFederatedTopicClient& FederatedTopicClient::GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND {
+    UASSERT(topic_client_);
+    return *topic_client_;
+}
 
 }  // namespace ydb
 

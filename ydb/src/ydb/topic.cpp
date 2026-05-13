@@ -77,6 +77,7 @@ TopicClient::TopicClient(std::shared_ptr<impl::Driver> driver, [[maybe_unused]] 
       compression_executor_{NYdb::CreateThreadPoolExecutor(2)},
       handlers_executor_{NYdb::CreateThreadPoolExecutor(1)},
       topic_client_{
+          std::in_place,
           driver_->GetNativeDriver(),
           NYdb::NTopic::TTopicClientSettings()
               .DefaultCompressionExecutor(compression_executor_)
@@ -85,6 +86,9 @@ TopicClient::TopicClient(std::shared_ptr<impl::Driver> driver, [[maybe_unused]] 
 {}
 
 TopicClient::~TopicClient() {
+    // Destroy the native client first so sessions flush and no longer post to
+    // the executors; then join executor threads.
+    topic_client_.reset();
     // Joins background threads of the compression and handlers thread pools.
     // Without this, posted tasks may still be running while the
     // ydb-cpp-sdk's globals (e.g. TCodecMap singleton in codecs.h) are torn
@@ -95,22 +99,25 @@ TopicClient::~TopicClient() {
 }
 
 void TopicClient::AlterTopic(const std::string& path, const NYdb::NTopic::TAlterTopicSettings& settings) {
-    impl::GetFutureValueChecked(topic_client_.AlterTopic(impl::ToString(path), settings), "AlterTopic");
+    impl::GetFutureValueChecked(topic_client_->AlterTopic(impl::ToString(path), settings), "AlterTopic");
 }
 
 NYdb::NTopic::TDescribeTopicResult TopicClient::DescribeTopic(const std::string& path) {
-    return impl::GetFutureValueChecked(topic_client_.DescribeTopic(impl::ToString(path)), "DescribeTopic");
+    return impl::GetFutureValueChecked(topic_client_->DescribeTopic(impl::ToString(path)), "DescribeTopic");
 }
 
 TopicReadSession TopicClient::CreateReadSession(const NYdb::NTopic::TReadSessionSettings& settings) {
-    return TopicReadSession{topic_client_.CreateReadSession(settings)};
+    return TopicReadSession{topic_client_->CreateReadSession(settings)};
 }
 
 TopicWriteSession TopicClient::CreateWriteSession(const NYdb::NTopic::TWriteSessionSettings& settings) {
-    return TopicWriteSession{topic_client_.CreateWriteSession(settings)};
+    return TopicWriteSession{topic_client_->CreateWriteSession(settings)};
 }
 
-NYdb::NTopic::TTopicClient& TopicClient::GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND { return topic_client_; }
+NYdb::NTopic::TTopicClient& TopicClient::GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND {
+    UASSERT(topic_client_);
+    return *topic_client_;
+}
 
 }  // namespace ydb
 
