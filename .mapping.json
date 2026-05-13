@@ -3893,6 +3893,8 @@
   "postgresql/src/storages/postgres/tests/pool_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/pool_pgtest.cpp",
   "postgresql/src/storages/postgres/tests/pool_stats_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/pool_stats_pgtest.cpp",
   "postgresql/src/storages/postgres/tests/portal_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/portal_pgtest.cpp",
+  "postgresql/src/storages/postgres/tests/postgres_chaos_proxy.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/postgres_chaos_proxy.cpp",
+  "postgresql/src/storages/postgres/tests/postgres_chaos_proxy.hpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/postgres_chaos_proxy.hpp",
   "postgresql/src/storages/postgres/tests/query_params_test.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/query_params_test.cpp",
   "postgresql/src/storages/postgres/tests/query_queue_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/query_queue_pgtest.cpp",
   "postgresql/src/storages/postgres/tests/query_short_info_test.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/query_short_info_test.cpp",
