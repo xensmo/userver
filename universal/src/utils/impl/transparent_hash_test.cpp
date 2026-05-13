@@ -5,6 +5,8 @@
 #include <userver/utils/meta.hpp>
 #include <userver/utils/str_icase.hpp>
 
+#include "utils/overloaded_address_operator_test.hpp"
+
 USERVER_NAMESPACE_BEGIN
 
 namespace {
@@ -84,6 +86,12 @@ TEST(TransparentMap, FindTransparentOrNullptr) {
     const auto const_map = std::move(map);
     EXPECT_EQ(*FindTransparentOrNullptr(const_map, "foo"), expected);
     EXPECT_EQ(FindTransparentOrNullptr(const_map, "bar"), nullptr);
+}
+
+TEST(TransparentMap, FindTransparentOrNullptrAddressof) {
+    utils::impl::TransparentMap<std::string, utils::OverloadedAddressOperator> m{{{"1"}, {}}};
+    const auto* ptr = FindTransparentOrNullptr(m, "1");
+    ASSERT_TRUE(ptr);
 }
 
 TEST(TransparentMap, CustomValue) {
