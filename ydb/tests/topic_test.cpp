@@ -91,7 +91,6 @@ protected:
 
         while (!written || !acked) {
             auto event = session.GetEvent();
-            ASSERT_TRUE(event.has_value());
 
             std::visit(
                 utils::Overloaded{
@@ -111,7 +110,7 @@ protected:
                     },
                     []([[maybe_unused]] auto& e) {},
                 },
-                *event
+                event
             );
         }
     }
@@ -220,7 +219,7 @@ TYPED_UTEST(YdbTopicReadSessionWithDataHandler, CommitDataEventsPersistence) {
         );
 
         auto task = engine::AsyncNoTracing([&session] {
-            UASSERT_NO_THROW(session.GetNativeTopicReadSession()->WaitEvent().Wait(std::chrono::milliseconds{1000}));
+            UASSERT_NO_THROW(session.GetNativeTopicReadSession().WaitEvent().Wait(std::chrono::milliseconds{1000}));
         });
         task.WaitFor(std::chrono::milliseconds{1000});
         Y_ENSURE(task.IsFinished());
@@ -338,7 +337,7 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionCreateClose) {
 
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionGetNative) {
     auto session = CreateWriteSession();
-    EXPECT_NE(session.GetNativeTopicWriteSession(), nullptr);
+    EXPECT_TRUE(session.GetNativeTopicWriteSession().GetInitSeqNo().Initialized());
     session.Close(std::chrono::milliseconds{1000});
 }
 
@@ -373,10 +372,7 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionTryGetEventEmpty) {
         // Drain TReadyToAcceptEvent so the session is established
         // and the event queue is empty.
         auto event = session.GetEvent();
-
-        const bool is_ready = std::holds_alternative<NYdb::NTopic::TWriteSessionEvent::TReadyToAcceptEvent>(*event);
-        ASSERT_TRUE(event.has_value());
-        ASSERT_TRUE(is_ready);
+        ASSERT_TRUE(std::holds_alternative<NYdb::NTopic::TWriteSessionEvent::TReadyToAcceptEvent>(event));
 
         // Queue is now drained — TryGetEvent must return nullopt immediately.
         EXPECT_FALSE(session.TryGetEvent().has_value());

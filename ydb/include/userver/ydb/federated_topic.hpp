@@ -13,6 +13,9 @@
 #include <memory>
 
 #include <ydb-cpp-sdk/client/federated_topic/federated_topic.h>
+#include <ydb-cpp-sdk/client/types/executor/executor.h>
+
+#include <userver/compiler/impl/lifetime.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -58,11 +61,11 @@ public:
     /// Force close after timeout
     bool Close(std::chrono::milliseconds timeout);
 
-    /// Get native read session
-    /// @warning Use with care! Facilities from
-    /// `<core/include/userver/drivers/subscribable_futures.hpp>` can help with
-    /// non-blocking wait operations.
-    std::shared_ptr<NYdb::NFederatedTopic::IFederatedReadSession> GetNativeTopicReadSession();
+    /// @brief Get native read session
+    ///
+    /// @warning Use with care! Facilities from @ref userver/drivers/subscribable_futures.hpp can help
+    /// with non-blocking wait operations.
+    NYdb::NFederatedTopic::IFederatedReadSession& GetNativeTopicReadSession() USERVER_IMPL_LIFETIME_BOUND;
 
 private:
     std::shared_ptr<NYdb::NFederatedTopic::IFederatedReadSession> read_session_;
@@ -89,10 +92,16 @@ public:
     /// @warning Use with care! Facilities from
     /// `<core/include/userver/drivers/subscribable_futures.hpp>` can help with
     /// non-blocking wait operations.
-    NYdb::NFederatedTopic::TFederatedTopicClient& GetNativeTopicClient();
+    NYdb::NFederatedTopic::TFederatedTopicClient& GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND;
 
 private:
     std::shared_ptr<impl::Driver> driver_;
+    // Owned executors that we explicitly Stop() in the destructor to join
+    // background threads (compression / event handlers) before the rest of
+    // topic_client_ is destroyed. This avoids a use-after-destroy race in
+    // ydb-cpp-sdk's process-shutdown path (e.g. SEGV in TCodecMap).
+    NYdb::IExecutor::TPtr compression_executor_;
+    NYdb::IExecutor::TPtr handlers_executor_;
     NYdb::NFederatedTopic::TFederatedTopicClient topic_client_;
 };
 

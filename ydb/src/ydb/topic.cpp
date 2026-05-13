@@ -34,7 +34,10 @@ std::vector<NYdb::NTopic::TReadSessionEvent::TEvent> TopicReadSession::GetEvents
 
 bool TopicReadSession::Close(std::chrono::milliseconds timeout) { return read_session_->Close(timeout); }
 
-std::shared_ptr<NYdb::NTopic::IReadSession> TopicReadSession::GetNativeTopicReadSession() { return read_session_; }
+NYdb::NTopic::IReadSession& TopicReadSession::GetNativeTopicReadSession() USERVER_IMPL_LIFETIME_BOUND {
+    UASSERT(read_session_);
+    return *read_session_;
+}
 
 TopicWriteSession::TopicWriteSession(std::shared_ptr<NYdb::NTopic::IWriteSession> write_session)
     : write_session_(std::move(write_session))
@@ -42,9 +45,14 @@ TopicWriteSession::TopicWriteSession(std::shared_ptr<NYdb::NTopic::IWriteSession
     UASSERT(write_session_);
 }
 
-std::optional<NYdb::NTopic::TWriteSessionEvent::TEvent> TopicWriteSession::GetEvent() {
-    impl::GetFutureValue(write_session_->WaitEvent());
-    return write_session_->GetEvent(/*block=*/false);
+NYdb::NTopic::TWriteSessionEvent::TEvent TopicWriteSession::GetEvent() {
+    while (true) {
+        impl::GetFutureValue(write_session_->WaitEvent());
+        if (auto event = write_session_->GetEvent(/*block=*/false)) {
+            return std::move(*event);
+        }
+        // In case of races between multiple GetEvent() calls, we may need to retry awaiting the event.
+    }
 }
 
 std::optional<NYdb::NTopic::TWriteSessionEvent::TEvent> TopicWriteSession::TryGetEvent() {
@@ -57,14 +65,34 @@ void TopicWriteSession::Write(NYdb::NTopic::TContinuationToken&& token, NYdb::NT
 
 bool TopicWriteSession::Close(std::chrono::milliseconds timeout) { return write_session_->Close(timeout); }
 
-std::shared_ptr<NYdb::NTopic::IWriteSession> TopicWriteSession::GetNativeTopicWriteSession() { return write_session_; }
+NYdb::NTopic::IWriteSession& TopicWriteSession::GetNativeTopicWriteSession() USERVER_IMPL_LIFETIME_BOUND {
+    UASSERT(write_session_);
+    return *write_session_;
+}
 
 TopicClient::TopicClient(std::shared_ptr<impl::Driver> driver, [[maybe_unused]] impl::TopicSettings settings)
     : driver_{std::move(driver)},
-      topic_client_{driver_->GetNativeDriver()}
+      // TODO: use shared thread pool executors from driver?
+      // These are the default thread pool executors used by the ydb-cpp-sdk.
+      compression_executor_{NYdb::CreateThreadPoolExecutor(2)},
+      handlers_executor_{NYdb::CreateThreadPoolExecutor(1)},
+      topic_client_{
+          driver_->GetNativeDriver(),
+          NYdb::NTopic::TTopicClientSettings()
+              .DefaultCompressionExecutor(compression_executor_)
+              .DefaultHandlersExecutor(handlers_executor_)
+      }
 {}
 
-TopicClient::~TopicClient() = default;
+TopicClient::~TopicClient() {
+    // Joins background threads of the compression and handlers thread pools.
+    // Without this, posted tasks may still be running while the
+    // ydb-cpp-sdk's globals (e.g. TCodecMap singleton in codecs.h) are torn
+    // down during atexit, leading to a use-after-destroy SEGV at process
+    // shutdown.
+    compression_executor_->Stop();
+    handlers_executor_->Stop();
+}
 
 void TopicClient::AlterTopic(const std::string& path, const NYdb::NTopic::TAlterTopicSettings& settings) {
     impl::GetFutureValueChecked(topic_client_.AlterTopic(impl::ToString(path), settings), "AlterTopic");
@@ -82,7 +110,7 @@ TopicWriteSession TopicClient::CreateWriteSession(const NYdb::NTopic::TWriteSess
     return TopicWriteSession{topic_client_.CreateWriteSession(settings)};
 }
 
-NYdb::NTopic::TTopicClient& TopicClient::GetNativeTopicClient() { return topic_client_; }
+NYdb::NTopic::TTopicClient& TopicClient::GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND { return topic_client_; }
 
 }  // namespace ydb
 
