@@ -76,17 +76,25 @@ template <typename Function, typename... Args>
     );
 }
 
+#ifndef ARCADIA_ROOT
+
 /// @deprecated Use @ref engine::AsyncNoTracing instead.
 template <typename Function, typename... Args>
-[[nodiscard]] auto AsyncNoSpan(TaskProcessor& task_processor, Function&& f, Args&&... args) {
+[[nodiscard, deprecated("Use AsyncNoTracing instead")]] auto AsyncNoSpan(
+    TaskProcessor& task_processor,
+    Function&& f,
+    Args&&... args
+) {
     return AsyncNoTracing(task_processor, std::forward<Function>(f), std::forward<Args>(args)...);
 }
 
 /// @deprecated Use @ref engine::AsyncNoTracing instead.
 template <typename Function, typename... Args>
-[[nodiscard]] auto AsyncNoSpan(Function&& f, Args&&... args) {
+[[nodiscard, deprecated("Use AsyncNoTracing instead")]] auto AsyncNoSpan(Function&& f, Args&&... args) {
     return AsyncNoTracing(std::forward<Function>(f), std::forward<Args>(args)...);
 }
+
+#endif
 
 }  // namespace engine
 
