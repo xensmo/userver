@@ -1,9 +1,6 @@
 #include <userver/utils/string_literal.hpp>
 
-#ifdef __cpp_concepts
 #include <concepts>
-#endif
-
 #include <type_traits>
 
 #include <gtest/gtest.h>
@@ -22,7 +19,6 @@ static_assert(!std::is_assignable_v<utils::StringLiteral, utils::zstring_view>);
 static_assert(std::is_assignable_v<std::string_view, utils::StringLiteral>);
 static_assert(std::is_assignable_v<utils::zstring_view, utils::StringLiteral>);
 
-#ifdef __cpp_concepts
 template <typename T>
 concept SuffixRemovable = requires(T t) { t.remove_suffix(10); };
 
@@ -30,7 +26,6 @@ static_assert(std::swappable<utils::StringLiteral>);
 static_assert(!std::swappable_with<utils::StringLiteral, utils::zstring_view>);
 static_assert(!std::swappable_with<utils::StringLiteral, std::string_view>);
 static_assert(!SuffixRemovable<utils::StringLiteral>);
-#endif
 
 static constexpr utils::StringLiteral kLongString = "some long long long long long long long long long string";
 

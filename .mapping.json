@@ -1483,7 +1483,6 @@
   "core/src/concurrent/impl/intrusive_mpsc_queue_benchmark.cpp":"taxi/uservices/userver/core/src/concurrent/impl/intrusive_mpsc_queue_benchmark.cpp",
   "core/src/concurrent/impl/intrusive_mpsc_queue_test.cpp":"taxi/uservices/userver/core/src/concurrent/impl/intrusive_mpsc_queue_test.cpp",
   "core/src/concurrent/impl/intrusive_stack_test.cpp":"taxi/uservices/userver/core/src/concurrent/impl/intrusive_stack_test.cpp",
-  "core/src/concurrent/impl/latch.hpp":"taxi/uservices/userver/core/src/concurrent/impl/latch.hpp",
   "core/src/concurrent/impl/monotonic_concurrent_set_benchmark.cpp":"taxi/uservices/userver/core/src/concurrent/impl/monotonic_concurrent_set_benchmark.cpp",
   "core/src/concurrent/impl/monotonic_concurrent_set_test.cpp":"taxi/uservices/userver/core/src/concurrent/impl/monotonic_concurrent_set_test.cpp",
   "core/src/concurrent/impl/owning_intrusive_pool.hpp":"taxi/uservices/userver/core/src/concurrent/impl/owning_intrusive_pool.hpp",

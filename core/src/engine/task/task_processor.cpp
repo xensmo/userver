@@ -2,6 +2,7 @@
 
 #include <sys/types.h>
 #include <csignal>
+#include <latch>
 
 #if __has_include(<util/system/progname.h>)
 #define ARCADIA
@@ -11,7 +12,6 @@
 
 #include <fmt/format.h>
 
-#include <concurrent/impl/latch.hpp>
 #include <userver/compiler/impl/tsan.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utils/assert.hpp>
@@ -143,7 +143,7 @@ TaskProcessor::TaskProcessor(TaskProcessorConfig config, std::shared_ptr<impl::T
         LOG_INFO()
             << "creating task_processor " << Name() << " "
             << "worker_threads=" << config_.worker_threads << " thread_name=" << config_.thread_name;
-        concurrent::impl::Latch workers_left{static_cast<std::ptrdiff_t>(config_.worker_threads)};
+        std::latch workers_left{static_cast<std::ptrdiff_t>(config_.worker_threads)};
         workers_.reserve(config_.worker_threads);
         for (std::size_t i = 0; i < config_.worker_threads; ++i) {
             workers_.emplace_back([this, i, &workers_left] {

@@ -149,14 +149,14 @@ UTEST_F(Watchdog, Basic) {
     EXPECT_EQ(kTestsuiteConnlimit / 2, DoStepV1());
 }
 
-#ifdef __cpp_concepts
 template <class T>
 concept HasNewVersion = requires { &T::StepV3; };
+
 static_assert(
     !HasNewVersion<pg::ConnlimitWatchdog>,
     "Please update the following test for StepV* and increment the version check in above concept"
 );
-#endif
+
 // We check different combinations of queries order with table 'u_clients', because
 // services can be deployed on different versions of userver and rolled back to random version
 UTEST_F(Watchdog, AllPermutations) {

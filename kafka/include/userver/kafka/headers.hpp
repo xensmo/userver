@@ -71,9 +71,7 @@ private:
     std::size_t index_{0};
 };
 
-#if defined(__cpp_concepts)
 static_assert(std::forward_iterator<HeadersIterator>);
-#endif
 
 /// @brief Class to read all message's headers.
 class HeadersReader {
