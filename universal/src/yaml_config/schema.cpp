@@ -1,6 +1,6 @@
 #include <userver/yaml_config/schema.hpp>
 
-#include <boost/range/algorithm/count.hpp>
+#include <algorithm>
 
 #include <fmt/ranges.h>
 
@@ -58,7 +58,7 @@ void CheckTypeSupportsField(
     const std::optional<Field>& optional_field,
     std::initializer_list<FieldType> allowed_types
 ) {
-    if (optional_field.has_value() && boost::count(allowed_types, schema.type) == 0) {
+    if (optional_field.has_value() && std::ranges::count(allowed_types, schema.type) == 0) {
         std::string allowed_types_str;
         for (auto type : allowed_types) {
             if (!allowed_types_str.empty()) {

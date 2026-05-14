@@ -99,6 +99,18 @@ ToContainer AsContainer(FromContainer&& container) {
 
 namespace impl {
 
+template <typename ToContainer, typename Range>
+ToContainer AsContainerViaInsert(Range&& range) {
+    ToContainer result;
+    if constexpr (requires { result.reserve(std::ranges::size(range)); }) {
+        result.reserve(std::ranges::size(range));
+    }
+    for (auto&& ref : range) {
+        result.insert(result.end(), std::forward<decltype(ref)>(ref));
+    }
+    return result;
+}
+
 template <typename Container>
 concept HasKeyType = requires { typename Container::key_type; };
 

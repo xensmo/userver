@@ -59,7 +59,7 @@ bool HasPropagatedHeader(const USERVER_NAMESPACE::http::headers::PredefinedHeade
     return DoHasPropagatedHeader(header_name);
 }
 
-boost::iterator_range<HeadersToPropagate::const_iterator> GetPropagatedHeaders() {
+std::ranges::subrange<HeadersToPropagate::const_iterator> GetPropagatedHeaders() {
     const auto* headers = kPropagatedHeaders.GetOptional();
     if (headers == nullptr) {
         return kEmptyHeaders;

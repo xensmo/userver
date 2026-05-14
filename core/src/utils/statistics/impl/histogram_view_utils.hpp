@@ -4,8 +4,6 @@
 #include <cmath>
 #include <ranges>
 
-#include <boost/range/combine.hpp>
-
 #include <userver/utils/assert.hpp>
 #include <userver/utils/span.hpp>
 #include <userver/utils/statistics/histogram_view.hpp>

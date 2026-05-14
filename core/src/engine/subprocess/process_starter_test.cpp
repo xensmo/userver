@@ -4,7 +4,6 @@
 #include <unistd.h>
 
 #include <chrono>
-#include <ranges>
 #include <string>
 #include <thread>
 #include <utility>

@@ -17,7 +17,7 @@ void Limiter::SetLimit(const USERVER_NAMESPACE::congestion_control::Limit& new_l
 
 std::size_t Limiter::GetLimitableHandlersCount() const {
     auto lock = limitees_.Lock();
-    return std::accumulate((*lock).begin(), (*lock).end(), std::size_t{0}, [](std::size_t sum, auto ptr) {
+    return std::accumulate(lock->begin(), lock->end(), std::size_t{0}, [](std::size_t sum, auto ptr) {
         return sum + ptr->GetLimitableHandlersCount();
     });
 }

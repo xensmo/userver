@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <iomanip>
-#include <ranges>
 #include <sstream>
 #include <unordered_map>
 

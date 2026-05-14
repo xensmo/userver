@@ -1,9 +1,7 @@
 #include <components/manager_config.hpp>
 
 #include <fstream>
-
-#include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/adaptor/transformed.hpp>
+#include <ranges>
 
 #include <userver/components/static_config_validator.hpp>
 #include <userver/formats/parse/common_containers.hpp>
@@ -316,10 +314,10 @@ ManagerConfig Parse(const yaml_config::YamlConfig& value, formats::parse::To<Man
     config.preheat_stacktrace_collector =
         value["preheat_stacktrace_collector"].As<bool>(config.preheat_stacktrace_collector);
     config.validate_components_configs = value["static_config_validation"].As<ValidationMode>(ValidationMode::kAll);
-    config.enabled_experiments = utils::AsContainer<utils::impl::UserverExperimentSet>(
-        value["userver_experiments"].As<std::unordered_map<std::string, bool>>({}) |
-        boost::adaptors::filtered([](const auto& pair) { return pair.second; }) |
-        boost::adaptors::transformed([](const auto& pair) { return pair.first; })
+    const auto experiments = value["userver_experiments"].As<std::unordered_map<std::string, bool>>({});
+    config.enabled_experiments = utils::impl::AsContainerViaInsert<utils::impl::UserverExperimentSet>(
+        experiments | std::views::filter([](const auto& pair) { return pair.second; }) |
+        std::views::transform([](const auto& pair) { return pair.first; })
     );
     config.graceful_shutdown_interval =
         value["graceful_shutdown_interval"].As<std::chrono::milliseconds>(config.graceful_shutdown_interval);

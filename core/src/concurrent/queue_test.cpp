@@ -1,9 +1,8 @@
 #include <userver/concurrent/queue.hpp>
 
 #include <optional>
+#include <ranges>
 #include <unordered_set>
-
-#include <boost/range/irange.hpp>
 
 #include <concurrent/mp_queue_test.hpp>
 #include <userver/engine/async.hpp>
@@ -362,7 +361,7 @@ TYPED_UTEST_MT(MpMcQueueFixture, MultiConsumerToken, kProducersCount + kConsumer
     auto producer_tasks = utils::GenerateFixedArray(kProducersCount, [&](std::size_t producer_id) {
         return engine::AsyncNoTracing([&, producer_id] {
             for (const auto message :
-                 boost::irange<Message>(kMessageCount * producer_id, kMessageCount * (producer_id + 1)))
+                 std::views::iota(Message{kMessageCount * producer_id}, Message{kMessageCount * (producer_id + 1)}))
             {
                 ASSERT_TRUE(producer.Push(Message{message}));
             }

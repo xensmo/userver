@@ -1,6 +1,6 @@
 #include "odbc_secdist.hpp"
 
-#include <boost/range/adaptor/map.hpp>
+#include <ranges>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -81,7 +81,7 @@ std::vector<OdbcConnectionInfo> OdbcSettings::GetConnectionInfos(const std::stri
         throw storages::secdist::SecdistError(fmt::format(
             "dbalias '{}' not found in secdist config. Available aliases: [{}]",
             dbalias,
-            fmt::join(databases_ | boost::adaptors::map_keys, ", ")
+            fmt::join(databases_ | std::views::keys, ", ")
         ));
     }
     return it->second;

@@ -1,5 +1,6 @@
 #include <engine/deadlock_detector.hpp>
 
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <vector>

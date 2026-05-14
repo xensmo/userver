@@ -1,6 +1,5 @@
 #include <userver/storages/redis/dynamic_component.hpp>
 
-#include <ranges>
 #include <stdexcept>
 
 #include <fmt/ranges.h>
