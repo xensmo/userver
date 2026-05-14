@@ -173,13 +173,16 @@ void ComponentContextImpl::OnAllComponentsLoaded() {
 }
 
 void ComponentContextImpl::OnGracefulShutdownStarted() {
+    const auto interval = manager_.GetConfig().graceful_shutdown_interval;
+    if (interval <= std::chrono::milliseconds::zero()) {
+        return;
+    }
+
+    in_graceful_shutdown_.test_and_set();
     service_lifetime_stage_ = ServiceLifetimeStage::kGracefulShutdown;
 
-    const auto interval = manager_.GetConfig().graceful_shutdown_interval;
-    if (interval > std::chrono::milliseconds{0}) {
-        LOG_INFO() << "Shutdown started, notifying ping handlers and delaying by " << interval;
-        engine::SleepFor(interval);
-    }
+    LOG_INFO() << "Graceful shutdown started, notifying ping handlers and delaying by " << interval;
+    engine::SleepFor(interval);
 }
 
 void ComponentContextImpl::OnAllComponentsAreStopping() {
@@ -265,6 +268,8 @@ bool ComponentContextImpl::IsAnyComponentInFatalState() const {
 }
 
 ServiceLifetimeStage ComponentContextImpl::GetServiceLifetimeStage() const { return service_lifetime_stage_.load(); }
+
+bool ComponentContextImpl::IsInGracefulShutdown() const { return in_graceful_shutdown_.test(); }
 
 bool ComponentContextImpl::HasDependencyOn(std::string_view component_name, std::string_view dependency) const {
     if (!Contains(component_name)) {

@@ -116,6 +116,9 @@ public:
     /// @see @ref components::ServiceLifetimeStage
     ServiceLifetimeStage GetServiceLifetimeStage() const;
 
+    /// @returns true if the service is being shut down gracefully.
+    bool IsInGracefulShutdown() const;
+
     /// @returns true if component with name `component_name` depends
     /// (directly or transitively) on a component with name `dependency`.
     ///

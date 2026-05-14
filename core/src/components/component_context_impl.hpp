@@ -59,6 +59,8 @@ public:
 
     ServiceLifetimeStage GetServiceLifetimeStage() const;
 
+    bool IsInGracefulShutdown() const;
+
     bool HasDependencyOn(std::string_view component_name, std::string_view dependency) const;
 
     std::unordered_set<std::string_view> GetAllDependencies(std::string_view component_name) const;
@@ -195,6 +197,7 @@ private:
     ComponentMap components_;
     std::atomic_flag components_load_cancelled_ ATOMIC_FLAG_INIT;
     std::atomic<ServiceLifetimeStage> service_lifetime_stage_{ServiceLifetimeStage::kLoading};
+    std::atomic_flag in_graceful_shutdown_;
 
     engine::ConditionVariable print_adding_components_cv_;
     concurrent::Variable<ProtectedData> shared_data_;
