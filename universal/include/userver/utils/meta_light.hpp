@@ -14,17 +14,6 @@ namespace meta {
 
 namespace impl {
 
-template <typename Default, template <typename...> typename Trait, typename... Args>
-struct Detector {
-    using type = Default;
-};
-
-template <typename Default, template <typename...> typename Trait, typename... Args>
-requires requires { typename Trait<Args...>; }
-struct Detector<Default, Trait, Args...> {
-    using type = Trait<Args...>;
-};
-
 template <template <typename...> typename Template, typename T>
 struct IsInstantiationOf : std::false_type {};
 
@@ -32,9 +21,6 @@ template <template <typename...> typename Template, typename... Args>
 struct IsInstantiationOf<Template, Template<Args...>> : std::true_type {};
 
 }  // namespace impl
-
-/// @see utils::meta::IsDetected
-struct NotDetected {};
 
 /// @brief Checks whether a trait is correct for the given template args
 ///
@@ -57,18 +43,6 @@ struct NotDetected {};
 /// @endcode
 template <template <typename...> typename Trait, typename... Args>
 concept IsDetected = requires { typename Trait<Args...>; };
-
-/// @brief Produces the result type of a trait, or utils::meta::NotDetected if
-/// it's incorrect for the given template args
-/// @see utils::meta::IsDetected
-template <template <typename...> typename Trait, typename... Args>
-using DetectedType = typename impl::Detector<NotDetected, Trait, Args...>::type;
-
-/// @brief Produces the result type of a trait, or @a Default if it's incorrect
-/// for the given template args
-/// @see utils::meta::IsDetected
-template <typename Default, template <typename...> typename Trait, typename... Args>
-using DetectedOr = typename impl::Detector<Default, Trait, Args...>::type;
 
 /// @brief Returns `true` if the type is an instantiation of the specified template.
 template <typename T, template <typename...> typename Template>
