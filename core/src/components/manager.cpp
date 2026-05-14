@@ -274,7 +274,7 @@ const TaskProcessorsMap& Manager::GetTaskProcessorsMap() const { return task_pro
 
 engine::TaskProcessor& Manager::GetTaskProcessor(std::string_view name) const {
     const auto& map = task_processors_storage_.GetMap();
-    if (const auto* const task_processor = utils::impl::FindTransparentOrNullptr(map, name)) {
+    if (const auto* const task_processor = utils::FindOrNullptr(map, name)) {
         return **task_processor;
     }
     throw std::runtime_error(fmt::format("Failed to find task processor with name: {}", name));

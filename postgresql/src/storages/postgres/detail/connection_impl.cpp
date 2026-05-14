@@ -1268,7 +1268,7 @@ void ConnectionImpl::ReportStatement(std::string_view name) {
     // Only report statement usage once.
     {
         const std::lock_guard<engine::Mutex> lock{statements_mutex_};
-        if (USERVER_NAMESPACE::utils::impl::FindTransparent(statements_reported_, name) != statements_reported_.end()) {
+        if (statements_reported_.find(name) != statements_reported_.end()) {
             return;
         }
     }

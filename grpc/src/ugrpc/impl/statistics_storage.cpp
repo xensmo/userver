@@ -74,7 +74,7 @@ MethodStatistics& StatisticsStorage::GetGenericStatistics(
 
     {
         auto generic_statistics = generic_statistics_map_.SharedMutableLockUnsafe();
-        if (auto* stats = utils::impl::FindTransparentOrNullptr(*generic_statistics, generic_key)) {
+        if (auto* stats = utils::FindOrNullptr(*generic_statistics, generic_key)) {
             return *stats;
         }
     }
