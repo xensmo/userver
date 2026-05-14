@@ -42,15 +42,30 @@ struct UniqueDefaultFactory final {
 
 }  // namespace impl
 
+/// @brief A scope that crashes if coroutine context switches are attempted.
+///
+/// This is useful to prevent accidental waiting operations in places where they would be disastrous,
+/// e.g. while holding a thread-local resource.
+///
+/// The check only happens in debug builds.
+class CoroutineSwitchBanScope {
+public:
+    CoroutineSwitchBanScope() noexcept;
+
+    CoroutineSwitchBanScope(CoroutineSwitchBanScope&&) = delete;
+    CoroutineSwitchBanScope& operator=(CoroutineSwitchBanScope&&) = delete;
+    ~CoroutineSwitchBanScope();
+};
+
 /// @brief The scope that grants access to a thread-local variable.
 ///
 /// @see compiler::ThreadLocal
 template <typename VariableType>
-class ThreadLocalScope final {
+class ThreadLocalScope final : private CoroutineSwitchBanScope {
 public:
     ThreadLocalScope(ThreadLocalScope&&) = delete;
     ThreadLocalScope& operator=(ThreadLocalScope&&) = delete;
-    ~ThreadLocalScope();
+    ~ThreadLocalScope() = default;
 
     /// Access the thread-local variable.
     VariableType& operator*() & noexcept USERVER_IMPL_LIFETIME_BOUND;
@@ -154,25 +169,26 @@ private:
     // user defines it as a local variable or even a thread_local variable, it
     // should be harmless in practice, because ThreadLocal is an empty type,
     // mainly used to store the `FactoryFunc` template parameter.
-    Factory factory_;
+    [[no_unique_address]] Factory factory_;
 };
 
 template <typename Factory>
 ThreadLocal(Factory factory) -> ThreadLocal<std::invoke_result_t<const Factory&>, Factory>;
 
-template <typename VariableType>
-ThreadLocalScope<VariableType>::ThreadLocalScope(VariableType& variable) noexcept : variable_(variable) {
+inline CoroutineSwitchBanScope::CoroutineSwitchBanScope() noexcept {
 #ifndef NDEBUG
     impl::IncrementLocalCoroutineSwitchBans();
 #endif
 }
 
-template <typename VariableType>
-ThreadLocalScope<VariableType>::~ThreadLocalScope() {
+inline CoroutineSwitchBanScope::~CoroutineSwitchBanScope() {
 #ifndef NDEBUG
     impl::DecrementLocalCoroutineSwitchBans();
 #endif
 }
+
+template <typename VariableType>
+ThreadLocalScope<VariableType>::ThreadLocalScope(VariableType& variable) noexcept : variable_(variable) {}
 
 template <typename VariableType>
 VariableType& ThreadLocalScope<VariableType>::operator*() & noexcept  //
