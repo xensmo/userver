@@ -17,14 +17,15 @@ schema:
     definitions:
         DefaultService:
             type: object
-            additionalProperties: false
+            additionalProperties:
+                $ref: '#/definitions/TaskProcessor'
             required:
               - default-task-processor
             properties:
                 default-task-processor:
-                    $ref: '#/definitions/DefaultTaskProcessor'
+                    $ref: '#/definitions/TaskProcessor'
 
-        DefaultTaskProcessor:
+        TaskProcessor:
             type: object
             additionalProperties: false
             required:
