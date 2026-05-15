@@ -111,9 +111,9 @@ class Frobnicator {
 public:
     // ...
 
-private:
     void Launch(const Dependencies& stuff);
 
+private:
     // ...
     Foo foo_;
     concurrent::BackgroundTaskStorage bts_;
@@ -141,6 +141,8 @@ void Frobnicator::Launch(const Dependencies& stuff) {
     });
 }
 /// [BtsLifetimeCapturesPitfalls]
+
+[[maybe_unused]] void UseFrobnicator(Frobnicator& frobnicator) { frobnicator.Launch({}); }
 
 }  // namespace
 
