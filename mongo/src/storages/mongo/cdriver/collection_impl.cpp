@@ -38,11 +38,13 @@ const std::string kMaxTimeMsTag = "max_time_ms";
 class WriteResultHelper {
 public:
     bson_t* GetNative() { return bson_.Get(); }
+    MongoError& GetError() { return error_; }
 
-    WriteResult Extract() { return WriteResult(formats::bson::Document(bson_.Extract())); }
+    WriteResult Extract() { return WriteResult(formats::bson::Document(bson_.Extract()), std::move(error_)); }
 
 private:
     formats::bson::impl::UninitializedBson bson_;
+    MongoError error_{};
 };
 
 std::optional<std::string_view> GetCurrentSpanLink() {
@@ -293,8 +295,8 @@ std::vector<formats::bson::Value> CDriverCollectionImpl::Execute(const operation
 WriteResult CDriverCollectionImpl::Execute(const operations::InsertOne& operation) {
     auto context = MakeRequestContext("mongo_insert_one", operation);
 
-    MongoError error;
     WriteResultHelper write_result;
+    MongoError& error = write_result.GetError();
     stats::OperationStopwatch stopwatch(std::move(context.stats));
     const bson_t* native_bson_ptr = operation.impl_->document.GetBson().get();
     if (mongoc_collection_insert_one(
@@ -332,8 +334,8 @@ WriteResult CDriverCollectionImpl::Execute(const operations::InsertMany& operati
         bsons.push_back(doc.GetBson().get());
     }
 
-    MongoError error;
     WriteResultHelper write_result;
+    MongoError& error = write_result.GetError();
     stats::OperationStopwatch stopwatch(std::move(context.stats));
     if (mongoc_collection_insert_many(
             context.collection.get(),
@@ -357,8 +359,8 @@ WriteResult CDriverCollectionImpl::Execute(const operations::InsertMany& operati
 WriteResult CDriverCollectionImpl::Execute(const operations::ReplaceOne& operation) {
     auto context = MakeRequestContext("mongo_replace_one", operation);
 
-    MongoError error;
     WriteResultHelper write_result;
+    MongoError& error = write_result.GetError();
     stats::OperationStopwatch stopwatch(std::move(context.stats));
     const bson_t* native_selector_bson_ptr = operation.impl_->selector.GetBson().get();
     const bson_t* native_replacement_bson_ptr = operation.impl_->replacement.GetBson().get();
@@ -386,8 +388,8 @@ WriteResult CDriverCollectionImpl::Execute(const operations::Update& operation) 
 
     bool should_retry_dupkey = operation.impl_->should_retry_dupkey;
     while (true) {
-        MongoError error;
         WriteResultHelper write_result;
+        MongoError& error = write_result.GetError();
         stats::OperationStopwatch stopwatch(context.stats);
         const bson_t* native_selector_bson_ptr = operation.impl_->selector.GetBson().get();
         const bson_t* native_update_bson_ptr = operation.impl_->update.GetBson().get();
@@ -436,8 +438,8 @@ WriteResult CDriverCollectionImpl::Execute(const operations::Update& operation) 
 WriteResult CDriverCollectionImpl::Execute(const operations::Delete& operation) {
     auto context = MakeRequestContext("mongo_delete", operation);
 
-    MongoError error;
     WriteResultHelper write_result;
+    MongoError& error = write_result.GetError();
     stats::OperationStopwatch stopwatch(std::move(context.stats));
     const bson_t* native_selector_bson_ptr = operation.impl_->selector.GetBson().get();
     bool has_succeeded = false;
@@ -481,8 +483,8 @@ WriteResult CDriverCollectionImpl::Execute(const operations::FindAndModify& oper
     bool should_retry_dupkey = operation.impl_->should_retry_dupkey;
 
     while (true) {
-        MongoError error;
         WriteResultHelper write_result;
+        MongoError& error = write_result.GetError();
         stats::OperationStopwatch stopwatch(context.stats);
         const bson_t* native_fam_bson_ptr = operation.impl_->query.GetBson().get();
         if (mongoc_collection_find_and_modify_with_opts(
@@ -513,8 +515,8 @@ WriteResult CDriverCollectionImpl::Execute(const operations::FindAndRemove& oper
     auto options = CopyFindAndModifyOptions(operation.impl_->options);
     SetMaxServerTime(*options, operation.impl_->max_server_time, context);
 
-    MongoError error;
     WriteResultHelper write_result;
+    MongoError& error = write_result.GetError();
     stats::OperationStopwatch stopwatch(std::move(context.stats));
     const bson_t* native_fam_bson_ptr = operation.impl_->query.GetBson().get();
     if (mongoc_collection_find_and_modify_with_opts(
@@ -546,8 +548,8 @@ WriteResult CDriverCollectionImpl::Execute(operations::Bulk&& operation) {
 
     mongoc_bulk_operation_set_client(operation.impl_->bulk.get(), context.client.get());
 
-    MongoError error;
     WriteResultHelper write_result;
+    MongoError& error = write_result.GetError();
     stats::OperationStopwatch stopwatch(std::move(context.stats));
     if (mongoc_bulk_operation_execute(operation.impl_->bulk.get(), write_result.GetNative(), error.GetNative())) {
         stopwatch.AccountSuccess();

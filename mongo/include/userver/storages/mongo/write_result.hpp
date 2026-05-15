@@ -21,7 +21,7 @@ public:
 
     /// @cond
     /// Wraps provided write result, internal use only
-    explicit WriteResult(formats::bson::Document);
+    explicit WriteResult(formats::bson::Document, MongoError error);
     /// @endcond
 
     /// @name Affected document counters
@@ -55,8 +55,17 @@ public:
     /// @see options::SuppressServerExceptions
     std::vector<MongoError> WriteConcernErrors() const;
 
+    /// @brief If the operation is not completed successfully,
+    /// an error that caused it will be returned.
+    ///
+    /// It is necessary to check whether an error is set up.
+    ///
+    /// @see options::SuppressServerExceptions
+    const MongoError& OperationError() const;
+
 private:
     formats::bson::Document value_;
+    MongoError error_;
 };
 
 }  // namespace storages::mongo
