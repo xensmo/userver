@@ -4,6 +4,7 @@
 /// @brief @copybrief utils::FromString
 /// @ingroup userver_universal
 
+#include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <charconv>
@@ -151,7 +152,7 @@ expected<T, FromStringErrorCode> FromString(std::string_view str) noexcept {
     }
 
     char buffer[kSmallBufferSize];
-    std::copy(str.data(), str.data() + str.size(), buffer);
+    std::ranges::copy(str, buffer);
     buffer[str.size()] = '\0';
 
     return impl::FromString<T>(utils::zstring_view::UnsafeMake(buffer, str.size()));

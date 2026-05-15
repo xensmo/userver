@@ -155,7 +155,7 @@ std::vector<unsigned char> Shard::GetNearestServersPing(
         sorted_by_ping.emplace_back(ping, i);
     }
 
-    std::sort(sorted_by_ping.begin(), sorted_by_ping.end());
+    std::ranges::sort(sorted_by_ping);
 
     auto result = std::vector<unsigned char>(instances_.size(), 0);
     for (size_t i = 0; i < sorted_by_ping.size() && count > 0; ++i) {
@@ -515,7 +515,7 @@ bool Shard::UpdateCleanWaitQueue(std::vector<ConnectionStatus>&& add_clean_wait)
         // NOLINTNEXTLINE(readability-qualified-auto)
         for (auto instance_iterator = instances_.begin(); instance_iterator != instances_.end();) {
             // NOLINTNEXTLINE(readability-qualified-auto)
-            auto conn_info = std::find(connection_infos_.begin(), connection_infos_.end(), instance_iterator->info);
+            auto conn_info = std::ranges::find(connection_infos_, instance_iterator->info);
             if (conn_info == connection_infos_.end()) {
                 erase_instance.emplace_back(std::move(*instance_iterator));
                 instance_iterator = instances_.erase(instance_iterator);

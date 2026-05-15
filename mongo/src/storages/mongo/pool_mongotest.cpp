@@ -113,7 +113,7 @@ UTEST_F(Pool, ListCollectionNames) {
         UEXPECT_NO_THROW(coll.InsertOne(formats::bson::MakeDoc("_id", 42)));
 
         auto list_collections = pool.ListCollectionNames();
-        std::sort(list_collections.begin(), list_collections.end());
+        std::ranges::sort(list_collections);
         EXPECT_EQ(2, list_collections.size());
         EXPECT_EQ(kCollAName, list_collections[0]);
         EXPECT_EQ(kCollBName, list_collections[1]);

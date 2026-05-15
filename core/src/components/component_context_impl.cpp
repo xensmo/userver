@@ -80,10 +80,8 @@ ComponentContextImpl::ComponentContextImpl(const Manager& manager, std::vector<s
     : manager_(manager),
       trace_plugin_(engine::current_task::GetTaskProcessor().GetWorkerCount())
 {
-    UASSERT(std::is_sorted(loading_component_names.begin(), loading_component_names.end()));
-    UASSERT(
-        std::unique(loading_component_names.begin(), loading_component_names.end()) == loading_component_names.end()
-    );
+    UASSERT(std::ranges::is_sorted(loading_component_names));
+    UASSERT(std::ranges::adjacent_find(loading_component_names) == loading_component_names.end());
 
     components_.reserve(loading_component_names.size());
 

@@ -136,7 +136,7 @@ void DumpLocator::Cleanup() {
             }
         }
 
-        std::sort(dumps.begin(), dumps.end(), [](const DumpFileStats& a, const DumpFileStats& b) {
+        std::ranges::sort(dumps, [](const DumpFileStats& a, const DumpFileStats& b) {
             return a.update_time > b.update_time;
         });
 

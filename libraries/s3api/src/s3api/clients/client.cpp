@@ -342,13 +342,9 @@ void ClientImpl::Auth(Request& request) const {
     auto auth_headers = authenticator_->Auth(request);
 
     {
-        auto it = std::find_if(
-            auth_headers.cbegin(),
-            auth_headers.cend(),
-            [&request](const decltype(auth_headers)::value_type& header) {
-                return request.headers.count(std::get<0>(header));
-            }
-        );
+        auto it = std::ranges::find_if(auth_headers, [&request](const auto& header) {
+            return request.headers.contains(header.first);
+        });
 
         if (it != auth_headers.cend()) {
             throw AuthHeaderConflictError{std::string{"Conflict with auth header: "} + it->first};

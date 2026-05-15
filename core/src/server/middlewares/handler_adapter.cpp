@@ -56,7 +56,7 @@ std::string GetHeadersLogString(
         max_result_size += header.first.size() + (header_hide ? kMask.size() : header.second.size()) + 3;
         sorted_headers.emplace_back(header, header_hide);
     }
-    std::sort(sorted_headers.begin(), sorted_headers.end(), [](const auto& lhs, const auto& rhs) {
+    std::ranges::sort(sorted_headers, [](const auto& lhs, const auto& rhs) {
         return std::tie(lhs.second, *lhs.first) < std::tie(rhs.second, *rhs.first);
     });
 

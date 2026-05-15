@@ -102,8 +102,7 @@ size_t KeyShardTaximeterCrc32::ShardByKey(const std::string& key) const {
 size_t KeyShardGpsStorageDriver::ShardByKey(const std::string& key) const {
     const auto path = Parse(key);
     const auto& driver_id = path.value_or(key);
-    const boost::crc_32_type crc{};
-    return std::ranges::for_each(driver_id, crc).fun() % shard_count_;
+    return std::for_each(driver_id.begin(), driver_id.end(), boost::crc_32_type{})() % shard_count_;
 }
 
 std::optional<std::string> KeyShardGpsStorageDriver::Parse(const std::string& s) {

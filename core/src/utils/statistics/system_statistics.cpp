@@ -55,7 +55,7 @@ bool IsProcStatMatchesName(std::string_view data, std::string_view name) {
 }
 
 bool IsAllDigits(const boost::filesystem::path& path) {
-    return std::all_of(path.native().begin(), path.native().end(), [](char c) { return c >= '0' && c <= '9'; });
+    return std::ranges::all_of(path.native(), [](char c) { return c >= '0' && c <= '9'; });
 }
 
 void ParseProcStat(std::string_view data, SystemStats& stats) {

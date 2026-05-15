@@ -138,7 +138,7 @@ std::exception_ptr PrepareDeadlinePassedException(std::string_view url, LocalSta
 }
 
 bool IsPrefix(const std::string& url, const std::vector<std::string>& prefixes) {
-    return !(std::find_if(prefixes.begin(), prefixes.end(), [&url](const std::string& prefix) {
+    return !(std::ranges::find_if(prefixes, [&url](const std::string& prefix) {
                  return utils::text::StartsWith(url, prefix);
              }) == prefixes.end());
 }

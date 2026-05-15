@@ -35,7 +35,7 @@ std::vector<utils::NotNull<clients::http::MiddlewareBase*>> FindMiddlewares(
             components.push_back(&context.FindComponent<clients::http::middlewares::ComponentBase>(name));
         }
     }
-    std::sort(components.begin(), components.end(), [](const auto& lhs, const auto& rhs) {
+    std::ranges::sort(components, [](const auto& lhs, const auto& rhs) {
         return lhs->GetIndex(utils::impl::InternalTag{}) < rhs->GetIndex(utils::impl::InternalTag{});
     });
     return utils::AsContainer<std::vector<utils::NotNull<

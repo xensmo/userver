@@ -71,8 +71,8 @@ bool AreServicesUnique(const std::vector<std::unique_ptr<impl::ServiceWorker>>& 
     for (const auto& worker : workers) {
         names.push_back(worker->GetMetadata().service_full_name);
     }
-    std::sort(names.begin(), names.end());
-    return std::adjacent_find(names.begin(), names.end()) == names.end();
+    std::ranges::sort(names);
+    return std::ranges::adjacent_find(names) == std::ranges::end(names);
 }
 
 }  // namespace

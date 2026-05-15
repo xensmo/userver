@@ -1,5 +1,6 @@
 #include <storages/redis/impl/cluster_slots_query.hpp>
 
+#include <algorithm>
 #include <optional>
 
 #include <fmt/format.h>
@@ -350,7 +351,7 @@ void ProceResponseOnceImpl(
                 << log_extra() << "Too many shards found: " << res.size() << ", maximum: " << shard_names.size();
             res = {};
         } else {
-            std::sort(res.begin(), res.end());
+            std::ranges::sort(res);
             for (auto& shard_host_info : res) {
                 shard_host_info.master.SetPassword(password);
                 shard_host_info.master.SetName(shard_names[shard_index]);

@@ -93,7 +93,7 @@ template <typename T>
 static T CidrNetworkFromInetNetwork(const InetNetwork& inet_network) {
     typename T::AddressType::BytesType bytes;
     const auto& inet_bytes = inet_network.GetBytes();
-    std::copy(inet_bytes.cbegin(), inet_bytes.cend(), bytes.begin());
+    std::ranges::copy(inet_bytes, bytes.begin());
     return T(typename T::AddressType(bytes), inet_network.GetPrefixLength());
 }
 
@@ -102,7 +102,7 @@ static InetNetwork InetNetworkFromCidrNetwork(const T& network) {
     const auto bytes = network.GetAddress().GetBytes();
     std::vector<unsigned char> inet_bytes;
     inet_bytes.reserve(bytes.size());
-    std::copy(bytes.cbegin(), bytes.cend(), std::back_inserter(inet_bytes));
+    std::ranges::copy(bytes, std::back_inserter(inet_bytes));
     return InetNetwork(
         std::move(inet_bytes),
         network.GetPrefixLength(),

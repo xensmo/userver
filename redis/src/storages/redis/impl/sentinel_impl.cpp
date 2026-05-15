@@ -1,5 +1,6 @@
 #include "sentinel_impl.hpp"
 
+#include <algorithm>
 #include <atomic>
 
 #include <fmt/format.h>

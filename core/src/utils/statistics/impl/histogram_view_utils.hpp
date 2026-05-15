@@ -77,13 +77,10 @@ public:
 
     template <typename InputRange>
     void SetBounds(const InputRange& upper_bounds) const {
+        UINVARIANT(std::ranges::all_of(upper_bounds, IsBoundPositive), "Histogram bounds must be positive");
+        UINVARIANT(std::ranges::is_sorted(upper_bounds), "Histogram bounds must be sorted");
         UINVARIANT(
-            std::all_of(upper_bounds.begin(), upper_bounds.end(), IsBoundPositive),
-            "Histogram bounds must be positive"
-        );
-        UINVARIANT(std::is_sorted(upper_bounds.begin(), upper_bounds.end()), "Histogram bounds must be sorted");
-        UINVARIANT(
-            std::adjacent_find(upper_bounds.begin(), upper_bounds.end()) == upper_bounds.end(),
+            std::ranges::adjacent_find(upper_bounds) == std::ranges::end(upper_bounds),
             "Histogram bounds must not contain duplicates"
         );
         if (std::size(upper_bounds) != 0) {

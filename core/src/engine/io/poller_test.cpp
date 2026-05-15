@@ -201,9 +201,7 @@ UTEST(Poller, ReadWriteMultipleTorture) {
                 );
                 EXPECT_EQ(event.type, Poller::Event::kRead);
 
-                const auto* it = std::find_if(std::begin(pipes), std::end(pipes), [&event](auto& pipe) {
-                    return pipe.In() == event.fd;
-                });
+                const auto* it = std::ranges::find_if(pipes, [&event](auto& pipe) { return pipe.In() == event.fd; });
                 EXPECT_NE(it, std::end(pipes));
                 pipes_read_from[it - std::begin(pipes)] = true;
                 ReadOne(event.fd);

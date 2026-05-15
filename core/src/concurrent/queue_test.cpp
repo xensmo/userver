@@ -155,7 +155,7 @@ TYPED_UTEST_MT(MpMcQueueFixture, Mpmc, kProducersCount + kConsumersCount) {
         task.Get();
     }
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 TYPED_UTEST_MT(MpMcQueueFixture, SizeAfterConsumersDie, kConsumersCount + 1) {
@@ -230,7 +230,7 @@ UTEST_MT(SpmcQueue, Spmc, 1 + kConsumersCount) {
         task.Get();
     }
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 // Reported in https://github.com/userver-framework/userver/issues/578
@@ -293,7 +293,7 @@ UTEST_MT(NonFifoMpscQueue, Mpsc, kProducersCount + 1) {
 
     consumer_task.Get();
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 UTEST_MT(NonFifoMpscQueue, SizeAfterConsumersDie, 2) {
@@ -346,7 +346,7 @@ UTEST_MT(SpscQueue, Spsc, 1 + 1) {
     producer.reset();
     consumer_task.Get();
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 TYPED_UTEST_MT(MpMcQueueFixture, MultiConsumerToken, kProducersCount + kConsumersCount) {

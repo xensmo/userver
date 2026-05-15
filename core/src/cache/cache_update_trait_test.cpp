@@ -729,7 +729,7 @@ UTEST(ExpirableCacheUpdateTrait, TwoFailed) {
     cache::MockEnvironment environment(testsuite::impl::PeriodicUpdatesMode::kEnabled);
     const ExpirableCache cache(config, environment, [](auto i) -> bool {
         std::vector<int> failed{1, 3, 4, 5, 7, 9, 10, 11};
-        return std::count(failed.begin(), failed.end(), i);
+        return std::ranges::count(failed, i);
     });
 
     const std::vector expected{false, false, false, false, true, true, false, false, false, false, true, true, false};

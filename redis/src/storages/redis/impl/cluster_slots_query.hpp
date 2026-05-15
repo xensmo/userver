@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <compare>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -8,6 +9,8 @@
 #include <vector>
 
 #include <userver/storages/redis/base.hpp>
+#include <userver/utils/assert.hpp>
+
 #include "shard.hpp"
 
 USERVER_NAMESPACE_BEGIN
@@ -40,8 +43,7 @@ struct SlotInterval {
           slot_max(slot_max)
     {}
 
-    bool operator<(const SlotInterval& r) const { return slot_min < r.slot_min; }
-    bool operator==(const SlotInterval& r) const { return slot_min == r.slot_min && slot_max == r.slot_max; }
+    constexpr auto operator<=>(const SlotInterval&) const = default;
 };
 
 logging::LogHelper& operator<<(logging::LogHelper& log, SlotInterval interval);
@@ -51,10 +53,16 @@ struct ClusterShardHostInfo {
     std::vector<ConnectionInfoInt> slaves;
     std::set<SlotInterval> slot_intervals;
 
-    bool operator<(const ClusterShardHostInfo& r) const {
+    auto operator<=>(const ClusterShardHostInfo& r) const {
         UASSERT(!slot_intervals.empty());
         UASSERT(!r.slot_intervals.empty());
-        return slot_intervals < r.slot_intervals;
+        return slot_intervals <=> r.slot_intervals;
+    }
+
+    bool operator==(const ClusterShardHostInfo& r) const noexcept {
+        UASSERT(!slot_intervals.empty());
+        UASSERT(!r.slot_intervals.empty());
+        return slot_intervals == r.slot_intervals;
     }
 };
 

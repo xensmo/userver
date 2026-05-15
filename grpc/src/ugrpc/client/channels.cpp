@@ -68,7 +68,7 @@ namespace {
         ));
     }
     const auto results = engine::GetAll(tasks);
-    return std::all_of(results.begin(), results.end(), [](bool connected) { return connected; });
+    return std::ranges::all_of(results, [](bool connected) { return connected; });
 }
 
 }  // namespace impl
