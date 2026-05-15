@@ -49,10 +49,8 @@ std::string HttpMethodToString(const clients::http::HttpMethod http_method) {
 
 std::string RemoveExcessiveSpaces(std::string value) {
     std::ranges::replace(value, '\n', ' ');
-    const auto copy_result = std::ranges::unique_copy(value, value.begin(), [](char a, char b) {
-        return a == ' ' && b == ' ';
-    });
-    value.erase(copy_result.out, value.end());
+    const auto garbage = std::ranges::unique(value, [](char a, char b) { return a == ' ' && b == ' '; });
+    value.erase(garbage.begin(), garbage.end());
     return value;
 }
 
@@ -102,7 +100,7 @@ std::string MakeStringToSign(
         canonical_headers.reserve(request.headers.size());
 
         std::ranges::copy_if(request.headers, std::back_inserter(canonical_headers), [](const auto& header) {
-            static const std::string kAmzHeader = "x-amz-";
+            static constexpr std::string_view kAmzHeader = "x-amz-";
             auto header_start = std::string_view{header.first}.substr(0, kAmzHeader.size());
             return utils::StrIcaseEqual{}(header_start, kAmzHeader);
         });
