@@ -4,9 +4,8 @@
 /// @brief @copybrief utils::StringLiteral
 /// @ingroup userver_universal
 
-#include <string>
+#include <concepts>
 #include <string_view>
-#include <type_traits>
 
 #include <fmt/core.h>
 
@@ -44,6 +43,18 @@ public:
     /// @warning `str[len]` should be '\0' and `str` should point to compile time literal.
     static constexpr StringLiteral UnsafeMake(const char* str, std::size_t len) noexcept {
         return StringLiteral(str, len);
+    }
+
+    friend constexpr auto operator<=>(StringLiteral lhs, StringLiteral rhs) noexcept = default;
+
+    friend constexpr auto operator<=>(StringLiteral lhs, const std::convertible_to<std::string_view> auto& rhs)
+        noexcept {
+        return std::string_view{lhs} <=> std::string_view{rhs};
+    }
+
+    friend constexpr bool operator==(StringLiteral lhs, const std::convertible_to<std::string_view> auto& rhs)
+        noexcept {
+        return std::string_view{lhs} == std::string_view{rhs};
     }
 
 private:

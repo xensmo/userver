@@ -65,4 +65,35 @@ TEST(StringLiteral, Swap) {
     EXPECT_EQ(v2, kShortString);
 }
 
+template <typename T, typename U>
+// NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
+static constexpr bool AreEqualInEveryWay(T&& lhs, U&& rhs) {
+    return lhs == rhs && rhs == lhs &&        //
+           !(lhs != rhs) && !(rhs != lhs) &&  //
+           !(lhs < rhs) && !(rhs < lhs) &&    //
+           !(lhs > rhs) && !(rhs > lhs) &&    //
+           (lhs <= rhs) && (rhs <= lhs) &&    //
+           (lhs >= rhs) && (rhs >= lhs) &&    //
+           (lhs <=> rhs) == std::strong_ordering::equal && (rhs <=> lhs) == std::strong_ordering::equal;
+}
+
+template <typename StringLike>
+class StringLikeComparisonTest : public testing::Test {};
+
+using StringLikeComparisonTypes = ::testing::Types<utils::StringLiteral, utils::zstring_view>;
+
+TYPED_TEST_SUITE(StringLikeComparisonTest, StringLikeComparisonTypes);
+
+TYPED_TEST(StringLikeComparisonTest, Comparison) {
+    static constexpr TypeParam kCmp = "ab";
+
+    static_assert(AreEqualInEveryWay(kCmp, kCmp));
+    static_assert(AreEqualInEveryWay(kCmp, "ab"));
+    static_assert(AreEqualInEveryWay(kCmp, static_cast<const char(&)[3]>("ab")));
+    static_assert(AreEqualInEveryWay(kCmp, static_cast<const char*>("ab")));
+    static_assert(AreEqualInEveryWay(kCmp, std::string_view{"ab"}));
+    static_assert(AreEqualInEveryWay(kCmp, utils::zstring_view{"ab"}));
+    static_assert(AreEqualInEveryWay(kCmp, utils::StringLiteral{"ab"}));
+}
+
 USERVER_NAMESPACE_END

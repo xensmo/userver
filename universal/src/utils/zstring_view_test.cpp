@@ -59,4 +59,7 @@ TEST(ZstringView, Swap) {
     EXPECT_EQ(v1, kLongString);
     EXPECT_EQ(v2, kShortString);
 }
+
+// For comparison-operator tests (shared typed suite for StringLiteral and zstring_view), see string_literal_test.cpp.
+
 USERVER_NAMESPACE_END
