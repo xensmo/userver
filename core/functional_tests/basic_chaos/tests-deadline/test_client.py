@@ -2,6 +2,7 @@ import asyncio
 import datetime
 
 import pytest
+import pytest_userver.client
 
 DP_TIMEOUT_MS = 'X-YaTaxi-Client-TimeoutMs'
 DP_DEADLINE_EXPIRED = 'X-YaTaxi-Deadline-Expired'
@@ -80,6 +81,23 @@ def get_handler_exception_logs(capture):
     return [log for log in capture.select() if log['text'].startswith("exception in 'handler-chaos-httpclient'")]
 
 
+async def _wait_for_timeout_error_metrics(
+    client_metrics: pytest_userver.client.MetricsDiffer,
+    expected_count: int,
+    *,
+    max_wait: float = 2.0,
+) -> None:
+    """httpclient timeout counters are written asynchronously."""
+    poll_interval = 0.05
+    attempts = int(max_wait / poll_interval)
+    for _ in range(attempts):
+        client_metrics.current = await client_metrics.fetch()
+        count = client_metrics.value_at('errors', {'http_error': 'timeout', **VERSION}, default=0)
+        if count == expected_count:
+            return
+        await asyncio.sleep(poll_interval)
+
+
 @pytest.mark.parametrize(
     'timeout,deadline,attempts',
     [(100, 2000, 1), (100, 2000, 1), (200, 2000, 2)],
@@ -102,6 +120,8 @@ async def test_timeout_expired(
             )
             assert response.status == 500
             assert response.text == ''
+
+            await _wait_for_timeout_error_metrics(client_metrics, attempts)
 
     assert client_metrics.value_at('cancelled-by-deadline', VERSION) == 0
     assert client_metrics.value_at('errors', {'http_error': 'ok', **VERSION}) == 0
@@ -145,6 +165,8 @@ async def test_timeout_expired_with_reuse(
             )
             assert response.status == 500
             assert response.text == ''
+
+            await _wait_for_timeout_error_metrics(client_metrics, reuse_attempts)
 
     assert client_metrics.value_at('cancelled-by-deadline', VERSION) == 0
     assert client_metrics.value_at('errors', {'http_error': 'ok', **VERSION}) == 0
