@@ -46,7 +46,17 @@ inline void AddNonAtomic(std::atomic<double>& to, std::uint64_t x) {
     to.store(to.load(std::memory_order_relaxed) + x, std::memory_order_relaxed);
 }
 
-inline void AddAtomic(std::atomic<double>& to, double x) { to += x; }
+inline void AddAtomic(std::atomic<double>& to, double x) {
+#if !defined(_LIBCPP_VERSION) || _LIBCPP_VERSION >= 180000
+    to += x;
+#else
+    double expected = to.load();
+    double desired = expected + x;
+    while (!to.compare_exchange_weak(expected, desired, std::memory_order_release, std::memory_order_relaxed)) {
+        desired = expected + x;
+    }
+#endif
+}
 
 inline bool IsBoundPositive(double x) noexcept { return std::isnormal(x) && x > 0; }
 
