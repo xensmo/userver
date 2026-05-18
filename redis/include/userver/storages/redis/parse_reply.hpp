@@ -3,6 +3,7 @@
 /// @file
 /// @brief Customizations for Redis response parsings
 
+#include <concepts>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -10,7 +11,6 @@
 #include <vector>
 
 #include <userver/storages/redis/fwd.hpp>
-#include <userver/utils/void_t.hpp>
 
 #include <userver/storages/redis/reply_types.hpp>
 
@@ -21,19 +21,11 @@ namespace impl {
 
 ReplyData&& ExtractData(ReplyPtr& reply);
 
-template <typename Result, typename ReplyType, typename = utils::void_t<>>
-struct HasParseFunctionFromRedisReply {
-    static constexpr bool value = false;
-};
-
-template <typename Result, typename ReplyType>
-struct HasParseFunctionFromRedisReply<
-    Result,
-    ReplyType,
-    utils::void_t<decltype(Result::Parse(std::declval<ReplyData>(), std::declval<const std::string&>()))>> {
-    static constexpr bool value = std::is_same<
-        decltype(Result::Parse(std::declval<ReplyData>(), std::declval<const std::string&>())),
-        ReplyType>::value;
+template <typename Result, typename ReplyType = Result>
+concept HasParseFunctionFromRedisReply = requires {
+    {
+        Result::Parse(std::declval<ReplyData>(), std::declval<const std::string&>())
+    } -> std::same_as<ReplyType>;
 };
 
 bool IsNil(const ReplyData& reply_data);
@@ -109,7 +101,7 @@ Parse(ReplyData&& reply_data, const std::string& request_description, To<std::un
 ReplyData Parse(ReplyData&& reply_data, const std::string& request_description, To<ReplyData>);
 
 template <typename Result, typename ReplyType = Result>
-requires impl::HasParseFunctionFromRedisReply<Result, ReplyType>::value
+requires impl::HasParseFunctionFromRedisReply<Result, ReplyType>
 ReplyType Parse(ReplyData&& reply_data, const std::string& request_description, To<Result, ReplyType>) {
     return Result::Parse(std::move(reply_data), request_description);
 }

@@ -5,7 +5,6 @@
 
 #include <userver/cache/update_type.hpp>
 #include <userver/utils/meta.hpp>
-#include <userver/utils/void_t.hpp>
 
 USERVER_NAMESPACE_BEGIN
 

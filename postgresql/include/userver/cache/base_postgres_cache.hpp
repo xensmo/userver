@@ -29,7 +29,6 @@
 #include <userver/utils/assert.hpp>
 #include <userver/utils/cpu_relax.hpp>
 #include <userver/utils/meta.hpp>
-#include <userver/utils/void_t.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -226,8 +225,11 @@ concept HasCacheInsertOrAssignFunction =
         CacheInsertOrAssign(c, std::move(val), std::move(key));
     };
 
+template <typename T>
+concept PolicyHasCustomCacheContainer = requires { typename T::CacheContainer; };
+
 // Data container for cache
-template <typename T, typename = USERVER_NAMESPACE::utils::void_t<>>
+template <typename T>
 struct DataCacheContainer {
     static_assert(
         meta::IsStdHashable<KeyMemberType<T>>,
@@ -238,7 +240,8 @@ struct DataCacheContainer {
 };
 
 template <typename T>
-struct DataCacheContainer<T, USERVER_NAMESPACE::utils::void_t<typename T::CacheContainer>> {
+requires PolicyHasCustomCacheContainer<T>
+struct DataCacheContainer<T> {
     static_assert(HasSizeMethod<typename T::CacheContainer>, "Custom CacheContainer must provide `size` method");
     static_assert(
         HasInsertOrAssignMethod<T> || HasCacheInsertOrAssignFunction<T>,

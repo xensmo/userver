@@ -20,7 +20,6 @@
 #include <userver/utils/meta.hpp>
 #include <userver/utils/strong_typedef_fwd.hpp>
 #include <userver/utils/underlying_value.hpp>
-#include <userver/utils/void_t.hpp>
 
 namespace testing {
 
@@ -48,14 +47,15 @@ constexpr auto operator|(StrongTypedefOps op1, StrongTypedefOps op2) noexcept {
 // Helpers
 namespace impl::strong_typedef {
 
-template <class T, class /*Enable*/ = void_t<>>
+template <class T>
 struct InitializerListImpl {
     struct DoNotMatch;
     using type = DoNotMatch;
 };
 
 template <class T>
-struct InitializerListImpl<T, void_t<typename T::value_type>> {
+requires requires { typename T::value_type; }
+struct InitializerListImpl<T> {
     using type = std::initializer_list<typename T::value_type>;
 };
 

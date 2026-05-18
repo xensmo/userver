@@ -401,8 +401,8 @@ concept EnableArrayFormatter =
 }  // namespace detail
 
 template <typename T>
-struct CppToPg<T, std::enable_if_t<traits::detail::EnableContainerMapping<T>()>>
-    : detail::ArrayPgOid<T, detail::IsElementMappedToSystem<T>()> {};
+requires(traits::detail::EnableContainerMapping<T>())
+struct CppToPg<T> : detail::ArrayPgOid<T, detail::IsElementMappedToSystem<T>()> {};
 
 template <typename T>
 constexpr bool IsTypeMappedToSystemArray() {
@@ -413,12 +413,14 @@ constexpr bool IsTypeMappedToSystemArray() {
 namespace traits {
 
 template <typename T>
-struct Input<T, std::enable_if_t<!detail::CustomParserDefined<T> && io::detail::EnableArrayParser<T>>> {
+requires(!detail::CustomParserDefined<T> && io::detail::EnableArrayParser<T>)
+struct Input<T> {
     using type = io::detail::ArrayBinaryParser<T>;
 };
 
 template <typename T>
-struct Output<T, std::enable_if_t<!detail::CustomFormatterDefined<T> && io::detail::EnableArrayFormatter<T>>> {
+requires(!detail::CustomFormatterDefined<T> && io::detail::EnableArrayFormatter<T>)
+struct Output<T> {
     using type = io::detail::ArrayBinaryFormatter<T>;
 };
 

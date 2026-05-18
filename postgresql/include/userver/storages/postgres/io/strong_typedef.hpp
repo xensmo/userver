@@ -10,7 +10,6 @@
 #include <userver/storages/postgres/io/nullable_traits.hpp>
 
 #include <userver/utils/strong_typedef.hpp>
-#include <userver/utils/void_t.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -75,7 +74,7 @@ struct GetSetNull<USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops>> {
 
 /// A metafunction that enables an enum type serialization to its
 /// underlying type. Can be specialized.
-template <typename T, typename = USERVER_NAMESPACE::utils::void_t<>>
+template <typename T>
 struct CanUseEnumAsStrongTypedef : std::false_type {};
 
 namespace impl {
@@ -164,10 +163,8 @@ struct BufferParser<USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops>>
 
 // StrongTypedef template mapping specialization
 template <typename Tag, typename T, USERVER_NAMESPACE::utils::StrongTypedefOps Ops>
-struct CppToPg<
-    USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops>,
-    std::enable_if_t<!traits::impl::IsStrongTypedefDirectlyMapped<Tag, T, Ops> && traits::kIsMappedToPg<T>>>
-    : CppToPg<T> {};
+requires(!traits::impl::IsStrongTypedefDirectlyMapped<Tag, T, Ops> && traits::kIsMappedToPg<T>)
+struct CppToPg<USERVER_NAMESPACE::utils::StrongTypedef<Tag, T, Ops>> : CppToPg<T> {};
 
 namespace traits {
 

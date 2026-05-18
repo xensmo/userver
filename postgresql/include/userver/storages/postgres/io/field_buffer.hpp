@@ -69,16 +69,10 @@ std::size_t ReadRawBinary(FieldBuffer buffer, T& value, const TypeBufferCategory
 
 namespace detail {
 
-template <typename T, typename Buffer, typename Enable = USERVER_NAMESPACE::utils::void_t<>>
-struct FormatterAcceptsReplacementOid : std::false_type {};
-
 template <typename T, typename Buffer>
-struct FormatterAcceptsReplacementOid<
-    T,
-    Buffer,
-    USERVER_NAMESPACE::utils::void_t<
-        decltype(std::declval<T&>()(std::declval<const UserTypes&>(), std::declval<Buffer&>(), std::declval<Oid>()))>>
-    : std::true_type {};
+inline constexpr bool kFormatterAcceptsReplacementOid = requires(T& f, const UserTypes& types, Buffer& buf, Oid oid) {
+    f(types, buf, oid);
+};
 
 }  // namespace detail
 
@@ -95,11 +89,10 @@ void WriteRawBinary(
         io::WriteBuffer(types, buffer, kPgNullBufferSize);
     } else {
         using BufferFormatter = typename traits::IO<T>::FormatterType;
-        using AcceptsReplacementOid = detail::FormatterAcceptsReplacementOid<BufferFormatter, Buffer>;
         auto len_start = buffer.size();
         buffer.resize(buffer.size() + size_len);
         auto size_before = buffer.size();
-        if constexpr (AcceptsReplacementOid{}) {
+        if constexpr (detail::kFormatterAcceptsReplacementOid<BufferFormatter, Buffer>) {
             BufferFormatter{value}(types, buffer, replace_oid);
         } else {
             io::WriteBuffer(types, buffer, value);
