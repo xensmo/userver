@@ -235,6 +235,10 @@ TEST(Meta, Sizable) {
 
 TEST(CacheDumpMetaContainers, Reservable) {
     struct ReservableDummy {
+        int* begin() { return nullptr; }
+        int* end() { return nullptr; }
+
+        std::size_t size() const { return 0; }
         void reserve(std::size_t) {}
     };
 
@@ -251,6 +255,9 @@ TEST(CacheDumpMetaContainers, Reservable) {
 
 TEST(Meta, IsPushBackable) {
     struct PushBackableDummy {
+        int* begin() { return nullptr; }
+        int* end() { return nullptr; }
+
         void push_back(int) {}
     };
 
