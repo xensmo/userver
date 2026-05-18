@@ -25,6 +25,10 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace utils {
+class ResourceScopeStorage;
+}  // namespace utils
+
 namespace ugrpc::impl {
 class CompletionQueuePoolBase;
 }  // namespace ugrpc::impl
@@ -84,6 +88,7 @@ public:
 
     /// @brief Start building the server
     explicit Server(
+        utils::ResourceScopeStorage& scope_storage,
         ServerConfig&& config,
         utils::statistics::Storage& statistics_storage,
         dynamic_config::Source config_source

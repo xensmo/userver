@@ -18,6 +18,7 @@
 #include <userver/utils/assert.hpp>
 #include <userver/utils/fixed_array.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
+#include <userver/utils/resource_scopes.hpp>
 
 #include <ugrpc/impl/grpc_native_logging.hpp>
 #include <ugrpc/server/impl/generic_service_worker.hpp>
@@ -79,7 +80,12 @@ bool AreServicesUnique(const std::vector<std::unique_ptr<impl::ServiceWorker>>& 
 
 class Server::Impl final {
 public:
-    explicit Impl(ServerConfig&& config, utils::statistics::Storage& statistics_storage, dynamic_config::Source);
+    explicit Impl(
+        utils::ResourceScopeStorage& scope_storage,
+        ServerConfig&& config,
+        utils::statistics::Storage& statistics_storage,
+        dynamic_config::Source config_source
+    );
     ~Impl();
 
     void AddService(ServiceBase& service, ServiceConfig&& config);
@@ -136,11 +142,12 @@ private:
 };
 
 Server::Impl::Impl(
+    utils::ResourceScopeStorage& scope_storage,
     ServerConfig&& config,
     utils::statistics::Storage& statistics_storage,
     dynamic_config::Source config_source
 )
-    : statistics_storage_(statistics_storage, ugrpc::impl::StatisticsDomain::kServer),
+    : statistics_storage_(scope_storage, statistics_storage, ugrpc::impl::StatisticsDomain::kServer),
       config_source_(config_source)
 {
     LOG_INFO() << "Configuring the gRPC server";
@@ -376,11 +383,12 @@ void Server::Impl::ShutdownServer() noexcept {
 }
 
 Server::Server(
+    utils::ResourceScopeStorage& scope_storage,
     ServerConfig&& config,
     utils::statistics::Storage& statistics_storage,
     dynamic_config::Source config_source
 )
-    : impl_(std::make_unique<Impl>(std::move(config), statistics_storage, config_source))
+    : impl_(std::make_unique<Impl>(scope_storage, std::move(config), statistics_storage, config_source))
 {}
 
 Server::~Server() = default;

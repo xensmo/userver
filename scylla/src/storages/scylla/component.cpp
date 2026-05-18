@@ -70,8 +70,6 @@ Scylla::Scylla(const ComponentConfig& config, const ComponentContext& context)
         secdist_subscriber_ = secdist->UpdateAndListen(this, dbalias_, &Scylla::OnSecdistUpdate);
     }
 
-    auto& statistics_storage = context.FindComponent<components::StatisticsStorage>();
-
     auto section_name = config.Name();
     if (boost::algorithm::starts_with(section_name, kStandardScyllaPrefix) &&
         section_name.size() != kStandardScyllaPrefix.size())
@@ -79,7 +77,8 @@ Scylla::Scylla(const ComponentConfig& config, const ComponentContext& context)
         section_name = section_name.substr(kStandardScyllaPrefix.size());
     }
 
-    statistics_entry_ = statistics_storage.GetStorage().RegisterWriter(
+    utils::statistics::RegisterWriterScope(
+        context,
         "scylla",
         [this](utils::statistics::Writer& writer) {
             UASSERT(session_);
@@ -100,10 +99,7 @@ void Scylla::OnSecdistUpdate(const storages::secdist::SecdistConfig& config) {
     session_->SetContactPoints(hosts);
 }
 
-Scylla::~Scylla() {
-    statistics_entry_.Unregister();
-    secdist_subscriber_.Unsubscribe();
-}
+Scylla::~Scylla() { secdist_subscriber_.Unsubscribe(); }
 }  // namespace components
 
 USERVER_NAMESPACE_END

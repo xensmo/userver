@@ -5,12 +5,15 @@
 /// implementations in a simplified gRPC environment.
 
 #include <memory>
+#include <optional>
 #include <utility>
+#include <vector>
 
 #include <userver/dynamic_config/snapshot.hpp>
 #include <userver/dynamic_config/storage_mock.hpp>
 #include <userver/dynamic_config/test_helpers.hpp>
 #include <userver/testsuite/grpc_control.hpp>
+#include <userver/utils/resource_scopes.hpp>
 #include <userver/utils/statistics/metrics_storage.hpp>
 #include <userver/utils/statistics/storage.hpp>
 
@@ -97,13 +100,13 @@ private:
     std::vector<utils::statistics::Entry> metrics_storage_registration_;
     dynamic_config::StorageMock config_storage_;
     std::optional<std::string> unix_socket_path_;
-    server::Server server_;
+    utils::WithResourceScopes<server::Server> server_;
     server::Middlewares server_middlewares_;
     SimpleClientMiddlewarePipeline simple_client_middleware_pipeline_;
     bool middlewares_change_allowed_{true};
     testsuite::GrpcControl testsuite_;
     std::optional<std::string> endpoint_;
-    ugrpc::impl::StatisticsStorage client_statistics_storage_;
+    utils::WithResourceScopes<ugrpc::impl::StatisticsStorage> client_statistics_storage_;
     std::optional<client::ClientFactory> client_factory_;
 };
 

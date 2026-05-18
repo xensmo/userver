@@ -72,6 +72,7 @@ CommonComponent::CommonComponent(const components::ComponentConfig& config, cons
           context
       )),
       client_statistics_storage_(
+          context.Scopes(),
           context.FindComponent<components::StatisticsStorage>().GetStorage(),
           ugrpc::impl::StatisticsDomain::kClient
       ),

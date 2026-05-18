@@ -134,16 +134,17 @@ Redis::Redis(const ComponentConfig& config, const ComponentContext& component_co
     auto& secdist = component_context.FindComponent<Secdist>();
     secdist_subscription_ = secdist.GetStorage().UpdateAndListen(this, "redis", &Redis::OnSecdistUpdate);
 
-    auto& statistics_storage = component_context.FindComponent<components::StatisticsStorage>().GetStorage();
+    utils::statistics::RegisterWriterScope(
+        component_context,
+        kStatisticsName,
+        [this](utils::statistics::Writer& writer) { WriteStatistics(writer); }
+    );
 
-    statistics_holder_ = statistics_storage.RegisterWriter(kStatisticsName, [this](utils::statistics::Writer& writer) {
-        WriteStatistics(writer);
-    });
-
-    subscribe_statistics_holder_ =
-        statistics_storage.RegisterWriter(kSubscribeStatisticsName, [this](utils::statistics::Writer& writer) {
-            WriteStatisticsPubsub(writer);
-        });
+    utils::statistics::RegisterWriterScope(
+        component_context,
+        kSubscribeStatisticsName,
+        [this](utils::statistics::Writer& writer) { WriteStatisticsPubsub(writer); }
+    );
 }
 
 std::shared_ptr<storages::redis::Client> Redis::GetClient(
@@ -275,11 +276,7 @@ void Redis::Connect(
     }
 }
 
-Redis::~Redis() {
-    statistics_holder_.Unregister();
-    subscribe_statistics_holder_.Unregister();
-    config_subscription_.Unsubscribe();
-}
+Redis::~Redis() { config_subscription_.Unsubscribe(); }
 
 void Redis::WriteStatistics(utils::statistics::Writer& writer) {
     auto settings = metrics_settings_.Read();

@@ -33,7 +33,7 @@ components_manager:
 
 }  // namespace
 
-TEST(ComponentsScope, Smoke)
+TEST(ResourceScopeStorage, Smoke)
 {
     static bool init_called{};
     static bool destroy_called{};
@@ -61,8 +61,9 @@ TEST(ComponentsScope, Smoke)
     EXPECT_TRUE(destroy_called);
 }
 
-TEST(ComponentsScope, HappyPathOrder)
+TEST(ResourceScopeStorage, HappyPathOrder)
 {
+    /// [ResourceScopeStorage - HappyPathOrder]
     static std::vector<int> trace;
 
     // Reset static variables for --gtest_repeat.
@@ -91,9 +92,10 @@ TEST(ComponentsScope, HappyPathOrder)
     components::RunOnce(components::InMemoryConfig{kConfig}, component_list);
 
     EXPECT_THAT(trace, ::testing::ElementsAre(0, 1, 3, 4, 2));
+    /// [ResourceScopeStorage - HappyPathOrder]
 }
 
-TEST(ComponentsScope, CtrThrow)
+TEST(ResourceScopeStorage, CtrThrow)
 {
     static std::vector<int> trace;
 
@@ -131,7 +133,7 @@ TEST(ComponentsScope, CtrThrow)
     EXPECT_THAT(trace, ::testing::ElementsAre(0));
 }
 
-TEST(ComponentsScope, CallbackThrow)
+TEST(ResourceScopeStorage, CallbackThrow)
 {
     static std::vector<int> trace;
 
@@ -166,6 +168,39 @@ TEST(ComponentsScope, CallbackThrow)
     );
 
     EXPECT_THAT(trace, ::testing::ElementsAre(0, 1, 3, 2));
+}
+
+TEST(ResourceScopeStorage, WithResourceScopes) {
+    static std::string data_on_construction;
+    static std::string data_on_destruction;
+
+    // Reset static variables for --gtest_repeat.
+    data_on_construction = {};
+    data_on_destruction = {};
+
+    class Client final {
+    public:
+        Client(utils::ResourceScopeStorage& resource_scope_storage, std::unique_ptr<std::string> data) {
+            resource_scope_storage.Register([this] {
+                data_on_construction = *data_;
+                return utils::FastScopeGuard([this]() noexcept { data_on_destruction = *data_; });
+            });
+
+            // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
+            data_ = std::move(data);
+        }
+
+        ~Client() { data_ = nullptr; }
+
+    private:
+        std::unique_ptr<std::string> data_;
+    };
+
+    {
+        utils::WithResourceScopes<Client> client(std::in_place, std::make_unique<std::string>("data"));
+    }
+    EXPECT_EQ(data_on_construction, "data");
+    EXPECT_EQ(data_on_destruction, "data");
 }
 
 USERVER_NAMESPACE_END
