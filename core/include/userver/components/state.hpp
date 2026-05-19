@@ -63,8 +63,12 @@ enum class ServiceLifetimeStage {
     /// This stage ends once the service receives a shutdown signal (`SIGINT` or `SIGTERM`).
     kRunning,
 
-    /// The service waits for `graceful_shutdown_interval` (0 by default) before continuing with the actual service
-    /// shutdown in @ref ServiceLifetimeStage::kOnAllComponentsAreStoppingIsRunning.
+    /// The service performs a graceful shutdown if either `graceful_shutdown_continue_accepting_requests_interval`
+    /// or `graceful_shutdown_pending_requests_completion_interval` is non-zero.
+    /// First, it waits for `graceful_shutdown_pending_requests_completion_interval` unless the interval is zero.
+    /// Second, it stops accepting new requests and continues processing of already running requests for
+    /// `graceful_shutdown_pending_requests_completion_interval` unless the interval is zero.
+    /// Then the normal shutdown procedure continues in @ref ServiceLifetimeStage::kOnAllComponentsAreStoppingIsRunning.
     ///
     /// @see @ref scripts/docs/en/userver/graceful_shutdown.md
     /// @see @ref components::ManagerControllerComponent

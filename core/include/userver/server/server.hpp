@@ -3,6 +3,7 @@
 #include <userver/formats/json/value.hpp>
 
 #include <userver/components/component_context.hpp>
+#include <userver/engine/deadline.hpp>
 #include <userver/engine/task/task_processor_fwd.hpp>
 #include <userver/server/congestion_control/limiter.hpp>
 #include <userver/server/congestion_control/sensor.hpp>
@@ -53,7 +54,10 @@ public:
     const http::HttpRequestHandler& GetHttpRequestHandler(bool is_monitor = false) const;
 
     void StartMonitorPort();
+
     void Start();
+
+    void StopServing(engine::Deadline serving_shutdown_deadline);
 
     void Stop();
 

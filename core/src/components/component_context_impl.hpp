@@ -9,6 +9,7 @@
 #include <userver/engine/condition_variable.hpp>
 #include <userver/engine/task/task_processor_fwd.hpp>
 #include <userver/engine/task/task_with_result.hpp>
+#include <userver/utils/function_ref.hpp>
 #include <userver/utils/projected_set.hpp>
 
 #include <components/component_context_component_info.hpp>
@@ -106,7 +107,7 @@ private:
     using ComponentMap =
         utils::ProjectedUnorderedSet<utils::impl::MutableWrapper<ComponentInfo>, &ComponentInfoProjection>;
 
-    enum class DependencyType { kNormal, kInverted };
+    enum class DependencyType { kNormal, kInverted, kNone };
 
     struct ProtectedData {
         std::unordered_set<ComponentInfoRef> loading_components;
@@ -117,7 +118,7 @@ private:
     struct ComponentLifetimeStageSwitchingParams {
         ComponentLifetimeStageSwitchingParams(
             const ComponentLifetimeStage& next_stage,
-            void (ComponentInfo::*stage_switch_handler)(),
+            utils::function_ref<void(ComponentInfo&)> stage_switch_handler,
             const std::string& stage_switch_handler_name,
             DependencyType dependency_type,
             bool allow_cancelling
@@ -131,7 +132,7 @@ private:
         {}
 
         const ComponentLifetimeStage& next_stage;
-        void (ComponentInfo::*stage_switch_handler)();
+        utils::function_ref<void(ComponentInfo&)> stage_switch_handler;
         const std::string& stage_switch_handler_name;
         DependencyType dependency_type;
         bool allow_cancelling;

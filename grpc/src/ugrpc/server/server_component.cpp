@@ -41,6 +41,10 @@ ServiceConfig ServerComponent::ParseServiceConfig(
 
 void ServerComponent::OnAllComponentsLoaded() { server_.Start(); }
 
+void ServerComponent::OnGracefulShutdown(engine::Deadline serving_shutdown_deadline) {
+    server_.StopServing(serving_shutdown_deadline);
+}
+
 void ServerComponent::OnAllComponentsAreStopping() { server_.StopServing(); }
 
 yaml_config::Schema ServerComponent::GetStaticConfigSchema() {

@@ -7,6 +7,7 @@
 #include <userver/compiler/demangle.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/concurrent/variable.hpp>
+#include <userver/engine/deadline.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/task_with_result.hpp>
 #include <userver/logging/log.hpp>
@@ -157,7 +158,7 @@ void ComponentContextImpl::OnAllComponentsLoaded() {
     const tracing::Span span(kOnAllComponentsLoadedRootName);
     ProcessAllComponentLifetimeStageSwitchings(
         {impl::ComponentLifetimeStage::kRunning,
-         &impl::ComponentInfo::OnAllComponentsLoaded,
+         [](ComponentInfo& component_info) { component_info.OnAllComponentsLoaded(); },
          "OnAllComponentsLoaded()",
          DependencyType::kNormal,
          true}
@@ -171,16 +172,41 @@ void ComponentContextImpl::OnAllComponentsLoaded() {
 }
 
 void ComponentContextImpl::OnGracefulShutdownStarted() {
-    const auto interval = manager_.GetConfig().graceful_shutdown_interval;
-    if (interval <= std::chrono::milliseconds::zero()) {
+    const auto first_stage_interval = manager_.GetConfig().graceful_shutdown_continue_accepting_requests_interval;
+    const auto second_stage_interval = manager_.GetConfig().graceful_shutdown_pending_requests_completion_interval;
+    if (first_stage_interval <= std::chrono::milliseconds::zero() &&
+        second_stage_interval <= std::chrono::milliseconds::zero())
+    {
         return;
     }
 
     in_graceful_shutdown_.test_and_set();
     service_lifetime_stage_ = ServiceLifetimeStage::kGracefulShutdown;
 
-    LOG_INFO() << "Graceful shutdown started, notifying ping handlers and delaying by " << interval;
-    engine::SleepFor(interval);
+    // First stage: new requests are still accepted, but health checks are failed
+    LOG_INFO()
+        << "Graceful shutdown: failing health handlers and continue accepting requests for " << first_stage_interval;
+    if (first_stage_interval > std::chrono::milliseconds::zero()) {
+        engine::SleepFor(first_stage_interval);
+    }
+
+    // Second stage: new requests are rejected, but already accepted requests are still being processed
+    if (second_stage_interval <= std::chrono::milliseconds::zero()) {
+        return;
+    }
+    const auto serving_shutdown_deadline = engine::Deadline::FromDuration(second_stage_interval);
+    LOG_INFO()
+        << "Graceful shutdown: closing all listeners and delaying active requests cancellation by "
+        << second_stage_interval;
+    ProcessAllComponentLifetimeStageSwitchings(
+        {impl::ComponentLifetimeStage::kGracefulShutdown,
+         [serving_shutdown_deadline](ComponentInfo& component_info) {
+             component_info.OnGracefulShutdown(serving_shutdown_deadline);
+         },
+         "OnGracefulShutdown()",
+         DependencyType::kNone,
+         false}
+    );
 }
 
 void ComponentContextImpl::OnAllComponentsAreStopping() {
@@ -188,7 +214,7 @@ void ComponentContextImpl::OnAllComponentsAreStopping() {
     LOG_INFO() << "Sending stopping notification to all components";
     ProcessAllComponentLifetimeStageSwitchings(
         {impl::ComponentLifetimeStage::kReadyForClearing,
-         &impl::ComponentInfo::OnAllComponentsAreStopping,
+         [](ComponentInfo& component_info) { component_info.OnAllComponentsAreStopping(); },
          "OnAllComponentsAreStopping()",
          DependencyType::kInverted,
          false}
@@ -209,7 +235,7 @@ void ComponentContextImpl::ClearComponents() {
     LOG_INFO() << "Stopping components";
     ProcessAllComponentLifetimeStageSwitchings(
         {impl::ComponentLifetimeStage::kNull,
-         &impl::ComponentInfo::ClearComponent,
+         [](ComponentInfo& component_info) { component_info.ClearComponent(); },
          "ClearComponent()",
          DependencyType::kInverted,
          false}
@@ -395,10 +421,15 @@ void ComponentContextImpl::ProcessSingleComponentLifetimeStageSwitching(
         }
     };
     try {
-        if (params.dependency_type == DependencyType::kNormal) {
-            component_info.ForEachItDependsOn(wait_cb);
-        } else {
-            component_info.ForEachDependsOnIt(wait_cb);
+        switch (params.dependency_type) {
+            case DependencyType::kNormal:
+                component_info.ForEachItDependsOn(wait_cb);
+                break;
+            case DependencyType::kInverted:
+                component_info.ForEachDependsOnIt(wait_cb);
+                break;
+            case DependencyType::kNone:
+                break;
         }
 
         LOG_DEBUG() << "Call " << params.stage_switch_handler_name << " for component '" << name << "'";
@@ -410,7 +441,7 @@ void ComponentContextImpl::ProcessSingleComponentLifetimeStageSwitching(
             }
         );
 
-        (component_info.*params.stage_switch_handler)();
+        params.stage_switch_handler(component_info);
     } catch (const impl::StageSwitchingCancelledException& ex) {
         LOG_WARNING() << params.stage_switch_handler_name << " failed for component '" << name << "': " << ex;
         component_info.SetStage(params.next_stage);

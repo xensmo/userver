@@ -6,7 +6,7 @@ import pytest_userver.utils.sync as sync
 
 
 @pytest.mark.uservice_oneshot
-async def test_graceful_shutdown_timer_and_header(
+async def test_graceful_shutdown_first_stage(
     service_daemon_instance,
     service_client,
     dynamic_config,

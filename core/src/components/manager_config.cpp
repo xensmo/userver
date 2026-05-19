@@ -261,13 +261,25 @@ properties:
         additionalProperties:
             type: boolean
             description: whether a specific experiment is enabled
-    graceful_shutdown_interval:
+    graceful_shutdown_continue_accepting_requests_interval:
         type: string
         description: |
             At shutdown, first hang for this duration with /ping 5xx to give
             the balancer a chance to redirect new requests to other hosts and
             to give the service a chance to finish handling old requests.
         defaultDescription: 0s
+    graceful_shutdown_pending_requests_completion_interval:
+        type: string
+        description: |
+            At shutdown, when the graceful_shutdown_continue_accepting_requests_interval has expired,
+            all listeners are closed, but already accepted requests continue to be processed
+            until this interval ends.
+        defaultDescription: graceful_shutdown_continue_accepting_requests_interval
+    graceful_shutdown_interval:
+        type: string
+        description: |
+            Deprecated. Use graceful_shutdown_continue_accepting_requests_interval
+            and graceful_shutdown_pending_requests_completion_interval instead.
     enable_trx_tracker:
         type: boolean
         description: |
@@ -319,8 +331,17 @@ ManagerConfig Parse(const yaml_config::YamlConfig& value, formats::parse::To<Man
         experiments | std::views::filter([](const auto& pair) { return pair.second; }) |
         std::views::transform([](const auto& pair) { return pair.first; })
     );
-    config.graceful_shutdown_interval =
-        value["graceful_shutdown_interval"].As<std::chrono::milliseconds>(config.graceful_shutdown_interval);
+    auto graceful_shutdown_continue_accepting_requests_interval = value
+        ["graceful_shutdown_continue_accepting_requests_interval"];
+    config.graceful_shutdown_continue_accepting_requests_interval =
+        graceful_shutdown_continue_accepting_requests_interval.IsMissing() ||
+                graceful_shutdown_continue_accepting_requests_interval.IsNull()
+            ? value["graceful_shutdown_interval"]
+                  .As<std::chrono::milliseconds>(config.graceful_shutdown_continue_accepting_requests_interval)
+            : graceful_shutdown_continue_accepting_requests_interval.As<std::chrono::milliseconds>();
+    config.graceful_shutdown_pending_requests_completion_interval =
+        value["graceful_shutdown_pending_requests_completion_interval"]
+            .As<std::chrono::milliseconds>(config.graceful_shutdown_continue_accepting_requests_interval);
     config.enable_trx_tracker = value["enable_trx_tracker"].As<bool>(config.enable_trx_tracker);
     config.enable_component_load_tracing =
         value["enable_component_load_tracing"].As<bool>(config.enable_component_load_tracing);

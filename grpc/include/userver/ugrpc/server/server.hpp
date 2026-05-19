@@ -130,7 +130,7 @@ public:
     /// - does not destroy server statistics
     /// - does not close the associated CompletionQueue
     /// Stop must still be called. StopServing is also useful for testing.
-    void StopServing() noexcept;
+    void StopServing(std::optional<engine::Deadline> serving_shutdown_deadline = std::nullopt) noexcept;
 
     /// @cond
     // For internal use only.
