@@ -5,6 +5,7 @@
 #include <userver/engine/io/exception.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/task.hpp>
+#include <userver/engine/wait_any.hpp>
 #include <userver/logging/log.hpp>
 
 #include <array>
@@ -187,6 +188,14 @@ void PostgresChaosProxy::ProcessSocket(engine::io::Socket proxied_socket, engine
         engine::AsyncNoTracing(task_processor_, &ForwardProxy, std::ref(proxied_socket), std::ref(db_socket));
     auto backward_task =
         engine::AsyncNoTracing(task_processor_, &BackwardProxy, std::ref(db_socket), std::ref(proxied_socket));
+
+    engine::WaitAny(forward_task, backward_task);
+
+    if (forward_task.IsFinished()) {
+        backward_task.RequestCancel();
+    } else if (backward_task.IsFinished()) {
+        forward_task.RequestCancel();
+    }
 
     forward_task.Wait();
     backward_task.Wait();
