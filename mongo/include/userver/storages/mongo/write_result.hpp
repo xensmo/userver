@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/storages/mongo/write_result.hpp
+/// @brief @copybrief storages::mongo::WriteResult
+
 #include <cstddef>
 #include <optional>
 #include <unordered_map>
@@ -13,7 +16,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace storages::mongo {
 
-/// MongoDB write operation result
+/// @brief MongoDB write operation result
 class WriteResult {
 public:
     /// Creates an empty write result

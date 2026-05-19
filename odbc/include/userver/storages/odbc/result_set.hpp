@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/storages/odbc/result_set.hpp
+/// @brief @copybrief storages::odbc::ResultSet
+
 #include <limits>
 #include <memory>
 

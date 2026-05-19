@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/cache/mongo_cache_type_traits.hpp
+/// @brief Compile-time concepts and static checks for BaseMongoCache traits
+
 #include <chrono>
 #include <type_traits>
 

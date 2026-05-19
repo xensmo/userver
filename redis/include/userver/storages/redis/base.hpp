@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/storages/redis/base.hpp
+/// @brief Redis connection parameters, metrics, buffering and publish settings
+
 #include <chrono>
 #include <string>
 #include <vector>

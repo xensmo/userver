@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/storages/odbc/component.hpp
+/// @brief @copybrief components::Odbc
+
 #include <memory>
 
 #include <userver/components/component_base.hpp>
@@ -13,6 +16,7 @@ class Cluster;
 
 namespace components {
 
+/// @brief Component that owns a storages::odbc::Cluster
 class Odbc final : public ComponentBase {
 public:
     static constexpr std::string_view kName = "odbc";

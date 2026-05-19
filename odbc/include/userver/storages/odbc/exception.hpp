@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/storages/odbc/exception.hpp
+/// @brief ODBC storage exception hierarchy
+
 #include <cstddef>
 #include <stdexcept>
 
