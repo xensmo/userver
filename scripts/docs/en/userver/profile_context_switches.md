@@ -11,7 +11,7 @@ switches. Some use cases for this profiler are:
 
 ## How to profile a service
 
-1. Make sure that service is build with debug information and that the
+1. Make sure that service is built with debug information and that the
 cmake option `USERVER_FEATURE_STACKTRACE` was turned `ON`.
 2. In the static config file set the `task-trace` options for the task processor
 you are willing to profile. All the `task-trace` options are described at
@@ -105,7 +105,7 @@ $ make -j4 userver-core_unittest && ./userver/core/userver-core_unittest --gtest
 
 - **Q:** I get barely readable traces, without function or file names.
 
-  **A:** You need to make sure that the service was build with the
+  **A:** You need to make sure that the service was built with the
   cmake option `USERVER_FEATURE_STACKTRACE` turned `ON`. Also check that
   the debug information was not stripped away from the service and that you
   have a modern `libbacktrace` library on your system.

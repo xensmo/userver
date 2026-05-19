@@ -52,8 +52,8 @@ See @ref scripts/docs/en/userver/tutorial/grpc_service.md for a tutorial.
 In a component constructor, find @ref ugrpc::client::ClientFactoryComponent and store a reference to its
 @ref ugrpc::client::ClientFactory. Using it, you can create gRPC clients of code-generated `YourServiceClient` types.
 
-Client creation in an expensive operation! Either create them once at the server boot time or cache them. An automated
-solution for client creation and caching is the @ref ugrpc::client::SimpleClientComponent. It also allows to
+Client creation is an expensive operation! Either create them once at the server boot time or cache them. An automated
+solution for client creation and caching is the @ref ugrpc::client::SimpleClientComponent. It also allows you to
 specify dynamic config for @ref ugrpc::client::ClientQos :
 
 @snippet samples/grpc_service/src/greeter_client.hpp  component
@@ -368,7 +368,7 @@ If logging level is set in several components then the most verbose logging leve
 @anchor grpc_generic_api
 ## Generic API
 
-gRPC generic API allows to call and accept RPCs with dynamic service and method names.
+gRPC generic API allows you to call and accept RPCs with dynamic service and method names.
 The other side will see this as a normal RPC, it does not need to use generic API.
 
 Intended mainly for use in proxies. Metadata can be used to proxy the request without parsing it.

@@ -127,9 +127,9 @@ Similarly, when all @ref concurrent::Consumer "consumers" of a queue are destroy
 
 ### std::atomic
 
-If you need to access small trivial types (`int`, `long`, `std::size_t`, `bool`) in shared memory from different tasks, then atomic variables may help. Beware, for complex types compiler generates code with implicit use of synchronization primitives forbidden in userver. If you are using `std::atomic` with a non-trivial or type parameters with big size, then be sure to write a test to check that accessing this variable does not impose a mutex.
+If you need to access small trivial types (`int`, `long`, `std::size_t`, `bool`) in shared memory from different tasks, then atomic variables may help. Beware, for complex types the compiler generates code with implicit use of synchronization primitives forbidden in userver. If you are using `std::atomic` with a non-trivial type or with type parameters of large size, then be sure to write a test to check that accessing this variable does not use a mutex.
 
-It is not recommended to use non-default memory_orders (for example, acquire/release), because their use is fraught with great difficulties. In such code, it is very easy to get bug that will be extremely difficult to detect. Therefore, it is better to use a simpler and more reliable default, the std::memory_order_seq_cst.
+It is not recommended to use non-default memory_orders (for example, acquire/release), because their use is fraught with great difficulties. In such code, it is very easy to get a bug that will be extremely difficult to detect. Therefore, it is better to use a simpler and more reliable default, the std::memory_order_seq_cst.
 
 
 @anchor userver_thread_local
@@ -213,7 +213,7 @@ The semaphore is used to limit the number of users that run inside a critical se
 
 @snippet engine/semaphore_test.cpp  Sample engine::Semaphore usage
 
-You don't need to use a semaphore if you need to limit the number of threads that perform CPU-heavy operations. For these purposes, create a separate TaskProcessor and perform other operations on it, it is be cheaper in terms of synchronization.
+You don't need to use a semaphore if you need to limit the number of threads that perform CPU-heavy operations. For these purposes, create a separate TaskProcessor and perform other operations on it, it is cheaper in terms of synchronization.
 
 If you need a counter, but do not need to wait for the counter to change, then you need to use `std::atomic` instead of a semaphore.
 
@@ -229,7 +229,7 @@ For multiple producers and cancellation support, use `engine::SingleConsumerEven
 
 **Don't use** `utils::SwappingSmart`, use `rcu::Variable` instead. There is a UB in the SwappingSmart behavior.
 
-`utils::SwappingSmart` protects readers from rare writers, but in the case of very frequent writers, the reader has no guarantee of getting a valid `std::shared_ptr` (which occasionally fired in production). Also `rcu::Variable` faster than `utils::SwappingSmart` in most cases.
+`utils::SwappingSmart` protects readers from rare writers, but in the case of very frequent writers, the reader has no guarantee of getting a valid `std::shared_ptr` (which occasionally fired in production). Also `rcu::Variable` is faster than `utils::SwappingSmart` in most cases.
 
 
 ----------

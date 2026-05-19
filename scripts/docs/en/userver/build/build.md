@@ -113,7 +113,7 @@ find_package(userver COMPONENTS core kafka QUIET)
 
 Then add the corresponding option to @ref service_templates_presets "cmake presets",
 e.g. `"USERVER_FEATURE_GRPC": "ON"`.
-(This allows to use @ref userver_cpm "CPM" with the service project.)
+(This allows you to use @ref userver_cpm "CPM" with the service project.)
 
 @see @ref userver_libraries
 
@@ -404,7 +404,7 @@ sudo ./scripts/build_and_install_all.sh
 
 Alternatively see @ref userver_install "userver install"
 
-@note The above image is build from `scripts/docker/ubuntu-22.04-pg.dockerfile`,
+@note The above image is built from `scripts/docker/ubuntu-22.04-pg.dockerfile`,
    `scripts/docker/ubuntu-22.04.dockerfile`
    and `scripts/docker/base-ubuntu-22.04.dockerfile` respectively.
    See `scripts/docker/` directory and `scripts/docker/Readme.md` for more

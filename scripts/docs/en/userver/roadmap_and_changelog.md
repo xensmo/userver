@@ -421,7 +421,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
   [Maxim Drugov](https://github.com/crystalixxx) for the PR!
 * YDB `topic_client` is now exposed in testsuite's @ref pytest_userver.plugins.ydb.client.YdbClient "YdbClient".
 * Removed `MONGO_DEADLINE_PROPAGATION_ENABLED_V2` dynamic config. Many thanks to [Spar](https://github.com/GitSparTV)
-  for vibe-codding the PR at at Zero Cost Conf!
+  for vibe-coding the PR at Zero Cost Conf!
 * @ref yaml_config::YamlConfig now treats `#env` values as string.
 
 * Optimizations
@@ -623,7 +623,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
     @ref scripts/docs/en/userver/functional_testing.md.
 
 * Build:
-  * `CMAKE_CXX_STANDARD` was set to to `20` by default. C++17 still supported.
+  * `CMAKE_CXX_STANDARD` was set to `20` by default. C++17 still supported.
   * Added preliminary CMake configure support on Windows. Many thanks to [Alex](https://github.com/leha-bot) for
     the PR.
   * Added cmake-format config and formatted the CMake files. Many thanks to [Dzmitry Ivaniuk](https://github.com/idzm)
@@ -1181,7 +1181,7 @@ Binary Ubuntu 22.04 amd64 package could be found at
   [available at Yandex Cloud Marketplace](https://yandex.cloud/en/marketplace/products/yc/userver).
 * YDB driver now can be built on modern Clang compilers in C++20 and above
   modes.
-* Redis now allows to subscribe to master instances.
+* Redis now allows you to subscribe to master instances.
 * Improved logging of failures in testsuite.
 
 * Optimizations:
