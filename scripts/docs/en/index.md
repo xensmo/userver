@@ -117,7 +117,7 @@ and make sure that it builds and passes tests.
 * HTTP:
     * @ref clients::http::Client "Client"
     * @ref scripts/docs/en/userver/http_server.md
-* @ref rabbitmq_driver
+* @ref scripts/docs/en/userver/rabbitmq_driver.md
 * Low level:
     * @ref engine::io::TlsWrapper "TLS client and server socket"
     * @ref engine::io::Socket "TCP and UDP sockets"
@@ -145,21 +145,21 @@ and make sure that it builds and passes tests.
 ## Caches
 * @ref scripts/docs/en/userver/caches.md
 * @ref scripts/docs/en/userver/cache_dumps.md
-* @ref pg_cache
+* @ref scripts/docs/en/userver/pg/cache.md
 * @ref scripts/docs/en/userver/lru_cache.md
 
 
 ## PostgreSQL
-* @ref scripts/docs/en/userver/pg_driver.md
-* @ref pg_transactions
-* @ref pg_run_queries
-* @ref pg_process_results
-* @ref scripts/docs/en/userver/pg_types.md
-* @ref pg_user_row_types
-* @ref pg_errors
-* @ref pg_topology
-* @ref scripts/docs/en/userver/pg_connlimit_mode_auto.md
-* @ref scripts/docs/en/userver/pg_user_types.md
+* @ref scripts/docs/en/userver/pg/driver.md
+* @ref scripts/docs/en/userver/pg/transactions.md
+* @ref scripts/docs/en/userver/pg/run_queries.md
+* @ref scripts/docs/en/userver/pg/process_results.md
+* @ref scripts/docs/en/userver/pg/types.md
+* @ref scripts/docs/en/userver/pg/user_row_types.md
+* @ref scripts/docs/en/userver/pg/errors.md
+* @ref scripts/docs/en/userver/pg/topology.md
+* @ref scripts/docs/en/userver/pg/connlimit_mode_auto.md
+* @ref scripts/docs/en/userver/pg/user_types.md
 
 
 ## MySQL
@@ -190,7 +190,7 @@ and make sure that it builds and passes tests.
 * @ref scripts/docs/en/userver/mongodb.md
 * @ref scripts/docs/en/userver/scylladb.md
 * @ref scripts/docs/en/userver/redis.md
-* @ref clickhouse_driver
+* @ref scripts/docs/en/userver/clickhouse/driver.md
 
 ## Libraries
 * @ref scripts/docs/en/userver/libraries/easy.md

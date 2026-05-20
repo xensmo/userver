@@ -77,5 +77,5 @@ Errors accounted for the purposes of `recent-errors-threshold` are:
 ----------
 
 @htmlonly <div class="bottom-nav"> @endhtmlonly
-⇦ @ref pg_topology | @ref scripts/docs/en/userver/pg_user_types.md ⇨
+⇦ @ref scripts/docs/en/userver/pg/topology.md | @ref scripts/docs/en/userver/pg/user_types.md ⇨
 @htmlonly </div> @endhtmlonly

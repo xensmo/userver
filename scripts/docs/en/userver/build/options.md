@@ -17,13 +17,13 @@ userver is split into multiple CMake libraries.
 | `userver::grpc`            | `USERVER_FEATURE_GRPC`                            | `grpc`                | @ref scripts/docs/en/userver/grpc/grpc.md                 |
 | `userver::grpc-utest`      | `USERVER_FEATURE_GRPC` + `USERVER_FEATURE_UTEST`  | `grpc`                | @ref scripts/docs/en/userver/grpc/grpc.md                 |
 | `userver::mongo`           | `USERVER_FEATURE_MONGODB`                         | `mongo`               | @ref scripts/docs/en/userver/mongodb.md                   |
-| `userver::postgresql`      | `USERVER_FEATURE_POSTGRESQL`                      | `postgresql`          | @ref scripts/docs/en/userver/pg_driver.md                 |
+| `userver::postgresql`      | `USERVER_FEATURE_POSTGRESQL`                      | `postgresql`          | @ref scripts/docs/en/userver/pg/driver.md                 |
 | `userver::redis`           | `USERVER_FEATURE_REDIS`                           | `redis`               | @ref scripts/docs/en/userver/redis.md                     |
 | `userver::redis-utest`     | `USERVER_FEATURE_REDIS` + `USERVER_FEATURE_UTEST` | `redis`               | @ref scripts/docs/en/userver/redis.md                     |
-| `userver::clickhouse`      | `USERVER_FEATURE_CLICKHOUSE`                      | `clickhouse`          | @ref clickhouse_driver                                    |
+| `userver::clickhouse`      | `USERVER_FEATURE_CLICKHOUSE`                      | `clickhouse`          | @ref scripts/docs/en/userver/clickhouse/driver.md         |
 | `userver::kafka`           | `USERVER_FEATURE_KAFKA`                           | `kafka`               | @ref scripts/docs/en/userver/kafka.md                     |
 | `userver::kafka-utest`     | `USERVER_FEATURE_KAFKA` + `USERVER_FEATURE_UTEST` | `kafka`               | @ref scripts/docs/en/userver/kafka.md                     |
-| `userver::rabbitmq`        | `USERVER_FEATURE_RABBITMQ`                        | `rabbitmq`            | @ref rabbitmq_driver                                      |
+| `userver::rabbitmq`        | `USERVER_FEATURE_RABBITMQ`                        | `rabbitmq`            | @ref scripts/docs/en/userver/rabbitmq_driver.md           |
 | `userver::mysql`           | `USERVER_FEATURE_MYSQL`                           | `mysql`               | @ref scripts/docs/en/userver/mysql/mysql_driver.md        |
 | `userver::rocks`           | `USERVER_FEATURE_ROCKS`                           | `rocks`               | TODO                                                      |
 | `userver::sqlite`          | `USERVER_FEATURE_SQLITE`                          | `sqlite`              | @ref scripts/docs/en/userver/sqlite/sqlite_driver.md      |

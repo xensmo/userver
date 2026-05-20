@@ -1,8 +1,8 @@
 # uPg: Supported data types
 
 PostgreSQL provides data type support with a system of buffer parsers and
-formatters. Please refer to @ref scripts/docs/en/userver/pg_user_types.md and
-@ref pg_user_row_types for more information about the system.
+formatters. Please refer to @ref scripts/docs/en/userver/pg/user_types.md and
+@ref scripts/docs/en/userver/pg/user_row_types.md for more information about the system.
 
 @see @ref userver_postgres_parse_and_format
 
@@ -133,13 +133,13 @@ The driver provides support for user-defined PostgreSQL types:
 - custom ranges
 
 For more information please see
-@ref scripts/docs/en/userver/pg_user_types.md.
+@ref scripts/docs/en/userver/pg/user_types.md.
 
 
 ## C++ strong typedefs in PostgreSQL
 
 The driver provides support for C++ strong typedef idiom. For more
-information see @ref pg_strong_typedef
+information see @ref scripts/docs/en/userver/pg/strong_typedef.md
 
 
 ## PostgreSQL ranges
@@ -201,5 +201,5 @@ users.
 ----------
 
 @htmlonly <div class="bottom-nav"> @endhtmlonly
-⇦ @ref pg_process_results | @ref pg_user_row_types ⇨
+⇦ @ref scripts/docs/en/userver/pg/process_results.md | @ref scripts/docs/en/userver/pg/user_row_types.md ⇨
 @htmlonly </div> @endhtmlonly

@@ -3,16 +3,16 @@
 This section describes advanced usage of PostgreSQL type system with custom
 user-provided database types.
 
-For a basic information on querying data see @ref pg_run_queries and
-@ref pg_process_results. A list of supported fundamental PostgreSQL types
+For a basic information on querying data see @ref scripts/docs/en/userver/pg/run_queries.md and
+@ref scripts/docs/en/userver/pg/process_results.md. A list of supported fundamental PostgreSQL types
 and their mappings to C++ types is available at
-@ref scripts/docs/en/userver/pg_types.md.
+@ref scripts/docs/en/userver/pg/types.md.
 
 In PosgtgreSQL database the following kinds of user types are available:
   - @ref pg_composite_types "composite (row) types"
   - @ref pg_enum "enumerations"
   - @ref pg_range_types "ranges"
-  - @ref pg_user_types "domains"
+  - @ref scripts/docs/en/userver/pg/user_types.md "domains"
 
 
 ## Mapping a C++ type to PostgreSQL domain user type
@@ -35,8 +35,8 @@ The following code allows retrieval of that type:
 
 The driver supports user-defined PostgreSQL composite types. The C++
 counterpart type must satisfy the same requirements as for the row types,
-(@ref pg_user_row_types) and must provide a specialization of
-storages::postgres::io::CppToUserPg template (@ref pg_user_types).
+(@ref scripts/docs/en/userver/pg/user_row_types.md) and must provide a specialization of
+storages::postgres::io::CppToUserPg template (@ref scripts/docs/en/userver/pg/user_types.md).
 
 After a C++ type is defined, it must be mapped to its PostgreSQL
 counterpart by specialising storages::postgres::io::CppToUserPg template for the
@@ -182,7 +182,7 @@ The actual usage:
 ----------
 
 @htmlonly <div class="bottom-nav"> @endhtmlonly
-⇦ @ref scripts/docs/en/userver/pg_connlimit_mode_auto.md | @ref scripts/docs/en/userver/mysql/mysql_driver.md ⇨
+⇦ @ref scripts/docs/en/userver/pg/connlimit_mode_auto.md | @ref scripts/docs/en/userver/mysql/mysql_driver.md ⇨
 @htmlonly </div> @endhtmlonly
 
 

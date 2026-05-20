@@ -37,16 +37,16 @@ current coroutine for carrying out network I/O.
 @section toc More information
 - For configuration see components::Postgres
 - For cluster topology see storages::postgres::Cluster
-- @ref pg_transactions
-- @ref pg_run_queries
-- @ref pg_process_results
-- @ref scripts/docs/en/userver/pg_types.md
-- @ref scripts/docs/en/userver/pg_user_types.md
-- @ref pg_errors
-- @ref pg_topology
+- @ref scripts/docs/en/userver/pg/transactions.md
+- @ref scripts/docs/en/userver/pg/run_queries.md
+- @ref scripts/docs/en/userver/pg/process_results.md
+- @ref scripts/docs/en/userver/pg/types.md
+- @ref scripts/docs/en/userver/pg/user_types.md
+- @ref scripts/docs/en/userver/pg/errors.md
+- @ref scripts/docs/en/userver/pg/topology.md
 
 ----------
 
 @htmlonly <div class="bottom-nav"> @endhtmlonly
-⇦ @ref scripts/docs/en/userver/lru_cache.md | @ref pg_transactions ⇨
+⇦ @ref scripts/docs/en/userver/lru_cache.md | @ref scripts/docs/en/userver/pg/transactions.md ⇨
 @htmlonly </div> @endhtmlonly

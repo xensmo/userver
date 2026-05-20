@@ -38,17 +38,17 @@ public:
     size_t GetRowsCount() const;
 
     /// Converts underlying block to strongly-typed struct of vectors.
-    /// See @ref clickhouse_io for better understanding of `T`'s requirements.
+    /// See @ref scripts/docs/en/userver/clickhouse/io.md for better understanding of `T`'s requirements.
     template <typename T>
     T As() &&;
 
     /// Converts underlying block to iterable of strongly-typed struct.
-    /// See @ref clickhouse_io for better understanding of `T`'s requirements.
+    /// See @ref scripts/docs/en/userver/clickhouse/io.md for better understanding of `T`'s requirements.
     template <typename T>
     auto AsRows() &&;
 
     /// Converts underlying block to strongly-typed container.
-    /// See @ref clickhouse_io for better understanding
+    /// See @ref scripts/docs/en/userver/clickhouse/io.md for better understanding
     /// of `Container::value_type`'s requirements.
     template <typename Container>
     Container AsContainer() &&;

@@ -175,7 +175,7 @@
 
 * Documentation and Diagnostics:
   * Added fix hints for storages::postgres::InvalidParserCategory.
-  * Clarify @ref scripts/docs/en/userver/pg_user_types.md
+  * Clarify @ref scripts/docs/en/userver/pg/user_types.md
   * More references and info for the metrics documentation.
   * More documentation for dynamic_config::ValueDict `__default__` behavior,
     and for dynamic configs.
@@ -292,7 +292,7 @@
   were implemented. Many thanks to [Aleksej Kamenev](https://github.com/ishiku) for
   the PR!
 * PostgreSQL driver now auto detects the max pool size, see
-  @ref scripts/docs/en/userver/pg_connlimit_mode_auto.md
+  @ref scripts/docs/en/userver/pg/connlimit_mode_auto.md
 * server::http::HttpRequest:GetMethod() now can return
   server::http::HttpMethod::kHEAD. Thanks
   to [Kirill Zimnikov](https://github.com/lirik90) for the bugreport and PR!
