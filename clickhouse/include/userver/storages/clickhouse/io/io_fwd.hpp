@@ -7,7 +7,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace storages::clickhouse::io {
 
-// clang-format off
 /// @page clickhouse_io
 ///
 /// uClickHouse driver doesn't expose underlying ClickHouse types and only provides a
@@ -37,7 +36,6 @@ namespace storages::clickhouse::io {
 /// ## Example usage:
 ///
 /// @snippet storages/tests/execute_chtest.cpp  Sample CppToClickhouse specialization
-// clang-format on
 template <typename T>
 struct CppToClickhouse;
 

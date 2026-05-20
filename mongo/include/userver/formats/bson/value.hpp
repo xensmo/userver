@@ -155,18 +155,13 @@ public:
     bool IsObject() const { return IsDocument(); }
     /// @}
 
-    // clang-format off
-
-  /// Extracts the specified type with strict type checks
-  ///
-  /// ## Example usage:
-  ///
-  /// @snippet formats/bson/value_test.cpp  Sample formats::bson::Value::As<T>() usage
-  ///
-  /// @see @ref scripts/docs/en/userver/formats.md
-
-    // clang-format on
-
+    /// Extracts the specified type with strict type checks
+    ///
+    /// ## Example usage:
+    ///
+    /// @snippet formats/bson/value_test.cpp  Sample formats::bson::Value::As<T>() usage
+    ///
+    /// @see @ref scripts/docs/en/userver/formats.md
     template <typename T>
     auto As() const {
         static_assert(

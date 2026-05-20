@@ -143,20 +143,15 @@ public:
     /// @brief Returns true if *this is a map (Type::kObject).
     bool IsObject() const noexcept;
 
-    // clang-format off
-
-  /// @brief Returns value of *this converted to the result type of
-  ///        Parse(const Value&, parse::To<T>). Almost always it is T.
-  /// @throw Anything derived from std::exception.
-  ///
-  /// ## Example usage:
-  ///
-  /// @snippet formats/yaml/value_test.cpp  Sample formats::yaml::Value::As<T>() usage
-  ///
-  /// @see @ref scripts/docs/en/userver/formats.md
-
-    // clang-format on
-
+    /// @brief Returns value of *this converted to the result type of
+    ///        Parse(const Value&, parse::To<T>). Almost always it is T.
+    /// @throw Anything derived from std::exception.
+    ///
+    /// ## Example usage:
+    ///
+    /// @snippet formats/yaml/value_test.cpp  Sample formats::yaml::Value::As<T>() usage
+    ///
+    /// @see @ref scripts/docs/en/userver/formats.md
     template <typename T>
     auto As() const;
 

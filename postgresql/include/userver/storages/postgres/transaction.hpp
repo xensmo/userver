@@ -119,7 +119,6 @@ namespace storages::postgres {
 /// ⇦ @ref pg_transactions | @ref pg_process_results ⇨
 /// @htmlonly </div> @endhtmlonly
 
-// clang-format off
 /// @brief PostgreSQL transaction.
 ///
 /// RAII wrapper for running transactions on PostgreSQL connections. Should be
@@ -140,8 +139,6 @@ namespace storages::postgres {
 /// // rolled back in the destructor of trx.
 /// trx.Commit();
 /// @endcode
-// clang-format on
-
 class Transaction {
 public:
     //@{

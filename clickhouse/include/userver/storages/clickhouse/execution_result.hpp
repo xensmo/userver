@@ -17,8 +17,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace storages::clickhouse {
 
-// clang-format off
-
 /// Thin wrapper over underlying block of data, returned by
 /// storages::clickhouse::Cluster Execute methods
 ///
@@ -27,8 +25,6 @@ namespace storages::clickhouse {
 /// @snippet storages/tests/execute_chtest.cpp  Sample CppToClickhouse specialization
 ///
 /// @snippet storages/tests/execute_chtest.cpp  Sample ExecutionResult usage
-
-// clang-format on
 class ExecutionResult final {
 public:
     explicit ExecutionResult(impl::BlockWrapperPtr);

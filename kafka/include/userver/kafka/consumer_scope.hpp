@@ -17,8 +17,6 @@ class Consumer;
 
 }  // namespace impl
 
-// clang-format off
-
 /// @ingroup userver_clients
 ///
 /// @brief RAII class that used as interface for Apache Kafka Consumer interaction
@@ -64,9 +62,6 @@ class Consumer;
 /// @code
 /// // Subscription must be the last field! Add new fields above this comment.
 /// @endcode
-
-// clang-format on
-
 class ConsumerScope final {
 public:
     /// @brief Callback that is invoked on each polled message batch.

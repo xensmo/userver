@@ -13,8 +13,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace formats::yaml {
 
-// clang-format off
-
 /// @ingroup userver_universal userver_containers userver_formats
 ///
 /// @brief Builder for YAML.
@@ -31,9 +29,6 @@ namespace formats::yaml {
 /// @snippet formats/json/value_builder_test.cpp  Sample Customization formats::json::ValueBuilder usage
 ///
 /// @see @ref scripts/docs/en/userver/formats.md
-
-// clang-format on
-
 class ValueBuilder final {
 public:
     struct IterTraits {
