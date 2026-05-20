@@ -19,7 +19,8 @@ def _userver_config_testsuite(userver_config_testsuite):
         userver_config_testsuite(config, config_vars)
         # Restore the option after it's deleted by the base fixture.
         # Don't do this in your testsuite tests! For userver tests only.
-        config['components_manager']['graceful_shutdown_interval'] = '3s'
+        config['components_manager']['graceful_shutdown_continue_accepting_requests_interval'] = '3s'
+        config['components_manager']['graceful_shutdown_pending_requests_completion_interval'] = '0s'
 
     return patch_config
 
