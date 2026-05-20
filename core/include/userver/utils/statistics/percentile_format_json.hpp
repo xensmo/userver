@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/utils/statistics/percentile_format_json.hpp
+/// @brief JSON formatting helpers for percentile metrics
+
 #include <initializer_list>
 
 #include <userver/formats/json/value_builder.hpp>

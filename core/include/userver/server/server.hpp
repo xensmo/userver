@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/server/server.hpp
+/// @brief @copybrief server::Server
+
 #include <userver/formats/json/value.hpp>
 
 #include <userver/components/component_context.hpp>
@@ -30,6 +33,7 @@ class RequestsView;
 class ServerImpl;
 struct ServerConfig;
 
+/// @brief Main HTTP server instance
 class Server final : public congestion_control::Limitee, public congestion_control::RequestsSource {
 public:
     Server(

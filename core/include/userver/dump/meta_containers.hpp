@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/dump/meta_containers.hpp
+/// @brief Dump serialization customization points for STL containers
+
 #include <iterator>
 #include <map>
 #include <set>

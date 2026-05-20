@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/utils/statistics/metric_tag_impl.hpp
+/// @brief MetricTag implementation details and metric map utilities
+
 #include <atomic>
 #include <cstddef>
 #include <functional>
