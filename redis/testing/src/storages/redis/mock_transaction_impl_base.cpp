@@ -503,6 +503,48 @@ RequestZscore MockTransactionImplBase::Zscore(std::string /*key*/, std::string /
     AbortWithStacktrace("Redis method not mocked");
 }
 
+RequestJsonSet MockTransactionImplBase::JsonSet(
+    std::string /*key*/,
+    std::string /*path*/,
+    formats::json::Value /*value*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestJsonSetIfNotExist MockTransactionImplBase::JsonSetIfNotExist(
+    std::string /*key*/,
+    std::string /*path*/,
+    formats::json::Value /*value*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestJsonSetIfExist MockTransactionImplBase::JsonSetIfExist(
+    std::string /*key*/,
+    std::string /*path*/,
+    formats::json::Value /*value*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestJsonGet MockTransactionImplBase::JsonGet(std::string /*key*/) { AbortWithStacktrace("Redis method not mocked"); }
+
+RequestJsonGet MockTransactionImplBase::JsonGet(std::string /*key*/, std::string /*path*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestJsonGet MockTransactionImplBase::JsonGet(std::string /*key*/, std::vector<std::string> /*paths*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestJsonMget MockTransactionImplBase::JsonMget(std::vector<std::string> /*keys*/, std::string /*path*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestJsonMset MockTransactionImplBase::JsonMset(std::vector<JsonKeyPathValue> /*key_path_values*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
 // end of redis commands
 
 }  // namespace storages::redis

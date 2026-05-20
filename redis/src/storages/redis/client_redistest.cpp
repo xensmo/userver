@@ -122,7 +122,7 @@ UTEST_F(RedisClientTest, Unlink) {
 
 UTEST_F(RedisClientTest, Geosearch) {
     const Version since{6, 2, 0};
-    if (!CheckVersion(since)) {
+    if (!CheckRedisVersion(since)) {
         GTEST_SKIP() << SkipMsgByVersion("Geosearch", since);
     }
 
@@ -297,7 +297,7 @@ class RedisExpireOptionsTest
 
 UTEST_P(RedisExpireOptionsTest, ExpireOptionsTest) {
     const Version since{7, 0, 0};
-    if (!CheckVersion(since)) {
+    if (!CheckRedisVersion(since)) {
         GTEST_SKIP() << SkipMsgByVersion("Expire options", since);
     }
 
@@ -871,7 +871,7 @@ UTEST_F(RedisClientTest, Zadd) {
 
 UTEST_F(RedisClientTest, ZaddGtLt) {
     const Version since{6, 2, 0};
-    if (!CheckVersion(since)) {
+    if (!CheckRedisVersion(since)) {
         GTEST_SKIP() << SkipMsgByVersion("Zadd gt/lt", since);
     }
 

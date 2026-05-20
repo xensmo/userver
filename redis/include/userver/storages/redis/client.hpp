@@ -672,6 +672,58 @@ public:
 
     virtual RequestZscore Zscore(std::string key, std::string member, const CommandControl& command_control) = 0;
 
+    // JSON module commands:
+
+    /// @brief Set a JSON value at the given key and path.
+    virtual RequestJsonSet JsonSet(
+        std::string key,
+        std::string path,
+        formats::json::Value value,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set a JSON value only if the path does not already exist (NX).
+    virtual RequestJsonSetIfNotExist JsonSetIfNotExist(
+        std::string key,
+        std::string path,
+        formats::json::Value value,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set a JSON value only if the path already exists (XX).
+    virtual RequestJsonSetIfExist JsonSetIfExist(
+        std::string key,
+        std::string path,
+        formats::json::Value value,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get the JSON value at the root path of the given key.
+    virtual RequestJsonGet JsonGet(std::string key, const CommandControl& command_control) = 0;
+
+    /// @brief Get the JSON value at the given path of the given key.
+    virtual RequestJsonGet JsonGet(std::string key, std::string path, const CommandControl& command_control) = 0;
+
+    /// @brief Get the JSON value at multiple paths of the given key.
+    virtual RequestJsonGet JsonGet(
+        std::string key,
+        std::vector<std::string> paths,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get JSON values from multiple keys at the given path.
+    virtual RequestJsonMget JsonMget(
+        std::vector<std::string> keys,
+        std::string path,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set JSON values for multiple key-path-value triplets.
+    virtual RequestJsonMset JsonMset(
+        std::vector<JsonKeyPathValue> key_path_values,
+        const CommandControl& command_control
+    ) = 0;
+
     // end of redis commands
 
     RequestGet Get(std::string key, RetryNilFromMaster, const CommandControl& command_control);

@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <userver/engine/impl/context_accessor.hpp>
+#include <userver/formats/json/value.hpp>
 #include <userver/storages/redis/exception.hpp>
 #include <userver/storages/redis/fwd.hpp>
 #include <userver/storages/redis/reply_types.hpp>
@@ -263,6 +264,14 @@ using RequestZremrangebyrank = Request<size_t>;
 using RequestZremrangebyscore = Request<size_t>;
 using RequestZscan = ScanRequest<ScanTag::kZscan>;
 using RequestZscore = Request<std::optional<double>>;
+
+// JSON module commands
+using RequestJsonSet = Request<StatusOk, void>;
+using RequestJsonSetIfExist = Request<std::optional<StatusOk>, bool>;
+using RequestJsonSetIfNotExist = Request<std::optional<StatusOk>, bool>;
+using RequestJsonGet = Request<std::optional<formats::json::Value>>;
+using RequestJsonMget = Request<std::vector<std::optional<formats::json::Value>>>;
+using RequestJsonMset = Request<StatusOk, void>;
 /// @}
 
 }  // namespace storages::redis

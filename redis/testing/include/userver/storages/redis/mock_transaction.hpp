@@ -282,6 +282,22 @@ public:
 
     RequestZscore Zscore(std::string key, std::string member) override;
 
+    RequestJsonSet JsonSet(std::string key, std::string path, formats::json::Value value) override;
+
+    RequestJsonSetIfNotExist JsonSetIfNotExist(std::string key, std::string path, formats::json::Value value) override;
+
+    RequestJsonSetIfExist JsonSetIfExist(std::string key, std::string path, formats::json::Value value) override;
+
+    RequestJsonGet JsonGet(std::string key) override;
+
+    RequestJsonGet JsonGet(std::string key, std::string path) override;
+
+    RequestJsonGet JsonGet(std::string key, std::vector<std::string> paths) override;
+
+    RequestJsonMget JsonMget(std::vector<std::string> keys, std::string path) override;
+
+    RequestJsonMset JsonMset(std::vector<JsonKeyPathValue> key_path_values) override;
+
     // end of redis commands
 
 private:

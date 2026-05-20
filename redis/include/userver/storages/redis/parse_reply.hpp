@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <userver/formats/json/value.hpp>
 #include <userver/storages/redis/fwd.hpp>
 
 #include <userver/storages/redis/reply_types.hpp>
@@ -99,6 +100,11 @@ std::unordered_map<std::string, std::string>
 Parse(ReplyData&& reply_data, const std::string& request_description, To<std::unordered_map<std::string, std::string>>);
 
 ReplyData Parse(ReplyData&& reply_data, const std::string& request_description, To<ReplyData>);
+
+formats::json::Value Parse(ReplyData&& reply_data, const std::string& request_description, To<formats::json::Value>);
+
+std::vector<std::optional<formats::json::Value>>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<std::optional<formats::json::Value>>>);
 
 template <typename Result, typename ReplyType = Result>
 requires impl::HasParseFunctionFromRedisReply<Result, ReplyType>

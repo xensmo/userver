@@ -495,6 +495,42 @@ public:
 
     RequestZscore Zscore(std::string key, std::string member, const CommandControl& command_control) override;
 
+    // JSON module commands:
+
+    RequestJsonSet JsonSet(
+        std::string key,
+        std::string path,
+        formats::json::Value value,
+        const CommandControl& command_control
+    ) override;
+
+    RequestJsonSetIfNotExist JsonSetIfNotExist(
+        std::string key,
+        std::string path,
+        formats::json::Value value,
+        const CommandControl& command_control
+    ) override;
+
+    RequestJsonSetIfExist JsonSetIfExist(
+        std::string key,
+        std::string path,
+        formats::json::Value value,
+        const CommandControl& command_control
+    ) override;
+
+    RequestJsonGet JsonGet(std::string key, const CommandControl& command_control) override;
+
+    RequestJsonGet JsonGet(std::string key, std::string path, const CommandControl& command_control) override;
+
+    RequestJsonGet JsonGet(std::string key, std::vector<std::string> paths, const CommandControl& command_control)
+        override;
+
+    RequestJsonMget JsonMget(std::vector<std::string> keys, std::string path, const CommandControl& command_control)
+        override;
+
+    RequestJsonMset JsonMset(std::vector<JsonKeyPathValue> key_path_values, const CommandControl& command_control)
+        override;
+
     // end of redis commands
 
     friend class TransactionImpl;

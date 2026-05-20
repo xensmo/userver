@@ -311,7 +311,7 @@ UTEST_F(RedisClusterClientTest, EvalSha) {
 
 UTEST_F(RedisClusterClientTest, EvalReadOnly) {
     const Version since{7, 0, 0};
-    if (!CheckVersion(since)) {
+    if (!CheckRedisVersion(since)) {
         GTEST_SKIP() << SkipMsgByVersion("EvalReadOnly", since);
     }
 
@@ -353,7 +353,7 @@ UTEST_F(RedisClusterClientTest, EvalReadOnly) {
 
 UTEST_F(RedisClusterClientTest, EvalShaReadOnly) {
     const Version since{7, 0, 0};
-    if (!CheckVersion(since)) {
+    if (!CheckRedisVersion(since)) {
         GTEST_SKIP() << SkipMsgByVersion("EvalShaReadOnly", since);
     }
 

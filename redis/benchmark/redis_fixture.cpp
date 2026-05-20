@@ -8,6 +8,7 @@
 #include <storages/redis/client_impl.hpp>
 #include <storages/redis/impl/sentinel.hpp>
 #include <storages/redis/redis_secdist.hpp>
+#include <userver/storages/redis/redis_config.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -54,7 +55,12 @@ void Redis::RunStandalone(std::function<void()> payload) {
     engine::RunStandalone(kMainWorkerThreads, [&] {
         auto thread_pools = std::make_shared<
             storages::redis::impl::ThreadPools>(kSentinelThreadPoolSize, kRedisThreadPoolSize);
-        dynamic_config::StorageMock config;
+        dynamic_config::StorageMock config{
+            {
+                storages::redis::kConfig,
+                storages::redis::Config{},
+            },
+        };
 
         sentinel_ = storages::redis::impl::Sentinel::CreateSentinel(
             std::move(thread_pools),

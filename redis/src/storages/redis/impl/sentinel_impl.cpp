@@ -306,7 +306,10 @@ std::unordered_map<ServerId, size_t, ServerIdHasher> SentinelImpl::GetAvailableS
 
 void SentinelImpl::WaitConnectedDebug(bool allow_empty_slaves) {
     const auto mode = allow_empty_slaves ? WaitConnectedMode::kMaster : WaitConnectedMode::kMasterAndSlave;
-    const RedisWaitConnected wait_connected{mode, true, kRedisWaitConnectedDefaultTimeout};
+
+    const auto config = dynamic_config_source_.GetSnapshot();
+    const auto& wait_settings = config[storages::redis::kConfig].redis_wait_connected;
+    const RedisWaitConnected wait_connected{mode, /*throw_on_fail=*/true, wait_settings.timeout};
     WaitConnectedOnce(wait_connected);
 }
 

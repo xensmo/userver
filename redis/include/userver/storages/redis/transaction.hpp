@@ -313,6 +313,28 @@ public:
 
     virtual RequestZscore Zscore(std::string key, std::string member) = 0;
 
+    // JSON module commands:
+
+    virtual RequestJsonSet JsonSet(std::string key, std::string path, formats::json::Value value) = 0;
+
+    virtual RequestJsonSetIfNotExist JsonSetIfNotExist(
+        std::string key,
+        std::string path,
+        formats::json::Value value
+    ) = 0;
+
+    virtual RequestJsonSetIfExist JsonSetIfExist(std::string key, std::string path, formats::json::Value value) = 0;
+
+    virtual RequestJsonGet JsonGet(std::string key) = 0;
+
+    virtual RequestJsonGet JsonGet(std::string key, std::string path) = 0;
+
+    virtual RequestJsonGet JsonGet(std::string key, std::vector<std::string> paths) = 0;
+
+    virtual RequestJsonMget JsonMget(std::vector<std::string> keys, std::string path) = 0;
+
+    virtual RequestJsonMset JsonMset(std::vector<JsonKeyPathValue> key_path_values) = 0;
+
     // end of redis commands
 };
 

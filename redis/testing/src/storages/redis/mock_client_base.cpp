@@ -908,6 +908,71 @@ RequestZscore MockClientBase::Zscore(
     AbortWithStacktrace(kNotMocked);
 }
 
+RequestJsonSet MockClientBase::JsonSet(
+    std::string /*key*/,
+    std::string /*path*/,
+    formats::json::Value /*value*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestJsonSetIfNotExist MockClientBase::JsonSetIfNotExist(
+    std::string /*key*/,
+    std::string /*path*/,
+    formats::json::Value /*value*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestJsonSetIfExist MockClientBase::JsonSetIfExist(
+    std::string /*key*/,
+    std::string /*path*/,
+    formats::json::Value /*value*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestJsonGet MockClientBase::JsonGet(
+    std::string /*key*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestJsonGet MockClientBase::JsonGet(
+    std::string /*key*/,
+    std::string /*path*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestJsonGet MockClientBase::JsonGet(
+    std::string /*key*/,
+    std::vector<std::string> /*paths*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestJsonMget MockClientBase::JsonMget(
+    std::vector<std::string> /*keys*/,
+    std::string /*path*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestJsonMset MockClientBase::JsonMset(
+    std::vector<JsonKeyPathValue> /*key_path_values*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
 // end of redis commands
 
 TransactionPtr MockClientBase::Multi() {
