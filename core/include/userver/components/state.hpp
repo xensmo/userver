@@ -27,7 +27,7 @@ class ComponentContextImpl;
 /// kLoading [label="{kLoading | <f0> * Components are constructed }"];
 /// kOnAllComponentsLoadedIsRunning [label="{kOnAllComponentsLoadedIsRunning | <f1> * OnAllComponentsLoaded is called }"];
 /// kRunning [label="{kRunning | <f2> * All components loaded successfully \n * Service is fully operational }"];
-/// kGracefulShutdown [label="{kGracefulShutdown | <f3> * Waits graceful_shutdown_interval }"];
+/// kGracefulShutdown [label="{kGracefulShutdown | <f3> * First, waits graceful_shutdown_continue_accepting_requests_interval. Then OnGracefulShutdown is called * }"];
 /// kOnAllComponentsAreStoppingIsRunning [label="{kOnAllComponentsAreStoppingIsRunning | <f4> * OnAllComponentsAreStopping is called \n * Reverse-dependency order }"];
 /// kStopping [label="{kStopping | <f5> * Components are destroyed \n * Reverse-dependency order }"];
 ///
@@ -35,7 +35,8 @@ class ComponentContextImpl;
 /// kLoading -> kOnAllComponentsAreStoppingIsRunning [label=" Exception during construction "];
 /// kOnAllComponentsLoadedIsRunning -> kRunning;
 /// kOnAllComponentsLoadedIsRunning -> kOnAllComponentsAreStoppingIsRunning [label=" OnAllComponentsLoaded throws "];
-/// kRunning -> kGracefulShutdown [label=" Received SIGINT or SIGTERM "];
+/// kRunning -> kOnAllComponentsAreStoppingIsRunning [label=" Received SIGINT or SIGTERM when graceful shutdown is disabled "];
+/// kRunning -> kGracefulShutdown [label=" Received SIGINT or SIGTERM when graceful shutdown is enabled "];
 /// kGracefulShutdown -> kOnAllComponentsAreStoppingIsRunning;
 /// kOnAllComponentsAreStoppingIsRunning -> kStopping;
 /// }
