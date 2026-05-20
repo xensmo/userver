@@ -75,7 +75,7 @@ enum class ServiceLifetimeStage {
     /// @see @ref components::ManagerControllerComponent
     ///
     /// Example:
-    /// @snippet core/functional_tests/graceful_shutdown/static_config.yaml graceful_shutdown_interval
+    /// @snippet core/functional_tests/graceful_shutdown/static_config.yaml graceful_shutdown_settings
     kGracefulShutdown,
 
     /// @ref components::ComponentBase::OnAllComponentsAreStopping (noop by default) is running for all components.
