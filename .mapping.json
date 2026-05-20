@@ -4164,6 +4164,8 @@
   "redis/src/storages/redis/impl/redis_connection_holder.cpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_connection_holder.cpp",
   "redis/src/storages/redis/impl/redis_connection_holder.hpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_connection_holder.hpp",
   "redis/src/storages/redis/impl/redis_creation_settings.hpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_creation_settings.hpp",
+  "redis/src/storages/redis/impl/redis_group.cpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_group.cpp",
+  "redis/src/storages/redis/impl/redis_group.hpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_group.hpp",
   "redis/src/storages/redis/impl/redis_info.cpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_info.cpp",
   "redis/src/storages/redis/impl/redis_info.hpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_info.hpp",
   "redis/src/storages/redis/impl/redis_stats.cpp":"taxi/uservices/userver/redis/src/storages/redis/impl/redis_stats.cpp",

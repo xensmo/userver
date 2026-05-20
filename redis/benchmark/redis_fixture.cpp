@@ -62,13 +62,15 @@ void Redis::RunStandalone(std::function<void()> payload) {
             },
         };
 
+        auto key_shard = storages::redis::impl::KeyShardFactory{
+            storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32
+        };
         sentinel_ = storages::redis::impl::Sentinel::CreateSentinel(
             std::move(thread_pools),
             GetTestsuiteRedisSettings(),
             "none",
             config.GetSource(),
-            "pub",
-            storages::redis::impl::KeyShardFactory{storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32}
+            storages::redis::impl::SentinelStaticConfig{"pub", std::move(key_shard), {}, {}}
         );
 
         sentinel_->WaitConnectedDebug();

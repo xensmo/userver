@@ -8,6 +8,7 @@
 #include <userver/logging/log.hpp>
 #include <userver/utils/statistics/writer.hpp>
 
+#include <storages/redis/impl/redis_group.hpp>
 #include <storages/redis/impl/sentinel.hpp>
 #include <storages/redis/impl/thread_pools.hpp>
 #include <userver/storages/redis/client.hpp>
@@ -63,19 +64,21 @@ bool DynamicRedis::AddClient(
     settings.sentinel_password = dyn_settings.sentinel_password;
     settings.shards = dyn_settings.shards;
 
-    const auto& sharding_strategy = dyn_settings.sharding_strategy;
-
     CommandControl cc{};
     cc.allow_reads_from_master = dyn_settings.allow_reads_from_master;
+
+    impl::SentinelStaticConfig creation_config{
+        name,
+        impl::KeyShardFactory{dyn_settings.sharding_strategy},
+        cc,
+    };
 
     auto sentinel = impl::Sentinel::CreateSentinel(
         thread_pools_,
         settings,
         name,
         config,
-        name,
-        impl::KeyShardFactory{sharding_strategy},
-        cc,
+        creation_config,
         testsuite_redis_control_
     );
     if (!sentinel) {

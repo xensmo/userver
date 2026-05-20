@@ -221,13 +221,11 @@ SentinelImpl::SentinelImpl(
     const std::vector<std::string>& shards,
     const std::vector<ConnectionInfo>& conns,
     std::string shard_group_name,
-    const std::string& client_name,
     const Password& password,
     ConnectionSecurity connection_security,
-    KeyShardFactory&& key_shard_factory,
+    SentinelStaticConfig creation_config,
     dynamic_config::Source dynamic_config_source,
-    std::size_t database_index,
-    TopologyUpdateMethod topology_update_method
+    std::size_t database_index
 )
     : sentinel_obj_(sentinel),
       ev_thread_(sentinel_thread_control),
@@ -236,17 +234,18 @@ SentinelImpl::SentinelImpl(
           [this] { ProcessWaitingCommands(); },
           kSentinelGetHostsCheckInterval
       )),
-      key_shard_factory_(std::move(key_shard_factory)),
+      key_shard_factory_(std::move(creation_config.key_shard_factory)),
       key_shard_(key_shard_factory_(shards.size())),
       shard_group_name_(std::move(shard_group_name)),
       conns_(conns),
       redis_thread_pool_(redis_thread_pool),
-      client_name_(client_name),
+      client_name_(std::move(creation_config.client_name)),
       dynamic_config_source_(std::move(dynamic_config_source)),
       database_index_(database_index)
 {
     log_extra_.Extend("shard_group_name", shard_group_name_);
 
+    const auto topology_update_method = creation_config.topology_update_method;
     const auto& key_shard_type = key_shard_factory_.GetShardingStrategy();
     topology_holder_ = [&]() -> std::unique_ptr<TopologyHolderBase> {
         if (key_shard_type == ShardingStrategy::kRedisCluster) {
