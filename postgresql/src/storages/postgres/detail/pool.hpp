@@ -163,6 +163,7 @@ private:
     const error_injection::Settings ei_settings_;
     RecentCounter recent_conn_errors_;
     USERVER_NAMESPACE::utils::TokenBucket cancel_limit_;
+    USERVER_NAMESPACE::utils::TokenBucket connecting_rate_limiter_;
     detail::StatementStatsStorage sts_;
     dynamic_config::Source config_source_;
     USERVER_NAMESPACE::utils::statistics::MetricsStoragePtr metrics_;
