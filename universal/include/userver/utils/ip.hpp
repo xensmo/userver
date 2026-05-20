@@ -19,7 +19,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
-/// IP address and utilities
+/// @brief IP address parsing, formatting, and related utilities.
 namespace utils::ip {
 
 /// @ingroup userver_containers

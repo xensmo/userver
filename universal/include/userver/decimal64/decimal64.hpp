@@ -51,7 +51,7 @@ class LogHelper;
 
 }  // namespace logging
 
-/// Fixed-point decimal data type and related functions
+/// @brief Fixed-point `decimal64` arithmetic and formatting.
 namespace decimal64 {
 
 /// The base class for Decimal-related exceptions

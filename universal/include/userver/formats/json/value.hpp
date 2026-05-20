@@ -449,7 +449,7 @@ void PrintTo(const Value&, std::ostream*);
 
 }  // namespace formats::json
 
-/// Although we provide user defined literals, please beware that
+/// @brief Although we provide user defined literals, please beware that
 /// 'using namespace ABC' may contradict code style of your company.
 namespace formats::literals {
 

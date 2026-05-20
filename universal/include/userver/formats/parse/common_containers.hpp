@@ -14,6 +14,7 @@
 #include <userver/formats/parse/to.hpp>
 #include <userver/utils/meta.hpp>
 
+/// @brief Boost.UUID helpers referenced by format parsers and serializers.
 namespace boost::uuids {
 struct uuid;
 }

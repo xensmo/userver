@@ -21,6 +21,7 @@
 #include <userver/utils/strong_typedef_fwd.hpp>
 #include <userver/utils/underlying_value.hpp>
 
+/// @brief GoogleTest-related helpers used from headers in test-only paths.
 namespace testing {
 
 template <typename T>

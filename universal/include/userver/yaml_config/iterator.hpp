@@ -1,5 +1,9 @@
 #pragma once
 
+/// @file userver/yaml_config/iterator.hpp
+/// @brief @copybrief yaml_config::Iterator
+/// @ingroup userver_universal
+
 #include <iterator>
 
 #include <userver/formats/yaml/value.hpp>
@@ -8,6 +12,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace yaml_config {
 
+/// @brief Forward iterator adapter over YAML-backed configuration containers.
 template <typename IterTraits>
 class Iterator final {
 public:

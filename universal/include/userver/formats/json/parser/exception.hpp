@@ -1,5 +1,9 @@
 #pragma once
 
+/// @file userver/formats/json/parser/exception.hpp
+/// @brief Exception types for JSON streaming parsers.
+/// @ingroup userver_universal
+
 #include <stdexcept>
 
 #include <fmt/format.h>

@@ -15,7 +15,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
-/// HTTP helpers
+/// @brief HTTP primitives: status codes, URLs, headers, and parsing helpers.
 namespace http {
 
 /// @brief Content-Type parsing error
@@ -102,6 +102,7 @@ private:
     utils::StrIcaseHash str_hasher_;
 };
 
+/// @brief MIME content type helpers.
 namespace content_type {
 
 extern const ContentType kApplicationOctetStream;

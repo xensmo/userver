@@ -18,6 +18,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
+/// @brief General-purpose utilities used across userver libraries.
 namespace utils {
 
 /// @brief Concatenates multiple `std::string_view`-convertible items

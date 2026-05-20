@@ -16,6 +16,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
+/// @brief Metaprogramming utilities, concepts, and type traits helpers.
 namespace meta {
 
 namespace impl {

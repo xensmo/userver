@@ -1,5 +1,9 @@
 #pragma once
 
+/// @file userver/http/parse_status_code.hpp
+/// @brief @copybrief http::Parse
+/// @ingroup userver_universal
+
 #include <fmt/format.h>
 
 #include <userver/formats/common/meta.hpp>
@@ -10,6 +14,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace http {
 
+/// @brief Parsing helpers for HTTP status codes from format values.
 template <formats::common::kIsFormatValue Value>
 StatusCode Parse(const Value& value, formats::parse::To<StatusCode>) {
     using IntType = std::underlying_type_t<StatusCode>;

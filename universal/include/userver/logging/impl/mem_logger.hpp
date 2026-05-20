@@ -12,6 +12,7 @@ namespace formatters {
 struct LogItem;
 }
 
+/// @brief In-memory logger that captures formatted log items.
 class MemLogger final : public LoggerBase {
 public:
     MemLogger() noexcept;

@@ -1,5 +1,9 @@
 #pragma once
 
+/// @file userver/http/header_map.hpp
+/// @brief @copybrief http::headers::HeaderMap
+/// @ingroup userver_universal
+
 #include <initializer_list>
 #include <iterator>
 #include <string>
@@ -16,6 +20,7 @@ namespace http::headers {
 
 class TestsHelper;
 
+/// @brief Internal helpers for `HeaderMap` storage and iteration.
 namespace header_map {
 class Map;
 }

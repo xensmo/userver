@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file
+/// @file userver/utils/zstring_view.hpp
 /// @brief @copybrief utils::zstring_view
 /// @ingroup userver_universal
 
