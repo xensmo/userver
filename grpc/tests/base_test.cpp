@@ -24,7 +24,7 @@ namespace {
 constexpr int kNumber = 42;
 constexpr auto kLongTimeout = 500ms;
 
-void CheckServerContext(grpc::ServerContext& context) {
+void CheckServerContext(grpc::ServerContextBase& context) {
     const auto& client_metadata = context.client_metadata();
     EXPECT_EQ(utils::FindOptional(client_metadata, "req_header"), "value");
     context.AddTrailingMetadata("resp_header", "value");

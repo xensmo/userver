@@ -29,7 +29,7 @@ const utils::AnyStorageDataTag<ugrpc::server::StorageContext, engine::Deadline::
 
 bool CheckAndSetupDeadline(
     tracing::Span& span,
-    grpc::ServerContext& server_context,
+    grpc::ServerContextBase& server_context,
     std::string_view service_name,
     std::string_view method_name,
     ugrpc::impl::RpcStatisticsScope& statistics_scope,
