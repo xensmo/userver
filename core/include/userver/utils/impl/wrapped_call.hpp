@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/impl/wrapped_call_base.hpp>
 #include <userver/utils/lazy_prvalue.hpp>
@@ -78,6 +79,18 @@ struct UnrefImpl<utils::LazyPrvalue<Func>> final {
 template <typename T>
 using DecayUnref = typename UnrefImpl<std::decay_t<T>>::type;
 
+// Like std::apply, but avoids generating extra template instantiations and unnecessary debug information.
+template <typename Function, typename... Args, std::size_t... Indices>
+USERVER_IMPL_NODEBUG_INLINE_FUNC inline decltype(auto)
+TransparentApply(Function&& func, std::tuple<Args...>&& args, std::index_sequence<Indices...>) {
+    if constexpr (std::is_member_pointer_v<std::remove_cvref_t<Function>>) {
+        // Not utils::ForwardLike because it would move arguments stored by reference.
+        return std::invoke(std::forward<Function>(func), static_cast<Args&&>(std::get<Indices>(args))...);
+    } else {
+        return std::forward<Function>(func)(static_cast<Args&&>(std::get<Indices>(args))...);
+    }
+}
+
 // Stores passed arguments and function. Invokes function later with argument
 // types exactly matching the initial types of arguments passed to WrapCall.
 template <typename Function, typename... Args>
@@ -104,10 +117,18 @@ public:
         // see 'logging/stacktrace_cache.cpp'.
         try {
             if constexpr (std::is_void_v<ResultType>) {
-                std::apply(std::forward<Function>(data_->func), std::move(data_->args));
+                impl::TransparentApply(
+                    std::forward<Function>(data_->func),
+                    std::move(data_->args),
+                    std::index_sequence_for<Args...>{}
+                );
                 result.SetValue();
             } else {
-                result.SetValue(std::apply(std::forward<Function>(data_->func), std::move(data_->args)));
+                result.SetValue(impl::TransparentApply(
+                    std::forward<Function>(data_->func),
+                    std::move(data_->args),
+                    std::index_sequence_for<Args...>{}
+                ));
             }
         } catch (const std::exception&) {
             result.SetException(std::current_exception());
@@ -116,7 +137,6 @@ public:
 
 private:
     struct Data final {
-        // TODO remove after paren-init for aggregates in C++20
         template <typename RawFunction, typename... RawArgs>
         explicit Data(RawFunction&& func, RawArgs&&... args)
             // NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
