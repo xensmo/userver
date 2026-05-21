@@ -32,7 +32,7 @@ During a graceful shutdown, a service appends special HTTP headers and gRPC meta
 
 Graceful shutdown headers are enabled by default. They could be configured or disabled via @ref GRACEFUL_SHUTDOWN_HEADERS dynamic configuration.
 
-@example grpc/functional_tests/middleware_server/tests/test_graceful_shutdown_headers.py
+@example grpc/functional_tests/middleware_server/tests-graceful-shutdown-first-stage/test_first_stage.py
 
 
 ----------
