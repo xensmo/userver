@@ -1,5 +1,5 @@
 default: {}
-description: ''
+description: Congestion Control settings for PostgreSQL
 schema:
     type: object
     additionalProperties: false
