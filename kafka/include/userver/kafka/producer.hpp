@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/kafka/producer.hpp
+/// @brief @copybrief kafka::Producer
+
 #include <cstdint>
 #include <type_traits>
 #include <utility>

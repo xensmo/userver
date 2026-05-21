@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/ydb/table.hpp
+/// @brief @copybrief ydb::TableClient
+
 #include <ydb-cpp-sdk/client/query/client.h>
 #include <ydb-cpp-sdk/client/query/query.h>
 #include <ydb-cpp-sdk/client/table/table.h>
@@ -57,6 +60,7 @@ using ScanQuerySettings = NYdb::NTable::TStreamExecScanQuerySettings;
 /// and metrics will become unusable.
 using DynamicTransactionName = utils::StrongTypedef<struct DynamicTransactionNameTag, std::string>;
 
+/// @brief YDB Table client
 class TableClient final {
 public:
     /// @cond

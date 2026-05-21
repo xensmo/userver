@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/ydb/io/structs.hpp
+/// @brief YDB struct serialization traits and customization
+
 #include <ydb-cpp-sdk/client/result/result.h>
 #include <ydb-cpp-sdk/client/value/value.h>
 

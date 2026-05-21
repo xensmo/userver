@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/ydb/settings.hpp
+/// @brief YDB operation, query and transaction settings
+
 #include <chrono>
 #include <cstdint>
 #include <optional>

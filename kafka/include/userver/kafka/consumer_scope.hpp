@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/kafka/consumer_scope.hpp
+/// @brief @copybrief kafka::ConsumerScope
+
 #include <functional>
 
 #include <userver/kafka/message.hpp>

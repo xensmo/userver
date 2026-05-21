@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/ydb/io/traits.hpp
+/// @brief YDB value serialization traits and helpers
+
 #include <ydb-cpp-sdk/client/params/fwd.h>
 #include <ydb-cpp-sdk/client/value/fwd.h>
 

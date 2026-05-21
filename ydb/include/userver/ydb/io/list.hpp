@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/ydb/io/list.hpp
+/// @brief YDB list container serialization traits
+
 #include <ydb-cpp-sdk/client/value/value.h>
 
 #include <iterator>

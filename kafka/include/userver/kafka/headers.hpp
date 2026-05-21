@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/kafka/headers.hpp
+/// @brief Kafka message header views and readers
+
 #include <cstddef>
 #include <iterator>
 #include <string_view>

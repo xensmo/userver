@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/kafka/consumer_component.hpp
+/// @brief @copybrief kafka::ConsumerComponent
+
 #include <string_view>
 
 #include <userver/kafka/consumer_scope.hpp>

@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/kafka/producer_component.hpp
+/// @brief @copybrief kafka::ProducerComponent
+
 #include <string_view>
 
 #include <userver/kafka/producer.hpp>
