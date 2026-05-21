@@ -1,8 +1,7 @@
 #pragma once
 
 /// @file userver/utils/hedged_request.hpp
-/// @brief
-/// Classes and functions for performing hedged requests.
+/// @brief Classes and functions for performing hedged requests.
 ///
 /// To perform hedged request you need to define RequestStrategy - a class
 /// similar to following ExampleStrategy:
@@ -50,10 +49,10 @@
 ///
 
 #include <chrono>
+#include <compare>
 #include <functional>
 #include <optional>
 #include <queue>
-#include <tuple>
 #include <type_traits>
 
 #include <userver/engine/task/cancel.hpp>
@@ -99,16 +98,7 @@ struct PlanEntry {
           action(action)
     {}
 
-    bool operator<(const PlanEntry& other) const noexcept { return Tie() < other.Tie(); }
-    bool operator>(const PlanEntry& other) const noexcept { return Tie() > other.Tie(); }
-    bool operator==(const PlanEntry& other) const noexcept { return Tie() == other.Tie(); }
-    bool operator<=(const PlanEntry& other) const noexcept { return Tie() <= other.Tie(); }
-    bool operator>=(const PlanEntry& other) const noexcept { return Tie() >= other.Tie(); }
-    bool operator!=(const PlanEntry& other) const noexcept { return Tie() != other.Tie(); }
-
-    std::tuple<const TimePoint&, const size_t&, const size_t&, const Action&> Tie() const noexcept {
-        return std::tie(timepoint, request_index, attempt_id, action);
-    }
+    auto operator<=>(const PlanEntry& other) const noexcept = default;
 
     TimePoint timepoint;
     std::size_t request_index{0};
