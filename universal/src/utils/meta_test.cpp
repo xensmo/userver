@@ -213,18 +213,6 @@ TEST(Meta, IsOstreamWritable) {
     static_assert(!meta::IsOstreamWritable<std::vector<int>>);
 }
 
-struct Dummy {
-    using dummy_alias = int;
-};
-
-template <typename T>
-using DummyAlias = typename T::dummy_alias;
-
-TEST(Meta, Detection) {
-    static_assert(meta::IsDetected<DummyAlias, Dummy>);
-    static_assert(!meta::IsDetected<DummyAlias, std::string>);
-}
-
 TEST(Meta, Sizable) {
     static_assert(meta::kIsSizable<std::string>);
     static_assert(meta::kIsSizable<std::string_view>);

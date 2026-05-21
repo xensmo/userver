@@ -22,27 +22,18 @@ struct IsInstantiationOf<Template, Template<Args...>> : std::true_type {};
 
 }  // namespace impl
 
+#ifndef ARCADIA_ROOT
+
 /// @brief Checks whether a trait is correct for the given template args
 ///
-/// Implements the pre-cpp20-concepts detection idiom.
-///
-/// To use, define a templated type alias (a "trait"), which for some type
-/// either is correct and produces ("detects") some result type,
-/// or is SFINAE-d out. Example:
-///
-/// @code
-/// template <typename T>
-/// using HasValueType = typename T::ValueType;
-/// ...
-/// if constexpr (utils::meta::IsDetected<HasValueType, T>) { ... }
-/// @endcode
-///
-/// @deprecated Prefer using `requires` expressions directly in new code:
+/// @deprecated Use a `requires` expression directly:
 /// @code
 /// if constexpr (requires { typename T::ValueType; }) { ... }
 /// @endcode
 template <template <typename...> typename Trait, typename... Args>
 concept IsDetected = requires { typename Trait<Args...>; };
+
+#endif
 
 /// @brief Returns `true` if the type is an instantiation of the specified template.
 template <typename T, template <typename...> typename Template>
