@@ -18,7 +18,7 @@ struct ParseContext final {
     std::string_view column_name;
 };
 
-template <typename T, typename Enable = void>
+template <typename T>
 struct ValueTraits {
     /// Parses an element of type `T` from `parser`. `context` may be used
     /// for diagnostic messages.

@@ -139,7 +139,7 @@ public:
             // may throw a non std::exception based exception
             Stream() << value;
             FlushStream();
-        } else if constexpr (meta::kIsRange<T> && !formats::common::kIsFormatValue<T>) {
+        } else if constexpr (meta::kIsRange<T> && !formats::common::IsFormatValue<T>) {
             // may throw a non std::exception based exception
             PutRange(value);
         } else {

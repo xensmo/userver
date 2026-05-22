@@ -74,7 +74,8 @@ using InsertRow = std::vector<InsertColumn>;
 /// @endcond
 
 template <typename T>
-struct ValueTraits<T, std::enable_if_t<meta::kIsRange<T> && !meta::kIsMap<T>>> {
+requires meta::kIsRange<T> && (!meta::kIsMap<T>)
+struct ValueTraits<T> {
     using ValueType = meta::RangeValueType<T>;
 
     static T Parse(NYdb::TValueParser& parser, const ParseContext& context) {
@@ -123,8 +124,8 @@ struct ValueTraits<T, std::enable_if_t<meta::kIsRange<T> && !meta::kIsMap<T>>> {
 };
 
 template <typename T>
-struct ValueTraits<std::optional<T>, std::enable_if_t<meta::kIsRange<T> && !meta::kIsMap<T>>>
-    : impl::GenericOptionalValueTraits<T> {};
+requires meta::kIsRange<T> && (!meta::kIsMap<T>)
+struct ValueTraits<std::optional<T>> : impl::GenericOptionalValueTraits<T> {};
 
 }  // namespace ydb
 

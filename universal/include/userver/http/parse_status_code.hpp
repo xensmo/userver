@@ -15,7 +15,7 @@ USERVER_NAMESPACE_BEGIN
 namespace http {
 
 /// @brief Parsing helpers for HTTP status codes from format values.
-template <formats::common::kIsFormatValue Value>
+template <formats::common::IsFormatValue Value>
 StatusCode Parse(const Value& value, formats::parse::To<StatusCode>) {
     using IntType = std::underlying_type_t<StatusCode>;
     constexpr IntType kMinCode = 100;

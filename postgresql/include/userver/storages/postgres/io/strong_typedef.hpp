@@ -81,9 +81,6 @@ constexpr bool CheckCanUseEnumAsStrongTypedef() {
 }  // namespace impl
 
 template <typename T>
-using EnableIfCanUseEnumAsStrongTypedef = std::enable_if_t<impl::CheckCanUseEnumAsStrongTypedef<T>()>;
-
-template <typename T>
 concept RequiresCanUseEnumAsStrongTypedef = impl::CheckCanUseEnumAsStrongTypedef<T>();
 
 }  // namespace traits
