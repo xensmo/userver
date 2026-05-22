@@ -240,6 +240,7 @@ using RequestSetIfNotExist = Request<std::optional<StatusOk>, bool>;
 using RequestSetIfNotExistOrGet = Request<std::optional<std::string>>;
 using RequestSetOptions = Request<SetReply>;
 using RequestSetex = Request<StatusOk, void>;
+using RequestSetAndGetPrevious = Request<std::optional<std::string>>;
 using RequestSismember = Request<size_t>;
 using RequestSmembers = Request<std::unordered_set<std::string>>;
 using RequestSrandmember = Request<std::optional<std::string>>;

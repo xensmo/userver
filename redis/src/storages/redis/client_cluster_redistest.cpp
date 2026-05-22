@@ -46,6 +46,40 @@ UTEST_F(RedisClusterClientTest, SetGet) {
     }
 }
 
+UTEST_F(RedisClusterClientTest, SetAndGetPrevious) {
+    const Version since{6, 2, 0};
+    if (!CheckRedisVersion(since)) {
+        GTEST_SKIP() << SkipMsgByVersion("SetAndGetPrevious", since);
+    }
+
+    auto client = GetClient();
+
+    const size_t num_keys = 10;
+    const int add = 100;
+
+    for (size_t i = 0; i < num_keys; ++i) {
+        auto req = client->Set(MakeKey(i), std::to_string(add + i), kDefaultCc);
+        UASSERT_NO_THROW(req.Get());
+    }
+
+    for (size_t i = 0; i < num_keys; ++i) {
+        auto req = client->SetAndGetPrevious(MakeKey(i), std::to_string(add - i), std::chrono::seconds{10}, kDefaultCc);
+        auto previous_value = req.Get();
+        ASSERT_TRUE(previous_value.has_value());
+        EXPECT_EQ(previous_value.value(), std::to_string(add + i));
+        EXPECT_TRUE(client->Ttl(MakeKey(i), kDefaultCc).Get().KeyHasExpiration());
+
+        auto current_value = client->Get(MakeKey(i), kDefaultCc).Get();
+        ASSERT_TRUE(current_value.has_value());
+        EXPECT_EQ(current_value, std::to_string(add - i));
+    }
+
+    for (size_t i = 0; i < num_keys; ++i) {
+        auto req = client->Del(MakeKey(i), kDefaultCc);
+        EXPECT_EQ(req.Get(), 1);
+    }
+}
+
 UTEST_F(RedisClusterClientTest, Mget) {
     auto client = GetClient();
 

@@ -487,6 +487,15 @@ RequestSetex TransactionImpl::Setex(std::string key, std::chrono::seconds second
     return AddCmd<RequestSetex>("setex", true, std::move(key), seconds.count(), std::move(value));
 }
 
+RequestSetAndGetPrevious TransactionImpl::SetAndGetPrevious(
+    std::string key,
+    std::string value,
+    std::chrono::milliseconds ttl
+) {
+    UpdateShard(key);
+    return AddCmd<RequestSetAndGetPrevious>("set", true, std::move(key), std::move(value), "PX", ttl.count(), "GET");
+}
+
 RequestSismember TransactionImpl::Sismember(std::string key, std::string member) {
     UpdateShard(key);
     return AddCmd<RequestSismember>("sismember", false, std::move(key), std::move(member));

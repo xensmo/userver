@@ -499,6 +499,15 @@ RequestSetex MockTransaction::Setex(std::string key, std::chrono::seconds second
     return AddSubrequest(impl_->Setex(std::move(key), seconds, std::move(value)));
 }
 
+RequestSetAndGetPrevious MockTransaction::SetAndGetPrevious(
+    std::string key,
+    std::string value,
+    std::chrono::milliseconds ttl
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->SetAndGetPrevious(std::move(key), std::move(value), ttl));
+}
+
 RequestSismember MockTransaction::Sismember(std::string key, std::string member) {
     UpdateShard(key);
     return AddSubrequest(impl_->Sismember(std::move(key), std::move(member)));

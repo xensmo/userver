@@ -317,6 +317,14 @@ RequestSetex MockTransactionImplBase::Setex(
     AbortWithStacktrace("Redis method not mocked");
 }
 
+RequestSetAndGetPrevious MockTransactionImplBase::SetAndGetPrevious(
+    std::string /*key*/,
+    std::string /*value*/,
+    std::chrono::milliseconds /*ttl*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
 RequestSismember MockTransactionImplBase::Sismember(std::string /*key*/, std::string /*member*/) {
     AbortWithStacktrace("Redis method not mocked");
 }

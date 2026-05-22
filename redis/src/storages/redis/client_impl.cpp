@@ -1029,6 +1029,21 @@ RequestSetex ClientImpl::Setex(
     ));
 }
 
+RequestSetAndGetPrevious ClientImpl::SetAndGetPrevious(
+    std::string key,
+    std::string value,
+    std::chrono::milliseconds ttl,
+    const CommandControl& command_control
+) {
+    auto shard = ShardByKey(key, command_control);
+    return CreateRequest<RequestSetAndGetPrevious>(MakeRequest(
+        CmdArgs{"set", std::move(key), std::move(value), "PX", ttl.count(), "GET"},
+        shard,
+        true,
+        GetCommandControl(command_control)
+    ));
+}
+
 RequestSismember ClientImpl::Sismember(std::string key, std::string member, const CommandControl& command_control) {
     auto shard = ShardByKey(key, command_control);
     return CreateRequest<RequestSismember>(MakeRequest(

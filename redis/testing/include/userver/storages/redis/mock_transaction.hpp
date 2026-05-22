@@ -194,6 +194,9 @@ public:
 
     RequestSetex Setex(std::string key, std::chrono::seconds seconds, std::string value) override;
 
+    RequestSetAndGetPrevious SetAndGetPrevious(std::string key, std::string value, std::chrono::milliseconds ttl)
+        override;
+
     RequestSismember Sismember(std::string key, std::string member) override;
 
     RequestSmembers Smembers(std::string key) override;

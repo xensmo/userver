@@ -484,6 +484,13 @@ public:
         const CommandControl& command_control
     ) = 0;
 
+    virtual RequestSetAndGetPrevious SetAndGetPrevious(
+        std::string key,
+        std::string value,
+        std::chrono::milliseconds ttl,
+        const CommandControl& command_control
+    ) = 0;
+
     virtual RequestSismember Sismember(std::string key, std::string member, const CommandControl& command_control) = 0;
 
     // use Sscan in case of a big set

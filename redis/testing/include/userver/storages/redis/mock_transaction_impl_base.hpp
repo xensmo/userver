@@ -187,6 +187,12 @@ public:
 
     virtual RequestSetex Setex(std::string key, std::chrono::seconds seconds, std::string value);
 
+    virtual RequestSetAndGetPrevious SetAndGetPrevious(
+        std::string key,
+        std::string value,
+        std::chrono::milliseconds ttl
+    );
+
     virtual RequestSismember Sismember(std::string key, std::string member);
 
     virtual RequestSmembers Smembers(std::string key);

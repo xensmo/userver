@@ -340,6 +340,13 @@ public:
         const CommandControl& command_control
     ) override;
 
+    RequestSetAndGetPrevious SetAndGetPrevious(
+        std::string key,
+        std::string value,
+        std::chrono::milliseconds ttl,
+        const CommandControl& command_control
+    ) override;
+
     RequestSismember Sismember(std::string key, std::string member, const CommandControl& command_control) override;
 
     RequestSmembers Smembers(std::string key, const CommandControl& command_control) override;

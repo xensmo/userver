@@ -624,6 +624,15 @@ RequestSetex MockClientBase::Setex(
     AbortWithStacktrace(kNotMocked);
 }
 
+RequestSetAndGetPrevious MockClientBase::SetAndGetPrevious(
+    std::string /*key*/,
+    std::string /*value*/,
+    std::chrono::milliseconds /*ttl*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
 RequestSismember MockClientBase::Sismember(
     std::string /*key*/,
     std::string /*member*/,
