@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/concurrent/variable.hpp
+/// @brief @copybrief concurrent::Variable
+
 #include <cstdlib>
 #include <mutex>
 #include <optional>

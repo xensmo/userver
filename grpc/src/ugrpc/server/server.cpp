@@ -13,11 +13,13 @@
 #include <grpcpp/ext/channelz_service_plugin.h>
 #include <grpcpp/server.h>
 
+#include <userver/engine/deadline.hpp>
 #include <userver/engine/mutex.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/fixed_array.hpp>
 #include <userver/utils/impl/internal_tag.hpp>
+#include <userver/utils/resource_scopes.hpp>
 
 #include <ugrpc/impl/grpc_native_logging.hpp>
 #include <ugrpc/server/impl/generic_service_worker.hpp>
@@ -37,7 +39,6 @@ namespace ugrpc::server {
 namespace {
 
 constexpr std::size_t kMaxSocketPathLength = 107;
-constexpr std::chrono::seconds kShutdownGracePeriod{1};
 
 std::optional<int> ToOptionalInt(const std::string& str) {
     char* str_end{};
@@ -71,15 +72,20 @@ bool AreServicesUnique(const std::vector<std::unique_ptr<impl::ServiceWorker>>& 
     for (const auto& worker : workers) {
         names.push_back(worker->GetMetadata().service_full_name);
     }
-    std::sort(names.begin(), names.end());
-    return std::adjacent_find(names.begin(), names.end()) == names.end();
+    std::ranges::sort(names);
+    return std::ranges::adjacent_find(names) == std::ranges::end(names);
 }
 
 }  // namespace
 
 class Server::Impl final {
 public:
-    explicit Impl(ServerConfig&& config, utils::statistics::Storage& statistics_storage, dynamic_config::Source);
+    explicit Impl(
+        utils::ResourceScopeStorage& scope_storage,
+        ServerConfig&& config,
+        utils::statistics::Storage& statistics_storage,
+        dynamic_config::Source config_source
+    );
     ~Impl();
 
     void AddService(ServiceBase& service, ServiceConfig&& config);
@@ -96,7 +102,7 @@ public:
 
     int GetPort() const noexcept;
 
-    void StopServing() noexcept;
+    void StopServing(std::optional<engine::Deadline> serving_shutdown_deadline) noexcept;
 
     void Stop() noexcept;
 
@@ -120,7 +126,7 @@ private:
 
     void DoStart();
 
-    void ShutdownServer() noexcept;
+    void ShutdownServer(std::optional<engine::Deadline> serving_shutdown_deadline) noexcept;
 
     State state_{State::kConfiguration};
     std::optional<grpc::ServerBuilder> server_builder_;
@@ -136,11 +142,12 @@ private:
 };
 
 Server::Impl::Impl(
+    utils::ResourceScopeStorage& scope_storage,
     ServerConfig&& config,
     utils::statistics::Storage& statistics_storage,
     dynamic_config::Source config_source
 )
-    : statistics_storage_(statistics_storage, ugrpc::impl::StatisticsDomain::kServer),
+    : statistics_storage_(scope_storage, statistics_storage, ugrpc::impl::StatisticsDomain::kServer),
       config_source_(config_source)
 {
     LOG_INFO() << "Configuring the gRPC server";
@@ -260,7 +267,7 @@ void Server::Impl::Start() {
     } catch (const std::exception& ex) {
         LOG_ERROR() << "The gRPC server failed to start. " << ex;
         // Not Stop, because some gRPC clients might be using completion_queues_.
-        StopServing();
+        StopServing(std::nullopt);
         throw;
     }
 }
@@ -281,7 +288,7 @@ void Server::Impl::Stop() noexcept {
     // Must shutdown server, then ServiceWorkers, then queues before anything
     // else
     if (server_ && state_ != State::kServingStopped) {
-        ShutdownServer();
+        ShutdownServer(std::nullopt);
     }
     service_workers_.clear();
     generic_service_workers_.clear();
@@ -291,10 +298,10 @@ void Server::Impl::Stop() noexcept {
     state_ = State::kStopped;
 }
 
-void Server::Impl::StopServing() noexcept {
+void Server::Impl::StopServing(std::optional<engine::Deadline> serving_shutdown_deadline) noexcept {
     UASSERT(state_ != State::kStopped);
     if (server_) {
-        ShutdownServer();
+        ShutdownServer(serving_shutdown_deadline);
     }
     service_workers_.clear();
     generic_service_workers_.clear();
@@ -361,14 +368,16 @@ void Server::Impl::DoStart() {
     }
 }
 
-void Server::Impl::ShutdownServer() noexcept {
+void Server::Impl::ShutdownServer(std::optional<engine::Deadline> serving_shutdown_deadline) noexcept {
     LOG_INFO() << "Stopping the gRPC server";
-    const auto deadline = engine::Deadline::FromDuration(kShutdownGracePeriod);
+    if (!serving_shutdown_deadline.has_value()) {
+        serving_shutdown_deadline = engine::Deadline::FromDuration(std::chrono::seconds::zero());
+    }
 
     // Shutdown blocks thread.
     engine::SingleUseEvent finished;
     std::thread thread([&] {
-        server_->Shutdown(deadline);
+        server_->Shutdown(*serving_shutdown_deadline);
         finished.Send();
     });
     finished.WaitNonCancellable();
@@ -376,11 +385,12 @@ void Server::Impl::ShutdownServer() noexcept {
 }
 
 Server::Server(
+    utils::ResourceScopeStorage& scope_storage,
     ServerConfig&& config,
     utils::statistics::Storage& statistics_storage,
     dynamic_config::Source config_source
 )
-    : impl_(std::make_unique<Impl>(std::move(config), statistics_storage, config_source))
+    : impl_(std::make_unique<Impl>(scope_storage, std::move(config), statistics_storage, config_source))
 {}
 
 Server::~Server() = default;
@@ -405,7 +415,9 @@ int Server::GetPort() const noexcept { return impl_->GetPort(); }
 
 void Server::Stop() noexcept { impl_->Stop(); }
 
-void Server::StopServing() noexcept { impl_->StopServing(); }
+void Server::StopServing(std::optional<engine::Deadline> serving_shutdown_deadline) noexcept {
+    impl_->StopServing(serving_shutdown_deadline);
+}
 
 std::uint64_t Server::GetTotalRequests() const { return impl_->GetTotalRequests(); }
 

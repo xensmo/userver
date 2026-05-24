@@ -10,7 +10,6 @@
 #include <userver/formats/json.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/str_icase.hpp>
-#include <userver/utils/void_t.hpp>
 
 USERVER_NAMESPACE_BEGIN
 

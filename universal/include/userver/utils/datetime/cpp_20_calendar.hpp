@@ -11,6 +11,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
+/// @brief Date, time-of-day, clocks, and parsing utilities.
 namespace utils::datetime {
 
 // TODO: remove the following aliases

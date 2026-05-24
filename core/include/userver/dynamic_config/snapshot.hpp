@@ -108,8 +108,6 @@ private:
     const impl::ConfigId id_;
 };
 
-// clang-format off
-
 /// @brief The shared snapshot of
 /// @ref scripts/docs/en/userver/dynamic_config.md "dynamic configs". Cheap to
 /// copy, even cheaper to move. Thread safe, not updated with new dynamic
@@ -124,8 +122,6 @@ private:
 ///
 /// ## Usage example:
 /// @snippet components/component_sample_test.cpp  Sample user component runtime config source
-
-// clang-format on
 class Snapshot final {
 public:
     Snapshot(const Snapshot&);

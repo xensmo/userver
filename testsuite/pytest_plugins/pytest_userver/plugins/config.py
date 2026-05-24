@@ -664,6 +664,8 @@ def userver_config_testsuite(pytestconfig, mockserver_info) -> ServiceConfigPatc
     def patch_config(config, config_vars) -> None:
         # Don't delay tests teardown unnecessarily.
         config['components_manager'].pop('graceful_shutdown_interval', None)
+        config['components_manager'].pop('graceful_shutdown_continue_accepting_requests_interval', None)
+        config['components_manager'].pop('graceful_shutdown_pending_requests_completion_interval', None)
         components: dict = config['components_manager']['components']
         if 'testsuite-support' not in components:
             return

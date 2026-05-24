@@ -9,13 +9,14 @@
 #include <iterator>
 #include <optional>
 #include <type_traits>
-#include <vector>
+#include <utility>
 
 #include <userver/compiler/impl/nodebug.hpp>
 #include <userver/utils/meta_light.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
+/// @brief Metaprogramming utilities, concepts, and type traits helpers.
 namespace meta {
 
 namespace impl {
@@ -24,14 +25,13 @@ using std::begin;
 using std::end;
 
 template <typename T>
-concept HasKeyType = requires { typename T::key_type; };
-
-template <typename T>
-concept HasMappedType = requires { typename T::mapped_type; };
-
-template <typename T>
 concept IsRange = requires(T& t) {
-    requires std::is_same_v<std::decay_t<decltype(begin(t))>, std::decay_t<decltype(end(t))>>;
+    {
+        begin(t)
+    };
+    {
+        end(t)
+    };
 };
 
 template <IsRange T>
@@ -52,9 +52,8 @@ concept IsSingleRange = (sizeof...(Args) == 1) && (impl::IsRange<Args> && ...);
 
 }  // namespace impl
 
-template <typename T>
-concept IsVector = kIsInstantiationOf<std::vector, T>;
-
+/// @warning Use std::ranges::range instead of this concept, except possibly in common headers
+/// where compilation time is a concern.
 template <typename T>
 concept IsRange = impl::IsRange<T>;
 
@@ -71,20 +70,19 @@ concept IsUniqueMap = IsMap<T> && requires(T& map, typename T::key_type key) {
     map[key];  // no operator[] in multimaps
 };
 
-template <impl::HasKeyType T>
+template <IsMap T>
 using MapKeyType = typename T::key_type;
 
-template <impl::HasMappedType T>
+template <IsMap T>
 using MapValueType = typename T::mapped_type;
 
-template <impl::IsRange T>
+/// @warning Use std::ranges::range_value_t instead of this type, except possibly in common headers
+/// where compilation time is a concern.
+template <IsRange T>
 using RangeValueType = impl::RangeValueType<T>;
 
 template <typename T>
 concept IsRecursiveRange = IsRange<T> && std::same_as<impl::RangeValueType<T>, T>;
-
-template <typename T>
-concept IsIterator = requires { typename std::iterator_traits<T>::iterator_category; };
 
 template <typename T>
 concept IsOptional = kIsInstantiationOf<std::optional, T>;
@@ -103,21 +101,28 @@ concept IsStdHashable = requires(const T& val) {
     } -> std::same_as<std::size_t>;
 } && std::equality_comparable<T>;
 
-/// @brief  Check if std::size is applicable to container
+/// @brief Check if std::size is applicable to container
+/// @warning Use std::ranges::sized_range instead of this concept, except possibly in common headers
+/// where compilation time is a concern.
 template <typename T>
-concept IsSizable = requires(T value) { std::size(value); };
+concept IsSizable = IsRange<T> && requires(T value) { std::size(value); };
 
 /// @brief Check if a container has `reserve`
 template <typename T>
-concept IsReservable = requires(T value) { value.reserve(1); };
+concept IsReservable = IsSizable<T> && requires(T value) { value.reserve(1); };
 
 /// @brief Check if a container has 'push_back'
 template <typename T>
-concept IsPushBackable = requires(T value) { value.push_back({}); };
+concept IsPushBackable = IsRange<T> && requires(T value, RangeValueType<T> element) {
+    value.push_back(std::move(element));
+};
 
-/// @brief Check if a container has fixed size (e.g. std::array)
+/// @brief Check if a container has fixed size (e.g. `std::array`)
 template <typename T>
-concept IsFixedSizeContainer = impl::IsFixedSizeContainer<T>::value;
+concept IsFixedSizeContainer = IsRange<T> && impl::IsFixedSizeContainer<T>::value;
+
+template <typename T>
+concept IsVectorLike = IsRange<T> && std::default_initializable<T> && IsReservable<T> && IsPushBackable<T>;
 
 /// @brief Returns default inserter for a container
 template <typename T>
@@ -131,10 +136,10 @@ auto Inserter(T& container) {
     }
 }
 
-/// @deprecated Use @ref meta::IsVector instead.
+/// @deprecated Use @ref meta::IsVectorLike instead.
 template <typename T>
 // NOLINTNEXTLINE(readability-identifier-naming)
-concept kIsVector = IsVector<T>;
+concept kIsVector = IsVectorLike<T>;
 
 /// @deprecated Use @ref meta::IsRange instead.
 template <typename T>

@@ -20,8 +20,8 @@
 #include <userver/utils/meta.hpp>
 #include <userver/utils/strong_typedef_fwd.hpp>
 #include <userver/utils/underlying_value.hpp>
-#include <userver/utils/void_t.hpp>
 
+/// @brief GoogleTest-related helpers used from headers in test-only paths.
 namespace testing {
 
 template <typename T>
@@ -48,14 +48,15 @@ constexpr auto operator|(StrongTypedefOps op1, StrongTypedefOps op2) noexcept {
 // Helpers
 namespace impl::strong_typedef {
 
-template <class T, class /*Enable*/ = void_t<>>
+template <class T>
 struct InitializerListImpl {
     struct DoNotMatch;
     using type = DoNotMatch;
 };
 
 template <class T>
-struct InitializerListImpl<T, void_t<typename T::value_type>> {
+requires requires { typename T::value_type; }
+struct InitializerListImpl<T> {
     using type = std::initializer_list<typename T::value_type>;
 };
 
@@ -161,11 +162,11 @@ constexpr bool IsStrongToStrongConversion() noexcept {
 ///   argument of type StrongTypedefOps. See its docs for more info.
 template <class Tag, class T, StrongTypedefOps Ops>
 class StrongTypedef : public impl::strong_typedef::StrongTypedefTag {
-    static_assert(!std::is_reference<T>::value);
-    static_assert(!std::is_pointer<T>::value);
+    static_assert(!std::is_reference_v<T>);
+    static_assert(!std::is_pointer_v<T>);
 
-    static_assert(!std::is_reference<Tag>::value);
-    static_assert(!std::is_pointer<Tag>::value);
+    static_assert(!std::is_reference_v<Tag>);
+    static_assert(!std::is_pointer_v<Tag>);
 
 public:
     using UnderlyingType = T;
@@ -290,6 +291,9 @@ private:
         }                                                                                         \
     }
 
+// Replacing std::enable_if_t with constraints leads to the return type always being computed,
+// which results in infinite recursion for non-StrongTypedef types.
+// NOLINTBEGIN(modernize-use-constraints)
 UTILS_STRONG_TYPEDEF_REL_OP(==)
 UTILS_STRONG_TYPEDEF_REL_OP(!=)
 UTILS_STRONG_TYPEDEF_REL_OP(<)
@@ -297,6 +301,7 @@ UTILS_STRONG_TYPEDEF_REL_OP(>)
 UTILS_STRONG_TYPEDEF_REL_OP(<=)
 UTILS_STRONG_TYPEDEF_REL_OP(>=)
 UTILS_STRONG_TYPEDEF_REL_OP(<=>)
+// NOLINTEND(modernize-use-constraints)
 
 #undef UTILS_STRONG_TYPEDEF_REL_OP
 
@@ -329,7 +334,7 @@ constexpr bool IsStrongTypedefLoggable(StrongTypedefOps ops) { return !(ops & St
 
 // Serialization
 
-template <impl::strong_typedef::IsStrongTypedef T, formats::common::kIsFormatValue Value>
+template <impl::strong_typedef::IsStrongTypedef T, formats::common::IsFormatValue Value>
 T Parse(const Value& source, formats::parse::To<T>) {
     return T{source.template As<typename T::UnderlyingType>()};
 }

@@ -114,7 +114,7 @@ TEST(UtilsAlgo, Erase) {
     std::unordered_map<std::string, int> um = {{"1", 2}, {"2", 1}};
     std::unordered_multiset<int> ums = {1, 1, 1, 2, 3, 4};
     std::vector<int> v = {1, 1, 1, 2, 3, 4};
-    const auto one_count = std::count(cbegin(v), cend(v), 1);
+    const auto one_count = std::ranges::count(v, 1);
 
     ASSERT_EQ(utils::Erase(m, "1"), 1);
     EXPECT_EQ(m, (std::map<std::string, int>{{"2", 1}}));

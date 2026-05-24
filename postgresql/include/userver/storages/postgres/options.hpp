@@ -175,6 +175,9 @@ inline constexpr std::size_t kDefaultPoolMaxQueueSize = 200;
 /// Default limit for concurrent establishing connections number
 inline constexpr std::size_t kDefaultConnectingLimit = 0;
 
+/// Default minimum time between starting new connections per host in milliseconds
+inline constexpr std::size_t kDefaultConnectingIntervalMs = 0;
+
 /// @brief PostgreSQL topology options
 ///
 /// Dynamic option @ref POSTGRES_TOPOLOGY_SETTINGS
@@ -203,9 +206,12 @@ struct PoolSettings final {
     /// Limits number of concurrent establishing connections (0 - unlimited)
     std::size_t connecting_limit{kDefaultConnectingLimit};
 
+    /// Minimum time in milliseconds between starting new connections to each host (0 - unlimited)
+    std::size_t connecting_interval_ms{kDefaultConnectingIntervalMs};
+
     bool operator==(const PoolSettings& rhs) const {
         return min_size == rhs.min_size && max_size == rhs.max_size && max_queue_size == rhs.max_queue_size &&
-               connecting_limit == rhs.connecting_limit;
+               connecting_limit == rhs.connecting_limit && connecting_interval_ms == rhs.connecting_interval_ms;
     }
 };
 
@@ -216,6 +222,7 @@ struct PoolSettingsDynamic final {
     std::optional<std::size_t> max_size;
     std::optional<std::size_t> max_queue_size;
     std::optional<std::size_t> connecting_limit;
+    std::optional<std::size_t> connecting_interval_ms;
 };
 
 /// Default size limit for prepared statements cache

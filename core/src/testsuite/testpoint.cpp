@@ -65,7 +65,7 @@ bool IsTestpointEnabled(std::string_view name) noexcept {
         return std::visit(
             utils::Overloaded{
                 [](const EnableAll&) { return true; },
-                [&](const EnableOnly& names) { return utils::impl::FindTransparent(names, name) != names.end(); }
+                [&](const EnableOnly& names) { return names.find(name) != names.end(); }
             },
             *enabled_names
         );

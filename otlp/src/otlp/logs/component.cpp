@@ -112,12 +112,10 @@ LoggerComponent::LoggerComponent(const components::ComponentConfig& config, cons
     logging::impl::SetDefaultLoggerRef(*logger_);
     old_logger_.ForwardTo(&*logger_);
 
-    auto* const statistics_storage = context.FindComponentOptional<components::StatisticsStorage>();
-    if (statistics_storage) {
-        statistics_holder_ =
-            statistics_storage->GetStorage().RegisterWriter("logger", [this](utils::statistics::Writer& writer) {
-                writer.ValueWithLabels(logger_->GetStatistics(), {"logger", "default"});
-            });
+    if (context.FindComponentOptional<components::StatisticsStorage>()) {
+        utils::statistics::RegisterWriterScope(context, "logger", [this](utils::statistics::Writer& writer) {
+            writer.ValueWithLabels(logger_->GetStatistics(), {"logger", "default"});
+        });
     }
 }
 

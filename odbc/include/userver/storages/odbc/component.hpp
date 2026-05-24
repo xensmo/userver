@@ -1,10 +1,12 @@
 #pragma once
 
+/// @file userver/storages/odbc/component.hpp
+/// @brief @copybrief components::Odbc
+
 #include <memory>
 
 #include <userver/components/component_base.hpp>
 #include <userver/dynamic_config/source.hpp>
-#include <userver/utils/statistics/entry.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -14,6 +16,7 @@ class Cluster;
 
 namespace components {
 
+/// @brief Component that owns a storages::odbc::Cluster
 class Odbc final : public ComponentBase {
 public:
     static constexpr std::string_view kName = "odbc";
@@ -30,7 +33,6 @@ private:
 
     std::string name_;
     std::shared_ptr<storages::odbc::Cluster> cluster_;
-    utils::statistics::Entry statistics_holder_;
 
     dynamic_config::Source config_source_;
     concurrent::AsyncEventSubscriberScope config_subscription_;

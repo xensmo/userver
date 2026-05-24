@@ -6,6 +6,7 @@
 #include <fmt/ranges.h>
 
 #include <userver/components/component_context.hpp>
+#include <userver/engine/deadline.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/tracing/span.hpp>
 #include <userver/utils/algo.hpp>
@@ -19,6 +20,7 @@ namespace {
 
 constexpr utils::StringLiteral kComponentName = "component_name";
 constexpr utils::StringLiteral kStopComponentRootName = "component_stop";
+constexpr utils::StringLiteral kOnGracefulShutdown = "on_graceful_shutdown";
 constexpr utils::StringLiteral kOnAllComponentsAreStopping = "on_all_components_are_stopping";
 
 template <typename Range>
@@ -158,6 +160,18 @@ void ComponentInfo::OnAllComponentsLoaded() {
         const std::string message = "OnAllComponentsLoaded() failed for component " + name_ + ": " + ex.what();
         LOG_ERROR() << message;
         throw std::runtime_error(message);
+    }
+}
+
+void ComponentInfo::OnGracefulShutdown(engine::Deadline serving_shutdown_deadline) {
+    if (!HasComponent()) {
+        return;
+    }
+    try {
+        const tracing::Span span(std::string{kOnGracefulShutdown});
+        component_->OnGracefulShutdown(serving_shutdown_deadline);
+    } catch (const std::exception& ex) {
+        LOG_ERROR() << "OnGracefulShutdown() failed for component " << name_ << ": " << ex;
     }
 }
 

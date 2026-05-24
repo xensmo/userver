@@ -182,6 +182,7 @@ Settings ParsePoolSettings(const ConfigType& config) {
     result.max_size = GetField(config, "max_pool_size", result.max_size);
     result.max_queue_size = GetField(config, "max_queue_size", result.max_queue_size);
     result.connecting_limit = GetField(config, "connecting_limit", result.connecting_limit);
+    result.connecting_interval_ms = GetField(config, "connecting_interval_ms", result.connecting_interval_ms);
 
     if (result.max_size == 0) {
         throw InvalidConfig{"max_pool_size must be greater than 0"};

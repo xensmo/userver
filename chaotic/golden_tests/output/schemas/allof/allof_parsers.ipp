@@ -25,7 +25,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__AllOf_PropertiesNam
   return selector().template Type<std::string_view>().Case("foo");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 AllOf::Foo__P0 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P0>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -41,7 +41,7 @@ AllOf::Foo__P0 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::F
   return res;
 }
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 AllOf::Foo__P1 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo__P1>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -57,12 +57,12 @@ AllOf::Foo__P1 Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::F
   return res;
 }
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 AllOf::Foo Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf::Foo>) {
   return AllOf::Foo(value.template As<AllOf::Foo__P0>(), value.template As<AllOf::Foo__P1>());
 }
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 AllOf Parse(Value value, USERVER_NAMESPACE::formats::parse::To<AllOf>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();

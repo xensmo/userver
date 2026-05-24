@@ -1,11 +1,13 @@
 #pragma once
 
+/// @file userver/cache/mongo_cache_type_traits.hpp
+/// @brief Compile-time concepts and static checks for BaseMongoCache traits
+
 #include <chrono>
 #include <type_traits>
 
 #include <userver/cache/update_type.hpp>
 #include <userver/utils/meta.hpp>
-#include <userver/utils/void_t.hpp>
 
 USERVER_NAMESPACE_BEGIN
 

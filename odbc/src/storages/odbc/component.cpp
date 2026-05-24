@@ -112,8 +112,8 @@ Odbc::Odbc(const ComponentConfig& config, const ComponentContext& context)
       },
       config_source_{context.FindComponent<components::DynamicConfig>().GetSource()}
 {
-    auto& statistics_storage = context.FindComponent<components::StatisticsStorage>();
-    statistics_holder_ = statistics_storage.GetStorage().RegisterWriter(
+    utils::statistics::RegisterWriterScope(
+        context,
         "odbc",
         [this](utils::statistics::Writer& writer) { cluster_->WriteStatistics(writer); },
         {{"component", name_}}
@@ -129,10 +129,7 @@ Odbc::Odbc(const ComponentConfig& config, const ComponentContext& context)
     );
 }
 
-Odbc::~Odbc() {
-    config_subscription_.Unsubscribe();
-    statistics_holder_.Unregister();
-}
+Odbc::~Odbc() { config_subscription_.Unsubscribe(); }
 
 void Odbc::OnConfigUpdate(const dynamic_config::Snapshot& config) {
     const auto& pool_settings = config[::dynamic_config::USERVER_ODBC_CONNECTION_POOL_SETTINGS];

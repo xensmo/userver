@@ -23,8 +23,6 @@ class ClientCore;
 
 namespace components {
 
-// clang-format off
-
 /// @ingroup userver_components
 ///
 /// @brief Component that manages @ref clients::http::ClientCore.
@@ -45,8 +43,6 @@ namespace components {
 /// ## Static configuration example:
 ///
 /// @snippet components/common_component_list_test.cpp  Sample http client component config
-
-// clang-format on
 class HttpClientCore final : public ComponentBase {
 public:
     /// @ingroup userver_component_names

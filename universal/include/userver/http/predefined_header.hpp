@@ -1,5 +1,9 @@
 #pragma once
 
+/// @file userver/http/predefined_header.hpp
+/// @brief Predefined HTTP header names and related helpers.
+/// @ingroup userver_universal
+
 #include <string>
 #include <string_view>
 

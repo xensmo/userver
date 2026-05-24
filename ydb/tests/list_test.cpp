@@ -3,7 +3,6 @@
 #include <vector>
 
 #include <gmock/gmock.h>
-#include <boost/range/irange.hpp>
 
 #include <userver/utest/utest.hpp>
 
@@ -57,7 +56,7 @@ UTEST_F(YdbListIO, BulkUpsertEmptyVectorOfStructs) {
 UTEST_F(YdbListIO, BulkUpsertRangeOfStructs) {
     CreateTable("test_table", false);
 
-    auto serialized_rows = boost::irange(0, 3) | std::views::transform([](int i) { return kPreFilledRows[i]; });
+    auto serialized_rows = std::views::iota(0, 3) | std::views::transform([](int i) { return kPreFilledRows[i]; });
     GetTableClient().BulkUpsert("test_table", std::move(serialized_rows));
 
     auto result = GetTableClient().ExecuteDataQuery(kSelectAllRows);
@@ -67,7 +66,7 @@ UTEST_F(YdbListIO, BulkUpsertRangeOfStructs) {
 UTEST_F(YdbListIO, BulkUpsertEmptyRangeOfStructs) {
     CreateTable("test_table", false);
 
-    auto serialized_rows = boost::irange(0, 0) | std::views::transform([](int i) { return kPreFilledRows[i]; });
+    auto serialized_rows = std::views::iota(0, 0) | std::views::transform([](int i) { return kPreFilledRows[i]; });
     GetTableClient().BulkUpsert("test_table", std::move(serialized_rows));
 
     auto result = GetTableClient().ExecuteDataQuery(kSelectAllRows);

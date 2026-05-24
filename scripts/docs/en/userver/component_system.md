@@ -130,7 +130,7 @@ The component configuration is passed as a first parameter of type
 @ref components::ComponentConfig to the constructor of the component. Note that
 @ref components::ComponentConfig extends the functionality of
 @ref yaml_config::YamlConfig with @ref YamlConfig::Mode::kEnvAllowed mode
-that is able to substitute variables with values, use environment variales and
+that is able to substitute variables with values, use environment variables and
 fallbacks. See @ref yaml_config::YamlConfig for more info and examples.
 
 All the components have the following options:
@@ -142,7 +142,7 @@ All the components have the following options:
 @anchor static-configs-validation
 ### Static configs validation
 
-To validate static configs you only need to define member function of your component
+To validate static configs you only need to define a member function in your component
 `GetStaticConfigSchema()`
 
 @snippet components/component_sample_test.cpp  Sample user component schema

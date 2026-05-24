@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/cache/nway_lru_cache.hpp
+/// @brief @copybrief cache::NWayLRU
+
 #include <functional>
 #include <optional>
 #include <vector>

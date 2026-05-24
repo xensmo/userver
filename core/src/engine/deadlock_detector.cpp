@@ -1,5 +1,6 @@
 #include <engine/deadlock_detector.hpp>
 
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -146,7 +147,7 @@ void StateBase::AddDependency(const Actor& from, const Actor& to, bool allow_rep
     auto edges = impl_->active_dependencies.Lock();
     auto& dependencies = (*edges)[&from];
     UASSERT_MSG(
-        allow_repeated_deps || std::find(dependencies.begin(), dependencies.end(), &to) == dependencies.end(),
+        allow_repeated_deps || std::ranges::find(dependencies, &to) == dependencies.end(),
         fmt::format("Adding already existing unique dependency {} -> {}", ToAssertString(from), ToAssertString(to))
     );
     dependencies.emplace_back(&to);
@@ -180,7 +181,7 @@ void StateBase::RemoveDependency(const Actor& from, const Actor& to) noexcept {
     auto edges = impl_->active_dependencies.Lock();
     auto& v = (*edges)[&from];
 
-    auto it = std::find(v.begin(), v.end(), &to);
+    auto it = std::ranges::find(v, &to);
     if (it == v.end()) {
         utils::AbortWithStacktrace(fmt::format(
             "Trying to remove dependency that does not exist! {} => {}",

@@ -60,22 +60,40 @@ ListenerImpl::ListenerImpl(
 }
 
 ListenerImpl::~ListenerImpl() {
-    LOG_TRACE() << "Stopping socket listener task";
-    for (auto& task : socket_listener_tasks_) {
-        task.SyncCancel();
-    }
-    LOG_TRACE() << "Stopped socket listener task";
-
+    StopListening();
     connections_.CancelAndWait();
 }
 
 StatsAggregation ListenerImpl::GetStats() const { return StatsAggregation{*stats_}; }
 
+void ListenerImpl::StopListening() {
+    if (socket_listener_tasks_.empty()) {
+        return;
+    }
+
+    LOG_TRACE() << "Stopping socket listener task";
+    for (auto& task : socket_listener_tasks_) {
+        task.SyncCancel();
+    }
+    socket_listener_tasks_.clear();
+    LOG_TRACE() << "Stopped socket listener task";
+}
+
+bool ListenerImpl::WaitForNoConnections(engine::Deadline deadline) const {
+    return endpoint_info_->no_connections_event.WaitUntil(deadline, [this] {
+        return endpoint_info_->connection_count == 0;
+    });
+}
+
 void ListenerImpl::AcceptConnection(engine::io::Socket& request_socket, const PortConfig& port_config) {
     auto peer_socket = request_socket.Accept({});
 
     const auto new_connection_count = ++endpoint_info_->connection_count;
-    utils::FastScopeGuard guard{[this]() noexcept { --endpoint_info_->connection_count; }};
+    utils::FastScopeGuard guard{[this]() noexcept {
+        if (--endpoint_info_->connection_count == 0) {
+            endpoint_info_->no_connections_event.Send();
+        }
+    }};
 
     if (new_connection_count > endpoint_info_->listener_config.max_connections) {
         LOG_LIMITED_WARNING()

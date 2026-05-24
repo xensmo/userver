@@ -51,7 +51,7 @@ Those inline helper functions usually work slightly faster than `formats::*::Val
 However, if you need a `std::string` with JSON the fastest way would be to use
 the @ref formats_streaming_serialization "Streaming Serialization".
 Inline helpers could not be customized
-for used provided types, unlike other format building types. Inline helpers
+for user-provided types, unlike other format building types. Inline helpers
 could produce broken value on bad input because they skip some of the checks,
 for example a key uniqueness check.
 

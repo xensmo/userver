@@ -51,7 +51,7 @@ class LogHelper;
 
 }  // namespace logging
 
-/// Fixed-point decimal data type and related functions
+/// @brief Fixed-point `decimal64` arithmetic and formatting.
 namespace decimal64 {
 
 /// The base class for Decimal-related exceptions
@@ -1588,7 +1588,7 @@ logging::LogHelper& operator<<(logging::LogHelper& lh, const Decimal<Prec, Round
 
 /// @brief Parses the `Decimal` from the string
 /// @see Decimal::Decimal(std::string_view)
-template <int Prec, typename RoundPolicy, formats::common::kIsFormatValue Value>
+template <int Prec, typename RoundPolicy, formats::common::IsFormatValue Value>
 Decimal<Prec, RoundPolicy> Parse(const Value& value, formats::parse::To<Decimal<Prec, RoundPolicy>>) {
     const std::string input = value.template As<std::string>();
 

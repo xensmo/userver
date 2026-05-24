@@ -4,8 +4,6 @@
 #include <cmath>
 #include <ranges>
 
-#include <boost/range/combine.hpp>
-
 #include <userver/utils/assert.hpp>
 #include <userver/utils/span.hpp>
 #include <userver/utils/statistics/histogram_view.hpp>
@@ -49,7 +47,7 @@ inline void AddNonAtomic(std::atomic<double>& to, std::uint64_t x) {
 }
 
 inline void AddAtomic(std::atomic<double>& to, double x) {
-#if __cplusplus >= 202002L && (!defined(_LIBCPP_VERSION) || _LIBCPP_VERSION >= 180000)
+#if !defined(_LIBCPP_VERSION) || _LIBCPP_VERSION >= 180000
     to += x;
 #else
     double expected = to.load();
@@ -89,13 +87,10 @@ public:
 
     template <typename InputRange>
     void SetBounds(const InputRange& upper_bounds) const {
+        UINVARIANT(std::ranges::all_of(upper_bounds, IsBoundPositive), "Histogram bounds must be positive");
+        UINVARIANT(std::ranges::is_sorted(upper_bounds), "Histogram bounds must be sorted");
         UINVARIANT(
-            std::all_of(upper_bounds.begin(), upper_bounds.end(), IsBoundPositive),
-            "Histogram bounds must be positive"
-        );
-        UINVARIANT(std::is_sorted(upper_bounds.begin(), upper_bounds.end()), "Histogram bounds must be sorted");
-        UINVARIANT(
-            std::adjacent_find(upper_bounds.begin(), upper_bounds.end()) == upper_bounds.end(),
+            std::ranges::adjacent_find(upper_bounds) == std::ranges::end(upper_bounds),
             "Histogram bounds must not contain duplicates"
         );
         if (std::size(upper_bounds) != 0) {

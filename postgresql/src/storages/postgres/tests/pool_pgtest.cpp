@@ -797,6 +797,52 @@ UTEST_P(PostgrePool, ForQueryQueueBeingNonTransactional) {
     EXPECT_EQ(inserted_values.front(), 1);
 }
 
+UTEST_P(PostgrePool, ConnectionRateLimitThrottled) {
+    constexpr std::size_t kHugeConnectingIntervalMs = 60'000;
+
+    auto pool = pg::detail::ConnectionPool::Create(
+        GetDsnFromEnv(),
+        nullptr,
+        GetTaskProcessor(),
+        "",
+        GetParam(),
+        pg::PoolSettings{1, 4, 10, 0, kHugeConnectingIntervalMs},
+        kCachePreparedStatements,
+        {},
+        GetTestCmdCtls(),
+        {},
+        {},
+        {},
+        dynamic_config::GetDefaultSource(),
+        std::make_shared<utils::statistics::MetricsStorage>()
+    );
+
+    pg::detail::ConnectionPtr conn1(nullptr);
+    UASSERT_NO_THROW(conn1 = pool->Acquire(MakeDeadline())) << "Obtained initial connection from pool";
+
+    pg::detail::ConnectionPtr conn2(nullptr);
+    UASSERT_NO_THROW(conn2 = pool->Acquire(MakeDeadline()))
+        << "Second acquire creates a new connection while a token "
+           "is available";
+
+    const auto throttled_before = pool->GetStatistics().connection.rate_limit_throttled;
+
+    constexpr auto kShortDeadline = std::chrono::milliseconds{200};
+    UEXPECT_THROW(
+        [[maybe_unused]] const auto conn3 = pool->Acquire(engine::Deadline::FromDuration(kShortDeadline)),
+        pg::PoolError
+    ) << "Third acquire must be throttled by the connecting rate limiter";
+
+    const auto& stats = pool->GetStatistics();
+    EXPECT_GE(stats.connection.rate_limit_throttled, throttled_before + 1)
+        << "rate_limit_throttled counter must "
+           "increment when the rate limit is "
+           "exceeded";
+
+    CheckConnection(std::move(conn1));
+    CheckConnection(std::move(conn2));
+}
+
 INSTANTIATE_UTEST_SUITE_P(
     PoolTests,
     PostgrePool,

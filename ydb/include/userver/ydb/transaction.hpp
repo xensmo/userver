@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/ydb/transaction.hpp
+/// @brief YDB transaction and retry transaction actor
+
 #include <functional>
 #include <string>
 

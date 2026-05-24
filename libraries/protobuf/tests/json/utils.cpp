@@ -363,8 +363,8 @@ void CheckMessageEqual(const ::google::protobuf::FieldMask& lhs, const ::google:
         mask_rhs.push_back(path);
     }
 
-    std::sort(mask_lhs.begin(), mask_lhs.end());
-    std::sort(mask_rhs.begin(), mask_rhs.end());
+    std::ranges::sort(mask_lhs);
+    std::ranges::sort(mask_rhs);
 
     EXPECT_EQ(mask_lhs, mask_rhs);
 }

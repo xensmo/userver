@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/storages/mysql/convert.hpp
+/// @brief MySQL value conversion tag `To` and helper `DoConvert`
+
 #include <type_traits>
 #include <utility>
 

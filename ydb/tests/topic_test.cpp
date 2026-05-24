@@ -91,7 +91,6 @@ protected:
 
         while (!written || !acked) {
             auto event = session.GetEvent();
-            ASSERT_TRUE(event.has_value());
 
             std::visit(
                 utils::Overloaded{
@@ -111,7 +110,7 @@ protected:
                     },
                     []([[maybe_unused]] auto& e) {},
                 },
-                *event
+                event
             );
         }
     }
@@ -220,7 +219,7 @@ TYPED_UTEST(YdbTopicReadSessionWithDataHandler, CommitDataEventsPersistence) {
         );
 
         auto task = engine::AsyncNoTracing([&session] {
-            UASSERT_NO_THROW(session.GetNativeTopicReadSession()->WaitEvent().Wait(std::chrono::milliseconds{1000}));
+            UASSERT_NO_THROW(session.GetNativeTopicReadSession().WaitEvent().Wait(std::chrono::milliseconds{1000}));
         });
         task.WaitFor(std::chrono::milliseconds{1000});
         Y_ENSURE(task.IsFinished());
@@ -338,14 +337,14 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionCreateClose) {
 
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionGetNative) {
     auto session = CreateWriteSession();
-    EXPECT_NE(session.GetNativeTopicWriteSession(), nullptr);
+    EXPECT_TRUE(session.GetNativeTopicWriteSession().GetInitSeqNo().Initialized());
     session.Close(std::chrono::milliseconds{1000});
 }
 
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteSingle) {
     auto session = CreateWriteSession();
 
-    auto task = engine::AsyncNoSpan([&] { UASSERT_NO_THROW(WriteAndAck(session, "hello")); });
+    auto task = engine::AsyncNoTracing([&] { UASSERT_NO_THROW(WriteAndAck(session, "hello")); });
     task.WaitFor(utest::kMaxTestWaitTime);
     ASSERT_TRUE(task.IsFinished());
 
@@ -355,7 +354,7 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteSingle) {
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteMultiple) {
     auto session = CreateWriteSession();
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         for (const std::string_view msg : {"msg-1", "msg-2", "msg-3"}) {
             UASSERT_NO_THROW(WriteAndAck(session, msg));
         }
@@ -369,14 +368,11 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionWriteMultiple) {
 UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionTryGetEventEmpty) {
     auto session = CreateWriteSession();
 
-    auto task = engine::AsyncNoSpan([&] {
+    auto task = engine::AsyncNoTracing([&] {
         // Drain TReadyToAcceptEvent so the session is established
         // and the event queue is empty.
         auto event = session.GetEvent();
-
-        const bool is_ready = std::holds_alternative<NYdb::NTopic::TWriteSessionEvent::TReadyToAcceptEvent>(*event);
-        ASSERT_TRUE(event.has_value());
-        ASSERT_TRUE(is_ready);
+        ASSERT_TRUE(std::holds_alternative<NYdb::NTopic::TWriteSessionEvent::TReadyToAcceptEvent>(event));
 
         // Queue is now drained — TryGetEvent must return nullopt immediately.
         EXPECT_FALSE(session.TryGetEvent().has_value());

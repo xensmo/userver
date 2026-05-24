@@ -40,8 +40,7 @@ void Serialize(const formats::yaml::Value& doc, std::ostream& os);
 /// Serialize YAML to string
 std::string ToString(const formats::yaml::Value& doc);
 
-/// Blocking operations that should not be used on main task processor after
-/// startup
+/// @brief Blocking operations that should not be used on main task processor after startup
 namespace blocking {
 /// @brief Read YAML from file
 /// @see formats::yaml::FromFile

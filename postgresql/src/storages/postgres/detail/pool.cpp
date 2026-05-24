@@ -1,5 +1,7 @@
 #include <storages/postgres/detail/pool.hpp>
 
+#include <chrono>
+
 #include <storages/postgres/deadline.hpp>
 #include <storages/postgres/detail/statement_stats_storage.hpp>
 
@@ -70,6 +72,17 @@ auto MakeLogExtraFromConnectionStats(const InstanceStatistics& stats) {
     };
 }
 
+USERVER_NAMESPACE::utils::TokenBucket::RefillPolicy MakeConnectingRateLimiterRefillPolicy(
+    const std::size_t connecting_interval_ms
+) {
+    return USERVER_NAMESPACE::utils::TokenBucket::RefillPolicy{
+        1,
+        connecting_interval_ms > 0
+            ? std::chrono::milliseconds{connecting_interval_ms}
+            : USERVER_NAMESPACE::utils::TokenBucket::Duration::zero()
+    };
+}
+
 }  // namespace
 
 class ConnectionPool::EmplaceEnabler {};
@@ -106,6 +119,7 @@ ConnectionPool::ConnectionPool(
       testsuite_pg_ctl_{testsuite_pg_ctl},
       ei_settings_(std::move(ei_settings)),
       cancel_limit_{std::max(std::size_t{1}, settings.max_size / kCancelRatio), {1, kCancelPeriod}},
+      connecting_rate_limiter_{1, MakeConnectingRateLimiterRefillPolicy(settings.connecting_interval_ms)},
       sts_{statement_metrics_settings},
       config_source_(config_source),
       metrics_(std::move(metrics)),
@@ -381,6 +395,10 @@ void ConnectionPool::SetSettings(const PoolSettings& settings) {
     if (reader->connecting_limit != settings.connecting_limit) {
         connecting_semaphore_.SetCapacity(settings.connecting_limit ? settings.connecting_limit : kUnlimitedConnecting);
     }
+    if (reader->connecting_interval_ms != settings.connecting_interval_ms) {
+        connecting_rate_limiter_.SetRefillPolicy(MakeConnectingRateLimiterRefillPolicy(settings.connecting_interval_ms)
+        );
+    }
 
     auto writer = settings_.StartWrite();
     *writer = settings;
@@ -484,6 +502,11 @@ void ConnectionPool::TryCreateConnectionAsync() {
     // check it only if we can start a new connection.
     const auto recent_errors = recent_conn_errors_.GetStatsForPeriod(kRecentErrorPeriod, true);
     if (recent_errors < conn_settings.recent_errors_threshold) {
+        if (!connecting_rate_limiter_.Obtain()) {
+            ++stats_.connection.rate_limit_throttled;
+            LOG_LIMITED_WARNING() << "Connection rate limit exceeded, skipping new connection attempt";
+            return;
+        }
         engine::SemaphoreLock size_lock{size_semaphore_, std::try_to_lock};
         if (size_lock || connect_task_storage_.ActiveTasksApprox() <= kPendingConnectsMax) {
             connect_task_storage_.Detach(Connect(std::move(size_lock), std::move(conn_settings)));

@@ -255,7 +255,7 @@ framework usage and help to detect bugs at early stages.
 
 Typical functional tests for a service consist of a `conftest.py` file with
 mocks+configs for the service and a bunch of `test_*.py` files with actual
-tests. Such approach allows to reuse mocks and configurations in different
+tests. Such approach allows you to reuse mocks and configurations in different
 tests.
 
 ## Full sources

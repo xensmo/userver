@@ -297,7 +297,7 @@ UTEST_MT(MpscQueue, FifoTest, kProducersCount + 1) {
 
     consumer_task.Get();
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return (item == 1); }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return (item == 1); }));
 }
 
 UTEST_MT(MpscQueue, ProducerRace, kProducersCount + 1) {

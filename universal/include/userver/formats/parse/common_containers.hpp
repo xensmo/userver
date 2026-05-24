@@ -14,6 +14,7 @@
 #include <userver/formats/parse/to.hpp>
 #include <userver/utils/meta.hpp>
 
+/// @brief Boost.UUID helpers referenced by format parsers and serializers.
 namespace boost::uuids {
 struct uuid;
 }
@@ -77,12 +78,12 @@ concept RangeNotMap =
 
 }  // namespace impl
 
-template <impl::RangeNotMap T, common::kIsFormatValue Value>
+template <impl::RangeNotMap T, common::IsFormatValue Value>
 T Parse(const Value& value, To<T>) {
     return impl::ParseArray<T>(value, &impl::AsExtractor<meta::RangeValueType<T>, Value>);
 }
 
-template <meta::kIsMap T, common::kIsFormatValue Value>
+template <meta::kIsMap T, common::IsFormatValue Value>
 T Parse(const Value& value, To<T>) {
     return impl::ParseObject<T>(value, &impl::AsExtractor<typename T::mapped_type, Value>);
 }

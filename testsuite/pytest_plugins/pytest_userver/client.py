@@ -1241,6 +1241,14 @@ class Client(ClientWrapper):
         @param log_level Do not capture logs below this level.
         @param testsuite_skip_prepare An advanced parameter to skip auto-`update_server_state`.
 
+        Example — filter captured logs after a request:
+
+        @snippet samples/testsuite-support/tests/test_logcapture.py select
+
+        Example — subscribe to log events as they arrive:
+
+        @snippet samples/testsuite-support/tests/test_logcapture.py subscribe
+
         @see @ref testsuite_logs_capture
         """
         return self._client.capture_logs(

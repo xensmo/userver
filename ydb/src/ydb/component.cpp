@@ -138,15 +138,14 @@ YdbComponent::YdbComponent(const components::ComponentConfig& config, const comp
         }
     }
 
-    auto& stats_storage = context.FindComponent<components::StatisticsStorage>().GetStorage();
-    statistic_holder_ = stats_storage.RegisterWriter("ydb", [this](utils::statistics::Writer& writer) {
+    utils::statistics::RegisterWriterScope(context, "ydb", [this](utils::statistics::Writer& writer) {
         WriteStatistics(writer);
     });
 
     config_subscription_ = config_.UpdateAndListen(this, "ydb", &YdbComponent::OnConfigUpdate);
 }
 
-YdbComponent::~YdbComponent() { statistic_holder_.Unregister(); }
+YdbComponent::~YdbComponent() = default;
 
 const YdbComponent::Database& YdbComponent::FindDatabase(const std::string& dbname) const {
     auto it = databases_.find(dbname);

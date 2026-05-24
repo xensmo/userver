@@ -165,7 +165,7 @@ Detailed diff against v2.16 could be found below.
 * Documentation
   * Better documentation and benchmark for LRU caches.
   * Markdown documentation for cmake files.
-  * Postgres: Updated connections limit documentation. See @ref scripts/docs/en/userver/pg_connlimit_mode_auto.md .
+  * Postgres: Updated connections limit documentation. See @ref scripts/docs/en/userver/pg/connlimit_mode_auto.md .
   * Extra samples for metrics unit testing.
   * Updated @ref engine::SingleUseEvent and @ref engine::SingleConsumerEvent documentation.
   * gRPC: @ref ugrpc::RichStatus documentation. See @ref scripts/docs/en/userver/grpc/rich_status.md .
@@ -421,7 +421,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
   [Maxim Drugov](https://github.com/crystalixxx) for the PR!
 * YDB `topic_client` is now exposed in testsuite's @ref pytest_userver.plugins.ydb.client.YdbClient "YdbClient".
 * Removed `MONGO_DEADLINE_PROPAGATION_ENABLED_V2` dynamic config. Many thanks to [Spar](https://github.com/GitSparTV)
-  for vibe-codding the PR at at Zero Cost Conf!
+  for vibe-coding the PR at Zero Cost Conf!
 * @ref yaml_config::YamlConfig now treats `#env` values as string.
 
 * Optimizations
@@ -515,7 +515,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
   * `update-period` for @ref components::Secdist is now set to `10s`. As a result all the databases now automatically
     recreate connections on connection data change in SecDist.
   * Implemented parsing of C++ `enum` into PostgreSQL text for `enums` with `Parse()` and `ToString()` functions. See
-    @ref scripts/docs/en/userver/pg_user_types.md for more info.
+    @ref scripts/docs/en/userver/pg/user_types.md for more info.
 
 * Optimizations
   * @ref concurrent::BackgroundTaskStorage was optimized with striped counters. Detaching a task now takes ~6% of
@@ -623,7 +623,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
     @ref scripts/docs/en/userver/functional_testing.md.
 
 * Build:
-  * `CMAKE_CXX_STANDARD` was set to to `20` by default. C++17 still supported.
+  * `CMAKE_CXX_STANDARD` was set to `20` by default. C++17 still supported.
   * Added preliminary CMake configure support on Windows. Many thanks to [Alex](https://github.com/leha-bot) for
     the PR.
   * Added cmake-format config and formatted the CMake files. Many thanks to [Dzmitry Ivaniuk](https://github.com/idzm)
@@ -934,7 +934,7 @@ Plugins are renamed to middlewares and @ref components::HttpClient was split int
   * Better log messages for the dist locks.
   * Better docs for gRPC middlewares and gRPC logs at @ref scripts/docs/en/userver/grpc/grpc.md.
   * Added topology and heartbeats logs and metrics for Mongo.
-  * Clarified docs on PostgreSQL data types with timezones. See @ref scripts/docs/en/userver/pg_types.md.
+  * Clarified docs on PostgreSQL data types with timezones. See @ref scripts/docs/en/userver/pg/types.md.
   * Added @ref scripts/docs/en/userver/tutorial/kafka_service.md tutorial.
   * @ref scripts/docs/en/userver/log_level_running_service.md, @ref scripts/docs/en/userver/congestion_control.md
     documentation rewrite.
@@ -1181,7 +1181,7 @@ Binary Ubuntu 22.04 amd64 package could be found at
   [available at Yandex Cloud Marketplace](https://yandex.cloud/en/marketplace/products/yc/userver).
 * YDB driver now can be built on modern Clang compilers in C++20 and above
   modes.
-* Redis now allows to subscribe to master instances.
+* Redis now allows you to subscribe to master instances.
 * Improved logging of failures in testsuite.
 
 * Optimizations:

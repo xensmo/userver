@@ -17,7 +17,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__OneOf_PropertiesNam
   return selector().template Type<std::string_view>().Case("foo");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 OneOf Parse(Value value, USERVER_NAMESPACE::formats::parse::To<OneOf>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();

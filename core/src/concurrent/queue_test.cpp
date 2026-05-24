@@ -1,9 +1,8 @@
 #include <userver/concurrent/queue.hpp>
 
 #include <optional>
+#include <ranges>
 #include <unordered_set>
-
-#include <boost/range/irange.hpp>
 
 #include <concurrent/mp_queue_test.hpp>
 #include <userver/engine/async.hpp>
@@ -156,7 +155,7 @@ TYPED_UTEST_MT(MpMcQueueFixture, Mpmc, kProducersCount + kConsumersCount) {
         task.Get();
     }
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 TYPED_UTEST_MT(MpMcQueueFixture, SizeAfterConsumersDie, kConsumersCount + 1) {
@@ -231,7 +230,7 @@ UTEST_MT(SpmcQueue, Spmc, 1 + kConsumersCount) {
         task.Get();
     }
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 // Reported in https://github.com/userver-framework/userver/issues/578
@@ -294,7 +293,7 @@ UTEST_MT(NonFifoMpscQueue, Mpsc, kProducersCount + 1) {
 
     consumer_task.Get();
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 UTEST_MT(NonFifoMpscQueue, SizeAfterConsumersDie, 2) {
@@ -347,7 +346,7 @@ UTEST_MT(SpscQueue, Spsc, 1 + 1) {
     producer.reset();
     consumer_task.Get();
 
-    ASSERT_TRUE(std::all_of(consumed_messages.begin(), consumed_messages.end(), [](int item) { return item == 1; }));
+    ASSERT_TRUE(std::ranges::all_of(consumed_messages, [](int item) { return item == 1; }));
 }
 
 TYPED_UTEST_MT(MpMcQueueFixture, MultiConsumerToken, kProducersCount + kConsumersCount) {
@@ -362,7 +361,7 @@ TYPED_UTEST_MT(MpMcQueueFixture, MultiConsumerToken, kProducersCount + kConsumer
     auto producer_tasks = utils::GenerateFixedArray(kProducersCount, [&](std::size_t producer_id) {
         return engine::AsyncNoTracing([&, producer_id] {
             for (const auto message :
-                 boost::irange<Message>(kMessageCount * producer_id, kMessageCount * (producer_id + 1)))
+                 std::views::iota(Message{kMessageCount * producer_id}, Message{kMessageCount * (producer_id + 1)}))
             {
                 ASSERT_TRUE(producer.Push(Message{message}));
             }

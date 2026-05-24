@@ -8,7 +8,6 @@
 #include <string>
 #include <thread>
 
-#include <concurrent/impl/latch.hpp>
 #include <engine/impl/standalone.hpp>
 #include <engine/task/task_processor.hpp>
 #include <engine/task/task_processor_config.hpp>

@@ -40,14 +40,14 @@ struct IsTuple<std::tuple<T...>> : std::true_type {};
 
 namespace impl {
 
-template <typename T, typename = USERVER_NAMESPACE::utils::void_t<>>
+template <typename T>
 struct HasConstIntrospection : std::false_type {};
 
 template <typename T>
-struct HasConstIntrospection<T, USERVER_NAMESPACE::utils::void_t<decltype(std::declval<const T&>().Introspect())>>
-    : std::true_type {};
+requires requires(const T& t) { t.Introspect(); }
+struct HasConstIntrospection<T> : std::true_type {};
 
-template <typename T, typename = USERVER_NAMESPACE::utils::void_t<>>
+template <typename T>
 struct HasNonConstIntrospection : std::false_type {
     static_assert(
         !impl::HasConstIntrospection<T>::value,
@@ -57,8 +57,8 @@ struct HasNonConstIntrospection : std::false_type {
 };
 
 template <typename T>
-struct HasNonConstIntrospection<T, USERVER_NAMESPACE::utils::void_t<decltype(std::declval<T&>().Introspect())>>
-    : std::true_type {
+requires requires(T& t) { t.Introspect(); }
+struct HasNonConstIntrospection<T> : std::true_type {
     static_assert(
         IsTuple<decltype(std::declval<T&>().Introspect())>::value,
         "Introspect() should return a std::tuple. "
@@ -78,12 +78,12 @@ namespace detail {
 
 struct ForDeserializationTag;
 
-template <typename T, typename = USERVER_NAMESPACE::utils::void_t<>>
+template <typename T>
 struct IsPostgresBuildInTypeWrapperImpl : std::false_type {};
 
 template <typename T>
-struct IsPostgresBuildInTypeWrapperImpl<T, USERVER_NAMESPACE::utils::void_t<decltype(T::kIsPostgresBuildInTypeWrapper)>>
-    : std::integral_constant<const bool, T::kIsPostgresBuildInTypeWrapper> {
+requires requires { T::kIsPostgresBuildInTypeWrapper; }
+struct IsPostgresBuildInTypeWrapperImpl<T> : std::integral_constant<const bool, T::kIsPostgresBuildInTypeWrapper> {
     static_assert(
         std::is_same_v<decltype(T::kIsPostgresBuildInTypeWrapper), const bool>,
         "kIsPostgresBuildInTypeWrapper must be bool"
@@ -172,13 +172,14 @@ concept kIsColumnType = IsColumnType<T>;
 
 // NOLINTEND(readability-identifier-naming)
 
-template <typename T, typename Enable = USERVER_NAMESPACE::utils::void_t<>>
+template <typename T>
 struct ExtractionTag {
     using type = FieldTag;
 };
 
 template <typename T>
-struct ExtractionTag<T, std::enable_if_t<kIsRowType<T>>> {
+requires IsRowType<T>
+struct ExtractionTag<T> {
     using type = RowTag;
 };
 

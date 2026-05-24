@@ -19,7 +19,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1CurrentUser_Prope
   return selector().template Type<std::string_view>().Case("token").Case("login").Case("name");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1CurrentUser Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1CurrentUser>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -44,7 +44,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelMessage_Pr
   return selector().template Type<std::string_view>().Case("current_user").Case("id").Case("timestamp").Case("message");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelMessage Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessage>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -68,7 +68,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelMessageByT
       return selector().template Type<std::string_view>().Case("channel_id").Case("from").Case("to");
     };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelMessageByTimestampRequest Parse(Value value,
                                          USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampRequest>) {
   value.CheckNotMissing();
@@ -89,7 +89,7 @@ V1ChannelMessageByTimestampRequest Parse(Value value,
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelMessageByTimestampResponse_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("messages"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelMessageByTimestampResponse Parse(Value value,
                                           USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampResponse>) {
   value.CheckNotMissing();
@@ -113,7 +113,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelMessageNew
       return selector().template Type<std::string_view>().Case("current_user").Case("channel_id").Case("message");
     };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelMessageNewRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewRequest>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -134,7 +134,7 @@ V1ChannelMessageNewRequest Parse(Value value, USERVER_NAMESPACE::formats::parse:
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelMessageNewResponse_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("message_id"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelMessageNewResponse Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewResponse>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -151,7 +151,7 @@ V1ChannelMessageNewResponse Parse(Value value, USERVER_NAMESPACE::formats::parse
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelNotificationListRequest_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("current_user").Case("channel_id"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelNotificationListRequest Parse(Value value,
                                        USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListRequest>) {
   value.CheckNotMissing();
@@ -171,7 +171,7 @@ V1ChannelNotificationListRequest Parse(Value value,
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelNotificationListResponse_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("notifications"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelNotificationListResponse Parse(Value value,
                                         USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListResponse>) {
   value.CheckNotMissing();
@@ -200,7 +200,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelNotificati
           .Case("other_user_login");
     };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelNotificationNewRequest Parse(Value value,
                                       USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewRequest>) {
   value.CheckNotMissing();
@@ -225,7 +225,7 @@ V1ChannelNotificationNewRequest Parse(Value value,
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1ChannelNotificationNewResponse_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>(); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1ChannelNotificationNewResponse Parse(Value value,
                                        USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewResponse>) {
   value.CheckNotMissing();
@@ -247,7 +247,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1Error_PropertiesN
   return selector().template Type<std::string_view>().Case("code").Case("message").Case("details");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1Error::Details Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Error::Details>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -261,7 +261,7 @@ V1Error::Details Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Erro
   return res;
 }
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1Error Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Error>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -282,7 +282,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1File_PropertiesNa
   return selector().template Type<std::string_view>().Case("login").Case("filename").Case("content");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1File Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1File>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -307,7 +307,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1FileByUriRequest_
   return selector().template Type<std::string_view>().Case("current_user").Case("uri");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1FileByUriRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1FileByUriRequest>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -328,7 +328,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1FileNewResponse_P
   return selector().template Type<std::string_view>().Case("current_user").Case("uri");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1FileNewResponse Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1FileNewResponse>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -368,7 +368,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1LikeTriggerReques
       .Case("animation");
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1LikeTriggerRequest::Animation Parse(Value val,
                                       USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>) {
   const auto value = val.template As<std::string>();
@@ -380,7 +380,7 @@ V1LikeTriggerRequest::Animation Parse(Value val,
       fmt::format("Invalid enum value ({}) for type ::ns::V1LikeTriggerRequest::Animation", value), val);
 }
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1LikeTriggerRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -405,7 +405,7 @@ V1LikeTriggerRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserAuthorizationRequest_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("login").Case("password"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserAuthorizationRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserAuthorizationRequest>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -427,7 +427,7 @@ V1UserAuthorizationRequest Parse(Value value, USERVER_NAMESPACE::formats::parse:
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserAuthorizationResponse_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("current_user"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserAuthorizationResponse Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserAuthorizationResponse>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -447,7 +447,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserRegistrationR
           "password");
     };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserRegistrationRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserRegistrationRequest>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -479,7 +479,7 @@ static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserStatus_Proper
   return selector().template Type<std::string_view>();
 };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserStatus Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserStatus>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -496,7 +496,7 @@ V1UserStatus Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserStat
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserStatusByLoginRequest_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("current_user").Case("login"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserStatusByLoginRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginRequest>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -516,7 +516,7 @@ V1UserStatusByLoginRequest Parse(Value value, USERVER_NAMESPACE::formats::parse:
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserStatusByLoginResponse_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("status"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserStatusByLoginResponse Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginResponse>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -533,7 +533,7 @@ V1UserStatusByLoginResponse Parse(Value value, USERVER_NAMESPACE::formats::parse
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserStatusUpdateRequest_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>().Case("current_user").Case("status"); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserStatusUpdateRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateRequest>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
@@ -551,7 +551,7 @@ V1UserStatusUpdateRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::
 static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__V1UserStatusUpdateResponse_PropertiesNames =
     [](auto selector) { return selector().template Type<std::string_view>(); };
 
-template <typename Value, typename = std::enable_if_t<USERVER_NAMESPACE::formats::common::kIsFormatValue<Value>>>
+template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
 V1UserStatusUpdateResponse Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateResponse>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();

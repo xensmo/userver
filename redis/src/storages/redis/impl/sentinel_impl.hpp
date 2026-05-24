@@ -16,6 +16,7 @@
 #include <userver/utils/swappingsmart.hpp>
 
 #include <storages/redis/impl/keyshard.hpp>
+#include <storages/redis/impl/redis_group.hpp>
 #include <storages/redis/impl/redis_stats.hpp>
 #include <userver/storages/redis/client.hpp>
 #include <userver/storages/redis/fwd.hpp>
@@ -62,13 +63,11 @@ public:
         const std::vector<std::string>& shards,
         const std::vector<ConnectionInfo>& conns,
         std::string shard_group_name,
-        const std::string& client_name,
         const Password& password,
         ConnectionSecurity connection_security,
-        KeyShardFactory&& key_shard_factory,
+        SentinelStaticConfig creation_config,
         dynamic_config::Source dynamic_config_source,
-        std::size_t database_index,
-        TopologyUpdateMethod topology_update_method
+        std::size_t database_index
     );
     ~SentinelImpl();
 

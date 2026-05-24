@@ -342,9 +342,7 @@ UTEST_F(ConsumerTest, HeadersProcessing) {
             ASSERT_EQ(batch.size(), 1);
 
             for (auto header : batch[0].GetHeaders()) {
-                EXPECT_TRUE(
-                    std::find(kExpectedHeaders.begin(), kExpectedHeaders.end(), header) != kExpectedHeaders.end()
-                );
+                EXPECT_TRUE(std::ranges::find(kExpectedHeaders, header) != kExpectedHeaders.end());
             }
         }
     );

@@ -13,7 +13,7 @@ synchronization often uses mutexes, other synchronization primitives and event
 waiting mechanisms that block the current thread. When using userver, this
 results in the current thread not being able to be used to execute other
 coroutines. As a result, the number of threads executing coroutines decreases.
-This can lead to a huge performance drops and increased latencies.
+This can lead to huge performance drops and increased latencies.
 
 For the reasons described above, the use of synchronization primitives or IO
 operations of the C++ standard library and libc in the
@@ -58,8 +58,8 @@ ______
 ## Tasks
 
 The asynchronous **task** (@ref engine::Task, @ref engine::TaskWithResult) can return
-a result (possibly in form of an exception) or return nothing. In any case, the
-task has the semantics of future, i.e. you can wait for it and get the result
+a result (possibly in the form of an exception) or return nothing. In any case, the
+task has the semantics of a future, i.e. you can wait for it and get the result
 from it.
 
 To create a task call the @ref utils::Async function. It accepts the name of a

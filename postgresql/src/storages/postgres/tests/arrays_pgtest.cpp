@@ -949,7 +949,7 @@ UTEST_P(PostgreConnection, TransactionDecomposedChunkedContainer) {
 
     std::vector<IdAndValue> rows_to_insert(1001);
     int index = 0;
-    std::generate(rows_to_insert.begin(), rows_to_insert.end(), [&index] {
+    std::ranges::generate(rows_to_insert, [&index] {
         const auto x = index++;
         return IdAndValue{x, std::to_string(x)};
     });
@@ -981,7 +981,7 @@ UTEST_P(PostgreConnection, TransactionDecomposedContainer) {
 
     std::vector<IdAndValue> rows_to_insert(1001);
     int index = 0;
-    std::generate(rows_to_insert.begin(), rows_to_insert.end(), [&index] {
+    std::ranges::generate(rows_to_insert, [&index] {
         const auto x = index++;
         return IdAndValue{x, std::to_string(x)};
     });

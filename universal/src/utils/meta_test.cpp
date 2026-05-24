@@ -213,23 +213,6 @@ TEST(Meta, IsOstreamWritable) {
     static_assert(!meta::IsOstreamWritable<std::vector<int>>);
 }
 
-struct Dummy {
-    using dummy_alias = int;
-};
-
-template <typename T>
-using DummyAlias = typename T::dummy_alias;
-
-TEST(Meta, Detection) {
-    static_assert(meta::IsDetected<DummyAlias, Dummy>);
-    static_assert(std::is_same_v<meta::DetectedType<DummyAlias, Dummy>, int>);
-    static_assert(std::is_same_v<meta::DetectedOr<bool, DummyAlias, Dummy>, int>);
-
-    static_assert(!meta::IsDetected<DummyAlias, std::string>);
-    static_assert(std::is_same_v<meta::DetectedType<DummyAlias, std::string>, meta::NotDetected>);
-    static_assert(std::is_same_v<meta::DetectedOr<bool, DummyAlias, std::string>, bool>);
-}
-
 TEST(Meta, Sizable) {
     static_assert(meta::kIsSizable<std::string>);
     static_assert(meta::kIsSizable<std::string_view>);
@@ -240,6 +223,10 @@ TEST(Meta, Sizable) {
 
 TEST(CacheDumpMetaContainers, Reservable) {
     struct ReservableDummy {
+        int* begin() { return nullptr; }
+        int* end() { return nullptr; }
+
+        std::size_t size() const { return 0; }
         void reserve(std::size_t) {}
     };
 
@@ -256,6 +243,9 @@ TEST(CacheDumpMetaContainers, Reservable) {
 
 TEST(Meta, IsPushBackable) {
     struct PushBackableDummy {
+        int* begin() { return nullptr; }
+        int* end() { return nullptr; }
+
         void push_back(int) {}
     };
 

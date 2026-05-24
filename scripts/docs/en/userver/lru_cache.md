@@ -59,5 +59,5 @@ Here's a brief introduction into LRU types:
 ----------
 
 @htmlonly <div class="bottom-nav"> @endhtmlonly
-⇦ @ref pg_cache | @ref scripts/docs/en/userver/pg_driver.md ⇨
+⇦ @ref scripts/docs/en/userver/pg/cache.md | @ref scripts/docs/en/userver/pg/driver.md ⇨
 @htmlonly </div> @endhtmlonly

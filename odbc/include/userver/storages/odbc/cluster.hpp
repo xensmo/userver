@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/storages/odbc/cluster.hpp
+/// @brief @copybrief storages::odbc::Cluster
+
 #include <chrono>
 #include <optional>
 
@@ -26,6 +29,7 @@ using ClusterImplPtr = std::unique_ptr<ClusterImpl>;
 
 }  // namespace detail
 
+/// @brief ODBC cluster client: queries and transactions against pooled DSNs
 class Cluster {
 public:
     Cluster(const settings::ODBCClusterSettings& settings, clients::dns::Resolver* resolver);

@@ -23,7 +23,7 @@ public:
 
 protected:
     MiddlewaresFixture() {
-        std::generate(middlewares_.begin(), middlewares_.end(), [] { return std::make_shared<MiddlewareMock>(); });
+        std::ranges::generate(middlewares_, [] { return std::make_shared<MiddlewareMock>(); });
 
         if constexpr (std::is_base_of_v<ugrpc::server::MiddlewareBase, MiddlewareType>) {
             SetServerMiddlewares({middlewares_.begin(), middlewares_.end()});

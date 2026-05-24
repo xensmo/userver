@@ -111,5 +111,5 @@ and after that the active topology is replaced.
 ----------
 
 @htmlonly <div class="bottom-nav"> @endhtmlonly
-⇦ @ref scripts/docs/en/userver/mongodb.md | @ref clickhouse_driver ⇨
+⇦ @ref scripts/docs/en/userver/mongodb.md | @ref scripts/docs/en/userver/clickhouse/driver.md ⇨
 @htmlonly </div> @endhtmlonly

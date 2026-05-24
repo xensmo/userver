@@ -96,18 +96,18 @@ float Parse(const Value& value, To<float>) {
     return impl::NarrowToFloat(value.template As<double>(), value);
 }
 
-template <common::kIsFormatValue Value, meta::kIsInteger T>
+template <common::IsFormatValue Value, meta::kIsInteger T>
 T Parse(const Value& value, To<T>) {
     using IntT = std::conditional_t<std::is_signed<T>::value, int64_t, uint64_t>;
     return impl::NarrowToInt<T>(value.template As<IntT>(), value);
 }
 
-template <common::kIsFormatValue Value, typename Period>
+template <common::IsFormatValue Value, typename Period>
 std::chrono::duration<double, Period> Parse(const Value& n, To<std::chrono::duration<double, Period>>) {
     return std::chrono::duration<double, Period>(n.template As<double>());
 }
 
-template <common::kIsFormatValue Value>
+template <common::IsFormatValue Value>
 std::chrono::seconds Parse(const Value& n, To<std::chrono::seconds>) {
     return n.IsInt64() ? std::chrono::seconds{n.template As<int64_t>()}
                        : impl::ToSeconds(n.template As<std::string>(), n);

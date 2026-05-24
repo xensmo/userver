@@ -174,10 +174,8 @@ private:
             }
         }
 
-        std::sort(sorted_keys_.begin(), sorted_keys_.end());
-        if (const auto duplicate = std::adjacent_find(sorted_keys_.begin(), sorted_keys_.end());
-            duplicate != sorted_keys_.end())
-        {
+        std::ranges::sort(sorted_keys_);
+        if (const auto duplicate = std::ranges::adjacent_find(sorted_keys_); duplicate != sorted_keys_.end()) {
             throw ParseException(
                 fmt::format("Duplicate mapping key '{}' at path '{}'", *duplicate, visitor_.ComputeCurrentPath())
             );

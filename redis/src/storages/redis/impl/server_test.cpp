@@ -5,6 +5,7 @@
 #include <userver/storages/redis/base.hpp>
 
 #include <storages/redis/impl/command.hpp>
+#include <storages/redis/impl/redis_group.hpp>
 #include <storages/redis/impl/secdist_redis.hpp>
 #include <storages/redis/impl/sentinel.hpp>
 #include <storages/redis/impl/subscribe_sentinel.hpp>
@@ -90,8 +91,12 @@ struct MockSentinelServers {
             settings,
             "test_shard_group_name",
             dynamic_config::GetDefaultSource(),
-            "test_client_name",
-            {storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32}
+            storages::redis::impl::SentinelStaticConfig{
+                "test_client_name",
+                {storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32},
+                {},
+                {},
+            }
         );
         sentinel_client->WaitConnectedDebug(std::empty(slaves));
     }
@@ -106,8 +111,6 @@ struct MockSentinelServers {
             subscribe_handlers.push_back(server.RegisterHandlerWithConstReply("SUBSCRIBE", 1));
         }
 
-        storages::redis::CommandControl cc{};
-        testsuite::RedisControl redis_control{};
         auto dynconf = dynamic_config::GetDefaultSource();
         using storages::redis::impl::SubscribeSentinel;
         auto subscribe_sentinel = SubscribeSentinel::Create(
@@ -115,10 +118,12 @@ struct MockSentinelServers {
             settings,
             "test_shard_group_name",
             dynconf,
-            "test_client_name",
-            storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32,
-            cc,
-            redis_control
+            storages::redis::impl::SubscribeSentinelStaticConfig{
+                "test_client_name",
+                {storages::redis::ShardingStrategy::kKeyShardTaximeterCrc32},
+                {},
+                {},
+            }
         );
         subscribe_sentinel->WaitConnectedDebug(std::empty(slaves));
 

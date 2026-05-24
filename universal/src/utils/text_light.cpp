@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <iomanip>
-#include <ranges>
 #include <sstream>
 #include <unordered_map>
 
@@ -108,7 +107,7 @@ bool IsAsciiSpace(char ch) noexcept {
 }
 
 bool IsAscii(std::string_view text) noexcept {
-    return std::all_of(text.cbegin(), text.cend(), [](auto ch) { return IsAscii(ch); });
+    return std::ranges::all_of(text, [](auto ch) { return IsAscii(ch); });
 }
 
 namespace utf8 {
@@ -330,11 +329,10 @@ bool IsUtf8(std::string_view text) noexcept {
 
 bool IsPrintable(std::string_view text, bool ascii_only) noexcept {
     if (ascii_only) {
-        return std::all_of(text.cbegin(), text.cend(), [](int c) { return (c >= 32 && c <= 126); });
+        return std::ranges::all_of(text, [](int c) { return (c >= 32 && c <= 126); });
     }
 
-    return IsUtf8(text) &&
-           !std::any_of(text.cbegin(), text.cend(), [](int c) { return ((c >= 0 && c <= 31) || c == 127); });
+    return IsUtf8(text) && !std::ranges::any_of(text, [](int c) { return ((c >= 0 && c <= 31) || c == 127); });
 }
 
 bool IsCString(std::string_view text) noexcept { return text.find('\0') == std::string::npos; }

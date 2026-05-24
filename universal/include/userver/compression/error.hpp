@@ -1,11 +1,16 @@
 #pragma once
 
+/// @file userver/compression/error.hpp
+/// @brief Decompression errors
+/// @ingroup userver_universal
+
 #include <stdexcept>
 
 #include <fmt/format.h>
 
 USERVER_NAMESPACE_BEGIN
 
+/// @brief Compression and decompression utilities and errors.
 namespace compression {
 
 /// Base class for decompression errors

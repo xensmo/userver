@@ -5,9 +5,13 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <ydb-cpp-sdk/client/topic/client.h>
+#include <ydb-cpp-sdk/client/types/executor/executor.h>
+
+#include <userver/compiler/impl/lifetime.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -61,11 +65,11 @@ public:
     /// Force close after timeout
     bool Close(std::chrono::milliseconds timeout);
 
-    /// Get native read session
-    /// @warning Use with care! Facilities from
-    /// `<core/include/userver/drivers/subscribable_futures.hpp>` can help with
-    /// non-blocking wait operations.
-    std::shared_ptr<NYdb::NTopic::IReadSession> GetNativeTopicReadSession();
+    /// @brief Get native read session
+    ///
+    /// @warning Use with care! Facilities from @ref userver/drivers/subscribable_futures.hpp can help
+    /// with non-blocking wait operations.
+    NYdb::NTopic::IReadSession& GetNativeTopicReadSession() USERVER_IMPL_LIFETIME_BOUND;
 
 private:
     std::shared_ptr<NYdb::NTopic::IReadSession> read_session_;
@@ -83,20 +87,20 @@ public:
 
     /// @brief Wait for the next write session event
     ///
-    /// Suspends the current coroutine until an event is available,
-    /// the returns it without blocking the thread.
-    std::optional<NYdb::NTopic::TWriteSessionEvent::TEvent> GetEvent();
+    /// Suspends the current coroutine until an event is available, then returns it without blocking the thread.
+    NYdb::NTopic::TWriteSessionEvent::TEvent GetEvent();
 
     /// @brief Poll for a write session event without waiting
     ///
-    /// Returns the next buffered event immediately if one is available,
-    /// or `std::nullopt` if the event queue is empty. Does not suspend
-    /// the coroutine.
+    /// Returns the next buffered event immediately if one is available, or `std::nullopt` if the event queue is empty.
+    /// Does not suspend the coroutine.
+    ///
+    /// @note Sometimes may return `std::nullopt` even if an event is available. Intended for use in loops.
     std::optional<NYdb::NTopic::TWriteSessionEvent::TEvent> TryGetEvent();
 
     /// @brief Write a messsage using a continuation token from TReadyToAcceptEvent
     ///
-    /// Must be called only after receiving TReadyToAcceptEvent from GetEvent().
+    /// Must be called only after receiving TReadyToAcceptEvent from GetEvent() or TryGetEvent().
     void Write(NYdb::NTopic::TContinuationToken&& token, NYdb::NTopic::TWriteMessage&& message);
 
     /// @brief Close write session
@@ -105,11 +109,11 @@ public:
     /// Force closes after timeout
     bool Close(std::chrono::milliseconds timeout);
 
-    /// Get native write session
-    /// @warning Use with care! Facilities from
-    /// `<core/include/userver/drivers/subscribable_futures.hpp>` can help with
-    /// non-blocking wait operations.
-    std::shared_ptr<NYdb::NTopic::IWriteSession> GetNativeTopicWriteSession();
+    /// @brief Get native write session
+    ///
+    /// @warning Use with care! Facilities from @ref userver/drivers/subscribable_futures.hpp can help
+    /// with non-blocking wait operations.
+    NYdb::NTopic::IWriteSession& GetNativeTopicWriteSession() USERVER_IMPL_LIFETIME_BOUND;
 
 private:
     std::shared_ptr<NYdb::NTopic::IWriteSession> write_session_;
@@ -145,11 +149,18 @@ public:
     /// @warning Use with care! Facilities from
     /// `<core/include/userver/drivers/subscribable_futures.hpp>` can help with
     /// non-blocking wait operations.
-    NYdb::NTopic::TTopicClient& GetNativeTopicClient();
+    NYdb::NTopic::TTopicClient& GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND;
 
 private:
     std::shared_ptr<impl::Driver> driver_;
-    NYdb::NTopic::TTopicClient topic_client_;
+    // Owned executors: Stop() only after `topic_client_` is destroyed (see
+    // ~TopicClient). Joining these threads after the native client is gone
+    // avoids atexit use-after-destroy (e.g. SEGV in TCodecMap). Stopping them
+    // while TTopicClient is still alive would deadlock or stall writes.
+    NYdb::IExecutor::TPtr compression_executor_;
+    NYdb::IExecutor::TPtr handlers_executor_;
+    // `reset()` in ~TopicClient runs before Stop() on the executors above.
+    std::optional<NYdb::NTopic::TTopicClient> topic_client_;
 };
 
 }  // namespace ydb

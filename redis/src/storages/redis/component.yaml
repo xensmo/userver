@@ -95,3 +95,7 @@ properties:
                     enum:
                       - cluster_slots
                       - cluster_shards
+                per_channel_statistics:
+                    type: boolean
+                    description: enables statistics for each redis pub/sub channel
+                    default: true

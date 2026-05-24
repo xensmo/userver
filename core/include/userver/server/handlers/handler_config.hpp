@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/server/handlers/handler_config.hpp
+/// @brief HTTP handler static configuration
+
 #include <optional>
 #include <string>
 #include <variant>

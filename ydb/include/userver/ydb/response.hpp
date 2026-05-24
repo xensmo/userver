@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/ydb/response.hpp
+/// @brief YDB query result rows, cursors and execute responses
+
 #include <ydb-cpp-sdk/client/query/client.h>
 #include <ydb-cpp-sdk/client/result/result.h>
 #include <ydb-cpp-sdk/client/table/table.h>

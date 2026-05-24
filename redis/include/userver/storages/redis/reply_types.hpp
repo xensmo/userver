@@ -9,7 +9,6 @@
 #include <userver/storages/redis/base.hpp>
 #include <userver/storages/redis/expire_reply.hpp>
 #include <userver/storages/redis/ttl_reply.hpp>
-#include <userver/utils/void_t.hpp>
 
 #include <userver/storages/redis/key_type.hpp>
 #include <userver/storages/redis/reply_fwd.hpp>

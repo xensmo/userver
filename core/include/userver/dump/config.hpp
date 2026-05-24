@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/dump/config.hpp
+/// @brief Dump storage configuration types
+
 #include <chrono>
 #include <optional>
 #include <string>

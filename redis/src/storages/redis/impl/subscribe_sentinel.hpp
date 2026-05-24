@@ -6,9 +6,9 @@
 
 #include <userver/testsuite/testsuite_support.hpp>
 
+#include <storages/redis/impl/redis_group.hpp>
 #include <storages/redis/impl/sentinel.hpp>
 #include <storages/redis/impl/subscription_storage.hpp>
-#include <userver/storages/redis/topology_update_method.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -22,14 +22,11 @@ public:
         const std::vector<ConnectionInfo>& conns,
         std::string shard_group_name,
         dynamic_config::Source dynamic_config_source,
-        const std::string& client_name,
         const Password& password,
         ConnectionSecurity connection_security,
-        KeyShardFactory key_shard_factory,
-        bool is_cluster_mode,
-        CommandControl command_control,
         const testsuite::RedisControl& testsuite_redis_control,
-        TopologyUpdateMethod topology_update_method
+        std::size_t database_index,
+        SubscribeSentinelStaticConfig creation_config
     );
     ~SubscribeSentinel() override;
 
@@ -38,11 +35,8 @@ public:
         const USERVER_NAMESPACE::secdist::RedisSettings& settings,
         std::string shard_group_name,
         dynamic_config::Source dynamic_config_source,
-        const std::string& client_name,
-        storages::redis::ShardingStrategy sharding_strategy,
-        const CommandControl& command_control,
-        const testsuite::RedisControl& testsuite_redis_control,
-        TopologyUpdateMethod topology_update_method = TopologyUpdateMethod::kClusterSlots
+        const SubscribeSentinelStaticConfig& creation_config,
+        const testsuite::RedisControl& testsuite_redis_control = {}
     );
 
     SubscriptionToken Subscribe(
@@ -82,6 +76,7 @@ private:
     void InitStorage();
 
     std::unique_ptr<SubscriptionStorageBase> storage_;
+    bool per_channel_stats_enabled_{true};
 };
 
 }  // namespace storages::redis::impl

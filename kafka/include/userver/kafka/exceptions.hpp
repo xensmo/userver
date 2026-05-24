@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file userver/kafka/exceptions.hpp
+/// @brief Kafka client exceptions
+
 #include <cstdint>
 #include <exception>
 #include <map>

@@ -12,6 +12,7 @@
 
 USERVER_NAMESPACE_BEGIN
 
+/// @brief YAML document model (`formats::yaml::Value`) and helpers.
 namespace formats::yaml {
 
 class Exception : public std::exception {

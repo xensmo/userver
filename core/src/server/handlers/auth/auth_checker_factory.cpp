@@ -26,7 +26,7 @@ public:
     }
 
     impl::AuthCheckerFactoryFactory GetFactory(std::string_view auth_type) const {
-        if (auto* const factory = utils::impl::FindTransparentOrNullptr(factories_, auth_type)) {
+        if (auto* const factory = utils::FindOrNullptr(factories_, auth_type)) {
             return *factory;
         }
         throw std::runtime_error(fmt::format("unknown type of auth checker: {}", auth_type));

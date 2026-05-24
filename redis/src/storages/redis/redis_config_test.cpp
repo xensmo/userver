@@ -97,4 +97,18 @@ TEST(RedisCommandControlConfig, BareMinimum) {
     EXPECT_EQ(config.retry_counter, 0);
 }
 
+TEST(RedisPubsubMetricsConfig, PerChannelStatsEnabled) {
+    formats::json::ValueBuilder builder{formats::common::Type::kObject};
+    builder["per-shard-stats-enabled"] = false;
+
+    storages::redis::PubsubMetricsSettings config{};
+    try {
+        config = builder.ExtractValue().As<storages::redis::PubsubMetricsSettings>();
+    } catch (const std::exception& e) {
+        FAIL() << e.what();
+    }
+
+    EXPECT_FALSE(config.per_shard_stats_enabled);
+}
+
 USERVER_NAMESPACE_END

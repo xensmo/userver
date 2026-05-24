@@ -23,8 +23,6 @@ class Locker;
 
 }  // namespace impl
 
-// clang-format off
-
 /// @ingroup userver_concurrency
 ///
 /// @brief A task that tries to acquire a distributed lock and runs user
@@ -42,9 +40,6 @@ class Locker;
 ///
 /// @see @ref scripts/docs/en/userver/periodics.md
 /// @see AlwaysBusyDistLockStrategy
-
-// clang-format on
-
 class DistLockedTask final : public engine::TaskBase {
 public:
     using WorkerFunc = std::function<void()>;
