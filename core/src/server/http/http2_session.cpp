@@ -173,7 +173,7 @@ int Http2Session::OnStreamClose(nghttp2_session*, int32_t id, uint32_t error_cod
     parser.RemoveStream(parser.GetStreamChecked(Stream::Id{id}));
 
     IncStat(parser.stats_.http2_stats.streams_close);
-    LOG_LIMITED_TRACE() << fmt::format("The stream {} was closed with code {}", id, error_code);
+    LOG_LIMITED_TRACE("The stream {} was closed with code {}", id, error_code);
 
     return 0;
 }
@@ -214,7 +214,7 @@ long Http2Session::OnSend(nghttp2_session* session, const uint8_t* data, size_t 
     auto& parser = GetParser(user_data);
     if (parser.socket_ != nullptr) {
         const auto send = parser.socket_->WriteAll(data, len, {});
-        LOG_TRACE() << fmt::format("Written {} bytes, expected to write {}.", send, len);
+        LOG_TRACE("Written {} bytes, expected to write {}.", send, len);
         return send;
     }
     return NGHTTP2_ERR_WOULDBLOCK;
@@ -254,7 +254,14 @@ void Http2Session::RegisterStream(Stream::Id id) {
     }
     utils::FastScopeGuard guard_free{[this, stream_ptr]() noexcept { streams_pool_.free(stream_ptr); }};
 
-    new (stream_ptr) Stream(request_constructor_config_, handler_info_index_, data_accounter_, remote_address_, id);
+    stream_ptr = std::construct_at(
+        stream_ptr,
+        request_constructor_config_,
+        handler_info_index_,
+        data_accounter_,
+        remote_address_,
+        id
+    );
     guard_free.Release();
 
     utils::FastScopeGuard guard_destroy{[this, stream_ptr]() noexcept { streams_pool_.destroy(stream_ptr); }};
@@ -306,7 +313,7 @@ bool Http2Session::Parse(std::string_view req) {
     const int
         readlen = nghttp2_session_mem_recv(session_.get(), reinterpret_cast<const uint8_t*>(req.data()), req.size());
     if (readlen < 0) {
-        LOG_LIMITED_ERROR() << fmt::format("Error in Parse: {}", nghttp2_strerror(readlen));
+        LOG_LIMITED_ERROR("Error in Parse: {}", nghttp2_strerror(readlen));
         return false;
     }
     if (static_cast<std::size_t>(readlen) != req.size()) {

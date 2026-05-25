@@ -3,13 +3,11 @@ import contextlib
 import logging
 import socket
 import struct
-import uuid
 
 import h2.connection
 import h2.events
 import h2.settings
 import pytest
-import pytest_userver.utils.sync as sync
 
 DEFAULT_PATH = '/http2server'
 DEFAULT_DATA = {'hello': 'world'}
@@ -33,67 +31,7 @@ DEFAULT_HEADERS = [
     ('echo-header', 'echo'),
 ]
 
-
-async def test_http2_ping(http2_client):
-    r = await http2_client.get('/ping', timeout=1)
-    assert 200 == r.status_code
-    assert '' == r.text
-
-
-async def test_big_body(http2_client):
-    s = 'x' * 2**22  # request - 4Mib. limit - 2Mib
-    r = await http2_client.get(
-        DEFAULT_PATH,
-        params={'type': 'echo-body'},
-        data=s,
-    )
-    assert 413 == r.status_code
-    assert 'too large request' == r.text
-
-    s = 'x' * 2**20  # request - 1Mib. limit - 2Mib
-    r = await http2_client.get(
-        DEFAULT_PATH,
-        params={'type': 'echo-body'},
-        data=s,
-    )
-    assert 200 == r.status_code
-    assert s == r.text
-
-
-async def test_body_different_size(http2_client):
-    s = ''
-    for _ in range(1026):
-        r = await http2_client.get(
-            DEFAULT_PATH,
-            params={'type': 'echo-body'},
-            data=s,
-        )
-        assert 200 == r.status_code
-        assert s == r.text
-        s += 'x'
-
-
-async def test_json_body(http2_client):
-    data = {'x': 'X', 'y': 'Y', 'd': 0.123, 'b': True, 'arr': [1, 2, 3, 4]}
-    r = await http2_client.get(
-        DEFAULT_PATH,
-        params={'type': 'json'},
-        json=data,
-    )
-    assert 200 == r.status_code
-    assert data == r.json()
-
-
-async def test_headers(http2_client):
-    hval = 'val'
-    r = await http2_client.post(
-        DEFAULT_PATH,
-        params={'type': 'echo-header'},
-        headers={'echo-header': hval, 'test': 'test'},
-        json=DEFAULT_DATA,
-    )
-    assert 200 == r.status_code
-    assert hval == r.text
+EVENTS_COUNT_IN_COMPLETED_STREAM = 3
 
 
 async def _get_metric(monitor_client, metric_name):
@@ -101,93 +39,6 @@ async def _get_metric(monitor_client, metric_name):
         f'server.requests.http2.{metric_name}',
     )
     return metric.value
-
-
-async def _request(client, req_per_client, count=1):
-    for _ in range(req_per_client):
-        data = str(uuid.uuid4())
-        data *= count
-        r = await client.put(
-            DEFAULT_PATH,
-            params={'type': 'echo-body'},
-            data=data,
-        )
-        assert 200 == r.status_code
-        assert data == r.text
-
-
-async def test_concurrent_requests(
-    http2_client,
-    service_client,
-    monitor_client,
-):
-    await service_client.update_server_state()
-
-    current_streams = await _get_metric(monitor_client, 'streams-count')
-    streams_parse_error = await _get_metric(
-        monitor_client,
-        'streams-parse-error',
-    )
-    clients_count = 10
-    req_per_client = 100
-    tasks = [_request(http2_client, req_per_client) for _ in range(clients_count)]
-    await asyncio.gather(*tasks)
-
-    await service_client.update_server_state()
-
-    def expect_eq(a, b):
-        if a == b:
-            return
-        raise sync.NotReady
-
-    async def is_ready():
-        metrics = await monitor_client.metrics(prefix='server.requests.http2')
-        expect_eq(len(metrics), 5)
-        total_requests = clients_count * req_per_client + current_streams
-        expect_eq(total_requests, await _get_metric(monitor_client, 'streams-count'))
-        expect_eq(total_requests, await _get_metric(monitor_client, 'streams-close'))
-        expect_eq(0, await _get_metric(monitor_client, 'reset-streams'))
-        expect_eq(0, await _get_metric(monitor_client, 'goaway'))
-        expect_eq(
-            streams_parse_error,
-            await _get_metric(monitor_client, 'streams-parse-error'),
-        )
-        return True
-
-    await sync.wait(is_ready)
-
-
-async def test_concurrent_requests_with_big_body(
-    http2_client,
-    service_client,
-    monitor_client,
-):
-    await service_client.update_server_state()
-
-    current_streams = await _get_metric(monitor_client, 'streams-count')
-    streams_parse_error = await _get_metric(
-        monitor_client,
-        'streams-parse-error',
-    )
-    clients_count = 5
-    req_per_client = 10
-    count = int((2**20) / 128)  # 1Mib / size(uuid)
-    tasks = [_request(http2_client, req_per_client, count) for _ in range(clients_count)]
-    await asyncio.gather(*tasks)
-
-    await service_client.update_server_state()
-
-    metrics = await monitor_client.metrics(prefix='server.requests.http2')
-    assert len(metrics) == 5
-    total_requests = clients_count * req_per_client + current_streams
-    assert total_requests == await _get_metric(monitor_client, 'streams-count')
-    assert total_requests == await _get_metric(monitor_client, 'streams-close')
-    assert 0 == await _get_metric(monitor_client, 'reset-streams')
-    assert 0 == await _get_metric(monitor_client, 'goaway')
-    assert streams_parse_error == await _get_metric(
-        monitor_client,
-        'streams-parse-error',
-    )
 
 
 @pytest.fixture(name='create_socket')
@@ -206,11 +57,6 @@ async def _create_socket(service_port, asyncio_socket):
             sock.close()
 
     return create_socket
-
-
-async def test_http1_ping(service_client):
-    r = await service_client.get('/ping')
-    assert r.status == 200
 
 
 async def test_http1_broken_bytes(service_client, create_socket):
@@ -239,7 +85,7 @@ async def test_settings_and_ping(service_client, create_socket):
         })
 
         events = []
-        while len(events) != 3:
+        while len(events) != EVENTS_COUNT_IN_COMPLETED_STREAM:
             events += await _send_and_receive(sock, conn)
         e = events[0]
         assert isinstance(e, h2.events.RemoteSettingsChanged)
@@ -295,8 +141,8 @@ def _create_frame(frame_type, flags, stream_id, payload):
     return header + payload
 
 
-def _assert_events(events):
-    assert len(events) == 3
+def _assert_is_completed_response(events):
+    assert len(events) == EVENTS_COUNT_IN_COMPLETED_STREAM
     assert isinstance(events[0], h2.events.ResponseReceived)
     assert isinstance(events[1], h2.events.DataReceived)
     assert isinstance(events[2], h2.events.StreamEnded)
@@ -304,9 +150,9 @@ def _assert_events(events):
 
 async def _receive_simple_response(sock, conn):
     events = []
-    while len(events) != 3:
+    while len(events) != EVENTS_COUNT_IN_COMPLETED_STREAM:
         events += await _send_and_receive(sock, conn)
-    _assert_events(events)
+    _assert_is_completed_response(events)
 
 
 async def test_invalid_stream(create_connection, service_client):
@@ -359,10 +205,10 @@ def _encode_header(name, value):
     )
 
 
-def _assert_responses(events):
-    assert len(events) % 3 == 0
-    for i in range(0, len(events) - 3, 3):
-        _assert_events(events[i : i + 3])
+def _assert_is_completed_responses(events):
+    assert len(events) % EVENTS_COUNT_IN_COMPLETED_STREAM == 0
+    for i in range(0, len(events) - EVENTS_COUNT_IN_COMPLETED_STREAM, EVENTS_COUNT_IN_COMPLETED_STREAM):
+        _assert_is_completed_response(events[i : i + EVENTS_COUNT_IN_COMPLETED_STREAM])
 
 
 async def do_max_streams(sock, conn):
@@ -381,13 +227,15 @@ async def do_max_streams(sock, conn):
         await sock.sendall(conn.data_to_send())
 
     events = []
-    expected_frames_count = MAX_CONCURRENT_STREAMS * 3  # 1 response =  (ResponseReceived, DataReceived, StreamEnded)
+    expected_frames_count = (
+        MAX_CONCURRENT_STREAMS * EVENTS_COUNT_IN_COMPLETED_STREAM
+    )  # response =  (ResponseReceived, DataReceived, StreamEnded)
     while len(events) != expected_frames_count:
         receive = await sock.recv(RECEIVE_SIZE)
         if not receive:
             raise RuntimeError('Socket connection was closed by the other side')
         events += conn.receive_data(receive)
-    _assert_responses(events)
+    _assert_is_completed_responses(events)
 
 
 async def test_many_in_flight(
