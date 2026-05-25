@@ -14,7 +14,7 @@ template <typename Producer>
 auto GetProducerTask(Producer producer, const std::atomic<bool>& run) {
     return engine::CriticalAsyncNoTracing([producer = std::move(producer), &run] {
         std::size_t message = 0;
-        while (run && producer.Push(std::size_t{message++})) {
+        while (run && producer.Push(message++)) {
         }
     });
 }
@@ -59,7 +59,7 @@ void QueueProduce(benchmark::State& state) {
             std::size_t message = 0;
             auto producer = queue->GetProducer();
             for ([[maybe_unused]] auto _ : state) {
-                bool res = producer.Push(std::size_t{message++});
+                bool res = producer.Push(message++);
                 benchmark::DoNotOptimize(res);
             }
         }

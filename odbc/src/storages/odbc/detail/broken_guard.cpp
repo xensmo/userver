@@ -8,7 +8,7 @@ namespace storages::odbc::detail {
 
 BrokenGuard::BrokenGuard(Connection& connection)
     : connection_{connection},
-      exceptions_on_enter_{static_cast<int>(std::uncaught_exceptions())}
+      exceptions_on_enter_{std::uncaught_exceptions()}
 {
     if (connection_.IsBroken()) {
         throw ConnectionError("Connection is broken.");
@@ -16,7 +16,7 @@ BrokenGuard::BrokenGuard(Connection& connection)
 }
 
 BrokenGuard::~BrokenGuard() {
-    if (static_cast<int>(std::uncaught_exceptions()) > exceptions_on_enter_) {
+    if (std::uncaught_exceptions() > exceptions_on_enter_) {
         if (!skip_notify_broken_) {
             connection_.NotifyBroken();
         }
