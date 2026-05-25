@@ -284,14 +284,16 @@ void Redis::OnSecdistUpdate(const storages::secdist::SecdistConfig& cfg) {
         const auto& config_name = sentinel->ShardGroupName();
         const auto& settings = cfg.Get<storages::secdist::RedisMapSettings>().GetSettings(config_name);
 
+        // TODO: move ConnectionInfo creation to Sentinel (must me same as in SubscribeSentinel::Create)
         std::vector<storages::redis::ConnectionInfo> cii;
         for (const auto& host_port : settings.sentinels) {
-            const storages::redis::ConnectionInfo ci(host_port.host, host_port.port, settings.password);
+            const storages::redis::ConnectionInfo
+                ci(host_port.host, host_port.port, storages::redis::Credentials{settings.username, settings.password});
             cii.push_back(ci);
         }
 
         sentinel->SetConnectionInfo(cii);
-        sentinel->UpdatePassword(settings.password);
+        sentinel->UpdateCredentials(storages::redis::Credentials{settings.username, settings.password});
     }
 }
 

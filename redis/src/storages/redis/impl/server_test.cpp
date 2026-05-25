@@ -168,7 +168,12 @@ TEST(Redis, NoPassword) {
     storages::redis::impl::Statistics stats;
     auto redis = std::make_shared<
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), storages::redis::Password(""), kDatabaseIndex);
+    redis->Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"", storages::redis::Password("")},
+        kDatabaseIndex
+    );
 
     EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
 }
@@ -176,14 +181,40 @@ TEST(Redis, NoPassword) {
 TEST(Redis, Auth) {
     MockRedisServer server{"redis_db"};
     auto ping_handler = server.RegisterPingHandler();
-    auto auth_handler = server.RegisterStatusReplyHandler("AUTH", "OK");
+    auto auth_handler = server.RegisterStatusReplyHandler("AUTH", {"password"}, "OK");
 
     auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
     auto redis = std::make_shared<
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), storages::redis::Password("password"), kDatabaseIndex);
+    redis->Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"", storages::redis::Password("password")},
+        kDatabaseIndex
+    );
+
+    EXPECT_TRUE(auth_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
+}
+
+TEST(Redis, AuthWithUsername) {
+    MockRedisServer server{"redis_db"};
+    auto ping_handler = server.RegisterPingHandler();
+    auto auth_handler = server.RegisterStatusReplyHandler("AUTH", {"username", "password"}, "OK");
+
+    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    const storages::redis::RedisCreationSettings redis_settings;
+    storages::redis::impl::Statistics stats;
+    auto redis = std::make_shared<
+        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
+    redis->Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"username", storages::redis::Password("password")},
+        kDatabaseIndex
+    );
 
     EXPECT_TRUE(auth_handler->WaitForFirstReply(kSmallPeriod));
     EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
@@ -199,7 +230,12 @@ TEST(Redis, AuthFail) {
     storages::redis::impl::Statistics stats;
     auto redis = std::make_shared<
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), storages::redis::Password("password"), kDatabaseIndex);
+    redis->Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"", storages::redis::Password("password")},
+        kDatabaseIndex
+    );
 
     EXPECT_TRUE(auth_error_handler->WaitForFirstReply(kSmallPeriod));
     PeriodicCheck([&] { return !IsConnected(*redis); });
@@ -216,7 +252,12 @@ TEST(Redis, AuthTimeout) {
     storages::redis::impl::Statistics stats;
     auto redis = std::make_shared<
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), storages::redis::Password("password"), kDatabaseIndex);
+    redis->Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"", storages::redis::Password("password")},
+        kDatabaseIndex
+    );
 
     EXPECT_TRUE(auth_error_handler->WaitForFirstReply(sleep_period + kSmallPeriod));
     PeriodicCheck([&] { return !IsConnected(*redis); });
@@ -230,7 +271,7 @@ UTEST(Redis, SentinelAuth) {
 
     secdist::RedisSettings settings;
     settings.shards = {std::string{MockSentinelServers::kRedisName}};
-    settings.sentinel_password = storages::redis::Password("pass");
+    settings.sentinel_password = storages::redis::Password("sentinel_password");
     settings.sentinels.reserve(std::size(sentinels));
     for (const auto& sentinel : sentinels) {
         settings.sentinels.emplace_back(kLocalhost, sentinel.GetPort());
@@ -239,7 +280,7 @@ UTEST(Redis, SentinelAuth) {
     std::vector<MockRedisServer::HandlerPtr> auth_handlers;
     auth_handlers.reserve(std::size(sentinels));
     for (auto& sentinel : sentinels) {
-        auth_handlers.push_back(sentinel.RegisterStatusReplyHandler("AUTH", "OK"));
+        auth_handlers.push_back(sentinel.RegisterStatusReplyHandler("AUTH", {"sentinel_password"}, "OK"));
     }
     std::vector<MockRedisServer::HandlerPtr> no_auth_handlers;
     no_auth_handlers.reserve(std::size(masters) + std::size(slaves));
@@ -265,6 +306,98 @@ UTEST(Redis, SentinelAuth) {
     }
 }
 
+UTEST(Redis, SentinelAuthWithUsername) {
+    MockSentinelServers mock;
+    mock.RegisterSentinelMastersSlaves();
+    mock.ForEachServer([](auto& server) { server.RegisterPingHandler(); });
+    auto& [masters, slaves, sentinels, thread_pool] = mock;
+
+    secdist::RedisSettings settings;
+    settings.shards = {std::string{MockSentinelServers::kRedisName}};
+    settings.sentinel_username = "sentinel_username";
+    settings.sentinel_password = storages::redis::Password("sentinel_password");
+    settings.sentinels.reserve(std::size(sentinels));
+    for (const auto& sentinel : sentinels) {
+        settings.sentinels.emplace_back(kLocalhost, sentinel.GetPort());
+    }
+
+    std::vector<MockRedisServer::HandlerPtr> auth_handlers;
+    auth_handlers.reserve(std::size(sentinels));
+    for (auto& sentinel : sentinels) {
+        auth_handlers
+            .push_back(sentinel.RegisterStatusReplyHandler("AUTH", {"sentinel_username", "sentinel_password"}, "OK"));
+    }
+    std::vector<MockRedisServer::HandlerPtr> no_auth_handlers;
+    no_auth_handlers.reserve(std::size(masters) + std::size(slaves));
+    for (auto& server : masters) {
+        no_auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "FAIL"));
+    }
+    for (auto& server : slaves) {
+        no_auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "FAIL"));
+    }
+
+    mock.CreateSentinelClientAndWait(settings);
+
+    for (auto& handler : auth_handlers) {
+        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+    }
+
+    for (auto& handler : no_auth_handlers) {
+        EXPECT_FALSE(handler->WaitForFirstReply(kWaitPeriod));
+    }
+
+    for (const auto& sentinel : sentinels) {
+        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSmallPeriod));
+    }
+}
+
+UTEST(Redis, SentinelAuthWithUsernameAndPassword) {
+    MockSentinelServers mock;
+    mock.RegisterSentinelMastersSlaves();
+    mock.ForEachServer([](auto& server) { server.RegisterPingHandler(); });
+    auto& [masters, slaves, sentinels, thread_pool] = mock;
+
+    secdist::RedisSettings settings;
+    settings.shards = {std::string{MockSentinelServers::kRedisName}};
+    settings.username = "username";
+    settings.password = storages::redis::Password("password");
+    settings.sentinel_username = "sentinel_username";
+    settings.sentinel_password = storages::redis::Password("sentinel_password");
+    settings.sentinels.reserve(std::size(sentinels));
+    for (const auto& sentinel : sentinels) {
+        settings.sentinels.emplace_back(kLocalhost, sentinel.GetPort());
+    }
+
+    std::vector<MockRedisServer::HandlerPtr> auth_handlers;
+    auth_handlers.reserve(std::size(sentinels));
+    for (auto& sentinel : sentinels) {
+        auth_handlers
+            .push_back(sentinel.RegisterStatusReplyHandler("AUTH", {"sentinel_username", "sentinel_password"}, "OK"));
+    }
+    std::vector<MockRedisServer::HandlerPtr> data_auth_handlers;
+    data_auth_handlers.reserve(std::size(masters) + std::size(slaves));
+    for (auto& server : masters) {
+        data_auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", {"username", "password"}, "FAIL"));
+    }
+    for (auto& server : slaves) {
+        data_auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", {"username", "password"}, "FAIL"));
+    }
+
+    mock.CreateSentinelClientAndWait(settings);
+
+    for (auto& handler : auth_handlers) {
+        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+    }
+
+    for (auto& handler : data_auth_handlers) {
+        EXPECT_TRUE(handler->WaitForFirstReply(kWaitPeriod));
+    }
+
+    for (const auto& sentinel : sentinels) {
+        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSmallPeriod));
+    }
+}
+
 UTEST(Redis, SentinelNoAuthButPassword) {
     MockSentinelServers mock;
     mock.RegisterSentinelMastersSlaves();
@@ -273,7 +406,7 @@ UTEST(Redis, SentinelNoAuthButPassword) {
 
     secdist::RedisSettings settings;
     settings.shards = {std::string{MockSentinelServers::kRedisName}};
-    settings.password = storages::redis::Password("pass");
+    settings.password = storages::redis::Password("password");
     settings.sentinels.reserve(std::size(sentinels));
     for (const auto& sentinel : sentinels) {
         settings.sentinels.emplace_back(kLocalhost, sentinel.GetPort());
@@ -287,10 +420,10 @@ UTEST(Redis, SentinelNoAuthButPassword) {
     std::vector<MockRedisServer::HandlerPtr> auth_handlers;
     auth_handlers.reserve(std::size(masters) + std::size(slaves));
     for (auto& server : masters) {
-        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "OK"));
+        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", {"password"}, "OK"));
     }
     for (auto& server : slaves) {
-        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "OK"));
+        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", {"password"}, "OK"));
     }
 
     mock.CreateSentinelClientAndWait(settings);
@@ -346,7 +479,7 @@ UTEST(Redis, SentinelAuthSubscribe) {
 
     secdist::RedisSettings settings;
     settings.shards = {std::string{MockSentinelServers::kRedisName}};
-    settings.sentinel_password = storages::redis::Password("pass");
+    settings.sentinel_password = storages::redis::Password("sentinel_password");
     settings.sentinels.reserve(std::size(sentinels));
     for (const auto& sentinel : sentinels) {
         settings.sentinels.emplace_back(kLocalhost, sentinel.GetPort());
@@ -355,7 +488,48 @@ UTEST(Redis, SentinelAuthSubscribe) {
     std::vector<MockRedisServer::HandlerPtr> auth_handlers;
     auth_handlers.reserve(std::size(sentinels));
     for (auto& sentinel : sentinels) {
-        auth_handlers.push_back(sentinel.RegisterStatusReplyHandler("AUTH", "OK"));
+        auth_handlers.push_back(sentinel.RegisterStatusReplyHandler("AUTH", {"sentinel_password"}, "OK"));
+    }
+    std::vector<MockRedisServer::HandlerPtr> no_auth_handlers;
+    no_auth_handlers.reserve(std::size(masters) + std::size(slaves));
+    for (auto& server : masters) {
+        no_auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "FAIL"));
+    }
+    for (auto& server : slaves) {
+        no_auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "FAIL"));
+    }
+
+    mock.CreateSubscribeSentinelClientAndWait(settings);
+
+    for (auto& handler : auth_handlers) {
+        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+    }
+
+    for (auto& handler : no_auth_handlers) {
+        EXPECT_FALSE(handler->WaitForFirstReply(kWaitPeriod));
+    }
+}
+
+UTEST(Redis, SentinelAuthSubscribeWithUsername) {
+    MockSentinelServers mock;
+    mock.RegisterSentinelMastersSlaves();
+    mock.ForEachServer([](auto& server) { server.RegisterPingHandler(); });
+    auto& [masters, slaves, sentinels, thread_pool] = mock;
+
+    secdist::RedisSettings settings;
+    settings.shards = {std::string{MockSentinelServers::kRedisName}};
+    settings.sentinel_username = "sentinel_username";
+    settings.sentinel_password = storages::redis::Password("sentinel_password");
+    settings.sentinels.reserve(std::size(sentinels));
+    for (const auto& sentinel : sentinels) {
+        settings.sentinels.emplace_back(kLocalhost, sentinel.GetPort());
+    }
+
+    std::vector<MockRedisServer::HandlerPtr> auth_handlers;
+    auth_handlers.reserve(std::size(sentinels));
+    for (auto& sentinel : sentinels) {
+        auth_handlers
+            .push_back(sentinel.RegisterStatusReplyHandler("AUTH", {"sentinel_username", "sentinel_password"}, "OK"));
     }
     std::vector<MockRedisServer::HandlerPtr> no_auth_handlers;
     no_auth_handlers.reserve(std::size(masters) + std::size(slaves));
@@ -385,7 +559,7 @@ UTEST(Redis, SentinelNoAuthSubscribeButPassword) {
 
     secdist::RedisSettings settings;
     settings.shards = {std::string{MockSentinelServers::kRedisName}};
-    settings.password = storages::redis::Password("pass");
+    settings.password = storages::redis::Password("password");
     settings.sentinels.reserve(std::size(sentinels));
     for (const auto& sentinel : sentinels) {
         settings.sentinels.emplace_back(kLocalhost, sentinel.GetPort());
@@ -399,10 +573,10 @@ UTEST(Redis, SentinelNoAuthSubscribeButPassword) {
     std::vector<MockRedisServer::HandlerPtr> auth_handlers;
     auth_handlers.reserve(std::size(masters) + std::size(slaves));
     for (auto& server : masters) {
-        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "OK"));
+        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", {"password"}, "OK"));
     }
     for (auto& server : slaves) {
-        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", "OK"));
+        auth_handlers.push_back(server.RegisterStatusReplyHandler("AUTH", {"password"}, "OK"));
     }
 
     mock.CreateSubscribeSentinelClientAndWait(settings);
@@ -534,7 +708,12 @@ TEST(Redis, PingFail) {
     storages::redis::impl::Statistics stats;
     auto redis = std::make_shared<
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), storages::redis::Password(""), kDatabaseIndex);
+    redis->Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"", storages::redis::Password("")},
+        kDatabaseIndex
+    );
 
     EXPECT_TRUE(ping_error_handler->WaitForFirstReply(kSmallPeriod));
     PeriodicWait([&] { return !IsConnected(*redis); });
@@ -563,7 +742,12 @@ TEST_P(RedisDisconnectingReplies, X) {
     storages::redis::impl::Statistics stats;
     auto redis = std::make_shared<
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), storages::redis::Password(""), kDatabaseIndex);
+    redis->Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"", storages::redis::Password("")},
+        kDatabaseIndex
+    );
 
     EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
     PeriodicWait([&] { return IsConnected(*redis); });

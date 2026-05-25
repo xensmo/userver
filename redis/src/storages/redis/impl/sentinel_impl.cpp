@@ -221,7 +221,7 @@ SentinelImpl::SentinelImpl(
     const std::vector<std::string>& shards,
     const std::vector<ConnectionInfo>& conns,
     std::string shard_group_name,
-    const Password& password,
+    const Credentials& credentials,
     ConnectionSecurity connection_security,
     SentinelStaticConfig creation_config,
     dynamic_config::Source dynamic_config_source,
@@ -253,7 +253,7 @@ SentinelImpl::SentinelImpl(
                 ev_thread_,
                 redis_thread_pool,
                 shard_group_name_,
-                password,
+                credentials,
                 shards,
                 conns,
                 connection_security,
@@ -267,7 +267,7 @@ SentinelImpl::SentinelImpl(
                 ev_thread_,
                 redis_thread_pool,
                 shard_group_name_,
-                password,
+                credentials,
                 database_index_,
                 conns.front()
             );
@@ -277,7 +277,7 @@ SentinelImpl::SentinelImpl(
             ev_thread_,
             redis_thread_pool,
             shard_group_name_,
-            password,
+            credentials,
             database_index_,
             shards,
             conns,
@@ -564,7 +564,9 @@ void SentinelImpl::SetConnectionInfo(const std::vector<ConnectionInfoInt>& info_
     topology_holder_->SetConnectionInfo(info_array);
 }
 
-void SentinelImpl::UpdatePassword(const Password& password) { topology_holder_->UpdatePassword(password); }
+void SentinelImpl::UpdateCredentials(const Credentials& credentials) {
+    topology_holder_->UpdateCredentials(credentials);
+}
 
 PublishSettings SentinelImpl::GetPublishSettings() {
     if (key_shard_factory_.IsClusterStrategy()) {

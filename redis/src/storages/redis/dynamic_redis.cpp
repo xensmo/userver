@@ -56,11 +56,13 @@ bool DynamicRedis::AddClient(
 
     USERVER_NAMESPACE::secdist::RedisSettings settings;
     settings.database_index = dyn_settings.database_index;
+    settings.username = dyn_settings.username;
     settings.password = dyn_settings.password;
     settings.secure_connection = dyn_settings.secure_connection;
     for (const auto& [host, port] : dyn_settings.sentinels) {
         settings.sentinels.emplace_back(host, port);
     }
+    settings.sentinel_username = dyn_settings.sentinel_username;
     settings.sentinel_password = dyn_settings.sentinel_password;
     settings.shards = dyn_settings.shards;
 

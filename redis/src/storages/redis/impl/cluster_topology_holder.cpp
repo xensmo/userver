@@ -129,7 +129,7 @@ ClusterTopologyHolder::ClusterTopologyHolder(
     const engine::ev::ThreadControl& sentinel_thread_control,
     const std::shared_ptr<engine::ev::ThreadPool>& redis_thread_pool,
     std::string shard_group_name,
-    Password password,
+    Credentials credentials,
     const std::vector<std::string>& /*shards*/,
     const std::vector<ConnectionInfo>& conns,
     ConnectionSecurity connection_security,
@@ -138,7 +138,7 @@ ClusterTopologyHolder::ClusterTopologyHolder(
     : ev_thread_(sentinel_thread_control),
       redis_thread_pool_(redis_thread_pool),
       shard_group_name_(std::move(shard_group_name)),
-      password_(std::move(password)),
+      credentials_(std::move(credentials)),
       shards_names_(MakeShardNames()),
       conns_(conns),
       topology_update_method_(topology_update_method),
@@ -342,13 +342,13 @@ boost::signals2::signal<void(size_t)>& ClusterTopologyHolder::GetSignalTopologyC
     return signal_topology_changed_;
 }
 
-void ClusterTopologyHolder::UpdatePassword(const Password& password) {
-    auto lock = password_.UniqueLock();
-    *lock = password;
+void ClusterTopologyHolder::UpdateCredentials(const Credentials& credentials) {
+    auto lock = credentials_.UniqueLock();
+    *lock = credentials;
 }
 
-Password ClusterTopologyHolder::GetPassword() {
-    const auto lock = password_.Lock();
+Credentials ClusterTopologyHolder::GetCredentials() {
+    const auto lock = credentials_.Lock();
     return *lock;
 }
 
@@ -474,7 +474,7 @@ std::shared_ptr<RedisConnectionHolder> ClusterTopologyHolder::CreateRedisInstanc
         shard_group_name_,
         host,
         port,
-        GetPassword(),
+        GetCredentials(),
         kClusterDatabaseIndex,
         buffering_settings_ptr->value_or(CommandsBufferingSettings{}),
         *replication_monitoring_settings_ptr,
@@ -595,14 +595,14 @@ void ClusterTopologyHolder::UpdateClusterTopology() {
         case TopologyUpdateMethod::kClusterShards:
             GetClusterShardsContext::ProcessRequest(
                 shards_names_,
-                GetClusterShardsRequest(*sentinels_, GetPassword(), shard_group_name_),
+                GetClusterShardsRequest(*sentinels_, GetCredentials(), shard_group_name_),
                 std::move(callback)
             );
             break;
         case TopologyUpdateMethod::kClusterSlots:
             GetClusterSlotsContext::ProcessRequest(
                 shards_names_,
-                GetClusterSlotsRequest(*sentinels_, GetPassword(), shard_group_name_),
+                GetClusterSlotsRequest(*sentinels_, GetCredentials(), shard_group_name_),
                 std::move(callback)
             );
             break;
