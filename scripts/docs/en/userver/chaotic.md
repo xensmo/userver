@@ -3,12 +3,14 @@
 Sometimes it is required to declare a data structure and to define parse/serialize methods for it.
 It is OK if you do it manually once a month, but it becomes uncomfortable to do it manually more frequently.
 
-Chaotic codegen allows you to define a data structure in a declarative [JSONSchema](https://json-schema.org/understanding-json-schema/reference) form and get
-parsing/serialization functions for free.
+Chaotic codegen allows you to define a data structure in a declarative
+[JSONSchema](https://json-schema.org/understanding-json-schema/reference) form and get parsing/serialization functions
+for free.
+
 It is often used for dynamic config structure/parser generation and OpenAPI request/response body types/parsers/serializers generation.
 
 
-### Running chaotic generator
+### Running JSON schema chaotic generator
 
 You can use chaotic in three simple steps:
 
@@ -42,42 +44,48 @@ You may search for schemas in `CMakeLists.txt` with `file()` command:
 file(GLOB_RECURSE SCHEMAS ${CMAKE_CURRENT_SOURCE_DIR}/schemas/*.yaml)
 ```
 
+@warning The root type that you are planning to parse/serialize should be a structure! Otherwize the validators
+         may not work as expected and your API becomes poorly extensible.
+
+
 #### Run chaotic-gen executable
 
 Now the most interesting part comes into play. We want to generate hpp and cpp files with C++ types described in YAML file.
-We use `chaotic-gen` executable for that. You may call it directly from terminal for debug purposes, but we strongly recommend to use `userver_target_generate_chaotic()` macro in your `CMakeLists.txt`.
+We use `chaotic-gen` executable for that. You may call it directly from terminal for debug purposes, but we strongly
+recommend to use `userver_target_generate_chaotic()` macro in your `CMakeLists.txt`.
 
 @snippet samples/chaotic_service/CMakeLists.txt chaotic
 
 All parameters of `userver_target_generate_chaotic()` are described below.
 
-| Parameter | Kind | Default | Description |
-|---|---|---|---|
-| `SCHEMAS` | multi-value | **required** | JSONSchema source files to process. |
-| `RELATIVE_TO` | one-value | **required** | Root directory for computing output paths relative to schemas. |
-| `LAYOUT` | multi-value | **required** | Mapping of in-file YAML path regex to C++ type name. Each item is `regex=Ns::Type{0}`. The path regex is written first, then `=`, then C++ type name (may include `{0}`, `{1}`, ... capture groups, or `{stem}` for the filename stem). |
-| `OUTPUT_DIR` | one-value | `${CMAKE_CURRENT_BINARY_DIR}` | Directory where generated `.cpp`, `.hpp`, `.ipp` files are placed. |
-| `OUTPUT_PREFIX` | one-value | `""` | Subdirectory prefix appended under `OUTPUT_DIR`. |
-| `GENERATE_SERIALIZERS` | option | off | Generate JSON serializers besides the JSON parser. |
-| `PARSE_EXTRA_FORMATS` | option | off | Also generate YAML and YAML-config parsers besides the JSON parser. |
-| `NO_SAX_PARSE` | option | off | Skip SAX parser generation; omits `_sax_parsers.hpp` and disables `FromJsonString()`. |
-| `ERASE_PATH_PREFIX` | one-value | `""` | Strip this prefix from `$ref` paths when resolving cross-file references. |
-| `FORMAT` | one-value | `${USERVER_CHAOTIC_FORMAT}` | `ON` or `OFF`: whether to run clang-format on generated files. |
-| `INCLUDE_DIRS` | multi-value | — | Extra `-I` paths used when looking up headers for `x-usrv-cpp-type` values. |
-| `LINK_TARGETS` | multi-value | — | CMake targets to link; their include directories are also passed to the generator. Required when using `x-usrv-cpp-type`. |
-| `INSTALL_INCLUDES_COMPONENT` | one-value | — | CPack install component for generated header files. |
+| Parameter                    | Kind        | Default                       | Description                                                                                        |
+|------------------------------|-------------|-------------------------------|----------------------------------------------------------------------------------------------------|
+| `SCHEMAS`                    | multi-value | **required**                  | JSONSchema source files to process.                                                                |
+| `RELATIVE_TO`                | one-value   | **required**                  | Root directory for computing output paths relative to schemas.                                     |
+| `LAYOUT`                     | multi-value | **required**                  | Mapping of in-file YAML path regex to C++ type name. Each item is `regex=Ns::Type{0}`. The path regex is written first, then `=`, then C++ type name (may include `{0}`, `{1}`, ... capture groups, or `{stem}` for the filename stem). |
+| `OUTPUT_DIR`                 | one-value   | `${CMAKE_CURRENT_BINARY_DIR}` | Directory where generated `.cpp`, `.hpp`, `.ipp` files are placed.                                 |
+| `OUTPUT_PREFIX`              | one-value   | `""`                          | Subdirectory prefix appended under `OUTPUT_DIR`.                                                   |
+| `GENERATE_SERIALIZERS`       | option      | off                           | Generate JSON serializers besides the JSON parser.                                                 |
+| `PARSE_EXTRA_FORMATS`        | option      | off                           | Also generate YAML and YAML-config parsers besides the JSON parser.                                |
+| `NO_SAX_PARSE`               | option      | off                           | Skip SAX parser generation; omits `_sax_parsers.hpp` and disables `FromJsonString()`.              |
+| `ERASE_PATH_PREFIX`          | one-value   | `""`                          | Strip this prefix from `$ref` paths when resolving cross-file references.                          |
+| `FORMAT`                     | one-value   | `${USERVER_CHAOTIC_FORMAT}`   | `ON` or `OFF`: whether to run clang-format on generated files.                                     |
+| `INCLUDE_DIRS`               | multi-value | —                             | Extra `-I` paths used when looking up headers for `x-usrv-cpp-type` values.                        |
+| `LINK_TARGETS`               | multi-value | —                             | CMake targets to link; their include directories are also passed to the generator. Required when using `x-usrv-cpp-type`. |
+| `INSTALL_INCLUDES_COMPONENT` | one-value   | —                             | CPack install component for generated header files.                                                |
 
-#### Use generated .hpp and .cpp files in your C++ project.
+
+#### Use generated .hpp and .cpp files from JSONSchema
 
 With the setting above `${CMAKE_CURRENT_SOURCE_DIR}/schemas/hello.yaml` will produce a set of
 `schemas/hello*.[hc]pp` files inside of `${CMAKE_CURRENT_BINARY_DIR}` directory. The files are as following:
 
-| File | Contents |
-|---|---|
-| `hello.hpp` | Type declarations |
-| `hello_fwd.hpp` | Type forward declarations |
-| `hello.cpp` | Type-related definitions |
-| `hello_parsers.ipp` | Generic parsers (DOM, YAML, YAML-config) |
+| File                    | Contents                                          |
+|-------------------------|---------------------------------------------------|
+| `hello.hpp`             | Type declarations                                 |
+| `hello_fwd.hpp`         | Type forward declarations                         |
+| `hello.cpp`             | Type-related definitions                          |
+| `hello_parsers.ipp`     | Generic parsers (DOM, YAML, YAML-config)          |
 | `hello_sax_parsers.hpp` | SAX parser types; also enables `FromJsonString()` |
 
 Usually you may just include `schemas/hello.hpp` file and that's all.
@@ -117,21 +125,16 @@ Base JSONSchema types are mapped to C++ types as following:
 | `$ref`          | -              |
 
 
-#### type: boolean
+#### JSON schema type: boolean
 
 Boolean type is mapped to C++ `bool` type.
 
 Example:
 
-```
-# yaml
-should_greet:
-    type: bool
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type boolean
 
-# => bool
-```
 
-#### type: integer
+#### JSON schema type: integer
 
 | format       | C++ type       |
 |--------------|----------------|
@@ -147,35 +150,18 @@ Integer supports the following validators:
 
 Example:
 
-```
-# yaml
-pet_count:
-    type: integer
-    format: int64
-    minimum: 0
-
-# => std::int64_t + validator
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type integer
 
 For other C++ integer types, first choose the appropriate raw type as above, then the desired C++ type:
 
-```
-# yaml
-pet_count:
-    type: integer
-    format: int64
-    minimum: 0
-    x-usrv-cpp-type: std::size_t
-
-# => std::size_t + validator
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type integer cpp type
 
 In this case, however, you still won't be able to fit integers greater than `INT64_MAX` into the field,
 because the way it works is: first the input is parsed into `int64`, then it is cast into `std::size_t`
 (with bounds checks).
 
 
-#### type: number
+#### JSON schema type: number
 
 The number type is unconditionally mapped to C++ double type:
 
@@ -193,18 +179,10 @@ Number supports the following validators:
 
 Example:
 
-```
-# yaml
-latitude:
-    type: number
-    minimum: -90.0
-    maximum: 90.0
-
-# => double + validator
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type number
 
 
-#### type: string
+#### JSON schema type: string
 
 String type is mapped to different C++ types:
 
@@ -229,32 +207,17 @@ Please note: `{min,max}Length` relates to UTF-8 code points, not bytes.
 
 Example:
 
-```
-# yaml
-entity_uuid:
-    type: string
-    format: uuid
-
-# => boost::uuids::uuid
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type string uuid
 
 
-#### Enums
+#### JSON schema Enums
 
 A type with an `enum:` list is mapped to a C++ `enum class`. Chaotic generates `Parse`,
 `Serialize`, `Convert`, `TryConvert`, and `operator<<` helpers automatically.
 
 Example:
 
-```
-# yaml
-Status:
-    type: string
-    enum:
-      - pending
-      - running
-      - done
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - enum
 
 Produces:
 
@@ -269,7 +232,7 @@ enum class Status {
 Integer enums work the same way with `type: integer` and a numeric `enum:` list.
 
 
-#### type: array
+#### JSON schema type: array
 
 Array type is mapped to different C++ types depending on `x-usrv-cpp-container` value:
 
@@ -287,39 +250,17 @@ Array supports the following validators:
 
 Example:
 
-```
-# yaml
-pet_names:
-    type: array
-    maxItems: 10
-    items:
-        type: string
-        pattern: '\w+'
-        maxLength: 20
-
-# => std::vector<std::string> + validator
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type array
 
 
-#### type: object
+#### JSON schema type: object
 
-Object type produces a custom structure C++ type.
-Required fields of C++ type `T` produce C++ fields with the same type `T`.
-Non-required fields of C++ type `T` produce C++ fields with type `std::optional<T>`.
+Object type produces a custom structure C++ type. Required fields of C++ type `T` produce C++ fields with the same
+type `T`. Non-required fields of C++ type `T` produce C++ fields with type `std::optional<T>`.
 
 E.g. the following JSONSchema:
-```
-# yaml
-type: object
-additionalProperties: false
-properties:
-    foo:
-        type: integer
-    bar:
-        type: string
-required:
-  - foo
-```
+
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type object
 
 produces the following C++ structure:
 
@@ -350,18 +291,10 @@ In this case unknown fields will be ignored.
 
 Use `x-usrv-cpp-name` to override the C++ field name for a property (the JSON key is unchanged):
 
-```
-# yaml
-type: object
-additionalProperties: false
-properties:
-    some-hyphenated-key:
-        type: string
-        x-usrv-cpp-name: some_hyphenated_key
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - object cpp name
 
 
-#### oneOf
+#### JSON schema oneOf
 
 oneOf type is mapped to C++ `std::variant<...>`.
 
@@ -371,46 +304,22 @@ So try to use `mapping` everywhere you can to speed up the parsing.
 
 With a `discriminator`, the parser reads a single field to select the right variant in O(1):
 
-```
-# yaml
-Shape:
-    oneOf:
-      - $ref: '#/components/schemas/Circle'
-      - $ref: '#/components/schemas/Rectangle'
-    discriminator:
-        propertyName: kind
-        mapping:
-            circle: '#/components/schemas/Circle'
-            rectangle: '#/components/schemas/Rectangle'
-
-Circle:
-    type: object
-    additionalProperties: true
-    properties:
-        kind: {type: string}
-        radius: {type: number}
-
-Rectangle:
-    type: object
-    additionalProperties: true
-    properties:
-        kind: {type: string}
-        width: {type: number}
-        height: {type: number}
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - oneOf discriminator
 
 Produces `std::variant<Circle, Rectangle>` and dispatches on the `"kind"` field value.
 Integer discriminator keys are also supported.
 
 
-#### allOf
+#### JSON schema allOf
 
 allOf is implemented using multiple inheritance of structures.
-It requires that all allOf subcases set `additionalProperties: true`.
+It requires that all `allOf` subcases set `additionalProperties: true`.
 Due to implementation details C++ parents' `extra` is not filled during parsing.
 
+Do not use `allOf` without a dire need!
 
-#### $ref
+
+#### JSON schema $ref
 
 You may define a type and reference it in another part of the schema.
 External references (i.e. to types defined in external files) are supported,
@@ -429,21 +338,7 @@ but it can be never `nullptr`.
 
 Example:
 
-```
-# yaml
-TreeNode:
-    type: object
-    additionalProperties: false
-    properties:
-        data:
-            type: string
-        left:
-            $ref: '#/TreeNode'
-            x-usrv-cpp-indirect: true
-        right:
-            $ref: '#/TreeNode'
-            x-usrv-cpp-indirect: true
-```
+@snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - ref TreeNode
 
 Produces the following C++ structure definition:
 
@@ -463,22 +358,22 @@ struct TreeNode {
 `chaotic-gen` is the underlying executable invoked by `userver_target_generate_chaotic()`.
 Calling it directly is useful for debugging schema parsing and output layout.
 
-| Flag | Required | Description |
-|---|---|---|
-| `-n` / `--name-map` | yes (repeatable) | `regex=Ns::Type{0}` mapping from in-file YAML path to C++ type. |
-| `-o` / `--output-dir` | yes | Directory for generated files. |
-| `--relative-to` | yes | Root directory for computing output paths. |
-| `file …` | yes | One or more YAML/JSON schema files. |
-| `--parse-extra-formats` | no | Also generate YAML and YAML-config parsers. |
-| `--generate-serializers` | no | Also generate JSON serializers. |
-| `--no-sax-parse` | no | Skip SAX parser and `_sax_parsers.hpp`. |
-| `-e` / `--erase-path-prefix` | no | Strip prefix from `$ref` paths. |
-| `-I` / `--include-dir` | no (repeatable) | Extra include path for `x-usrv-cpp-type` header lookup. |
-| `--clang-format` | no | clang-format binary; set to empty string to disable formatting. |
-| `-u` / `--userver` | no | userver namespace (default: `userver`). |
+| Flag                         | Required         | Description                                                     |
+|------------------------------|------------------|-----------------------------------------------------------------|
+| `-n` / `--name-map`          | yes (repeatable) | `regex=Ns::Type{0}` mapping from in-file YAML path to C++ type. |
+| `-o` / `--output-dir`        | yes              | Directory for generated files.                                  |
+| `--relative-to`              | yes              | Root directory for computing output paths.                      |
+| `file …`                     | yes              | One or more YAML/JSON schema files.                             |
+| `--parse-extra-formats`      | no               | Also generate YAML and YAML-config parsers.                     |
+| `--generate-serializers`     | no               | Also generate JSON serializers.                                 |
+| `--no-sax-parse`             | no               | Skip SAX parser and `_sax_parsers.hpp`.                         |
+| `-e` / `--erase-path-prefix` | no               | Strip prefix from `$ref` paths.                                 |
+| `-I` / `--include-dir`       | no (repeatable)  | Extra include path for `x-usrv-cpp-type` header lookup.         |
+| `--clang-format`             | no               | clang-format binary; set to empty string to disable formatting. |
+| `-u` / `--userver`           | no               | userver namespace (default: `userver`).                         |
 
 
-### User types
+### JSON schema User types
 
 One may wrap any generated type using any custom type using `x-usrv-cpp-type` tag.
 The tag value is the fully qualified C++ type name you want the value to wrap into.
@@ -498,7 +393,7 @@ can find the header, and pass `LINK_TARGETS` to link with the target that provid
 @include chaotic/integration_tests/include/userver/chaotic/io/my/custom_string.hpp
 
 
-### Parser
+### JSON schema chaotic Parser
 
 Parsing is implemented in two steps:
 
@@ -516,3 +411,6 @@ The whole parsing process is split into smaller steps using parsers combination.
 @htmlonly <div class="bottom-nav"> @endhtmlonly
 ⇦ @ref scripts/docs/en/userver/codegen_overview.md | @ref scripts/docs/en/userver/chaotic_dynamic_configs.md ⇨
 @htmlonly </div> @endhtmlonly
+
+@example chaotic/golden_tests/schemas/docs/docs.yaml
+
