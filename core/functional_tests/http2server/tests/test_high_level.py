@@ -75,6 +75,16 @@ async def test_headers(http2_client):
     assert hval == r.text
 
 
+async def test_head_response_has_no_body(http2_client):
+    r = await http2_client.head(
+        DEFAULT_PATH,
+        params={'type': 'echo-header'},
+        headers={'echo-header': 'body-that-must-not-be-sent'},
+    )
+    assert 200 == r.status_code
+    assert '' == r.text
+
+
 async def _get_metric(monitor_client, metric_name):
     metric = await monitor_client.single_metric(
         f'server.requests.http2.{metric_name}',

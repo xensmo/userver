@@ -8,18 +8,25 @@ import h2.connection
 import h2.events
 import h2.settings
 import pytest
+import pytest_userver.utils.sync as sync
 
 DEFAULT_PATH = '/http2server'
 DEFAULT_DATA = {'hello': 'world'}
 DEFAULT_FRAME_SIZE = 1 << 14
 RECEIVE_SIZE = 1 << 26
 MAX_CONCURRENT_STREAMS = 100
+HTTP1_HEADERS_END = b'\r\n\r\n'
 
 DATA_FRAME = 0x0
 HEADERS_FRAME = 0x01
+RST_STREAM_FRAME = 0x03
 GOAWAY_FRAME = 0x07
+CONTINUATION_FRAME = 0x09
 EMPTY_FLAGS = 0x0
+END_STREAM = 0x01
+END_HEADERS = 0x04
 END_HEADER_AND_STREAM = 0x05
+PROTOCOL_ERROR_CODE = 0x01
 
 FRAME_TYPE_INDEX = 3
 
@@ -141,6 +148,13 @@ def _create_frame(frame_type, flags, stream_id, payload):
     return header + payload
 
 
+def _parse_frame_header(frame):
+    payload_size = int.from_bytes(frame[:3], byteorder='big')
+    stream_id = int.from_bytes(frame[5:9], byteorder='big') & 0x7FFFFFFF
+    payload = frame[9 : 9 + payload_size]
+    return payload_size, frame[3], frame[4], stream_id, payload
+
+
 def _assert_is_completed_response(events):
     assert len(events) == EVENTS_COUNT_IN_COMPLETED_STREAM
     assert isinstance(events[0], h2.events.ResponseReceived)
@@ -153,6 +167,20 @@ async def _receive_simple_response(sock, conn):
     while len(events) != EVENTS_COUNT_IN_COMPLETED_STREAM:
         events += await _send_and_receive(sock, conn)
     _assert_is_completed_response(events)
+
+
+async def _receive_until_stream_ended(sock, conn, events=None):
+    events = list(events or [])
+    while not any(isinstance(event, h2.events.StreamEnded) for event in events):
+        receive = await sock.recv(RECEIVE_SIZE)
+        if not receive:
+            raise RuntimeError('Socket connection was closed by the other side')
+        events += conn.receive_data(receive)
+    return events
+
+
+def _response_data(events):
+    return b''.join(event.data for event in events if isinstance(event, h2.events.DataReceived))
 
 
 async def test_invalid_stream(create_connection, service_client):
@@ -172,6 +200,63 @@ async def test_invalid_stream(create_connection, service_client):
             events[0],
             h2.events.ConnectionTerminated,
         )  # Is the GOAWAY frame
+
+
+async def test_h2c_upgrade(create_socket):
+    async with create_socket() as sock:
+        conn = h2.connection.H2Connection()
+        settings_header = conn.initiate_upgrade_connection().decode('ascii')
+        request = (
+            'GET /http2server?type=echo-header HTTP/1.1\r\n'
+            'Host: localhost\r\n'
+            'Connection: Upgrade, HTTP2-Settings\r\n'
+            'Upgrade: h2c\r\n'
+            f'HTTP2-Settings: {settings_header}\r\n'
+            'echo-header: upgraded\r\n'
+            '\r\n'
+        )
+        await sock.sendall(request.encode('ascii'))
+
+        receive = b''
+        while HTTP1_HEADERS_END not in receive:
+            receive += await sock.recv(RECEIVE_SIZE)
+        headers, _, http2_data = receive.partition(HTTP1_HEADERS_END)
+        assert headers.startswith(b'HTTP/1.1 101 Switching Protocols')
+
+        events = conn.receive_data(http2_data) if http2_data else []
+        await sock.sendall(conn.data_to_send())
+        events = await _receive_until_stream_ended(sock, conn, events)
+
+        assert b'upgraded' == _response_data(events)
+
+
+async def test_headers_with_continuation_frame(create_connection, service_client):
+    await service_client.update_server_state()
+    async with create_connection() as (sock, conn):
+        stream_id = 1
+        header_block = b''.join(_encode_header(k, v) for k, v in DEFAULT_HEADERS)
+        split_pos = len(header_block) // 2
+
+        # END_STREAM means this GET request has no body; the header block itself
+        # continues until END_HEADERS on the CONTINUATION frame.
+        headers_frame = _create_frame(
+            HEADERS_FRAME,
+            END_STREAM,
+            stream_id,
+            header_block[:split_pos],
+        )
+        continuation_frame = _create_frame(
+            CONTINUATION_FRAME,
+            END_HEADERS,
+            stream_id,
+            header_block[split_pos:],
+        )
+        await sock.sendall(headers_frame + continuation_frame)
+        receive = await sock.recv(RECEIVE_SIZE)
+
+        _, frame_type, _, response_stream_id, _ = _parse_frame_header(receive)
+        assert frame_type == HEADERS_FRAME
+        assert response_stream_id == stream_id
 
 
 @pytest.mark.skip(reason='TAXICOMMON-10258')
@@ -209,6 +294,46 @@ def _assert_is_completed_responses(events):
     assert len(events) % EVENTS_COUNT_IN_COMPLETED_STREAM == 0
     for i in range(0, len(events) - EVENTS_COUNT_IN_COMPLETED_STREAM, EVENTS_COUNT_IN_COMPLETED_STREAM):
         _assert_is_completed_response(events[i : i + EVENTS_COUNT_IN_COMPLETED_STREAM])
+
+
+async def test_split_data_frames(create_connection, service_client):
+    await service_client.update_server_state()
+    async with create_connection() as (sock, conn):
+        stream_id = conn.get_next_available_stream_id()
+        headers = [
+            (':method', 'POST'),
+            (':path', f'{DEFAULT_PATH}?type=echo-body'),
+            (':scheme', 'http'),
+            (':authority', 'localhost'),
+        ]
+        conn.send_headers(stream_id, headers, end_stream=False)
+        conn.send_data(stream_id, b'hello ', end_stream=False)
+        conn.send_data(stream_id, b'from ', end_stream=False)
+        conn.send_data(stream_id, b'split frames', end_stream=True)
+        await sock.sendall(conn.data_to_send())
+
+        events = await _receive_until_stream_ended(sock, conn)
+        assert b'hello from split frames' == _response_data(events)
+
+
+async def test_head_response_has_no_data_frame(create_connection, service_client):
+    await service_client.update_server_state()
+    async with create_connection() as (sock, conn):
+        stream_id = conn.get_next_available_stream_id()
+        headers = [
+            (':method', 'HEAD'),
+            (':path', f'{DEFAULT_PATH}?type=echo-header'),
+            (':scheme', 'http'),
+            (':authority', 'localhost'),
+            ('echo-header', 'body-that-must-not-be-sent'),
+        ]
+        conn.send_headers(stream_id, headers, end_stream=True)
+        await sock.sendall(conn.data_to_send())
+
+        events = await _receive_until_stream_ended(sock, conn)
+        assert len(events) == 2
+        assert isinstance(events[0], h2.events.ResponseReceived)
+        assert isinstance(events[1], h2.events.StreamEnded)
 
 
 async def do_max_streams(sock, conn):
@@ -299,6 +424,95 @@ async def test_limit_concurrent_streams(
 
         assert GOAWAY_FRAME == receive[FRAME_TYPE_INDEX]  # GOAWAY frame
         assert 'request HEADERS: max concurrent streams exceeded' in str(receive)
+
+
+async def test_request_without_path_resets_stream(create_connection, service_client):
+    await service_client.update_server_state()
+    async with create_connection() as (sock, conn):
+        payload = b''.join(
+            _encode_header(k, v)
+            for k, v in [
+                (':method', 'GET'),
+                (':scheme', 'http'),
+                (':authority', 'localhost'),
+            ]
+        )
+        begin_stream_frame = _create_frame(
+            HEADERS_FRAME,
+            END_HEADER_AND_STREAM,
+            stream_id=1,
+            payload=payload,
+        )
+
+        await sock.sendall(begin_stream_frame)
+        receive = await sock.recv(RECEIVE_SIZE)
+
+        payload_size, frame_type, flags, stream_id, payload = _parse_frame_header(receive)
+        assert payload_size == 4
+        assert frame_type == RST_STREAM_FRAME
+        assert flags == EMPTY_FLAGS
+        assert stream_id == 1
+        assert int.from_bytes(payload, byteorder='big') == PROTOCOL_ERROR_CODE
+
+        valid_stream_frame = _create_frame(
+            HEADERS_FRAME,
+            END_HEADER_AND_STREAM,
+            stream_id=3,
+            payload=b''.join(_encode_header(k, v) for k, v in DEFAULT_HEADERS),
+        )
+        await sock.sendall(valid_stream_frame)
+        receive = await sock.recv(RECEIVE_SIZE)
+
+        _, frame_type, _, stream_id, _ = _parse_frame_header(receive)
+        assert frame_type == HEADERS_FRAME
+        assert stream_id == 3
+
+
+async def test_single_reset_keeps_connection_usable(
+    create_connection,
+    monitor_client,
+    service_client,
+):
+    await service_client.update_server_state()
+    reset_streams = await _get_metric(monitor_client, 'reset-streams')
+
+    async with create_connection() as (sock, conn):
+        stream_id = conn.get_next_available_stream_id()
+        conn.send_headers(stream_id, DEFAULT_HEADERS, end_stream=False)
+        await sock.sendall(conn.data_to_send())
+
+        conn.reset_stream(stream_id)
+        await sock.sendall(conn.data_to_send())
+
+        stream_id = conn.get_next_available_stream_id()
+        conn.send_headers(stream_id, DEFAULT_HEADERS, end_stream=True)
+        await sock.sendall(conn.data_to_send())
+        await _receive_simple_response(sock, conn)
+
+    async def is_ready():
+        await service_client.update_server_state()
+        if reset_streams + 1 != await _get_metric(monitor_client, 'reset-streams'):
+            raise sync.NotReady
+        return True
+
+    await sync.wait(is_ready)
+
+
+async def test_client_goaway_metric(create_connection, monitor_client, service_client):
+    await service_client.update_server_state()
+    goaway = await _get_metric(monitor_client, 'goaway')
+
+    async with create_connection() as (sock, conn):
+        conn.close_connection(error_code=0)
+        await sock.sendall(conn.data_to_send())
+
+    async def is_ready():
+        await service_client.update_server_state()
+        if goaway + 1 != await _get_metric(monitor_client, 'goaway'):
+            raise sync.NotReady
+        return True
+
+    await sync.wait(is_ready)
 
 
 async def test_stream_already_closed(create_connection, service_client):
