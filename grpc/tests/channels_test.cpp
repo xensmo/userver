@@ -78,7 +78,7 @@ UTEST_P_MT(GrpcChannels, TryWaitForConnected, 2) {
     // Make sure that TryWaitForConnected starts while the server is down
     engine::SleepFor(kServerStartDelay);
 
-    const ugrpc::tests::Service<UnitTestServiceSimple> service{MakeServerConfig(port)};
+    const ugrpc::tests::Service<UnitTestServiceSimple> service{{.server_config = MakeServerConfig(port)}};
 
     UEXPECT_NO_THROW(client_task.Get());
 }
