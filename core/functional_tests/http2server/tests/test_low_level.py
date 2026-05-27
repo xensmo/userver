@@ -8,7 +8,6 @@ import h2.connection
 import h2.events
 import h2.settings
 import pytest
-import pytest_userver.utils.sync as sync
 
 DEFAULT_PATH = '/http2server'
 DEFAULT_DATA = {'hello': 'world'}
@@ -259,6 +258,35 @@ async def test_headers_with_continuation_frame(create_connection, service_client
         assert response_stream_id == stream_id
 
 
+async def test_non_continuation_frame_during_headers(create_connection, service_client):
+    await service_client.update_server_state()
+    async with create_connection() as (sock, conn):
+        stream_id = 1
+        header_block = b''.join(_encode_header(k, v) for k, v in DEFAULT_HEADERS)
+        headers_frame = _create_frame(
+            HEADERS_FRAME,
+            EMPTY_FLAGS,  # without END_HEADERS!
+            stream_id,
+            header_block[: len(header_block) // 2],
+        )
+        # A HEADERS frame without END_HEADERS leaves a header block open. HTTP/2
+        # requires the next frame to be CONTINUATION on the same stream.
+        data_frame = _create_frame(
+            DATA_FRAME,
+            END_STREAM,
+            stream_id,
+            b'unexpected data',
+        )
+
+        await sock.sendall(headers_frame + data_frame)
+        receive = await sock.recv(RECEIVE_SIZE)
+
+        assert GOAWAY_FRAME == receive[FRAME_TYPE_INDEX]
+        assert 'unexpected non-CONTINUATION frame or stream_id is invalid' in str(
+            receive,
+        )
+
+
 @pytest.mark.skip(reason='TAXICOMMON-10258')
 async def test_many_resets(create_connection, service_client):
     await service_client.update_server_state()
@@ -278,7 +306,7 @@ async def test_many_resets(create_connection, service_client):
         conn.end_stream(stream_id)
         await sock.sendall(conn.data_to_send())
 
-        _receive_simple_response(sock, conn)
+        await _receive_simple_response(sock, conn)
 
 
 def _encode_header(name, value):
@@ -314,6 +342,30 @@ async def test_split_data_frames(create_connection, service_client):
 
         events = await _receive_until_stream_ended(sock, conn)
         assert b'hello from split frames' == _response_data(events)
+
+
+async def test_empty_data_frame_before_body(create_connection, service_client):
+    await service_client.update_server_state()
+    async with create_connection() as (sock, conn):
+        stream_id = conn.get_next_available_stream_id()
+        headers = [
+            (':method', 'POST'),
+            (':path', f'{DEFAULT_PATH}?type=echo-body'),
+            *DEFAULT_HEADERS[2:4],
+        ]
+        conn.send_headers(stream_id, headers, end_stream=False)
+        body = b'body after empty data frame'
+        conn.send_data(stream_id, b'', end_stream=False)
+        conn.send_data(stream_id, body, end_stream=True)
+        await sock.sendall(conn.data_to_send())
+
+        events = await _receive_until_stream_ended(sock, conn)
+        _assert_is_completed_response(events)
+        assert events[0].stream_id == stream_id
+        assert (b':status', b'200') in events[0].headers
+        assert events[1].stream_id == stream_id
+        assert events[1].data == body
+        assert events[2].stream_id == stream_id
 
 
 async def test_head_response_has_no_data_frame(create_connection, service_client):
@@ -370,16 +422,14 @@ async def test_many_in_flight(
 ):
     await service_client.update_server_state()
 
-    assert await _get_metric(
-        monitor_client,
-        'streams-close',
-    ) == await _get_metric(monitor_client, 'streams-count')
+    async with monitor_client.metrics_diff(prefix='server.requests.http2') as differ:
+        async with create_connection() as (sock, conn):
+            spikes_count = 2
+            for _ in range(spikes_count):
+                await do_max_streams(sock, conn)
 
-    async with create_connection() as (sock, conn):
-        # The first spike
-        await do_max_streams(sock, conn)
-        # The second spike
-        await do_max_streams(sock, conn)
+    assert differ.value_at('streams-count') == spikes_count * MAX_CONCURRENT_STREAMS
+    assert differ.value_at('streams-close') == spikes_count * MAX_CONCURRENT_STREAMS
 
 
 async def test_limit_concurrent_streams(
@@ -414,7 +464,7 @@ async def test_limit_concurrent_streams(
         payload = b''.join(_encode_header(k, v) for k, v in DEFAULT_HEADERS)
         begin_stream_frame = _create_frame(
             HEADERS_FRAME,
-            EMPTY_FLAGS,
+            END_HEADER_AND_STREAM,
             stream_id,
             payload,
         )
@@ -474,45 +524,33 @@ async def test_single_reset_keeps_connection_usable(
     service_client,
 ):
     await service_client.update_server_state()
-    reset_streams = await _get_metric(monitor_client, 'reset-streams')
 
-    async with create_connection() as (sock, conn):
-        stream_id = conn.get_next_available_stream_id()
-        conn.send_headers(stream_id, DEFAULT_HEADERS, end_stream=False)
-        await sock.sendall(conn.data_to_send())
+    async with monitor_client.metrics_diff(prefix='server.requests.http2') as differ:
+        async with create_connection() as (sock, conn):
+            stream_id = conn.get_next_available_stream_id()
+            conn.send_headers(stream_id, DEFAULT_HEADERS, end_stream=False)
+            await sock.sendall(conn.data_to_send())
 
-        conn.reset_stream(stream_id)
-        await sock.sendall(conn.data_to_send())
+            conn.reset_stream(stream_id)
+            await sock.sendall(conn.data_to_send())
 
-        stream_id = conn.get_next_available_stream_id()
-        conn.send_headers(stream_id, DEFAULT_HEADERS, end_stream=True)
-        await sock.sendall(conn.data_to_send())
-        await _receive_simple_response(sock, conn)
+            stream_id = conn.get_next_available_stream_id()
+            conn.send_headers(stream_id, DEFAULT_HEADERS, end_stream=True)
+            await sock.sendall(conn.data_to_send())
+            await _receive_simple_response(sock, conn)
 
-    async def is_ready():
-        await service_client.update_server_state()
-        if reset_streams + 1 != await _get_metric(monitor_client, 'reset-streams'):
-            raise sync.NotReady
-        return True
-
-    await sync.wait(is_ready)
+    assert differ.value_at('reset-streams') == 1
 
 
 async def test_client_goaway_metric(create_connection, monitor_client, service_client):
     await service_client.update_server_state()
-    goaway = await _get_metric(monitor_client, 'goaway')
 
-    async with create_connection() as (sock, conn):
-        conn.close_connection(error_code=0)
-        await sock.sendall(conn.data_to_send())
+    async with monitor_client.metrics_diff(prefix='server.requests.http2') as differ:
+        async with create_connection() as (sock, conn):
+            conn.close_connection(error_code=0)
+            await sock.sendall(conn.data_to_send())
 
-    async def is_ready():
-        await service_client.update_server_state()
-        if goaway + 1 != await _get_metric(monitor_client, 'goaway'):
-            raise sync.NotReady
-        return True
-
-    await sync.wait(is_ready)
+    assert differ.value_at('goaway') == 1
 
 
 async def test_stream_already_closed(create_connection, service_client):
@@ -522,27 +560,24 @@ async def test_stream_already_closed(create_connection, service_client):
             stream_id = conn.get_next_available_stream_id()
             conn.send_headers(stream_id, DEFAULT_HEADERS)
             conn.end_stream(stream_id)
-            _receive_simple_response(sock, conn)
+            await _receive_simple_response(sock, conn)
             return stream_id
 
         stream_id = await open_and_close_simple_stream()
         assert stream_id == 1
 
-        payload = b''.join(_encode_header(k, v) for k, v in DEFAULT_HEADERS)
-        double_stream = _create_frame(
-            HEADERS_FRAME,
-            END_HEADER_AND_STREAM,
-            stream_id + 1,
-            payload,
+        reset_closed_stream = _create_frame(
+            RST_STREAM_FRAME,
+            EMPTY_FLAGS,
+            stream_id,
+            struct.pack('>I', PROTOCOL_ERROR_CODE),
         )
-        _receive_simple_response(sock, conn)
 
-        # Send the stream that is already closed => nghttp2 ignores these.
-        await sock.sendall(double_stream)
-        await sock.sendall(double_stream)
+        # RST_STREAM for an already closed stream should not poison the connection.
+        await sock.sendall(reset_closed_stream)
+        await sock.sendall(reset_closed_stream)
 
         stream_id = await open_and_close_simple_stream()
-        # nghttp2 increments streams count on first double_stream => stream_id=3
         assert stream_id == 3
 
 

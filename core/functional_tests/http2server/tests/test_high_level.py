@@ -2,8 +2,6 @@ import asyncio
 import random
 import string
 
-import pytest_userver.utils.sync as sync
-
 DEFAULT_PATH = '/http2server'
 DEFAULT_DATA = {'hello': 'world'}
 
@@ -85,24 +83,6 @@ async def test_head_response_has_no_body(http2_client):
     assert '' == r.text
 
 
-async def _get_metric(monitor_client, metric_name):
-    metric = await monitor_client.single_metric(
-        f'server.requests.http2.{metric_name}',
-    )
-    return metric.value
-
-
-async def _get_http2_metrics(monitor_client):
-    metric_names = (
-        'streams-count',
-        'streams-close',
-        'reset-streams',
-        'goaway',
-        'streams-parse-error',
-    )
-    return {metric_name: await _get_metric(monitor_client, metric_name) for metric_name in metric_names}
-
-
 def _random_string(bytes_count=128):
     ascii_chars = string.printable.strip()
     return ''.join(random.choices(ascii_chars, k=bytes_count))
@@ -126,14 +106,13 @@ async def test_concurrent_requests(
 ):
     await service_client.update_server_state()
 
-    initial_http2_metrics = await _get_http2_metrics(monitor_client)
-
     tcp_connections_start = await monitor_client.single_metric('server.connections.opened.v2')
     tcp_connections_start = tcp_connections_start.value
 
     requests_count = 200
-    tasks = [_do_echo_request(http2_client) for _ in range(requests_count)]
-    await asyncio.gather(*tasks)
+    async with monitor_client.metrics_diff(prefix='server.requests.http2') as differ:
+        tasks = [_do_echo_request(http2_client) for _ in range(requests_count)]
+        await asyncio.gather(*tasks)
 
     await service_client.update_server_state()
 
@@ -141,35 +120,11 @@ async def test_concurrent_requests(
     tcp_connections_end = tcp_connections_end.value
 
     assert tcp_connections_end == tcp_connections_start + 1
-
-    async def is_ready():
-        def expect_eq(a, b):
-            if a == b:
-                return
-            raise sync.NotReady
-
-        total_requests = requests_count + initial_http2_metrics['streams-count']
-        expect_eq(total_requests, await _get_metric(monitor_client, 'streams-count'))
-        expect_eq(
-            requests_count + initial_http2_metrics['streams-close'],
-            await _get_metric(monitor_client, 'streams-close'),
-        )
-        expect_eq(
-            initial_http2_metrics['reset-streams'],
-            await _get_metric(monitor_client, 'reset-streams'),
-        )
-        expect_eq(
-            initial_http2_metrics['goaway'],
-            await _get_metric(monitor_client, 'goaway'),
-        )
-        expect_eq(
-            initial_http2_metrics['streams-parse-error'],
-            await _get_metric(monitor_client, 'streams-parse-error'),
-        )
-
-        return True
-
-    await sync.wait(is_ready)
+    assert differ.value_at('streams-count') == requests_count
+    assert differ.value_at('streams-close') == requests_count
+    assert differ.value_at('reset-streams') == 0
+    assert differ.value_at('goaway') == 0
+    assert differ.value_at('streams-parse-error') == 0
 
 
 async def test_concurrent_requests_with_big_body(
@@ -179,31 +134,17 @@ async def test_concurrent_requests_with_big_body(
 ):
     await service_client.update_server_state()
 
-    initial_http2_metrics = await _get_http2_metrics(monitor_client)
-
     requests_count = 50
-    tasks = [_do_echo_request(http2_client, 2**20) for _ in range(requests_count)]
-    await asyncio.gather(*tasks)
+    async with monitor_client.metrics_diff(prefix='server.requests.http2') as differ:
+        tasks = [_do_echo_request(http2_client, 2**20) for _ in range(requests_count)]
+        await asyncio.gather(*tasks)
 
     await service_client.update_server_state()
 
     metrics = await monitor_client.metrics(prefix='server.requests.http2')
     assert len(metrics) == 5
-    total_requests = requests_count + initial_http2_metrics['streams-count']
-    assert total_requests == await _get_metric(monitor_client, 'streams-count')
-    assert requests_count + initial_http2_metrics['streams-close'] == await _get_metric(
-        monitor_client,
-        'streams-close',
-    )
-    assert initial_http2_metrics['reset-streams'] == await _get_metric(
-        monitor_client,
-        'reset-streams',
-    )
-    assert initial_http2_metrics['goaway'] == await _get_metric(
-        monitor_client,
-        'goaway',
-    )
-    assert initial_http2_metrics['streams-parse-error'] == await _get_metric(
-        monitor_client,
-        'streams-parse-error',
-    )
+    assert differ.value_at('streams-count') == requests_count
+    assert differ.value_at('streams-close') == requests_count
+    assert differ.value_at('reset-streams') == 0
+    assert differ.value_at('goaway') == 0
+    assert differ.value_at('streams-parse-error') == 0
