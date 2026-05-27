@@ -1,6 +1,7 @@
 #pragma once
 
 #include <userver/formats/common/meta.hpp>
+#include <userver/formats/json/string_builder_fwd.hpp>
 #include <userver/formats/json/value.hpp>
 #include <userver/utils/box.hpp>
 
@@ -22,6 +23,11 @@ utils::Box<formats::common::ParseType<Value, T>> Parse(const Value& value, forma
 template <typename Value, typename T>
 Value Serialize(const Ref<T>& ps, formats::serialize::To<Value>) {
     return typename Value::Builder{T{*ps.value}}.ExtractValue();
+}
+
+template <typename T>
+void WriteToStream(const Ref<T>& ps, formats::json::StringBuilder& sw) {
+    WriteToStream(T{*ps.value}, sw);
 }
 
 }  // namespace chaotic

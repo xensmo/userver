@@ -3,6 +3,7 @@
 #include <userver/formats/json/exception.hpp>
 #include <userver/formats/json/inline.hpp>
 #include <userver/formats/json/parser/exception.hpp>
+#include <userver/formats/json/serialize.hpp>
 #include <userver/formats/json/value_builder.hpp>
 
 #include <schemas/array_of_xcpptype.hpp>
@@ -14,6 +15,7 @@ TEST(Custom, Int) {
     auto json = formats::json::MakeObject("integer", 12);
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.integer, std::chrono::milliseconds(12));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -26,6 +28,7 @@ TEST(Custom, Ms) {
     auto json = formats::json::MakeObject("ms", "12ms");
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.ms, std::chrono::milliseconds(12));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -38,6 +41,7 @@ TEST(Custom, String) {
     auto json = formats::json::MakeObject("string", "make love");
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.string, my::CustomString{"make love"});
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -50,6 +54,7 @@ TEST(Custom, Decimal) {
     auto json = formats::json::MakeObject("decimal", "12.3456789");
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.decimal, decimal64::Decimal<10>::FromBiased(1234567890, 8));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -62,6 +67,7 @@ TEST(Custom, Boolean) {
     auto json = formats::json::MakeObject("boolean", true);
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.boolean, my::CustomBoolean{true});
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -74,6 +80,7 @@ TEST(Custom, Number) {
     auto json = formats::json::MakeObject("number", 1.23);
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.number, my::CustomNumber{1.23});
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -86,6 +93,7 @@ TEST(Custom, Object) {
     auto json = formats::json::MakeObject("object", formats::json::MakeObject("foo", "bar"));
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.object, my::CustomObject{"bar"});
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -98,6 +106,7 @@ TEST(Custom, XCppContainer) {
     auto json = formats::json::MakeObject("std_array", formats::json::MakeArray("bar", "foo"));
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.std_array, (std::set<std::string>{"foo", "bar"}));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -110,6 +119,7 @@ TEST(Custom, XCppType) {
     auto json = formats::json::MakeObject("custom_array", formats::json::MakeArray("bar", "foo"));
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.custom_array, (my::CustomArray<std::string>{std::set<std::string>{"foo", "bar"}}));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -122,6 +132,7 @@ TEST(Custom, OneOf) {
     auto json = formats::json::MakeObject("oneOf", 5);
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(*custom.oneOf, my::CustomOneOf(5));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back) << " " << ToString(json);
@@ -137,6 +148,7 @@ TEST(Custom, OneOfWithDiscriminator) {
     );
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.oneOfWithDiscriminator, my::CustomOneOfWithDiscriminator(3));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -149,6 +161,7 @@ TEST(Custom, AllOf) {
     auto json = formats::json::MakeObject("allOf", formats::json::MakeObject("field1", "foo", "field2", "bar"));
     auto custom = json.As<ns::ObjWithCustom>();
     EXPECT_EQ(custom.allOf, (my::CustomAllOf{"foo", "bar"}));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -196,6 +209,7 @@ TEST(Custom, ArrayOfXCppType) {
         {"additional3", std::vector<my::Point>{}},
     };
     EXPECT_EQ(custom, ethalon);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);
@@ -230,6 +244,7 @@ TEST(Custom, ArrayOfXCppTypeValidation) {
         {"additional2", std::vector<my::Point>{my::Point{5, 6}, my::Point{7, 8}}},
     };
     EXPECT_EQ(custom, ethalon);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(custom)), formats::json::ValueBuilder{custom}.ExtractValue());
 
     auto json_back = formats::json::ValueBuilder{custom}.ExtractValue();
     EXPECT_EQ(json_back, json);

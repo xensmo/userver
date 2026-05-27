@@ -244,7 +244,7 @@ public:
     }
 
     template <typename T, typename U = void>
-    constexpr SwitchByFirst& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr SwitchByFirst& Type() noexcept {
         return *this;
     }
 
@@ -267,7 +267,7 @@ public:
     }
 
     template <typename T, typename U = void>
-    constexpr SwitchByFirst& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr SwitchByFirst& Type() noexcept {
         return *this;
     }
 
@@ -296,7 +296,7 @@ public:
     }
 
     template <typename T, typename U>
-    constexpr SwitchByFirstICase& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr SwitchByFirstICase& Type() noexcept {
         return *this;
     }
 
@@ -325,7 +325,7 @@ public:
     }
 
     template <typename T, typename U>
-    constexpr SwitchByFirstICase& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr SwitchByFirstICase& Type() noexcept {
         return *this;
     }
 
@@ -354,7 +354,7 @@ public:
     }
 
     template <typename T, typename U>
-    constexpr SwitchBySecondICase& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr SwitchBySecondICase& Type() noexcept {
         return *this;
     }
 
@@ -377,7 +377,7 @@ public:
     }
 
     template <typename T, typename U>
-    constexpr SwitchBySecond& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr SwitchBySecond& Type() noexcept {
         return *this;
     }
 
@@ -429,7 +429,7 @@ public:
     }
 
     template <typename First, typename Second = void>
-    constexpr auto Type() noexcept {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr auto Type() noexcept {
         return SwitchTypesDetected<DetectType<First>, DetectType<Second>>{};
     }
 };
@@ -448,8 +448,8 @@ public:
         return *this;
     }
 
-    template <typename T, typename U>
-    constexpr CaseCounter& Type() {
+    template <typename T, typename U = void>
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseCounter& Type() noexcept {
         return *this;
     }
 
@@ -473,7 +473,7 @@ public:
     }
 
     template <typename T, typename U>
-    constexpr CaseDescriber& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseDescriber& Type() noexcept {
         return *this;
     }
 
@@ -502,7 +502,7 @@ public:
     }
 
     template <typename T, typename U = void>
-    constexpr CaseFirstDescriber& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseFirstDescriber& Type() noexcept {
         return *this;
     }
 
@@ -526,7 +526,7 @@ public:
     }
 
     template <typename T, typename U>
-    constexpr CaseSecondDescriber& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseSecondDescriber& Type() noexcept {
         return *this;
     }
 
@@ -556,7 +556,7 @@ public:
     }
 
     template <typename T, typename U>
-    constexpr CaseGetValuesByIndex& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseGetValuesByIndex& Type() noexcept {
         return *this;
     }
 
@@ -584,6 +584,46 @@ private:
 };
 
 template <typename First>
+class CaseGetValuesByIndex<First, void> final {
+public:
+    USERVER_IMPL_NODEBUG_INLINE_FUNC explicit constexpr CaseGetValuesByIndex(std::size_t search_index)
+        : index_(search_index + 1)
+    {}
+
+    constexpr CaseGetValuesByIndex& Case(First first) noexcept {
+        if (index_ == 0) {
+            return *this;
+        }
+        if (index_ == 1) {
+            lazy_ = Lazy{first};
+        }
+        --index_;
+
+        return *this;
+    }
+
+    template <typename T>
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseGetValuesByIndex& Type() noexcept {
+        return *this;
+    }
+
+    [[nodiscard]] constexpr First GetFirst() noexcept { return std::move(lazy_.first); }
+
+private:
+    std::size_t index_;
+
+    // Work with non default constructible types
+    union Lazy {
+        USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr Lazy() noexcept : empty{} {}
+        USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr Lazy(First f) noexcept : first{f} {}
+
+        char empty;
+        First first;
+    };
+    Lazy lazy_;
+};
+
+template <typename First>
 class CaseFirstIndexer final {
 public:
     USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit CaseFirstIndexer(First search_value) noexcept : state_(search_value) {}
@@ -597,7 +637,7 @@ public:
     }
 
     template <typename T, typename U = void>
-    constexpr CaseFirstIndexer& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseFirstIndexer& Type() noexcept {
         return *this;
     }
 
@@ -624,7 +664,7 @@ public:
     }
 
     template <typename T, typename U = void>
-    constexpr CaseFirstIndexerICase& Type() {
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr CaseFirstIndexerICase& Type() noexcept {
         return *this;
     }
 
@@ -796,6 +836,7 @@ public:
         }
     }
 
+    /// Returns the parameters of a Case with index `index`
     constexpr ValueType GetValuesByIndex(std::size_t index) const {
         UASSERT_MSG(index < size(), "Index is out of bounds");
         auto result = func_([index]() { return impl::CaseGetValuesByIndex<First, Second>{index}; });
@@ -879,6 +920,7 @@ public:
         return func_([value]() { return impl::SwitchByFirstICase<void>{value}; }).Extract();
     }
 
+    /// Returns count of Case's in mapping
     constexpr std::size_t size() const noexcept {
         return func_([]() { return impl::CaseCounter{}; }).Extract();
     }
@@ -892,8 +934,7 @@ public:
         return func_([]() { return impl::CaseFirstDescriber{}; }).Extract();
     }
 
-    /// Returns index of the value in Case parameters or std::nullopt if no such
-    /// value.
+    /// Returns index of the value in Case parameters or std::nullopt if no such value.
     constexpr std::optional<std::size_t> GetIndex(DecayToStringView<First> value) const {
         return func_([value]() { return impl::CaseFirstIndexer{value}; }).Extract();
     }
@@ -902,6 +943,13 @@ public:
     /// std::nullopt if no such value.
     constexpr std::optional<std::size_t> GetIndexICase(std::string_view value) const {
         return func_([value]() { return impl::CaseFirstIndexerICase{value}; }).Extract();
+    }
+
+    /// Returns the parameter of a Case with index `index`
+    constexpr First GetKeyByIndex(std::size_t index) const {
+        UASSERT_MSG(index < size(), "Index is out of bounds");
+        auto result = func_([index]() { return impl::CaseGetValuesByIndex<First, Second>{index}; });
+        return result.GetFirst();
     }
 
 private:

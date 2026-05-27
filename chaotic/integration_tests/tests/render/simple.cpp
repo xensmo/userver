@@ -7,6 +7,7 @@
 #include <userver/chaotic/exception.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
+#include <userver/formats/json/serialize.hpp>
 #include <userver/formats/json/value.hpp>
 #include <userver/formats/json/value_builder.hpp>
 #include <userver/formats/parse/to.hpp>
@@ -33,6 +34,7 @@
 #include <schemas/string64.hpp>
 #include <schemas/uri.hpp>
 #include <schemas/uuid.hpp>
+#include <userver/formats/json/string_builder.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -40,16 +42,29 @@ USERVER_NAMESPACE_BEGIN
 static_assert(std::is_base_of_v<formats::json::Exception, chaotic::Error<formats::json::Value>>);
 static_assert(std::is_base_of_v<formats::json::Exception, formats::json::parser::ParseError>);
 
+namespace {
+
+template <class T>
+std::string TestStreamJson(const T& value) {
+    formats::json::StringBuilder builder;
+    WriteToStream(value, builder);
+    return builder.GetString();
+}
+
+}  // namespace
+
 TEST(Simple, Empty) {
     auto json = formats::json::MakeObject();
     auto obj = json.As<ns::ObjectEmpty>();
     EXPECT_EQ(obj, ns::ObjectEmpty());
+    EXPECT_EQ(ToJsonString(obj), ToString(json));
 }
 
 TEST(Simple, Integer) {
     auto json = formats::json::MakeObject("int3", 1, "integer", 3);
     auto obj = json.As<ns::SimpleObject>();
     EXPECT_EQ(obj.integer, 3);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, DefaultFieldValue) {
@@ -79,6 +94,7 @@ TEST(Simple, ObjectDefault) {
     auto json = formats::json::MakeObject("int3", 1);
     auto obj = json.As<ns::SimpleObject>();
     EXPECT_EQ(obj.int_, 1);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, ObjectRequired) {
@@ -127,6 +143,10 @@ TEST(Simple, ObjectTypes) {
         obj,
         (ns::ObjectTypes{true, 1, 1.1, "foo", ns::ObjectTypes::Object{}, {1}, {}, ns::ObjectTypes::String_Enum::kX1})
     );
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 template <typename T>
@@ -141,9 +161,11 @@ TEST(Simple, ObjectWithAdditionalPropertiesInt) {
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json_back);
 }
 
 TEST(Simple, ParseObjectWithAdditionalPropertiesIntFromYaml) {
@@ -164,6 +186,7 @@ TEST(Simple, ObjectWithAdditionalPropertiesIntSax) {
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
@@ -175,6 +198,7 @@ TEST(Simple, ObjectWithAdditionalPropertiesTrue) {
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
@@ -191,6 +215,7 @@ object: {}
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesTrueSax) {
@@ -199,6 +224,10 @@ TEST(Simple, ObjectWithAdditionalPropertiesTrueSax) {
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, ObjectExtraMemberFalse) {
@@ -209,6 +238,7 @@ TEST(Simple, ObjectExtraMemberFalse) {
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, formats::json::MakeObject("one", 1)) << ToString(json_back);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json_back);
 }
 
 TEST(Simple, ObjectExtraMemberFalseSax) {
@@ -216,6 +246,7 @@ TEST(Simple, ObjectExtraMemberFalseSax) {
     auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesTrueExtraMemberFalse>(ToString(json));
 
     EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesFalseStrict) {
@@ -240,7 +271,9 @@ TEST(Simple, ObjectWithAdditionalPropertiesFalseStrictSax) {
 TEST(Simple, IntegerEnum) {
     auto json = formats::json::MakeObject("one", 1);
     auto obj = json["one"].As<ns::IntegerEnum>();
+
     EXPECT_EQ(obj, ns::IntegerEnum::k1);
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json["one"]);
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json["one"]) << ToString(json_back);
@@ -273,6 +306,7 @@ TEST(Simple, IntegerEnumSax) {
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back.As<int>(), 1) << ToString(json_back);
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json_back);
 
     auto json2 = formats::json::MakeObject("one", 5);
     UEXPECT_THROW_MSG(
@@ -286,6 +320,7 @@ TEST(Simple, StringEnum) {
     auto json = formats::json::MakeObject("one", "foo");
     auto obj = json["one"].As<ns::StringEnum>();
     EXPECT_EQ(obj, ns::StringEnum::kFoo);
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json["one"]);
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json["one"]) << ToString(json_back);
@@ -340,6 +375,7 @@ TEST(Simple, StringEnumSax) {
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back.As<std::string>(), "foo") << ToString(json_back);
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json_back);
 
     UEXPECT_THROW_MSG(
         ParseToType<ns::StringEnum>("\"zoo\""),
@@ -368,6 +404,7 @@ TEST(Simple, StringEnumPgInteraction) {
 TEST(Simple, AllOf) {
     auto json = formats::json::MakeObject("foo", 1, "bar", 2);
     auto obj = json.As<ns::AllOf>();
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     EXPECT_EQ(obj.foo, 1);
     EXPECT_EQ(obj.bar, 2);
@@ -379,6 +416,7 @@ TEST(Simple, AllOf) {
 TEST(Simple, AllOfSax) {
     auto json = formats::json::MakeObject("foo", 1, "bar", 2);
     auto obj = ParseToType<ns::AllOf>(ToString(json));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     EXPECT_EQ(obj.foo, 1);
     EXPECT_EQ(obj.bar, 2);
@@ -390,6 +428,7 @@ TEST(Simple, AllOfSax) {
 TEST(Simple, OneOf) {
     auto json = formats::json::MakeObject();
     auto obj = json.As<ns::OneOf>();
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json);
 
     EXPECT_EQ(std::get<ns::OneOf__O2>(obj), ns::OneOf__O2());
 
@@ -400,6 +439,7 @@ TEST(Simple, OneOf) {
 TEST(Simple, OneOfSax) {
     auto json = formats::json::MakeObject();
     auto obj = ParseToType<ns::OneOf>(ToString(json));
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json);
 
     EXPECT_EQ(std::get<ns::OneOf__O2>(obj), ns::OneOf__O2());
 
@@ -412,9 +452,101 @@ TEST(Simple, OneOfWithDiscriminator) {
     auto obj = json.As<ns::ObjectOneOfWithDiscriminator>();
     EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
     EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
+
+    std::get<0>(obj.oneof.value()).type = "incorrect";
+    EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "incorrect");
+    EXPECT_EQ(formats::json::ValueBuilder{obj}.ExtractValue(), json);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
+}
+
+TEST(Simple, OneOfWithDiscriminator2) {
+    auto json =
+        formats::json::MakeObject("foo", formats::json::MakeObject("type", "aaa", "a_prop", 42, "additional", 14));
+    auto obj = json.As<ns::OneOfDiscriminator>();
+    EXPECT_EQ(std::get<0>(obj.foo.value()).type, "aaa");
+    EXPECT_EQ(std::get<0>(obj.foo.value()).a_prop, 42);
+    EXPECT_EQ(std::get<0>(obj.foo.value()).extra["additional"].As<int>(), 14);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+
+    std::get<0>(obj.foo.value()).type = "incorrect";
+    EXPECT_EQ(std::get<0>(obj.foo.value()).type, "incorrect");
+    EXPECT_EQ(formats::json::ValueBuilder{obj}.ExtractValue(), json);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
+}
+
+TEST(Simple, OneOfWithDiscriminator3) {
+    auto json =
+        formats::json::MakeObject("foo", formats::json::MakeObject("type", "bbb", "b_prop", 42, "additional", 14));
+    auto obj = json.As<ns::OneOfDiscriminator>();
+    EXPECT_EQ(std::get<1>(obj.foo.value()).type, "bbb");
+    EXPECT_EQ(std::get<1>(obj.foo.value()).b_prop, 42);
+    EXPECT_EQ(std::get<1>(obj.foo.value()).extra["additional"].As<int>(), 14);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+
+    std::get<1>(obj.foo.value()).type = "incorrect";
+    EXPECT_EQ(std::get<1>(obj.foo.value()).type, "incorrect");
+    EXPECT_EQ(formats::json::ValueBuilder{obj}.ExtractValue(), json);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
+}
+
+TEST(Simple, OneOfWithDiscriminator4) {
+    auto json = formats::json::MakeObject("foo", formats::json::MakeObject("version", 42));
+    auto obj = json.As<ns::IntegerOneOfDiscriminator>();
+    EXPECT_EQ(std::get<0>(obj.foo.value()).version, 42);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"version\""), std::string::npos) << "No 'version'";
+    EXPECT_EQ(ToJsonString(obj).find("\"version\""), ToJsonString(obj).rfind("\"version\"")) << "Multiple 'version's";
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+
+    std::get<0>(obj.foo.value()).version = 777;
+    EXPECT_EQ(std::get<0>(obj.foo.value()).version, 777);
+    EXPECT_EQ(formats::json::ValueBuilder{obj}.ExtractValue(), json);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"version\""), std::string::npos) << "No 'version'";
+    EXPECT_EQ(ToJsonString(obj).find("\"version\""), ToJsonString(obj).rfind("\"version\"")) << "Multiple 'version's";
+}
+
+TEST(Simple, OneOfWithDiscriminator5) {
+    auto json = formats::json::MakeObject("foo", formats::json::MakeObject("version", 52));
+    auto obj = json.As<ns::IntegerOneOfDiscriminator>();
+    EXPECT_EQ(std::get<1>(obj.foo.value()).version, 52);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"version\""), std::string::npos) << "No 'version'";
+    EXPECT_EQ(ToJsonString(obj).find("\"version\""), ToJsonString(obj).rfind("\"version\"")) << "Multiple 'version's";
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+
+    std::get<1>(obj.foo.value()).version = 777;
+    EXPECT_EQ(std::get<1>(obj.foo.value()).version, 777);
+    EXPECT_EQ(formats::json::ValueBuilder{obj}.ExtractValue(), json);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"version\""), std::string::npos) << "No 'version'";
+    EXPECT_EQ(ToJsonString(obj).find("\"version\""), ToJsonString(obj).rfind("\"version\"")) << "Multiple 'version's";
 }
 
 TEST(Simple, OneOfWithDiscriminatorSax) {
@@ -422,6 +554,9 @@ TEST(Simple, OneOfWithDiscriminatorSax) {
     auto obj = ParseToType<ns::ObjectOneOfWithDiscriminator>(ToString(json));
     EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
     EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
@@ -431,6 +566,29 @@ TEST(Simple, OneOfWithDiscriminatorMapping) {
     EXPECT_EQ(ns::IntegerOneOfDiscriminator::kFoo_Settings.mapping.Describe(), "'42', '52'");
     EXPECT_EQ(ns::OneOfDiscriminator::kFoo_Settings.mapping.Describe(), "'aaa', 'bbb'");
 }
+
+/* TODO:
+TEST(Simple, AllOfOneOf) {
+    auto json = formats::json::MakeObject("value", formats::json::MakeObject("foo", 1, "type", "B", "integer", 42));
+    auto obj = json.As<ns::AllOfOneOf>();
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json);
+
+    EXPECT_EQ(obj.value.foo, 1);
+
+    ns::OneOfDiscriminatorForAllOf& oneof = obj.value;
+    EXPECT_EQ(std::get<1>(oneof).type, "B");
+    EXPECT_EQ(std::get<1>(oneof).integer.value(), 42);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+
+    std::get<1>(oneof).type = "broken";
+    EXPECT_EQ(std::get<1>(oneof).type, "broken");
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+    EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
+    EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
+}
+*/
 
 TEST(Simple, Indirect) {
     auto json = formats::json::MakeObject(
@@ -446,6 +604,10 @@ TEST(Simple, Indirect) {
     EXPECT_EQ(obj.data, "smth");
     EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
     EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, IndirectSax) {
@@ -462,11 +624,16 @@ TEST(Simple, IndirectSax) {
     EXPECT_EQ(obj.data, "smth");
     EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
     EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, HyphenField) {
     const ns::ObjectWithHyphenField obj;
     EXPECT_EQ(obj.foo_field, std::nullopt);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, SubSubObjectSmoke) { [[maybe_unused]] const ns::Objectx::Objectx_::Objectx__ x; }
@@ -480,13 +647,17 @@ TEST(Simple, ExtraType) {
 TEST(Simple, CppName) {
     const ns::ObjectName obj;
     EXPECT_EQ(obj.bar, std::nullopt);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, Date) {
     auto json = formats::json::MakeObject("created_at", "2020-10-01");
     auto obj = json.As<ns::ObjectDate>();
-
     EXPECT_EQ(obj.created_at, utils::datetime::Date(2020, 10, 01));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, DateTime) {
@@ -497,9 +668,13 @@ TEST(Simple, DateTime) {
     const utils::datetime::TimePointTz
         tp{utils::datetime::UtcStringtime("2020-10-01T00:00:56Z"), std::chrono::seconds(12 * 60 * 60 + 34 * 60)};
     EXPECT_EQ(obj.updated_at, tp);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["updated_at"].As<std::string>();
     EXPECT_EQ(str, date);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, DateTimeExtra) {
@@ -510,9 +685,13 @@ TEST(Simple, DateTimeExtra) {
     const utils::datetime::TimePointTz
         tp{utils::datetime::UtcStringtime("2020-10-01T00:00:56Z"), std::chrono::seconds(12 * 60 * 60 + 34 * 60)};
     EXPECT_EQ(obj.updated_at_extra->time_point, tp);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["updated_at_extra"].As<std::string>();
     EXPECT_EQ(str, date);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, DateTimeIsoBasic) {
@@ -523,9 +702,13 @@ TEST(Simple, DateTimeIsoBasic) {
     const utils::datetime::TimePointTzIsoBasic
         tp{utils::datetime::UtcStringtime("2020-10-01T00:00:56Z"), std::chrono::seconds(12 * 60 * 60 + 34 * 60)};
     EXPECT_EQ(obj.deleted_at, tp);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["deleted_at"].As<std::string>();
     EXPECT_EQ(str, date);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, DateTimeFraction) {
@@ -537,9 +720,13 @@ TEST(Simple, DateTimeFraction) {
         tp{utils::datetime::UtcStringtime("2020-10-01T12:34:56Z"), std::chrono::seconds(0)};
     EXPECT_EQ(obj.modified_at->GetTimePoint() - tp.GetTimePoint(), std::chrono::milliseconds(789));
     EXPECT_EQ(obj.modified_at->GetTzOffset(), std::chrono::seconds(0));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["modified_at"].As<std::string>();
     EXPECT_EQ(str, date) << str;
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, Uuid) {
@@ -550,9 +737,13 @@ TEST(Simple, Uuid) {
     const boost::uuids::string_generator gen;
     const boost::uuids::uuid expected = gen(uuid);
     EXPECT_EQ(obj.uuid, expected);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["uuid"].As<std::string>();
     EXPECT_EQ(str, uuid);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, Uri) {
@@ -561,9 +752,13 @@ TEST(Simple, Uri) {
     auto obj = json.As<ns::ObjectUri>();
 
     EXPECT_EQ(obj.uri, uri);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
 
     auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["uri"].As<std::string>();
     EXPECT_EQ(str, uri);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, String64) {
@@ -572,6 +767,7 @@ TEST(Simple, String64) {
 
     auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["value"].As<std::string>();
     EXPECT_EQ(str, "aGVsbG8sIHVzZXJ2ZXIh");
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 
     auto new_obj = formats::json::MakeObject("value", str).As<ns::ObjectString64>();
     EXPECT_EQ(new_obj.value, str64);
@@ -587,6 +783,10 @@ TEST(Simple, RequiredNullableExists) {
     auto obj = json.As<ns::ObjectWithNullable>();
 
     EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 TEST(Simple, RequiredNullableNull) {
@@ -594,6 +794,7 @@ TEST(Simple, RequiredNullableNull) {
     auto obj = json.As<ns::ObjectWithNullable>();
 
     EXPECT_EQ(obj.foo, std::nullopt);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, RequiredNullableMissing) {
@@ -601,6 +802,10 @@ TEST(Simple, RequiredNullableMissing) {
     auto obj = json.As<ns::ObjectWithNullable>();
 
     EXPECT_EQ(obj.foo, std::nullopt);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json, json_back) << ToString(json_back);
 }
 
 USERVER_NAMESPACE_END

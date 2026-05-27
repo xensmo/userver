@@ -202,6 +202,12 @@ class CppType:
     def need_serializer(self) -> bool:
         return False
 
+    def need_stream_writer(self) -> bool:
+        return False
+
+    def need_add_hiding_args(self) -> bool:
+        return False
+
     def need_operator_eq(self) -> bool:
         return False
 
@@ -519,6 +525,9 @@ class CppIntEnum(CppType):
     def need_serializer(self) -> bool:
         return True
 
+    def need_stream_writer(self) -> bool:
+        return True
+
 
 @dataclasses.dataclass
 class CppStringEnumItem:
@@ -558,6 +567,9 @@ class CppStringEnum(CppType):
         return True
 
     def need_serializer(self) -> bool:
+        return True
+
+    def need_stream_writer(self) -> bool:
         return True
 
 
@@ -836,6 +848,12 @@ class CppStruct(CppType):
     def need_serializer(self) -> bool:
         return True
 
+    def need_stream_writer(self) -> bool:
+        return True
+
+    def need_add_hiding_args(self) -> bool:
+        return True
+
     def need_operator_eq(self) -> bool:
         return True
 
@@ -951,6 +969,12 @@ class CppStructAllOf(CppType):
         return True
 
     def need_serializer(self) -> bool:
+        return True
+
+    def need_stream_writer(self) -> bool:
+        return True
+
+    def need_add_hiding_args(self) -> bool:
         return True
 
     def need_operator_eq(self) -> bool:

@@ -77,8 +77,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--no-sax-parse',
-        action='store_true',
+        action='store_false',
+        dest='generate_sax_parser',
         help='Do not generate JSON SAX parsers',
+    )
+    parser.add_argument(
+        '--no-stream-writer',
+        action='store_false',
+        dest='generate_stream_writer',
+        help='Do not generate JSON stream writers (serializers)',
     )
 
     parser.add_argument(
@@ -276,7 +283,8 @@ def main() -> None:
         clang_format_bin=args.clang_format,
         parse_extra_formats=args.parse_extra_formats,
         generate_serializer=args.generate_serializers,
-        generate_sax_parser=not args.no_sax_parse,
+        generate_sax_parser=args.generate_sax_parser,
+        generate_stream_writer=args.generate_stream_writer,
     ).render(types)
     for output in outputs:
         if output.filepath_wo_ext.startswith('/'):

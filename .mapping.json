@@ -238,6 +238,7 @@
   "chaotic/chaotic/back/cpp/__init__.py":"taxi/uservices/userver/chaotic/chaotic/back/cpp/__init__.py",
   "chaotic/chaotic/back/cpp/renderer.py":"taxi/uservices/userver/chaotic/chaotic/back/cpp/renderer.py",
   "chaotic/chaotic/back/cpp/templates/common.jinja":"taxi/uservices/userver/chaotic/chaotic/back/cpp/templates/common.jinja",
+  "chaotic/chaotic/back/cpp/templates/stream_writer.jinja":"taxi/uservices/userver/chaotic/chaotic/back/cpp/templates/stream_writer.jinja",
   "chaotic/chaotic/back/cpp/templates/type.cpp.jinja":"taxi/uservices/userver/chaotic/chaotic/back/cpp/templates/type.cpp.jinja",
   "chaotic/chaotic/back/cpp/templates/type.hpp.jinja":"taxi/uservices/userver/chaotic/chaotic/back/cpp/templates/type.hpp.jinja",
   "chaotic/chaotic/back/cpp/templates/type_fwd.hpp.jinja":"taxi/uservices/userver/chaotic/chaotic/back/cpp/templates/type_fwd.hpp.jinja",

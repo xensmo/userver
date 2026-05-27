@@ -37,6 +37,7 @@ userver_target_generate_chaotic(
     PARSE_EXTRA_FORMATS
     GENERATE_SERIALIZERS
     NO_SAX_PARSE
+    NO_STREAMING_SERIALIZER
     INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include

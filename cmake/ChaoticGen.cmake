@@ -63,8 +63,9 @@ _userver_prepare_chaotic()
 # @param INSTALL_INCLUDES_COMPONENT - component to install generated includes
 # @multiparam LINK_TARGETS - targets to link (used by x-usrv-cpp-type)
 # @option NO_SAX_PARSE - Do not generate SAX parser and efficient FromJsonString() member factory function
+# @option NO_STREAM_WRITER - Do not generate streaming serializers via WriteToStream()
 function(userver_target_generate_chaotic TARGET)
-    set(OPTIONS GENERATE_SERIALIZERS PARSE_EXTRA_FORMATS NO_SAX_PARSE)
+    set(OPTIONS GENERATE_SERIALIZERS PARSE_EXTRA_FORMATS NO_SAX_PARSE NO_STREAM_WRITER)
     set(ONE_VALUE_ARGS OUTPUT_DIR RELATIVE_TO FORMAT INSTALL_INCLUDES_COMPONENT OUTPUT_PREFIX ERASE_PATH_PREFIX)
     set(MULTI_VALUE_ARGS SCHEMAS LAYOUT INCLUDE_DIRS LINK_TARGETS)
     cmake_parse_arguments(PARSE "${OPTIONS}" "${ONE_VALUE_ARGS}" "${MULTI_VALUE_ARGS}" ${ARGN})
@@ -140,6 +141,10 @@ function(userver_target_generate_chaotic TARGET)
     
     if(PARSE_NO_SAX_PARSE)
         list(APPEND CHAOTIC_ARGS "--no-sax-parse")
+    endif()
+
+    if(PARSE_NO_STREAM_WRITER)
+        list(APPEND CHAOTIC_ARGS "--no-stream-writer")
     endif()
 
     if(PARSE_ERASE_PATH_PREFIX)

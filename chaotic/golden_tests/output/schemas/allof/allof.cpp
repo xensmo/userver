@@ -1,3 +1,4 @@
+
 #include <userver/chaotic/type_bundle_cpp.hpp>
 
 #include "allof.hpp"
@@ -11,6 +12,12 @@ AllOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::T
       AllOf,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<AllOf>>>(
       json);
+}
+
+std::string ToJsonString(const AllOf& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const AllOf::Foo__P0& lhs, const AllOf::Foo__P0& rhs) {
@@ -148,6 +155,71 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   }
 
   return vb.ExtractValue();
+}
+
+void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo__P0& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.foo && hide_field_name != "foo") {
+    sw.Key("foo");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.foo}, sw);
+  }
+
+  for (const auto& [field_key, field_value] : USERVER_NAMESPACE::formats::common::Items(value.extra)) {
+    sw.Key(field_key);
+    WriteToStream(field_value, sw);
+  }
+}
+
+void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo__P1& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.bar && hide_field_name != "bar") {
+    sw.Key("bar");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<int>{*value.bar}, sw);
+  }
+
+  for (const auto& [field_key, field_value] : USERVER_NAMESPACE::formats::common::Items(value.extra)) {
+    sw.Key(field_key);
+    WriteToStream(field_value, sw);
+  }
+}
+
+void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  constexpr auto kAllOfHideBrackets = true;
+
+  {
+    const ::ns::AllOf::Foo__P0& obj = value;
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::AllOf::Foo__P0>{obj}, sw, kAllOfHideBrackets,
+                  hide_field_name);
+  }
+
+  {
+    const ::ns::AllOf::Foo__P1& obj = value;
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::AllOf::Foo__P1>{obj}, sw, kAllOfHideBrackets,
+                  hide_field_name);
+  }
+}
+
+void WriteToStream([[maybe_unused]] const ::ns::AllOf& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.foo && hide_field_name != "foo") {
+    sw.Key("foo");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::AllOf::Foo>{*value.foo}, sw);
+  }
 }
 
 }  // namespace ns

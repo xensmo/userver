@@ -1,3 +1,4 @@
+{% import 'templates/stream_writer.jinja' as sw %}
 #include "{{ pair_header }}.hpp"
 
 #include <userver/chaotic/type_bundle_cpp.hpp>
@@ -47,6 +48,21 @@
               >(json);
           {% else %}
               return {{ userver }}::formats::json::FromString(json).As<{{ shortest_cpp_name(type) }}>();
+          {% endif %}
+        }
+    {% endif %}
+{% endmacro %}
+
+
+{% macro generate_to_json_string_definition(type) %}
+    {% if type.get_py_type() == 'CppStruct' %}
+        std::string ToJsonString(const {{ shortest_cpp_name(type) }}& value) {
+          {% if generate_stream_writer %}
+              {{ userver }}::formats::json::StringBuilder builder;
+              WriteToStream(value, builder);
+              return builder.GetString();
+          {% else %}
+              return ToString({{ userver }}::formats::json::ValueBuilder(value).ExtractValue());
           {% endif %}
         }
     {% endif %}
@@ -136,13 +152,13 @@
             {%- for fname, field in type.fields.items() -%}
                 {% if field.is_optional() %}
                     if (value.{{ field.cpp_field_name() }}) {
-                        vb["{{ fname }}"] = 
+                        vb["{{ fname }}"] =
                             {{ field.schema.parser_type('', '') }}{
                                 *value.{{ field.cpp_field_name() }}
                             };
                     }
                 {% else %}
-                    vb["{{ fname }}"] = 
+                    vb["{{ fname }}"] =
                         {{ field.schema.parser_type('', '') }}{
                             value.{{ field.cpp_field_name() }}
                         };
@@ -305,6 +321,9 @@
 
     {% if has_json_parse(parse_formats) %}
         {{ generate_from_json_string_definition(type) }}
+        {% if generate_serializer %}
+            {{ generate_to_json_string_definition(type)  }}
+        {% endif %}
     {% endif %}
 
     {{ generate_operator_eq_definition(type) }}
@@ -319,6 +338,9 @@
 
     {% if generate_serializer %}
         {{ generate_serializer_definition(type) }}
+        {% if generate_stream_writer %}
+            {{ sw.generate_stream_writer_definition(userver, name, type) }}
+        {% endif %}
     {% endif %}
 
     {{ generate_tostring_definition(type) }}

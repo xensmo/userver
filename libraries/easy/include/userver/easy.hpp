@@ -77,6 +77,15 @@ T ParseFromJsonString(std::string_view json) {
     }
 }
 
+template <typename T>
+std::string FormatToJsonString(const T& value) {
+    if constexpr (requires { ToJsonString(value); }) {
+        return ToJsonString(value);
+    } else {
+        return formats::json::ToString(formats::json::ValueBuilder{value}.ExtractValue());
+    }
+}
+
 }  // namespace impl
 
 /// @ingroup userver_components
@@ -360,15 +369,14 @@ HttpWith<Dependency>::Callback::Callback(Function func) {
             auto arg = impl::ParseFromJsonString<FirstArgument>(req.RequestBody());
 
             if constexpr (std::is_invocable_v<Function, FirstArgument, const Dependency&>) {
-                return formats::json::ToString(formats::json::ValueBuilder{f(std::move(arg), GetDependencies(deps))}
-                                                   .ExtractValue());
+                return impl::FormatToJsonString(f(std::move(arg), GetDependencies(deps)));
             } else {
                 static_assert(
                     std::is_invocable_v<Function, FirstArgument>,
                     "Found no matching signature, probably due to second argument of the provided function. See "
                     "the easy::HttpWith::Callback docs for info on supported signatures"
                 );
-                return formats::json::ToString(formats::json::ValueBuilder{f(std::move(arg))}.ExtractValue());
+                return impl::FormatToJsonString(f(std::move(arg)));
             }
         };
     }

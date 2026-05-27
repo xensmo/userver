@@ -41,8 +41,13 @@ V1CurrentUser Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPAC
 
 V1CurrentUser FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1CurrentUser>);
 
+std::string ToJsonString(const V1CurrentUser& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1CurrentUser& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1CurrentUser& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelMessage {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
@@ -71,8 +76,13 @@ V1ChannelMessage Parse(USERVER_NAMESPACE::yaml_config::Value json,
 
 V1ChannelMessage FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessage>);
 
+std::string ToJsonString(const V1ChannelMessage& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelMessage& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelMessage& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelMessageByTimestampRequest {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamechannel_id = "channel_id";
@@ -100,9 +110,15 @@ V1ChannelMessageByTimestampRequest Parse(USERVER_NAMESPACE::yaml_config::Value j
 V1ChannelMessageByTimestampRequest FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampRequest>);
 
+std::string ToJsonString(const V1ChannelMessageByTimestampRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelMessageByTimestampRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelMessageByTimestampRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct V1ChannelMessageByTimestampResponse {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessages = "messages";
@@ -126,9 +142,15 @@ V1ChannelMessageByTimestampResponse Parse(USERVER_NAMESPACE::yaml_config::Value 
 V1ChannelMessageByTimestampResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampResponse>);
 
+std::string ToJsonString(const V1ChannelMessageByTimestampResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelMessageByTimestampResponse& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelMessageByTimestampResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct V1ChannelMessageNewRequest {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
@@ -156,9 +178,14 @@ V1ChannelMessageNewRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1ChannelMessageNewRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewRequest>);
 
+std::string ToJsonString(const V1ChannelMessageNewRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelMessageNewRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelMessageNewRequest& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 using V1MessageId = std::int64_t;
 
@@ -184,9 +211,14 @@ V1ChannelMessageNewResponse Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1ChannelMessageNewResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewResponse>);
 
+std::string ToJsonString(const V1ChannelMessageNewResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelMessageNewResponse& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelMessageNewResponse& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelNotificationListRequest {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
@@ -212,9 +244,15 @@ V1ChannelNotificationListRequest Parse(USERVER_NAMESPACE::yaml_config::Value jso
 V1ChannelNotificationListRequest FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListRequest>);
 
+std::string ToJsonString(const V1ChannelNotificationListRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelNotificationListRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelNotificationListRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct V1ChannelNotificationListResponse {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamenotifications = "notifications";
@@ -238,9 +276,15 @@ V1ChannelNotificationListResponse Parse(USERVER_NAMESPACE::yaml_config::Value js
 V1ChannelNotificationListResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListResponse>);
 
+std::string ToJsonString(const V1ChannelNotificationListResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelNotificationListResponse& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelNotificationListResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 // Notify other user that message requires his attention.
 struct V1ChannelNotificationNewRequest {
@@ -271,9 +315,15 @@ V1ChannelNotificationNewRequest Parse(USERVER_NAMESPACE::yaml_config::Value json
 V1ChannelNotificationNewRequest FromJsonString(std::string_view json,
                                                USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewRequest>);
 
+std::string ToJsonString(const V1ChannelNotificationNewRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelNotificationNewRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelNotificationNewRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct V1ChannelNotificationNewResponse {};
 
@@ -294,9 +344,15 @@ V1ChannelNotificationNewResponse Parse(USERVER_NAMESPACE::yaml_config::Value jso
 V1ChannelNotificationNewResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewResponse>);
 
+std::string ToJsonString(const V1ChannelNotificationNewResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1ChannelNotificationNewResponse& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1ChannelNotificationNewResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 // Structure to report any error.
 //
@@ -347,11 +403,19 @@ V1Error Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::for
 
 V1Error FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1Error>);
 
+std::string ToJsonString(const V1Error& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1Error::Details& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1Error& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1Error::Details& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
+
+void WriteToStream(const ::ns::V1Error& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1File {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamelogin = "login";
@@ -374,8 +438,13 @@ V1File Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::form
 
 V1File FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1File>);
 
+std::string ToJsonString(const V1File& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1File& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1File& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1FileByUriRequest {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
@@ -400,9 +469,14 @@ V1FileByUriRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 
 V1FileByUriRequest FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1FileByUriRequest>);
 
+std::string ToJsonString(const V1FileByUriRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1FileByUriRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1FileByUriRequest& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 using V1FileByUriResponse = ::ns::V1File;
 
@@ -431,8 +505,13 @@ V1FileNewResponse Parse(USERVER_NAMESPACE::yaml_config::Value json,
 
 V1FileNewResponse FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1FileNewResponse>);
 
+std::string ToJsonString(const V1FileNewResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1FileNewResponse& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1FileNewResponse& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 // Adds/removes a specified animation on a message
 struct V1LikeTriggerRequest {
@@ -491,6 +570,8 @@ V1LikeTriggerRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 
 V1LikeTriggerRequest FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest>);
 
+std::string ToJsonString(const V1LikeTriggerRequest& value);
+
 V1LikeTriggerRequest::Animation Convert(std::string_view value,
                                         USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>);
 
@@ -507,6 +588,12 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1LikeTriggerRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1LikeTriggerRequest::Animation& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw);
+
+void WriteToStream(const ::ns::V1LikeTriggerRequest& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 std::string ToString(V1LikeTriggerRequest::Animation value);
 
@@ -539,9 +626,14 @@ V1UserAuthorizationRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1UserAuthorizationRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserAuthorizationRequest>);
 
+std::string ToJsonString(const V1UserAuthorizationRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserAuthorizationRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserAuthorizationRequest& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserAuthorizationResponse {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
@@ -565,9 +657,14 @@ V1UserAuthorizationResponse Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1UserAuthorizationResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1UserAuthorizationResponse>);
 
+std::string ToJsonString(const V1UserAuthorizationResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserAuthorizationResponse& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserAuthorizationResponse& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 // Registration scenario:
 //
@@ -603,9 +700,14 @@ V1UserRegistrationRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1UserRegistrationRequest FromJsonString(std::string_view json,
                                          USERVER_NAMESPACE::formats::parse::To<V1UserRegistrationRequest>);
 
+std::string ToJsonString(const V1UserRegistrationRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserRegistrationRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserRegistrationRequest& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 using V1UserRegistrationResponse = ::ns::V1UserAuthorizationResponse;
 
@@ -626,8 +728,13 @@ V1UserStatus Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE
 
 V1UserStatus FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1UserStatus>);
 
+std::string ToJsonString(const V1UserStatus& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserStatus& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserStatus& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserStatusByLoginRequest {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
@@ -653,9 +760,14 @@ V1UserStatusByLoginRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1UserStatusByLoginRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginRequest>);
 
+std::string ToJsonString(const V1UserStatusByLoginRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserStatusByLoginRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserStatusByLoginRequest& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserStatusByLoginResponse {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamestatus = "status";
@@ -679,9 +791,14 @@ V1UserStatusByLoginResponse Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1UserStatusByLoginResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginResponse>);
 
+std::string ToJsonString(const V1UserStatusByLoginResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserStatusByLoginResponse& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserStatusByLoginResponse& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserStatusUpdateRequest {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
@@ -707,9 +824,14 @@ V1UserStatusUpdateRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1UserStatusUpdateRequest FromJsonString(std::string_view json,
                                          USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateRequest>);
 
+std::string ToJsonString(const V1UserStatusUpdateRequest& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserStatusUpdateRequest& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserStatusUpdateRequest& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserStatusUpdateResponse {};
 
@@ -730,9 +852,14 @@ V1UserStatusUpdateResponse Parse(USERVER_NAMESPACE::yaml_config::Value json,
 V1UserStatusUpdateResponse FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateResponse>);
 
+std::string ToJsonString(const V1UserStatusUpdateResponse& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const V1UserStatusUpdateResponse& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::V1UserStatusUpdateResponse& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 }  // namespace ns
 

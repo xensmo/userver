@@ -40,8 +40,13 @@ Circle Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::form
 
 Circle FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Circle>);
 
+std::string ToJsonString(const Circle& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Circle& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::Circle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 // CppStringWithFormat
 
@@ -72,8 +77,13 @@ Object Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::form
 
 Object FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Object>);
 
+std::string ToJsonString(const Object& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Object& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::Object& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct ObjectCpp {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamesome_hyphenated_key = "some_hyphenated_key";
@@ -92,8 +102,13 @@ ObjectCpp Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::f
 
 ObjectCpp FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<ObjectCpp>);
 
+std::string ToJsonString(const ObjectCpp& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const ObjectCpp& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::ObjectCpp& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 static constexpr auto kPetCountMinimum = 0;
 
@@ -130,8 +145,13 @@ Rectangle Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::f
 
 Rectangle FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Rectangle>);
 
+std::string ToJsonString(const Rectangle& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Rectangle& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::Rectangle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 [[maybe_unused]] static constexpr USERVER_NAMESPACE::chaotic::OneOfStringSettings kShape_Settings = {
     "kind", USERVER_NAMESPACE::utils::TrivialSet([](auto selector) {
@@ -177,6 +197,8 @@ Status Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Statu
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Status& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
+void WriteToStream(const ::ns::Status& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw);
+
 std::string ToString(Status value);
 
 struct TreeNode {
@@ -200,8 +222,13 @@ TreeNode Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::fo
 
 TreeNode FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<TreeNode>);
 
+std::string ToJsonString(const TreeNode& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const TreeNode& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::TreeNode& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 }  // namespace ns
 

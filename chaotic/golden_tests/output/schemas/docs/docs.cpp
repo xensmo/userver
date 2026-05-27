@@ -1,3 +1,4 @@
+
 #include <userver/chaotic/type_bundle_cpp.hpp>
 
 #include "docs.hpp"
@@ -11,6 +12,12 @@ Circle FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::
       Circle,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<Circle>>>(
       json);
+}
+
+std::string ToJsonString(const Circle& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const Circle& lhs, const Circle& rhs) {
@@ -51,11 +58,38 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const ::ns::Circle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.kind && hide_field_name != "kind") {
+    sw.Key("kind");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.kind}, sw);
+  }
+
+  if (value.radius && hide_field_name != "radius") {
+    sw.Key("radius");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<double>{*value.radius}, sw);
+  }
+
+  for (const auto& [field_key, field_value] : USERVER_NAMESPACE::formats::common::Items(value.extra)) {
+    sw.Key(field_key);
+    WriteToStream(field_value, sw);
+  }
+}
+
 Object FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Object>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       Object,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<Object>>>(
       json);
+}
+
+std::string ToJsonString(const Object& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const Object& lhs, const Object& rhs) { return lhs.foo == rhs.foo && lhs.bar == rhs.bar && true; }
@@ -90,11 +124,33 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const ::ns::Object& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "foo") {
+    sw.Key("foo");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<int>{value.foo}, sw);
+  }
+
+  if (value.bar && hide_field_name != "bar") {
+    sw.Key("bar");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.bar}, sw);
+  }
+}
+
 ObjectCpp FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<ObjectCpp>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       ObjectCpp,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<ObjectCpp>>>(
       json);
+}
+
+std::string ToJsonString(const ObjectCpp& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const ObjectCpp& lhs, const ObjectCpp& rhs) {
@@ -129,11 +185,28 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const ::ns::ObjectCpp& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.some_hyphenated_key && hide_field_name != "some-hyphenated-key") {
+    sw.Key("some-hyphenated-key");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.some_hyphenated_key}, sw);
+  }
+}
+
 Rectangle FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Rectangle>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       Rectangle,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<Rectangle>>>(
       json);
+}
+
+std::string ToJsonString(const Rectangle& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const Rectangle& lhs, const Rectangle& rhs) {
@@ -176,6 +249,32 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   }
 
   return vb.ExtractValue();
+}
+
+void WriteToStream([[maybe_unused]] const ::ns::Rectangle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.kind && hide_field_name != "kind") {
+    sw.Key("kind");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.kind}, sw);
+  }
+
+  if (value.width && hide_field_name != "width") {
+    sw.Key("width");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<double>{*value.width}, sw);
+  }
+
+  if (value.height && hide_field_name != "height") {
+    sw.Key("height");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<double>{*value.height}, sw);
+  }
+
+  for (const auto& [field_key, field_value] : USERVER_NAMESPACE::formats::common::Items(value.extra)) {
+    sw.Key(field_key);
+    WriteToStream(field_value, sw);
+  }
 }
 
 /* Parse(USERVER_NAMESPACE::formats::yaml::Value, To<Shape>) was not generated: ::ns::Shape has JSON-specific field
@@ -221,6 +320,15 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return USERVER_NAMESPACE::formats::json::ValueBuilder(ToString(value)).ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const ::ns::Status& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw) {
+  const auto result = k__ns__Status_Mapping.TryFindByFirst(value);
+  if (result.has_value()) {
+    WriteToStream(*result, sw);
+  } else {
+    throw std::runtime_error("Bad enum value");
+  }
+}
+
 std::string ToString(Status value) {
   const auto result = k__ns__Status_Mapping.TryFindByFirst(value);
   if (result.has_value()) {
@@ -234,6 +342,12 @@ TreeNode FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse
       TreeNode,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<TreeNode>>>(
       json);
+}
+
+std::string ToJsonString(const TreeNode& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const TreeNode& lhs, const TreeNode& rhs) {
@@ -274,6 +388,29 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   }
 
   return vb.ExtractValue();
+}
+
+void WriteToStream([[maybe_unused]] const ::ns::TreeNode& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.data && hide_field_name != "data") {
+    sw.Key("data");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.data}, sw);
+  }
+
+  if (value.left && hide_field_name != "left") {
+    sw.Key("left");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>{*value.left},
+                  sw);
+  }
+
+  if (value.right && hide_field_name != "right") {
+    sw.Key("right");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>{*value.right},
+                  sw);
+  }
 }
 
 }  // namespace ns

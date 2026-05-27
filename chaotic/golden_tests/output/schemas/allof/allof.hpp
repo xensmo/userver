@@ -84,6 +84,8 @@ AllOf Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::forma
 
 AllOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<AllOf>);
 
+std::string ToJsonString(const AllOf& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const AllOf::Foo__P0& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
@@ -95,6 +97,18 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const AllOf& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::AllOf::Foo__P0& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
+
+void WriteToStream(const ::ns::AllOf::Foo__P1& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
+
+void WriteToStream(const ::ns::AllOf::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
+
+void WriteToStream(const ::ns::AllOf& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 }  // namespace ns
 

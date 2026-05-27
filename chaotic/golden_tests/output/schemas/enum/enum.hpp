@@ -48,6 +48,8 @@ Enum Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::format
 
 Enum FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Enum>);
 
+std::string ToJsonString(const Enum& value);
+
 Enum::Foo Convert(std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>);
 
 std::optional<Enum::Foo> TryConvert(std::string_view value,
@@ -60,6 +62,11 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Enum& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const ::ns::Enum::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw);
+
+void WriteToStream(const ::ns::Enum& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
 
 std::string ToString(Enum::Foo value);
 
