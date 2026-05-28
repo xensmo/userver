@@ -117,6 +117,10 @@ public:
             const auto frame = impl::frames::MakeControlFrame(impl::WSOpcodes::kPong, message.data, need_data_masking_);
 
             SendFrame(*io_, frame, message.data, need_data_masking_);
+        } else if (message.close_status == CloseStatus::kNone) {
+            const auto frame = impl::frames::MakeControlFrame(impl::WSOpcodes::kClose, {}, need_data_masking_);
+
+            SendFrame(*io_, frame, {}, need_data_masking_);
         } else if (message.close_status.has_value()) {
             // Prepare payload (status code in big endian)
             auto status_be = boost::endian::native_to_big(static_cast<CloseStatusInt>(message.close_status.value()));

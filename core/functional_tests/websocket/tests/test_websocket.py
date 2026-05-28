@@ -4,6 +4,7 @@ import logging
 import pytest
 import pytest_userver.utils.sync as sync
 import websockets
+import websockets.frames
 
 # Disabling redundant logs from third party library
 logger = logging.getLogger('websockets.client')
@@ -208,3 +209,14 @@ async def test_non_websocket_request(service_client):
 
     assert response.status == 400
     assert response.text == 'Not a websocket request'
+
+
+async def test_close_no_status(service_port):
+    async with websockets.connect(f'ws://localhost:{service_port}/chat') as ws:
+        try:
+            async with ws.send_context():
+                ws.protocol.send_close(code=None)
+        except websockets.exceptions.ConnectionClosed:
+            pass
+
+    assert ws.close_code == websockets.frames.CloseCode.NO_STATUS_RCVD
