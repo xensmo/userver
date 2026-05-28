@@ -13,6 +13,7 @@
 #include <userver/dist_lock/dist_lock_strategy.hpp>
 #include <userver/engine/task/task_base.hpp>
 #include <userver/engine/task/task_processor_fwd.hpp>
+#include <userver/logging/level.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -64,6 +65,7 @@ public:
     /// @param strategy distributed locking strategy
     /// @param mode distributed lock waiting mode
     /// @param retry_mode run task continuously or once (needed mainly for tests)
+    /// @param base_log_level logging level settings. WARNING and ERROR levels are not overridden
     /// @note `worker_func` must honour task cancellation and stop ASAP when
     /// it is cancelled, otherwise brain split is possible (IOW, two different
     /// users do work assuming both of them hold the lock, which is not true).
@@ -73,7 +75,8 @@ public:
         std::shared_ptr<DistLockStrategyBase> strategy,
         const DistLockSettings& settings = {},
         DistLockWaitingMode mode = DistLockWaitingMode::kWait,
-        DistLockRetryMode retry_mode = DistLockRetryMode::kRetry
+        DistLockRetryMode retry_mode = DistLockRetryMode::kRetry,
+        logging::Level base_log_level = logging::Level::kInfo
     );
 
     /// Creates a DistLockedTask to be run in a specific engine::TaskProcessor
@@ -84,7 +87,8 @@ public:
         std::shared_ptr<DistLockStrategyBase> strategy,
         const DistLockSettings& settings = {},
         DistLockWaitingMode mode = DistLockWaitingMode::kWait,
-        DistLockRetryMode retry_mode = DistLockRetryMode::kRetry
+        DistLockRetryMode retry_mode = DistLockRetryMode::kRetry,
+        logging::Level base_log_level = logging::Level::kInfo
     );
 
     /// Returns for how long the lock is held (if held at all). Returned value
