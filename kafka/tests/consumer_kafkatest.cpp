@@ -6,8 +6,8 @@
 #include <vector>
 
 #include <gmock/gmock-matchers.h>
-#include <sys/syslog.h>
 
+#include <userver/engine/deadline.hpp>
 #include <userver/engine/single_use_event.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/utils/async.hpp>
@@ -516,6 +516,87 @@ UTEST_F(ConsumerTest, SeekToEnd) {
 
     ASSERT_EQ(messages.size(), after_seemessages.size());
     EXPECT_EQ(messages[0].key, after_seemessages[0].key);
+}
+
+UTEST_F(ConsumerTest, ConsumerRecreatesAfterFatalLibrdkafkaError) {
+    static constexpr std::string_view kStaticGroupInstanceId{"utest-static-fence-instance"};
+    static constexpr std::int32_t kHeartbeatApiKey = 12;
+    static constexpr std::int32_t kFencedInstanceIdError = 82;
+
+    const auto topic = GenerateTopic();
+
+    kafka::impl::ConsumerExecutionParams params{};
+    params.restart_after_failure_delay = std::chrono::milliseconds{100};
+
+    kafka::impl::ConsumerConfiguration configuration{};
+    configuration.rd_kafka_options["group.instance.id"] = kStaticGroupInstanceId;
+    configuration.rd_kafka_options["session.timeout.ms"] = "6000";
+    configuration.rd_kafka_options["heartbeat.interval.ms"] = "1000";
+
+    const kafka::utest::Message first_message{
+        .topic = topic,
+        .key = "key-before-fatal",
+        .payload = "payload-before-fatal",
+        .partition = 0,
+    };
+    const kafka::utest::Message second_message{
+        .topic = topic,
+        .key = "key-after-fatal",
+        .payload = "payload-after-fatal",
+        .partition = 0,
+    };
+
+    SendMessages({first_message});
+
+    auto consumer = MakeConsumer("kafka-consumer", {topic}, configuration, params);
+    auto consumer_scope = consumer.MakeConsumerScope();
+
+    std::vector<kafka::utest::Message> received_messages;
+    engine::SingleUseEvent first_message_received;
+    engine::SingleUseEvent second_message_received;
+
+    consumer_scope.Start([&](kafka::MessageBatchView messages) {
+        for (const auto& message : messages) {
+            received_messages.push_back(kafka::utest::Message{
+                message.GetTopic(),
+                std::string{message.GetKey()},
+                std::string{message.GetPayload()},
+                message.GetPartition(),
+            });
+        }
+        if (messages.empty()) {
+            return;
+        }
+        consumer_scope.AsyncCommit();
+
+        if (received_messages.size() == 1) {
+            first_message_received.Send();
+        }
+        if (!received_messages.empty() && received_messages.back().key == second_message.key) {
+            second_message_received.Send();
+        }
+    });
+
+    first_message_received.Wait();
+
+    // Real FENCEING does not occur on the kafka mock cluster during duplication group.instance.id
+    // that's why we're emulating this behavior
+    PushMockRequestError(kHeartbeatApiKey, kFencedInstanceIdError, /*count=*/1);
+    // Heartbeat (1s) → fatal → close → restart delay (100ms) → new ConsumerImpl → JoinGroup → poll
+    engine::SleepFor(std::chrono::milliseconds{2000});
+
+    SendMessages({second_message});
+
+    ASSERT_EQ(
+        second_message_received.WaitUntil(engine::Deadline::FromDuration(utest::kMaxTestWaitTime)),
+        engine::FutureStatus::kReady
+    );
+
+    consumer_scope.Stop();
+
+    ASSERT_GE(received_messages.size(), 2U);
+    EXPECT_EQ(received_messages.front().key, first_message.key);
+    EXPECT_EQ(received_messages.back().key, second_message.key);
 }
 
 UTEST_F(ConsumerTest, HeadersSaveAfterMessageDestroy) {
