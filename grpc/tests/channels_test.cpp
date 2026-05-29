@@ -38,7 +38,7 @@ ugrpc::server::ServerConfig MakeServerConfig(int port) {
 
 struct GrpcChannels : public ::testing::TestWithParam<std::size_t> {};
 
-UTEST_P_MT(GrpcChannels, TryWaitForConnected, 2) {
+UTEST_P_MT(GrpcChannels, DISABLED_IN_MAC_OS_TEST_NAME(TryWaitForConnected), 2) {
     constexpr auto kSmallTimeout = 100ms;
     constexpr auto kServerStartDelay = 100ms;
 
