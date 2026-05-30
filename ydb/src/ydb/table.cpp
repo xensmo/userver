@@ -346,7 +346,7 @@ Transaction TableClient::Begin(utils::StringLiteral transaction_name, Transactio
 }
 
 Transaction TableClient::Begin(utils::StringLiteral transaction_name, OperationSettings settings) {
-    return Begin(DynamicTransactionName{transaction_name.data()}, std::move(settings));
+    return Begin(DynamicTransactionName{transaction_name.c_str()}, std::move(settings));
 }
 
 Transaction TableClient::Begin(DynamicTransactionName transaction_name, OperationSettings settings) {
@@ -486,7 +486,7 @@ ExecuteResponse TableClient::ExecuteQuery(
 }
 
 void TableClient::RetryTx(utils::StringLiteral transaction_name, RetryTxSettings retry_settings, RetryTxFunction fn) {
-    RetryTx(DynamicTransactionName{transaction_name.data()}, std::move(retry_settings), std::move(fn));
+    RetryTx(DynamicTransactionName{transaction_name.c_str()}, std::move(retry_settings), std::move(fn));
 }
 
 void TableClient::RetryTx(DynamicTransactionName transaction_name, RetryTxSettings retry_settings, RetryTxFunction fn) {
