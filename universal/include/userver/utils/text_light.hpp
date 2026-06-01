@@ -15,7 +15,7 @@ namespace utils::text {
 
 /// Return trimmed copy of string.
 [[nodiscard]]
-std::string Trim(const std::string& str);
+std::string Trim(std::string_view str);
 
 /// Trim string in-place.
 [[nodiscard]]

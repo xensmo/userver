@@ -18,7 +18,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace utils::text {
 
-std::string Trim(const std::string& str) { return boost::algorithm::trim_copy(str); }
+std::string Trim(std::string_view str) { return std::string(TrimView(str)); }
 
 std::string Trim(std::string&& str) {
     boost::algorithm::trim(str);

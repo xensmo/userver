@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <exception>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <vector>
 
@@ -150,11 +151,11 @@ using NetworkV6 = NetworkBase<AddressV6>;
 ///@brief Create an IPv4 network from a string containing IP address and prefix
 /// length.
 /// @throw std::invalid_argument, AddressSystemError
-NetworkV4 NetworkV4FromString(const std::string& str);
+NetworkV4 NetworkV4FromString(std::string_view str);
 
 /// @brief Create an IPv6 network from a string containing IP address and prefix
 /// length.
-NetworkV6 NetworkV6FromString(const std::string& str);
+NetworkV6 NetworkV6FromString(std::string_view str);
 
 ///@brief Get the network as an address in dotted decimal format.
 std::string NetworkV4ToString(const NetworkV4& network);

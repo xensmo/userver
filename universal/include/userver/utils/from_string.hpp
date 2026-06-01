@@ -57,7 +57,7 @@ constexpr inline std::string_view ToString(FromStringErrorCode code) noexcept {
 class FromStringException : public std::runtime_error {
 public:
     /// @brief Creates exception for @a code .
-    FromStringException(FromStringErrorCode code, const std::string& what);
+    FromStringException(FromStringErrorCode code, utils::zstring_view what);
 
     /// @brief Returns conversion error code.
     FromStringErrorCode GetCode() const noexcept { return code_; }
