@@ -5,7 +5,9 @@
 #include <userver/formats/json/parser/bool_parser.hpp>
 #include <userver/formats/json/parser/int_parser.hpp>
 #include <userver/formats/json/parser/number_parser.hpp>
+#include <userver/formats/json/parser/parser_json.hpp>
 #include <userver/formats/json/parser/string_parser.hpp>
+#include <userver/formats/json/value.hpp>
 #include <userver/utils/meta.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -27,6 +29,8 @@ formats::json::parser::FloatParser ParserOf(Type<float>);
 formats::json::parser::DoubleParser ParserOf(Type<double>);
 
 formats::json::parser::StringParser ParserOf(Type<std::string>);
+
+formats::json::parser::JsonValueParser ParserOf(Type<formats::json::Value>);
 
 template <typename Array>
 requires(meta::kIsRange<Array> && !meta::kIsMap<Array>)

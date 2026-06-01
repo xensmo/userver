@@ -260,6 +260,20 @@ class Generator:
         else:
             return '::' + name
 
+    def _gen_any_value(
+        self,
+        name: type_name.TypeName,
+        schema: types.AnyValue,
+    ) -> cpp_types.CppType:
+        return cpp_types.CppAnyValue(
+            json_schema=schema,
+            nullable=False,
+            raw_cpp_type=type_name.TypeName(
+                'USERVER_NAMESPACE::formats::json::Value',
+            ),
+            user_cpp_type=None,
+        )
+
     def _gen_boolean(
         self,
         name: type_name.TypeName,
@@ -765,6 +779,7 @@ class Generator:
 
 # pylint: disable=protected-access
 SCHEMA_GENERATORS = {
+    types.AnyValue: Generator._gen_any_value,
     types.Boolean: Generator._gen_boolean,
     types.Integer: Generator._gen_integer,
     types.Number: Generator._gen_number,

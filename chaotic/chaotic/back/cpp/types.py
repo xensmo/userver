@@ -217,6 +217,12 @@ class CppType:
     def need_operator_lshift(self) -> bool:
         return True
 
+    def needs_new_type(self) -> bool:
+        """Returns True when this type introduces a new C++ declaration
+        (struct, enum class). Returns False for types that are resolved
+        entirely via template machinery without emitting a new declaration."""
+        return True
+
 
 def camel_to_snake_case(string: str) -> str:
     parts = string.rsplit('/', 1)
@@ -353,6 +359,33 @@ class CppPrimitiveType(CppType):
     def need_operator_lshift(self) -> bool:
         return False
 
+    def needs_new_type(self) -> bool:
+        return False
+
+
+# any JSON value ({})
+@dataclasses.dataclass
+class CppAnyValue(CppType):
+    __hash__ = CppType.__hash__
+
+    def declaration_includes(self) -> list[str]:
+        return ['userver/formats/json/value.hpp']
+
+    def definition_includes(self) -> list[str]:
+        return []
+
+    def parser_type(self, ns: str, name: str) -> str:
+        return 'USERVER_NAMESPACE::formats::json::Value'
+
+    def need_using_type(self) -> bool:
+        return True
+
+    def need_operator_lshift(self) -> bool:
+        return False
+
+    def needs_new_type(self) -> bool:
+        return False
+
 
 @dataclasses.dataclass
 class CppStringWithFormat(CppType):
@@ -412,6 +445,9 @@ class CppStringWithFormat(CppType):
         return True
 
     def need_operator_lshift(self) -> bool:
+        return False
+
+    def needs_new_type(self) -> bool:
         return False
 
 
@@ -477,6 +513,9 @@ class CppRef(CppType):
         return True
 
     def need_operator_lshift(self) -> bool:
+        return False
+
+    def needs_new_type(self) -> bool:
         return False
 
 
@@ -929,6 +968,9 @@ class CppArray(CppType):
     def need_operator_lshift(self) -> bool:
         return False
 
+    def needs_new_type(self) -> bool:
+        return False
+
 
 def flatten(data: list) -> list:
     return list(itertools.chain.from_iterable(data))
@@ -1028,6 +1070,9 @@ class CppVariant(CppType):
     def need_operator_lshift(self) -> bool:
         return False
 
+    def needs_new_type(self) -> bool:
+        return False
+
 
 @dataclasses.dataclass
 class CppVariantWithDiscriminator(CppType):
@@ -1074,6 +1119,9 @@ class CppVariantWithDiscriminator(CppType):
             return parser_type
 
     def need_operator_lshift(self) -> bool:
+        return False
+
+    def needs_new_type(self) -> bool:
         return False
 
     def is_str_discriminator(self) -> bool:

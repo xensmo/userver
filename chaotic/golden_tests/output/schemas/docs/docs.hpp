@@ -48,8 +48,6 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 void WriteToStream(const ::ns::Circle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
-// CppStringWithFormat
-
 using EntityUuid = std::string;
 
 static constexpr auto kLatitudeMinimum = -90.0;

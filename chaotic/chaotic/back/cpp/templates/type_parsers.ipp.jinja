@@ -44,7 +44,7 @@
                 {%- endfor -%}
                 ;
         };
-    {% elif type.get_py_type() in ('CppPrimitiveType', 'CppStringWithFormat', 'CppArray', 'CppRef', 'CppVariant', 'CppVariantWithDiscriminator', 'CppStructAllOf') %}
+    {% elif not type.needs_new_type() or type.get_py_type() == 'CppStructAllOf' %}
         {# No new type #}
     {% else %}
         {{ NOT_IMPLEMENTED(type) }}
@@ -99,7 +99,7 @@
             {% endif %}
             return res;
         }
-    {% elif type.get_py_type() in ('CppPrimitiveType', 'CppStringWithFormat', 'CppArray', 'CppRef', 'CppVariant', 'CppVariant', 'CppVariantWithDiscriminator') %}
+    {% elif not type.needs_new_type() %}
         {# No new type #}
     {% elif type.get_py_type() == 'CppIntEnum' %}
         template <{{ userver }}::formats::common::IsFormatValue Value>

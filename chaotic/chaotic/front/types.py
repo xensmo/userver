@@ -102,6 +102,12 @@ class Schema(base_model.BaseModel):
 _NOT_IMPL = Schema()
 
 
+class AnyValue(Schema):
+    """Represents a JSON schema with no type constraint — any JSON value."""
+
+    __hash__ = Schema.__hash__
+
+
 class Ref(Schema):
     ref: str  # type: ignore
     indirect: bool

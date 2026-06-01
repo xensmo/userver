@@ -132,8 +132,13 @@ class SchemaParser:
             return self._parse_allof(input__['allOf'], input__)
         elif 'oneOf' in input__:
             return self._parse_oneof(input__['oneOf'], input__)
+        elif _is_empty_schema(input__):
+            return self._parse_any_value(input__)
         else:
             self._raise('"type" is missing')
+
+    def _parse_any_value(self, input_: dict) -> types.AnyValue:
+        return types.AnyValue(**input_)
 
     def _parse_allof(self, variants: list, input__: dict) -> types.AllOf:
         fields = input__.copy()
@@ -458,6 +463,22 @@ class SchemaParser:
     def parsed_schemas(self) -> types.ParsedSchemas:
         assert self._state
         return types.ParsedSchemas(self._state.schemas)
+
+
+# Keys that are allowed in a structurally empty ("any value") schema.
+# A schema is considered empty if it contains only metadata fields and x- extensions.
+_ANY_VALUE_ALLOWED_KEYS = frozenset({'title', 'description', 'example'})
+
+
+def _is_empty_schema(input_: dict) -> bool:
+    """Returns True iff the schema has no structural type constraints."""
+    for key in input_:
+        if key in _ANY_VALUE_ALLOWED_KEYS:
+            continue
+        if key.startswith('x-'):
+            continue
+        return False
+    return True
 
 
 # pylint: disable=protected-access

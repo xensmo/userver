@@ -50,8 +50,6 @@
         };
     {% elif type.get_py_type() == 'CppPrimitiveType' %}
         {{ generate_validators_data_declaration(type) }}
-    {% elif type.get_py_type() == 'CppRef' %}
-        {# nothing #}
     {% elif type.get_py_type() == 'CppIntEnum' %}
         enum class {{ type.cpp_local_name() }} {
         {%- for item in type.enums %}
@@ -156,8 +154,10 @@
                 {%- if not loop.last %} , {% endif -%}
             {%- endfor -%}
         >;
+    {% elif not type.needs_new_type() %}
+        {# No new type #}
     {% else %}
-        // {{ type.get_py_type() }}
+        {{ NOT_IMPLEMENTED(type) }}
     {% endif %}
 {% endmacro %}
 
