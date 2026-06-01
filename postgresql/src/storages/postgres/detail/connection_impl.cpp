@@ -494,7 +494,9 @@ void ConnectionImpl::Commit() {
     ExecuteCommandNoPrepare("COMMIT", MakeCurrentDeadline());
 }
 
-void ConnectionImpl::Rollback() {
+void ConnectionImpl::Rollback() { Rollback(std::nullopt); }
+
+void ConnectionImpl::Rollback(std::optional<engine::Deadline> deadline) {
     const ScopeGuard guard([this]() { in_transaction_ = IsInTransaction(); });
 
     if (!IsInTransaction()) {
@@ -510,7 +512,7 @@ void ConnectionImpl::Rollback() {
     if (GetConnectionState() != ConnectionState::kTranActive ||
         (IsPipelineActive() && !conn_wrapper_.IsSyncingPipeline()))
     {
-        ExecuteCommandNoPrepare("ROLLBACK", MakeCurrentDeadline());
+        ExecuteCommandNoPrepare("ROLLBACK", deadline ? *deadline : MakeCurrentDeadline());
     } else {
         LOG_DEBUG()
             << "Attempt to rollback transaction on a busy connection. "
@@ -698,7 +700,7 @@ bool ConnectionImpl::Cleanup(TimeoutDuration timeout) {
         conn_wrapper_.EnterPipelineMode();
     }
     if (state > ConnectionState::kIdle) {
-        Rollback();
+        Rollback(deadline);
     }
     return GetConnectionState() == ConnectionState::kIdle;
 }
@@ -906,7 +908,8 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::DoPrepareStatement(
             // it. This situation might happen when `SendPrepare` times out and we
             // erase the statement from `prepared_` map.
             LOG_DEBUG()
-                << "Statement was already prepared, there was possibly a timeout while preparing, see log "
+                << "Statement was already prepared, there was possibly a "
+                   "timeout while preparing, see log "
                    "above.";
             ++stats_.duplicate_prepared_statements;
 
@@ -1251,7 +1254,9 @@ ResultSet ConnectionImpl::WaitResult(
     } catch (const FeatureNotSupported& e) {
         // yes, this is the only way to discern this error
         if (e.GetServerMessage().GetPrimary() == kBadCachedPlanErrorMessage) {
-            LOG_LIMITED_WARNING() << "Scheduling prepared statements invalidation due to cached plan change";
+            LOG_LIMITED_WARNING()
+                << "Scheduling prepared statements invalidation "
+                   "due to cached plan change";
             is_discard_prepared_pending_ = true;
         }
         span.AddTag(tracing::kErrorFlag, true);
