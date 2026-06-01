@@ -54,7 +54,7 @@ bool RequestAsyncCall(
     AsyncService& async_service,
     int method_id,
     typename CallTraits::RawContext& server_context,
-    typename CallTraits::InitialRequest& initial_request,
+    typename CallTraits::SerializedInitialRequest& serialized_initial_request,
     typename CallTraits::RawResponder& stream,
     grpc::ServerCompletionQueue& cq
 ) {
@@ -64,7 +64,16 @@ bool RequestAsyncCall(
 
     if constexpr (!std::is_same_v<ugrpc::impl::AsyncGenericService, AsyncService>) {
         if constexpr (IsSingleRequestMethod(CallTraits::kRpcType)) {
-            RequestAsyncCall(async_service, method_id, &server_context, &initial_request, &stream, &cq, &cq, tag);
+            RequestAsyncCall(
+                async_service,
+                method_id,
+                &server_context,
+                &serialized_initial_request,
+                &stream,
+                &cq,
+                &cq,
+                tag
+            );
         } else {
             RequestAsyncCall(async_service, method_id, &server_context, &stream, &cq, &cq, tag);
         }
@@ -152,11 +161,11 @@ struct CallData final : public boost::intrusive_ref_counter<CallData<CallTraits>
     };
 
     using ServerContext = typename CallTraits::RawContext;
-    using InitialRequest = typename CallTraits::InitialRequest;
+    using SerializedInitialRequest = typename CallTraits::SerializedInitialRequest;
     using Responder = typename CallTraits::RawResponder;
 
     ServerContext server_context;
-    InitialRequest initial_request{};
+    SerializedInitialRequest serialized_initial_request{};
     Responder responder{&server_context};
 
     engine::TaskCancellationToken cancellation_token{engine::current_task::GetCancellationToken()};
@@ -227,7 +236,7 @@ private:
                 method_data_.service_data.internals.status_codes_log_level,
             },
             calld_->responder,
-            calld_->initial_request,
+            calld_->serialized_initial_request,
             method_data_.service,
             method_data_.service_method,
         };
@@ -301,7 +310,7 @@ private:
             method_data_.service_data.async_service,
             method_data_.method_id,
             calld->server_context,
-            calld->initial_request,
+            calld->serialized_initial_request,
             calld->responder,
             cq
         );
