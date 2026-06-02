@@ -220,7 +220,8 @@ public:
 
     void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>& awaiter, std::uintptr_t context) override;
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override;
 
     std::exception_ptr GetErrorResult() const noexcept override;
 
@@ -447,8 +448,11 @@ void TlsWrapper::ReadContextAccessor::TryAppendAwaiter(
     GetSocketContextAccessor().TryAppendAwaiter(awaiter, context);
 }
 
-void TlsWrapper::ReadContextAccessor::RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept {
-    GetSocketContextAccessor().RemoveAwaiter(awaiter, context);
+boost::intrusive_ptr<engine::impl::Awaiter> TlsWrapper::ReadContextAccessor::RemoveAwaiter(
+    engine::impl::Awaiter& awaiter,
+    std::uintptr_t context
+) noexcept {
+    return GetSocketContextAccessor().RemoveAwaiter(awaiter, context);
 }
 
 std::exception_ptr TlsWrapper::ReadContextAccessor::GetErrorResult() const noexcept {

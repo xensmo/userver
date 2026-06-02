@@ -38,7 +38,10 @@ public:
 
     void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>&, std::uintptr_t) override { is_ready_ = true; }
 
-    void RemoveAwaiter(engine::impl::Awaiter&, std::uintptr_t) noexcept override {}
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter&, std::uintptr_t)
+        noexcept override {
+        return {};
+    }
 
 private:
     bool is_ready_{false};

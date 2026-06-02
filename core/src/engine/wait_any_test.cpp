@@ -51,14 +51,15 @@ public:
         context_ = context;
     }
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override {
         UINVARIANT(context_ == context, "Context does not match");
 
         if (awaiter_ == nullptr) {
-            return;
+            return {};
         }
         UINVARIANT(awaiter_.get() == &awaiter, "Awaiter does not match");
-        awaiter_ = nullptr;
+        return std::move(awaiter_);
     }
 
 private:

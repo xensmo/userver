@@ -80,8 +80,9 @@ void SingleUseEvent::TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& await
     awaiters_->GetSignalOrAppend(awaiter, context);
 }
 
-void SingleUseEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept {
-    awaiters_->Remove(awaiter, context);
+boost::intrusive_ptr<impl::Awaiter> SingleUseEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context)
+    noexcept {
+    return awaiters_->Remove(awaiter, context);
 }
 
 }  // namespace engine

@@ -57,8 +57,8 @@ void FutureStateBase::TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, s
     finish_awaiters_->GetSignalOrAppend(awaiter, context);
 }
 
-void FutureStateBase::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
-    finish_awaiters_->Remove(awaiter, context);
+boost::intrusive_ptr<Awaiter> FutureStateBase::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    return finish_awaiters_->Remove(awaiter, context);
 }
 
 }  // namespace engine::impl

@@ -65,16 +65,17 @@ void WaitList::NotifyAll(Lock& lock) {
     }
 }
 
-void WaitList::Remove(Lock& lock, impl::Awaiter& awaiter, std::uintptr_t) noexcept {
+boost::intrusive_ptr<impl::Awaiter> WaitList::Remove(Lock& lock, impl::Awaiter& awaiter, std::uintptr_t) noexcept {
     UASSERT(lock);
     if (!awaiter.wait_list_data_.is_linked()) {
-        return;
+        return {};
     }
 
-    const boost::intrusive_ptr<impl::Awaiter> holder(&awaiter, kAdopt);
+    boost::intrusive_ptr<impl::Awaiter> holder(&awaiter, kAdopt);
     UASSERT_MSG(IsInIntrusiveContainer(awaiters_, awaiter), "awaiter belongs to other list");
 
     awaiter.wait_list_data_.unlink();
+    return holder;
 }
 
 }  // namespace engine::impl

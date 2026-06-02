@@ -608,8 +608,8 @@ void TaskContext::TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::
     finish_awaiters_->GetSignalOrAppend(awaiter, context);
 }
 
-void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
-    finish_awaiters_->Remove(awaiter, context);
+boost::intrusive_ptr<Awaiter> TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    return finish_awaiters_->Remove(awaiter, context);
 }
 
 std::exception_ptr TaskContext::GetErrorResult() const noexcept {

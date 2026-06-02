@@ -75,9 +75,10 @@ void MultiConsumerEvent::TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& a
     awaiters_->Append(lock, std::move(awaiter), context);
 }
 
-void MultiConsumerEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept {
+boost::intrusive_ptr<impl::Awaiter> MultiConsumerEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context)
+    noexcept {
     impl::WaitList::Lock lock(*awaiters_);
-    awaiters_->Remove(lock, awaiter, context);
+    return awaiters_->Remove(lock, awaiter, context);
 }
 
 }  // namespace engine

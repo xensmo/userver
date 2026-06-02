@@ -122,10 +122,12 @@ public:
         }
     }
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {
-        awaiters_.Remove(awaiter, context);
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override {
+        auto removed_awaiter = awaiters_.Remove(awaiter, context);
         // we need to stop watcher manually to avoid racy wakeups later
         watcher_.StopAsync();
+        return removed_awaiter;
     }
 
 private:
