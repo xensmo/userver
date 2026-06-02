@@ -461,11 +461,11 @@ std::optional<std::string_view> Span::GetSpanIdForChildLogs() const { return pim
 
 std::string_view Span::GetName() const { return pimpl_->GetName(); }
 
-ScopeTime::Duration Span::GetTotalDuration(const std::string& scope_name) const {
+ScopeTime::Duration Span::GetTotalDuration(std::string_view scope_name) const {
     return pimpl_->GetTimeStorage().DurationTotal(scope_name);
 }
 
-ScopeTime::DurationMillis Span::GetTotalElapsedTime(const std::string& scope_name) const {
+ScopeTime::DurationMillis Span::GetTotalElapsedTime(std::string_view scope_name) const {
     return std::chrono::duration_cast<ScopeTime::DurationMillis>(GetTotalDuration(scope_name));
 }
 

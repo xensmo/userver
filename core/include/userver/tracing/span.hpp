@@ -147,13 +147,13 @@ public:
 
     /// Returns total time elapsed for a certain scope of this span.
     /// If there is no record for the scope, returns 0.
-    ScopeTime::Duration GetTotalDuration(const std::string& scope_name) const;
+    ScopeTime::Duration GetTotalDuration(std::string_view scope_name) const;
 
     /// Returns total time elapsed for a certain scope of this span.
     /// If there is no record for the scope, returns 0.
     ///
     /// Prefer using Span::GetTotalDuration()
-    ScopeTime::DurationMillis GetTotalElapsedTime(const std::string& scope_name) const;
+    ScopeTime::DurationMillis GetTotalElapsedTime(std::string_view scope_name) const;
 
     /// Add a tag that is used on each logging in this Span and all
     /// future children.
