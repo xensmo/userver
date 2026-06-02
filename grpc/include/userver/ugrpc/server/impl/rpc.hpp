@@ -3,7 +3,6 @@
 #include <type_traits>
 
 #include <google/protobuf/message.h>
-#include <grpcpp/impl/proto_utils.h>
 #include <grpcpp/support/byte_buffer.h>
 
 #include <userver/engine/single_waiting_task_mutex.hpp>
