@@ -140,11 +140,12 @@ Span::Impl::Impl(
     if (parent) {
         log_extra_inheritable_ = parent->log_extra_inheritable_;
         local_log_level_ = parent->local_log_level_;
+        is_sampled_ = parent->is_sampled_;
     }
 }
 
 Span::Impl::~Impl() {
-    if (!ShouldLog()) {
+    if (!ShouldLog() || !is_sampled_) {
         return;
     }
 
@@ -434,6 +435,10 @@ void Span::SetLink(std::string_view link) { pimpl_->SetLink(link); }
 void Span::SetParentLink(std::string_view parent_link) { pimpl_->SetParentLink(parent_link); }
 
 bool Span::ShouldLogDefault() const noexcept { return pimpl_->ShouldLog(); }
+
+bool Span::IsSampled() const noexcept { return pimpl_->is_sampled_; }
+
+void Span::SetSampled(const bool sampled) noexcept { pimpl_->is_sampled_ = sampled; }
 
 void Span::DetachFromCoroStack() {
     if (pimpl_) {

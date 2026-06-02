@@ -31,6 +31,10 @@ public:
     void AddTagFrozen(std::string key, logging::LogExtra::Value value);
     void AddNonInheritableTag(std::string key, logging::LogExtra::Value value);
 
+    void SetLocalLogLevel(logging::Level log_level);
+
+    void SetSampled(bool sampled);
+
     Span Build() &&;
     Span BuildDetachedFromCoroStack() &&;
 

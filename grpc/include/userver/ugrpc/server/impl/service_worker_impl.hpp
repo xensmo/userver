@@ -234,6 +234,7 @@ private:
                 method_data_.service_data.internals.middlewares,
                 method_data_.service_data.internals.config_source,
                 method_data_.service_data.internals.status_codes_log_level,
+                method_data_.service_data.internals.otel_trace_sampling_enabled,
             },
             calld_->responder,
             calld_->serialized_initial_request,

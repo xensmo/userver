@@ -1,6 +1,8 @@
 import pytest
 
-pytest_plugins = ['pytest_userver.plugins.core']
+import samples.greeter_pb2_grpc as greeter_services
+
+pytest_plugins = ['pytest_userver.plugins.grpc']
 
 USERVER_CONFIG_HOOKS = ['config_echo_url']
 
@@ -9,11 +11,16 @@ USERVER_CONFIG_HOOKS = ['config_echo_url']
 def config_echo_url(mockserver_info):
     def _do_patch(config_yaml, config_vars):
         components = config_yaml['components_manager']['components']
-        components['handler-echo-no-body']['echo-url'] = mockserver_info.url(
+        components['greeter-service']['echo-url'] = mockserver_info.url(
             '/test-service/echo-no-body',
         )
 
     return _do_patch
+
+
+@pytest.fixture
+def grpc_client(grpc_channel):
+    return greeter_services.GreeterServiceStub(grpc_channel)
 
 
 @pytest.fixture(scope='session')
@@ -24,10 +31,3 @@ def disable_otel_trace_sampling():
         )
 
     return _do_patch
-
-
-# Overriding userver fixture
-@pytest.fixture(name='userver_service_client_options')
-def _userver_service_client_options(userver_service_client_options):
-    userver_service_client_options['headers'] = {}
-    return userver_service_client_options

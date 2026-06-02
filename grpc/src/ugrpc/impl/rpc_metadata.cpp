@@ -15,6 +15,7 @@ const grpc::string kXYaRequestId = "x-yarequestid";
 const grpc::string kXBaggage = "baggage";
 
 const grpc::string kTraceParent = "traceparent";
+const grpc::string kTraceState = "tracestate";
 
 const grpc::string kXYaTaxiRatelimitedBy = "x-yataxi-ratelimited-by";
 const grpc::string kXYaTaxiRatelimitReason = "x-yataxi-ratelimit-reason";
