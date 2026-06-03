@@ -688,7 +688,7 @@ UTEST_F(RedisClientTest, Pexpire) {
 
     client->Set("key", "Hello", {}).Get();
     EXPECT_EQ(
-        client->Pexpire("key", std::chrono::milliseconds{1999}, {}).Get(),
+        client->Pexpire("key", std::chrono::milliseconds{1999}, kMasterCC).Get(),
         storages::redis::ExpireReply::kTimeoutWasSet
     );
     EXPECT_EQ(client->Ttl("key", kMasterCC).Get().GetExpire().count(), 2);
