@@ -387,6 +387,54 @@ class CppAnyValue(CppType):
 
 
 @dataclasses.dataclass
+class CppConstType(CppType):
+    const_value: str | int | bool
+    # C++ raw type, e.g. 'std::string', 'int', 'std::int32_t', 'std::int64_t', 'bool'
+    cpp_type: str
+    prefix: str
+    namespace: str
+
+    __hash__ = CppType.__hash__
+
+    def const_declaration_type(self) -> str:
+        if self.cpp_type == 'std::string':
+            return 'USERVER_NAMESPACE::utils::StringLiteral'
+        # int32_t, int64_t, bool, int
+        return self.cpp_type
+
+    def get_const_value(self) -> str:
+        if self.cpp_type == 'std::string':
+            return f'R"--({self.const_value})--"'
+        if self.cpp_type == 'bool':
+            return 'true' if self.const_value else 'false'
+        return str(self.const_value)
+
+    def declaration_includes(self) -> list[str]:
+        includes = ['userver/chaotic/const_value.hpp']
+        if self.cpp_type == 'std::string':
+            includes.append('userver/utils/string_literal.hpp')
+        elif self.cpp_type in ('std::int32_t', 'std::int64_t'):
+            includes.append('cstdint')
+        return includes
+
+    def definition_includes(self) -> list[str]:
+        return ['userver/chaotic/const_value.hpp']
+
+    def parser_type(self, ns: str, name: str) -> str:
+        parser_type = f'USERVER_NAMESPACE::chaotic::ConstValue<{self.namespace}::k{self.prefix}Const>'
+        return parser_type
+
+    def need_using_type(self) -> bool:
+        return False
+
+    def need_operator_lshift(self) -> bool:
+        return False
+
+    def needs_new_type(self) -> bool:
+        return False
+
+
+@dataclasses.dataclass
 class CppStringWithFormat(CppType):
     default: Any = None
     format_cpp_type: str = ''

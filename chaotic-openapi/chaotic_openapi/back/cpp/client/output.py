@@ -67,6 +67,7 @@ def _get_template_includes(
             'userver/components/component_context.hpp',
             'userver/components/component_base.hpp',
             'userver/yaml_config/merge_schemas.hpp',
+            'unordered_set',
         ],
         'client_impl.hpp': [
             f'clients/{client_name}/client.hpp',

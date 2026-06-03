@@ -50,6 +50,13 @@
         };
     {% elif type.get_py_type() == 'CppPrimitiveType' %}
         {{ generate_validators_data_declaration(type) }}
+    {% elif type.get_py_type() == 'CppConstType' %}
+        inline constexpr {{ type.const_declaration_type() }} k{{ type.prefix }}Const =
+            {{ type.get_const_value() }};
+
+        using {{ type.prefix }} = USERVER_NAMESPACE::chaotic::ConstValue<k{{ type.prefix }}Const>;
+    {% elif type.get_py_type() == 'CppRef' %}
+        {# nothing #}
     {% elif type.get_py_type() == 'CppIntEnum' %}
         enum class {{ type.cpp_local_name() }} {
         {%- for item in type.enums %}

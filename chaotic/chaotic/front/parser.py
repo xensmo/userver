@@ -4,6 +4,7 @@ import contextlib
 import dataclasses
 import os
 import re
+import typing
 from typing import Any
 from typing import NoReturn
 
@@ -134,6 +135,8 @@ class SchemaParser:
             return self._parse_oneof(input__['oneOf'], input__)
         elif _is_empty_schema(input__):
             return self._parse_any_value(input__)
+        elif 'const' in input__:
+            return self._parse_const(input__)
         else:
             self._raise('"type" is missing')
 
@@ -361,10 +364,36 @@ class SchemaParser:
         )
         return obj
 
-    def _parse_boolean(self, input_: dict) -> types.Boolean:
+    def _parse_boolean(self, input_: dict) -> types.Boolean | types.ConstSchema:
+        if 'const' in input_:
+            return self._parse_typed_const(
+                input_,
+                types.ConstType.BOOLEAN,
+                bool,
+                'boolean',
+            )
         return types.Boolean(**input_)
 
-    def _parse_int(self, input_: dict) -> types.Integer:
+    def _parse_int(self, input_: dict) -> types.Integer | types.ConstSchema:
+        if 'const' in input_:
+            format_str = input_.get('format')
+            if format_str == 'int32':
+                const_type = types.ConstType.INTEGER32
+            elif format_str == 'int64':
+                const_type = types.ConstType.INTEGER64
+            else:
+                const_type = types.ConstType.INTEGER
+            # bool is a subtype of int in Python — reject boolean const values
+            value = input_['const']
+            if isinstance(value, bool):
+                with self._path_enter('const') as _:
+                    self._raise('const value must be an integer, got boolean')
+            return self._parse_typed_const(
+                input_,
+                const_type,
+                int,
+                'integer',
+            )
         fields = input_.copy()
         format_str = fields.pop('format', None)
 
@@ -381,7 +410,14 @@ class SchemaParser:
             self._raise(f'Unknown "format" ({number.format})')
         return number
 
-    def _parse_string(self, input_: dict) -> types.String:
+    def _parse_string(self, input_: dict) -> types.String | types.ConstSchema:
+        if 'const' in input_:
+            return self._parse_typed_const(
+                input_,
+                types.ConstType.STRING,
+                str,
+                'string',
+            )
         fields = input_.copy()
         format_str = fields.pop('format', None)
         fmt: types.StringFormat | None
@@ -391,7 +427,48 @@ class SchemaParser:
             fmt = None
         return types.String(**fields, format=fmt)
 
-    def _parse_file(self, input_: dict) -> types.String:
+    def _parse_const(self, input_: dict) -> types.ConstSchema:
+        try:
+            value = types.CONST_TYPE_ADAPTER.validate_python(input_['const'])
+        except pydantic.ValidationError:
+            with self._path_enter('const') as _:
+                self._raise(
+                    f'Unsupported const value type ({type(input_["const"]).__name__}), '
+                    'only string, integer, and boolean are supported',
+                )
+        const_type = types.CONST_PYTHON_TYPE_TO_TYPE[type(value)]
+        extra = {k: v for k, v in input_.items() if k != 'const'}
+        return types.ConstSchema(const=value, const_type=const_type, **extra)
+
+    def _parse_typed_const(
+        self,
+        input_: dict,
+        expected_const_type: types.ConstType,
+        expected_python_type: type,
+        type_name: str,
+    ) -> types.ConstSchema:
+        value = input_['const']
+        if not isinstance(value, expected_python_type):
+            with self._path_enter('const') as _:
+                self._raise(
+                    f'const value must be a {type_name}, got {type(value).__name__}',
+                )
+        value = typing.cast(types.ConstValue, value)
+        allowed_fields = types.ConstSchema.allowed_input_fields()
+        unsupported = {field for field in input_ if field not in allowed_fields and not field.startswith('x-')}
+        if unsupported:
+            with self._path_enter('const') as _:
+                self._raise(
+                    f'"const" cannot be combined with: {sorted(unsupported)}',
+                )
+        extra = {k: v for k, v in input_.items() if k not in ('const', 'type', 'format')}
+        return types.ConstSchema(
+            const=value,
+            const_type=expected_const_type,
+            **extra,
+        )
+
+    def _parse_file(self, input_: dict) -> types.String | types.ConstSchema:
         if not self._config.allow_file:
             with self._path_enter('type') as _:
                 self._raise('"file" type is not allowed')

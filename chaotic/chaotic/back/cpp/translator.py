@@ -762,6 +762,23 @@ class Generator:
             strict_parsing=strict_parsing,
         )
 
+    def _gen_const(
+        self,
+        name: type_name.TypeName,
+        schema: types.ConstSchema,
+    ) -> cpp_types.CppType:
+        cpp_type = types.CONST_TYPE_TO_CPP[schema.const_type]
+        return cpp_types.CppConstType(
+            json_schema=schema,
+            nullable=False,
+            raw_cpp_type=name,
+            user_cpp_type=None,
+            const_value=schema.const,
+            cpp_type=cpp_type,
+            prefix=name.in_local_scope(),
+            namespace=name.namespace(),
+        )
+
     def _gen_ref(
         self,
         name: type_name.TypeName,
@@ -793,6 +810,7 @@ SCHEMA_GENERATORS = {
     types.Integer: Generator._gen_integer,
     types.Number: Generator._gen_number,
     types.String: Generator._gen_string,
+    types.ConstSchema: Generator._gen_const,
     types.SchemaObject: Generator._gen_object,
     types.Array: Generator._gen_array,
     types.Ref: Generator._gen_ref,
