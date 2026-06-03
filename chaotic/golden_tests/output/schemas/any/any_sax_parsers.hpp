@@ -17,7 +17,7 @@ namespace ns {
     USERVER_NAMESPACE::chaotic::Field<::ns::WithAnyField,
                                       USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::formats::json::Value>,
                                       &::ns::WithAnyField::payload, ::ns::WithAnyField::kFieldNamepayload>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::WithAnyField>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<WithAnyField>);
 
 }  // namespace ns
 

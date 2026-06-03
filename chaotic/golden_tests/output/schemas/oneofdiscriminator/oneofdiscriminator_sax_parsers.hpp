@@ -21,7 +21,7 @@ namespace ns {
         &::ns::A::type, ::ns::A::kFieldNametype>,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::A, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<int>>, &::ns::A::a_prop,
-        ::ns::A::kFieldNamea_prop>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::A>);
+        ::ns::A::kFieldNamea_prop>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<A>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::B, USERVER_NAMESPACE::chaotic::UnknownFields::StoreJson,
@@ -30,19 +30,19 @@ namespace ns {
         &::ns::B::type, ::ns::B::kFieldNametype>,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::B, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<int>>, &::ns::B::b_prop,
-        ::ns::B::kFieldNameb_prop>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::B>);
+        ::ns::B::kFieldNameb_prop>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<B>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::C, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::C, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<int>>, &::ns::C::version,
-        ::ns::C::kFieldNameversion>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::C>);
+        ::ns::C::kFieldNameversion>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<C>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::D, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::D, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<int>>, &::ns::D::version,
-        ::ns::D::kFieldNameversion>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::D>);
+        ::ns::D::kFieldNameversion>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<D>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::IntegerOneOfDiscriminator, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -52,7 +52,7 @@ namespace ns {
             &::ns::IntegerOneOfDiscriminator::kFoo_Settings, USERVER_NAMESPACE::chaotic::Primitive<::ns::C>,
             USERVER_NAMESPACE::chaotic::Primitive<::ns::D>>>,
         &::ns::IntegerOneOfDiscriminator::foo, ::ns::IntegerOneOfDiscriminator::kFieldNamefoo>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::IntegerOneOfDiscriminator>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<IntegerOneOfDiscriminator>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::OneOfDiscriminator, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -62,7 +62,7 @@ namespace ns {
             &::ns::OneOfDiscriminator::kFoo_Settings, USERVER_NAMESPACE::chaotic::Primitive<::ns::A>,
             USERVER_NAMESPACE::chaotic::Primitive<::ns::B>>>,
         &::ns::OneOfDiscriminator::foo, ::ns::OneOfDiscriminator::kFieldNamefoo>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::OneOfDiscriminator>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<OneOfDiscriminator>);
 
 }  // namespace ns
 

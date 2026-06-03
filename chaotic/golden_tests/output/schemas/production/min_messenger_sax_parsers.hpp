@@ -30,7 +30,7 @@ namespace ns {
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::V1CurrentUser, USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<std::string>>,
         &::ns::V1CurrentUser::name, ::ns::V1CurrentUser::kFieldNamename>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1CurrentUser>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1CurrentUser>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelMessage, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -50,7 +50,7 @@ namespace ns {
                                       USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<
                                           std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>,
                                       &::ns::V1ChannelMessage::message, ::ns::V1ChannelMessage::kFieldNamemessage>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelMessage>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelMessage>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelMessageByTimestampRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -67,7 +67,7 @@ namespace ns {
         ::ns::V1ChannelMessageByTimestampRequest,
         USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>,
         &::ns::V1ChannelMessageByTimestampRequest::to, ::ns::V1ChannelMessageByTimestampRequest::kFieldNameto>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelMessageByTimestampRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelMessageByTimestampRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelMessageByTimestampResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -77,7 +77,7 @@ namespace ns {
             USERVER_NAMESPACE::chaotic::Primitive<::ns::V1ChannelMessage>, std::vector<::ns::V1ChannelMessage>>>,
         &::ns::V1ChannelMessageByTimestampResponse::messages,
         ::ns::V1ChannelMessageByTimestampResponse::kFieldNamemessages>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelMessageByTimestampResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelMessageByTimestampResponse>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelMessageNewRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -94,7 +94,7 @@ namespace ns {
         USERVER_NAMESPACE::chaotic::Required<
             USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>,
         &::ns::V1ChannelMessageNewRequest::message, ::ns::V1ChannelMessageNewRequest::kFieldNamemessage>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelMessageNewRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelMessageNewRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelMessageNewResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -102,7 +102,7 @@ namespace ns {
         ::ns::V1ChannelMessageNewResponse,
         USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>,
         &::ns::V1ChannelMessageNewResponse::message_id, ::ns::V1ChannelMessageNewResponse::kFieldNamemessage_id>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelMessageNewResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelMessageNewResponse>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelNotificationListRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -116,7 +116,7 @@ namespace ns {
         USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>,
         &::ns::V1ChannelNotificationListRequest::channel_id,
         ::ns::V1ChannelNotificationListRequest::kFieldNamechannel_id>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelNotificationListRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelNotificationListRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelNotificationListResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -126,7 +126,7 @@ namespace ns {
             USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>, std::vector<std::int64_t>>>,
         &::ns::V1ChannelNotificationListResponse::notifications,
         ::ns::V1ChannelNotificationListResponse::kFieldNamenotifications>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelNotificationListResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelNotificationListResponse>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelNotificationNewRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -150,15 +150,15 @@ namespace ns {
                                           std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>,
                                       &::ns::V1ChannelNotificationNewRequest::other_user_login,
                                       ::ns::V1ChannelNotificationNewRequest::kFieldNameother_user_login>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelNotificationNewRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelNotificationNewRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1ChannelNotificationNewResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1ChannelNotificationNewResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1ChannelNotificationNewResponse>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<
     USERVER_NAMESPACE::chaotic::Object<::ns::V1Error::Details, USERVER_NAMESPACE::chaotic::UnknownFields::StoreJson>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1Error::Details>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1Error::Details>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1Error, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -172,7 +172,7 @@ namespace ns {
         ::ns::V1Error,
         USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1Error::Details>>,
         &::ns::V1Error::details, ::ns::V1Error::kFieldNamedetails>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1Error>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1Error>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1File, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -188,7 +188,7 @@ namespace ns {
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::V1File, USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<std::string>>,
         &::ns::V1File::content, ::ns::V1File::kFieldNamecontent>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1File>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1File>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1FileByUriRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -200,7 +200,7 @@ namespace ns {
                                       USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<
                                           std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>,
                                       &::ns::V1FileByUriRequest::uri, ::ns::V1FileByUriRequest::kFieldNameuri>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1FileByUriRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1FileByUriRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1FileNewResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -212,7 +212,7 @@ namespace ns {
                                       USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<
                                           std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>,
                                       &::ns::V1FileNewResponse::uri, ::ns::V1FileNewResponse::kFieldNameuri>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1FileNewResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1FileNewResponse>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1LikeTriggerRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -238,7 +238,7 @@ namespace ns {
                                           USERVER_NAMESPACE::chaotic::Primitive<::ns::V1LikeTriggerRequest::Animation>>,
                                       &::ns::V1LikeTriggerRequest::animation,
                                       ::ns::V1LikeTriggerRequest::kFieldNameanimation>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1LikeTriggerRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1LikeTriggerRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1UserAuthorizationRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -252,7 +252,7 @@ namespace ns {
         USERVER_NAMESPACE::chaotic::Required<
             USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>>,
         &::ns::V1UserAuthorizationRequest::password, ::ns::V1UserAuthorizationRequest::kFieldNamepassword>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserAuthorizationRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserAuthorizationRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1UserAuthorizationResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -260,7 +260,7 @@ namespace ns {
         ::ns::V1UserAuthorizationResponse,
         USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>,
         &::ns::V1UserAuthorizationResponse::current_user, ::ns::V1UserAuthorizationResponse::kFieldNamecurrent_user>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserAuthorizationResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserAuthorizationResponse>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1UserRegistrationRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -289,11 +289,11 @@ namespace ns {
         USERVER_NAMESPACE::chaotic::Required<
             USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>>,
         &::ns::V1UserRegistrationRequest::password, ::ns::V1UserRegistrationRequest::kFieldNamepassword>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserRegistrationRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserRegistrationRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<
     USERVER_NAMESPACE::chaotic::Object<::ns::V1UserStatus, USERVER_NAMESPACE::chaotic::UnknownFields::StoreJson>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserStatus>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserStatus>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1UserStatusByLoginRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -306,7 +306,7 @@ namespace ns {
         USERVER_NAMESPACE::chaotic::Required<
             USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>,
         &::ns::V1UserStatusByLoginRequest::login, ::ns::V1UserStatusByLoginRequest::kFieldNamelogin>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserStatusByLoginRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserStatusByLoginRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1UserStatusByLoginResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -314,7 +314,7 @@ namespace ns {
         ::ns::V1UserStatusByLoginResponse,
         USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>>,
         &::ns::V1UserStatusByLoginResponse::status, ::ns::V1UserStatusByLoginResponse::kFieldNamestatus>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserStatusByLoginResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserStatusByLoginResponse>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1UserStatusUpdateRequest, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -326,11 +326,11 @@ namespace ns {
         ::ns::V1UserStatusUpdateRequest,
         USERVER_NAMESPACE::chaotic::Required<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>>,
         &::ns::V1UserStatusUpdateRequest::status, ::ns::V1UserStatusUpdateRequest::kFieldNamestatus>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserStatusUpdateRequest>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserStatusUpdateRequest>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::V1UserStatusUpdateResponse, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::V1UserStatusUpdateResponse>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<V1UserStatusUpdateResponse>);
 
 }  // namespace ns
 

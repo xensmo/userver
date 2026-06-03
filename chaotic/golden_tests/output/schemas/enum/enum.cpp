@@ -87,7 +87,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::Enum::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw) {
+void WriteToStream([[maybe_unused]] const Enum::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw) {
   const auto result = k__ns__Enum__Foo_Mapping.TryFindByFirst(value);
   if (result.has_value()) {
     WriteToStream(*result, sw);
@@ -96,7 +96,7 @@ void WriteToStream([[maybe_unused]] const ::ns::Enum::Foo& value, USERVER_NAMESP
   }
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::Enum& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const Enum& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);

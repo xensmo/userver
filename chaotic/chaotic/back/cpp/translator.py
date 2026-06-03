@@ -8,6 +8,7 @@ from typing import NoReturn
 
 import transliterate
 
+from chaotic import cpp_keywords
 from chaotic import cpp_names
 from chaotic import error
 from chaotic.back.cpp import type_name
@@ -530,6 +531,14 @@ class Generator:
             if not initially_with_leading_underscore and name.startswith('_'):
                 name = name[1:]
 
+        if not name:
+            name = '_'
+
+        if name[0].isnumeric():
+            name = 'x' + name
+        elif cpp_keywords.is_cpp_keyword(name):
+            name = name + '_'
+
         return name
 
     def _gen_field(
@@ -743,7 +752,7 @@ class Generator:
         assert strict_parsing is not None
 
         return cpp_types.CppStruct(
-            raw_cpp_type=name,
+            raw_cpp_type=name.parent().joinns(self._normalize_name(name.in_local_scope())),
             user_cpp_type=user_cpp_type,
             json_schema=schema,
             nullable=schema.nullable,

@@ -49,7 +49,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::Int& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const Int& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);

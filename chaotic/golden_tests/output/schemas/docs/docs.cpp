@@ -58,7 +58,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::Circle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const Circle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
@@ -124,7 +124,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::Object& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const Object& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
@@ -185,7 +185,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::ObjectCpp& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const ObjectCpp& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
@@ -251,7 +251,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::Rectangle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const Rectangle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
@@ -320,7 +320,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return USERVER_NAMESPACE::formats::json::ValueBuilder(ToString(value)).ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::Status& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw) {
+void WriteToStream([[maybe_unused]] const Status& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw) {
   const auto result = k__ns__Status_Mapping.TryFindByFirst(value);
   if (result.has_value()) {
     WriteToStream(*result, sw);
@@ -390,7 +390,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::TreeNode& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const TreeNode& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);

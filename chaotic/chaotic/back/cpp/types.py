@@ -4,7 +4,6 @@ import dataclasses
 import itertools
 from typing import Any
 
-from chaotic import cpp_keywords
 from chaotic.back.cpp import type_name
 from chaotic.front import types
 
@@ -699,13 +698,7 @@ class CppStructField:
         return optional and self._default() is None
 
     def cpp_field_name(self) -> str:
-        data = self.name
-        if data[0].isnumeric():
-            return 'x' + data
-        elif cpp_keywords.is_cpp_keyword(data):
-            return data + '_'
-        else:
-            return data
+        return self.name
 
     def cpp_field_parse_type(self) -> str:
         type_ = self.schema.parser_type('TODO', self.name.title())

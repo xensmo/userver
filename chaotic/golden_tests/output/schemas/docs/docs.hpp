@@ -45,8 +45,8 @@ std::string ToJsonString(const Circle& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Circle& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::Circle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const Circle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 using EntityUuid = std::string;
 
@@ -80,11 +80,11 @@ std::string ToJsonString(const Object& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Object& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::Object& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const Object& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct ObjectCpp {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamesome_hyphenated_key = "some_hyphenated_key";
+  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamesome_hyphenated_key = "some-hyphenated-key";
   std::optional<std::string> some_hyphenated_key{};
 };
 
@@ -105,7 +105,7 @@ std::string ToJsonString(const ObjectCpp& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const ObjectCpp& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::ObjectCpp& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream(const ObjectCpp& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 static constexpr auto kPetCountMinimum = 0;
@@ -148,7 +148,7 @@ std::string ToJsonString(const Rectangle& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Rectangle& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::Rectangle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream(const Rectangle& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 [[maybe_unused]] static constexpr USERVER_NAMESPACE::chaotic::OneOfStringSettings kShape_Settings = {
@@ -195,7 +195,7 @@ Status Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Statu
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Status& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::Status& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw);
+void WriteToStream(const Status& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw);
 
 std::string ToString(Status value);
 
@@ -225,7 +225,7 @@ std::string ToJsonString(const TreeNode& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const TreeNode& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::TreeNode& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream(const TreeNode& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 }  // namespace ns

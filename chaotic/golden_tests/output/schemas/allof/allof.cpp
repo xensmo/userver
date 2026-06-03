@@ -157,9 +157,8 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo__P0& value,
-                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
-                   [[maybe_unused]] std::string_view hide_field_name) {
+void WriteToStream([[maybe_unused]] const AllOf::Foo__P0& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
 
@@ -174,9 +173,8 @@ void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo__P0& value,
   }
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo__P1& value,
-                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
-                   [[maybe_unused]] std::string_view hide_field_name) {
+void WriteToStream([[maybe_unused]] const AllOf::Foo__P1& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
 
@@ -191,7 +189,7 @@ void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo__P1& value,
   }
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const AllOf::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
@@ -211,7 +209,7 @@ void WriteToStream([[maybe_unused]] const ::ns::AllOf::Foo& value, USERVER_NAMES
   }
 }
 
-void WriteToStream([[maybe_unused]] const ::ns::AllOf& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream([[maybe_unused]] const AllOf& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);

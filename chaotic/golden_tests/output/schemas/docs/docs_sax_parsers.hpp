@@ -27,7 +27,7 @@ namespace ns {
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::Circle, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<double>>,
         &::ns::Circle::radius, ::ns::Circle::kFieldNameradius>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::Circle>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<Circle>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::Object, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -36,15 +36,14 @@ namespace ns {
                                       &::ns::Object::foo, ::ns::Object::kFieldNamefoo>,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::Object, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>,
-        &::ns::Object::bar, ::ns::Object::kFieldNamebar>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::Object>);
+        &::ns::Object::bar, ::ns::Object::kFieldNamebar>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<Object>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::ObjectCpp, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::ObjectCpp, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>,
         &::ns::ObjectCpp::some_hyphenated_key, ::ns::ObjectCpp::kFieldNamesome_hyphenated_key>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::ObjectCpp>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<ObjectCpp>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::Rectangle, USERVER_NAMESPACE::chaotic::UnknownFields::StoreJson,
@@ -57,7 +56,7 @@ namespace ns {
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::Rectangle, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<double>>,
         &::ns::Rectangle::height, ::ns::Rectangle::kFieldNameheight>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::Rectangle>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<Rectangle>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::TreeNode, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
@@ -72,7 +71,7 @@ namespace ns {
                                       USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Ref<
                                           USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>,
                                       &::ns::TreeNode::right, ::ns::TreeNode::kFieldNameright>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::TreeNode>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<TreeNode>);
 
 }  // namespace ns
 

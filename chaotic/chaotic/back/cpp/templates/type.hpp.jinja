@@ -18,7 +18,7 @@
         {{ type.cpp_comment() }}
         struct {{ type.cpp_local_name() }} {
             {#- handle subtypes -#}
-            {%- for fname, field in type.fields.items() -%}
+            {%- for field in type.fields.values() -%}
                     {{- generate_type(field.schema) -}}
             {%- endfor -%}
 
@@ -29,17 +29,17 @@
             {% endif %}
 
             {# properties #}
-            {%- for fname, field in type.fields.items() -%}
-                static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldName{{ field.cpp_field_name() }} = "{{ field.name }}";
+            {%- for property_name, field in type.fields.items() -%}
+                static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldName{{ field.cpp_field_name() }} = "{{ property_name }}";
             {%- endfor %}
 
-            {%- for fname, field in type.fields.items() -%}
+            {%- for field in type.fields.values() -%}
                 {% if field.get_default() != '' %}
                     static constexpr auto kFieldDefault{{ field.cpp_field_name() }} = {{ field.get_default_raw() }};
                 {% endif %}
             {%- endfor %}
 
-            {%- for fname, field in type.fields.items() -%}
+            {%- for field in type.fields.values() -%}
                 {{ field.cpp_field_type() }} {{ field.cpp_field_name() }}
                     { {{ field.get_default() }} };
             {%- endfor %}
@@ -343,7 +343,7 @@
     {% if generate_serializer %}
         {{ generate_serializer_declaration(type) }}
         {% if generate_stream_writer %}
-            {{ sw.generate_stream_writer_declaration(userver, name, type) }}
+            {{ sw.generate_stream_writer_declaration(userver, type) }}
         {% endif %}
     {% endif %}
 
@@ -352,6 +352,6 @@
 
 {{ common.switch_namespace('') }}
 
-{% for name, type in types.items() %}
+{% for type in types.values() %}
     {{ generate_fmt_formatter_declaration(type) }}
 {% endfor %}

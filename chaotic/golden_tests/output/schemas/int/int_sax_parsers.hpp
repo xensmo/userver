@@ -17,7 +17,7 @@ namespace ns {
     ::ns::Int, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::Int, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<int>>, &::ns::Int::foo,
-        ::ns::Int::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::Int>);
+        ::ns::Int::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<Int>);
 
 }  // namespace ns
 

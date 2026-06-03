@@ -19,23 +19,23 @@ namespace ns {
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::AllOf::Foo__P0, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>,
         &::ns::AllOf::Foo__P0::foo, ::ns::AllOf::Foo__P0::kFieldNamefoo>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::AllOf::Foo__P0>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<AllOf::Foo__P0>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::AllOf::Foo__P1, USERVER_NAMESPACE::chaotic::UnknownFields::StoreJson,
     USERVER_NAMESPACE::chaotic::Field<::ns::AllOf::Foo__P1,
                                       USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<int>>,
                                       &::ns::AllOf::Foo__P1::bar, ::ns::AllOf::Foo__P1::kFieldNamebar>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::AllOf::Foo__P1>);
+    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<AllOf::Foo__P1>);
 
-[[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::impl::JsonDomParser<::ns::AllOf::Foo> ParserOf(
-    USERVER_NAMESPACE::chaotic::sax::Type<::ns::AllOf::Foo>);
+[[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::impl::JsonDomParser<AllOf::Foo> ParserOf(
+    USERVER_NAMESPACE::chaotic::sax::Type<AllOf::Foo>);
 
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::AllOf, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::AllOf, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::AllOf::Foo>>,
-        &::ns::AllOf::foo, ::ns::AllOf::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::AllOf>);
+        &::ns::AllOf::foo, ::ns::AllOf::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<AllOf>);
 
 }  // namespace ns
 

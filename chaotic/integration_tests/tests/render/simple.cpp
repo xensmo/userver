@@ -23,6 +23,8 @@
 #include <schemas/indirect.hpp>
 #include <schemas/indirect_sax_parsers.hpp>
 #include <schemas/object_empty.hpp>
+#include <schemas/object_keywords.hpp>
+#include <schemas/object_keywords_sax_parsers.hpp>
 #include <schemas/object_name.hpp>
 #include <schemas/object_object.hpp>
 #include <schemas/object_single_field.hpp>
@@ -266,6 +268,56 @@ TEST(Simple, ObjectWithAdditionalPropertiesFalseStrictSax) {
         "Parse error at pos 14, path 'bar': unknown field 'bar' for type "
         "'ns::ObjectWithAdditionalPropertiesFalseStrict', the latest token was ,\"bar\""
     );
+}
+
+TEST(Simple, ObjectKeywords) {
+    auto json = formats::json::MakeObject("int", 1, "delete", 2, "new", 3, "co_await", 4, "co_yield", 5, "class", 6);
+    auto obj = json.As<ns::struct_>();
+
+    EXPECT_EQ(obj.int_, 1);
+    EXPECT_EQ(obj.delete_, 2);
+    EXPECT_EQ(obj.new_, 3);
+    EXPECT_EQ(obj.co_await_, 4);
+    EXPECT_EQ(obj.co_yield_, 5);
+    EXPECT_EQ(obj.class_, 6);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json_back);
+}
+
+TEST(Simple, ObjectKeywordsSax) {
+    auto json = formats::json::MakeObject("int", 7, "delete", 8, "new", 9, "co_await", 10, "co_yield", 11, "class", 12);
+    auto obj = ParseToType<ns::struct_>(ToString(json));
+
+    EXPECT_EQ(obj.int_, 7);
+    EXPECT_EQ(obj.delete_, 8);
+    EXPECT_EQ(obj.new_, 9);
+    EXPECT_EQ(obj.co_await_, 10);
+    EXPECT_EQ(obj.co_yield_, 11);
+    EXPECT_EQ(obj.class_, 12);
+
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
+}
+
+TEST(Simple, ObjectBadNaming) {
+    auto json = formats::json::MakeObject("some+ugly-name with%20trash", 42);
+    auto obj = json.As<ns::Bad_naming>();
+
+    EXPECT_EQ(obj.some_ugly_name_with_20trash, 42);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json_back);
+}
+
+TEST(Simple, ObjectBadNamingSax) {
+    auto json = formats::json::MakeObject("some+ugly-name with%20trash", 42);
+    auto obj = ParseToType<ns::Bad_naming>(ToString(json));
+
+    EXPECT_EQ(obj.some_ugly_name_with_20trash, 42);
+
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), formats::json::ValueBuilder{obj}.ExtractValue());
 }
 
 TEST(Simple, IntegerEnum) {

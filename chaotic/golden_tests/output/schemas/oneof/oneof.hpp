@@ -37,8 +37,8 @@ std::string ToJsonString(const OneOf& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const OneOf& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::OneOf& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const OneOf& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 }  // namespace ns
 

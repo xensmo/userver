@@ -63,10 +63,10 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const Enum& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::Enum::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw);
+void WriteToStream(const Enum::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw);
 
-void WriteToStream(const ::ns::Enum& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const Enum& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 std::string ToString(Enum::Foo value);
 

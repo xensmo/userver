@@ -1,16 +1,11 @@
-{% macro generate_stream_writer_declaration(userver, name, type) %}
+{% macro generate_stream_writer_declaration(userver, type) %}
     {# handle subtypes #}
     {%- for schema in type.subtypes() -%}
-        {{ generate_stream_writer_declaration(
-                userver,
-                schema.cpp_global_name(),
-                schema
-           )
-        }}
+        {{ generate_stream_writer_declaration(userver, schema) }}
     {% endfor %}
 
     {% if type.need_stream_writer() %}
-        void WriteToStream(const {{ name }}& value, {{ userver }}::formats::json::StringBuilder& sw
+        void WriteToStream(const {{ shortest_cpp_name(type) }}& value, {{ userver }}::formats::json::StringBuilder& sw
         {%- if type.need_add_hiding_args() -%}
             , bool hide_brackets = false
             , std::string_view hide_field_name = {}
@@ -19,15 +14,10 @@
     {% endif %}
 {% endmacro %}
 
-{% macro generate_stream_writer_definition(userver, name, type) %}
+{% macro generate_stream_writer_definition(userver, type) %}
     {# handle subtypes #}
     {%- for schema in type.subtypes() -%}
-        {{ generate_stream_writer_definition(
-                userver,
-                schema.cpp_global_name(),
-                schema
-           )
-        }}
+        {{ generate_stream_writer_definition(userver, schema) }}
     {% endfor %}
 
     {% if type.need_stream_writer() %}
@@ -41,7 +31,7 @@
             {% set start_object = userver ~ '::formats::json::StringBuilder::ObjectGuard guard(sw);' %}
         {% endif %}
 
-        void WriteToStream([[maybe_unused]] const {{ name }}& value, {{ userver }}::formats::json::StringBuilder& sw {{ extra_args }})
+        void WriteToStream([[maybe_unused]] const {{ shortest_cpp_name(type) }}& value, {{ userver }}::formats::json::StringBuilder& sw {{ extra_args }})
         {
             {% if type.get_py_type() == 'CppStruct' %}
                 {{ start_object }}

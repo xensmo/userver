@@ -18,7 +18,7 @@ namespace ns {
     ::ns::Enum, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::Enum, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::Enum::Foo>>,
-        &::ns::Enum::foo, ::ns::Enum::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::Enum>);
+        &::ns::Enum::foo, ::ns::Enum::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<Enum>);
 
 }  // namespace ns
 

@@ -339,7 +339,7 @@
     {% if generate_serializer %}
         {{ generate_serializer_definition(type) }}
         {% if generate_stream_writer %}
-            {{ sw.generate_stream_writer_definition(userver, name, type) }}
+            {{ sw.generate_stream_writer_definition(userver, type) }}
         {% endif %}
     {% endif %}
 
@@ -348,6 +348,6 @@
 
 {{ common.switch_namespace('') }}
 
-{% for name, type in types.items() %}
+{% for type in types.values() %}
     {{generate_fmt_formatter_definition(type)}}
 {% endfor %}

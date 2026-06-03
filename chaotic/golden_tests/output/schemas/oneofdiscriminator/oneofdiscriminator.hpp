@@ -39,8 +39,8 @@ std::string ToJsonString(const A& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const A& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::A& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const A& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct B {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNametype = "type";
@@ -68,8 +68,8 @@ std::string ToJsonString(const B& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const B& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::B& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const B& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct C {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameversion = "version";
@@ -93,8 +93,8 @@ std::string ToJsonString(const C& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const C& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::C& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const C& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct D {
   static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameversion = "version";
@@ -118,8 +118,8 @@ std::string ToJsonString(const D& value);
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const D& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::D& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
-                   bool hide_brackets = false, std::string_view hide_field_name = {});
+void WriteToStream(const D& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 struct IntegerOneOfDiscriminator {
   [[maybe_unused]] static constexpr USERVER_NAMESPACE::chaotic::OneOfIntegerSettings kFoo_Settings = {
@@ -155,7 +155,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
     const IntegerOneOfDiscriminator& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::IntegerOneOfDiscriminator& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream(const IntegerOneOfDiscriminator& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct OneOfDiscriminator {
@@ -191,7 +191,7 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
     const OneOfDiscriminator& value,
     USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
-void WriteToStream(const ::ns::OneOfDiscriminator& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+void WriteToStream(const OneOfDiscriminator& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 }  // namespace ns

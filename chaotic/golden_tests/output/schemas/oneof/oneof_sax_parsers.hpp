@@ -20,7 +20,7 @@ namespace ns {
         ::ns::OneOf,
         USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Variant<
             USERVER_NAMESPACE::chaotic::Primitive<int>, USERVER_NAMESPACE::chaotic::Primitive<std::string>>>,
-        &::ns::OneOf::foo, ::ns::OneOf::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::OneOf>);
+        &::ns::OneOf::foo, ::ns::OneOf::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<OneOf>);
 
 }  // namespace ns
 

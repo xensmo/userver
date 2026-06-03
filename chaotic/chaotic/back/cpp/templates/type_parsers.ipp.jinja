@@ -58,21 +58,21 @@
         {{ generate_parser_definition(schema) }}
     {% endfor %}
 
+    {% set local_name = shortest_cpp_name(type, blacklist=['Value']) %}
     {% if type.get_py_type() == 'CppStruct' %}
         {# parse object #}
         template <{{ userver }}::formats::common::IsFormatValue Value>
-        {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value value,
-                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+        {{ local_name }} Parse(Value value, {{ userver }}::formats::parse::To<{{ local_name }}>)
         {
             value.CheckNotMissing();
             value.CheckObjectOrNull();
 
-            {{ shortest_cpp_name(type, blacklist=['Value']) }} res;
+            {{ local_name }} res;
 
             {# properties #}
-            {%- for fname, field in type.fields.items() -%}
+            {%- for property_name, field in type.fields.items() -%}
                 res.{{ field.cpp_field_name() }} =
-                    value["{{ fname }}"].template As<{{ field.cpp_field_parse_type() }}>
+                    value["{{ property_name }}"].template As<{{ field.cpp_field_parse_type() }}>
                     ({{ field.get_default() }});
             {%- endfor %}
 
@@ -103,11 +103,10 @@
         {# No new type #}
     {% elif type.get_py_type() == 'CppIntEnum' %}
         template <{{ userver }}::formats::common::IsFormatValue Value>
-        {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value val,
-                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+        {{ local_name }} Parse(Value val, {{ userver }}::formats::parse::To<{{ local_name }}>)
         {
             const auto value = val.template As<std::int64_t>();
-            const auto converted_opt = TryConvert(value, {{ userver }}::chaotic::convert::To<{{ shortest_cpp_name(type) }}>{});
+            const auto converted_opt = TryConvert(value, {{ userver }}::chaotic::convert::To<{{ local_name }}>{});
             if (!converted_opt) {
               {{ userver }}::chaotic::ThrowForValue(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value), val);
             }
@@ -115,8 +114,7 @@
         }
     {% elif type.get_py_type() == 'CppStringEnum' %}
         template <{{ userver }}::formats::common::IsFormatValue Value>
-        {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value val,
-                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+        {{ local_name }} Parse(Value val, {{ userver }}::formats::parse::To<{{ local_name }}>)
         {
             const auto value = val.template As<std::string>();
             const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
@@ -128,10 +126,9 @@
     {% elif type.get_py_type() == 'CppStructAllOf' %}
         {# parse allOf #}
         template <{{ userver }}::formats::common::IsFormatValue Value>
-        {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value value,
-                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+        {{ local_name }} Parse(Value value, {{ userver }}::formats::parse::To<{{ local_name }}>)
         {
-            return {{ shortest_cpp_name(type, blacklist=['Value']) }}(
+            return {{ local_name }}(
                 {%- for parent in type.parents -%}
                     value.template As<{{ shortest_cpp_name(parent, blacklist=['Value']) }}>()
                     {%- if not loop.last %} , {% endif -%}
