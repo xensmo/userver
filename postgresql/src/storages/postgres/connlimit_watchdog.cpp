@@ -12,13 +12,11 @@ namespace storages::postgres {
 namespace {
 constexpr CommandControl kCommandControl{std::chrono::seconds(2), std::chrono::seconds(2)};
 constexpr std::size_t kTestsuiteConnlimit = 100;
-constexpr std::size_t kReservedConn = 5;
 constexpr std::size_t kMinReservedConnections = 2;
 constexpr std::size_t kMaxReservedConnections = 10;
 constexpr double kReservedConnectionsPercentage = 0.05;
 
 constexpr int kMaxStepsWithError = 3;
-constexpr std::size_t kFallbackConnlimit = 20;
 
 std::size_t GetMaxConnections(Transaction& trx) {
     const auto max_server_connections = USERVER_NAMESPACE::utils::FromString<
@@ -30,16 +28,10 @@ std::size_t GetMaxConnections(Transaction& trx) {
     }
     std::size_t max_connections = std::min(max_server_connections, max_user_connections);
 
-    const auto reserved_connections =
-        !USERVER_NAMESPACE::utils::impl::kPgConnlimitWatchdogReservationExperiment.IsEnabled()
-            ? kReservedConn
-            : std::max(
-                  kMinReservedConnections,
-                  std::min(
-                      kMaxReservedConnections,
-                      static_cast<std::size_t>(max_connections * kReservedConnectionsPercentage)
-                  )
-              );
+    const auto reserved_connections = std::max(
+        kMinReservedConnections,
+        std::min(kMaxReservedConnections, static_cast<std::size_t>(max_connections * kReservedConnectionsPercentage))
+    );
     if (max_connections > reserved_connections) {
         max_connections -= reserved_connections;
     } else {
@@ -175,13 +167,9 @@ void ConnlimitWatchdog::DoStep(
              * connlimit value. The period with "too low max_connections" should be
              * relatively small.
              */
-            if (!USERVER_NAMESPACE::utils::impl::kPgConnlimitWatchdogFallbackExperiment.IsEnabled()) {
-                connlimit_ = kFallbackConnlimit;
-            } else {
-                const auto previous_connlimit = connlimit_.load();
-                connlimit_ = std::max(previous_connlimit / 2, min_fallback_connections_);
-                steps_with_errors_ = 0;
-            }
+            const auto previous_connlimit = connlimit_.load();
+            connlimit_ = std::max(previous_connlimit / 2, min_fallback_connections_);
+            steps_with_errors_ = 0;
         }
         LOG_WARNING() << fmt::format("Can't connect to u_clients. Fallback max_size to {}. ", connlimit_.load()) << e;
     }
