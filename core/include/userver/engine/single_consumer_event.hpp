@@ -101,7 +101,7 @@ public:
     [[nodiscard]] bool IsReady() const noexcept;
 
 private:
-    class EventWaitStrategy;
+    class EventAwaitable;
 
     bool GetIsSignaled() noexcept;
 

@@ -13,49 +13,72 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
-class WaitAnyWaitStrategy final : public WaitStrategy {
+class WaitAnyAwaitable final : public WeakAwaitable {
 public:
-    WaitAnyWaitStrategy(utils::span<ContextAccessor*> targets, TaskContext& awaiter)
-        : awaiter_(awaiter),
-          targets_(targets)
+    explicit WaitAnyAwaitable(utils::span<ContextAccessor*> targets)
+        : targets_(targets)
     {}
 
-    EarlyNotify SetupWakeups() override {
+    bool IsReady() const noexcept override {
+        return std::ranges::all_of(targets_, [](ContextAccessor* target) {
+            return target == nullptr || target->IsReady();
+        });
+    }
+
+    void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) override {
         for (auto*& target : targets_) {
             if (!target) {
                 continue;
             }
 
             utils::FastScopeGuard disable_wakeups([&]() noexcept {
-                DoDisableWakeups(utils::span{targets_.data(), &target});
+                DoDisableWakeups(utils::span{targets_.data(), &target}, *awaiter, context);
             });
 
-            // SetupWakeups might throw.
-            boost::intrusive_ptr<Awaiter> awaiter_ptr{&awaiter_};
-            target->TryAppendAwaiter(awaiter_ptr, awaiter_.GetAwaiterContext());
-            if (awaiter_ptr != nullptr) {  // target is ready.
-                return EarlyNotify::kYes;
+            // TryAppendAwaiter might throw.
+            auto awaiter_copy = awaiter;
+            target->TryAppendAwaiter(awaiter_copy, context);
+            if (awaiter_copy != nullptr) {  // target is ready.
+                return;
             }
 
             disable_wakeups.Release();
         }
 
-        return EarlyNotify::kNo;
+        // Mark that the compound awaitable is not ready. A possible optimization (not performed currently)
+        // is to pass `awaiter` to the last target directly instead of copying it.
+        awaiter = nullptr;
     }
 
-    void DisableWakeups() noexcept override { DoDisableWakeups(targets_); }
+    boost::intrusive_ptr<Awaiter> RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept override {
+        return DoDisableWakeups(targets_, awaiter, context);
+    }
 
 private:
-    void DoDisableWakeups(utils::span<ContextAccessor*> targets) const noexcept {
+    boost::intrusive_ptr<Awaiter> DoDisableWakeups(
+        utils::span<ContextAccessor*> targets,
+        Awaiter& awaiter,
+        std::uintptr_t context
+    ) const noexcept {
+        boost::intrusive_ptr<Awaiter> compound_removal_result;
+        bool removed_before_notification = true;
+
         for (auto* const target : targets) {
             if (!target) {
                 continue;
             }
-            target->RemoveAwaiter(awaiter_, awaiter_.GetAwaiterContext());
+
+            auto removal_result = target->RemoveAwaiter(awaiter, context);
+            removed_before_notification &= (removal_result != nullptr);
+            compound_removal_result = std::move(removal_result);
         }
+
+        if (!removed_before_notification) {
+            compound_removal_result = nullptr;
+        }
+        return compound_removal_result;
     }
 
-    TaskContext& awaiter_;
     const utils::span<ContextAccessor*> targets_;
 };
 

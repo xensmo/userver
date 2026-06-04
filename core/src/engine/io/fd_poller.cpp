@@ -1,7 +1,6 @@
 #include <userver/engine/io/fd_poller.hpp>
 
 #include <engine/ev/watcher.hpp>
-#include <engine/impl/future_utils.hpp>
 #include <engine/impl/wait_list_light_with_epoch.hpp>
 #include <engine/task/task_context.hpp>
 
@@ -156,8 +155,7 @@ std::optional<FdPoller::Kind> FdPoller::Impl::Wait(Deadline deadline) {
 
     auto& current = current_task::GetCurrentTaskContext();
 
-    engine::impl::FutureWaitStrategy wait_strategy{*this, current};
-    current.Sleep(wait_strategy, deadline);
+    current.Sleep(*this, deadline);
 
     // Don't call heavy synchronous Stop() here. The epoch system will handle stale notifications.
     return GetReady();

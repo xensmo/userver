@@ -15,13 +15,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine {
 
-namespace impl {
-
-template <typename T>
-class FutureWaitStrategy;
-
-}  // namespace impl
-
 /// @ingroup userver_concurrency
 ///
 /// @brief A single-producer, multiple-consumers event.
@@ -70,8 +63,6 @@ public:
     /// @endcond
 
 private:
-    friend class impl::FutureWaitStrategy<MultiConsumerEvent>;
-
     void TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) override;
     boost::intrusive_ptr<impl::Awaiter> RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
 

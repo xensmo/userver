@@ -6,6 +6,8 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
+WeakAwaitable::WeakAwaitable() = default;
+
 ContextAccessor::ContextAccessor() = default;
 
 }  // namespace engine::impl

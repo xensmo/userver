@@ -13,9 +13,6 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
-template <typename T>
-class FutureWaitStrategy;
-
 class FutureStateBase : private ContextAccessor {
 public:
     bool IsReady() const noexcept final;
@@ -37,8 +34,6 @@ protected:
     void WaitForResult();
 
 private:
-    friend class FutureWaitStrategy<FutureStateBase>;
-
     void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) final;
     boost::intrusive_ptr<Awaiter> RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept final;
 

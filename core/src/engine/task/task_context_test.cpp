@@ -27,22 +27,35 @@ public:
 // The task had been woken up by a deadline timer and got notified by a wait
 // list in the process of housekeeping. This notification was not accounted as a
 // wakeup source because wakeup source was calculated early.
-struct WaitListRaceSimulator final : public engine::impl::WaitStrategy {
+struct WaitListRaceSimulator final : public engine::impl::WeakAwaitable {
     // cannot use passed deadline because of fast path
     WaitListRaceSimulator() = default;
 
-    engine::impl::EarlyNotify SetupWakeups() override {
+    bool IsReady() const noexcept override { return false; }
+
+    void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>& awaiter, std::uintptr_t context) override {
+        awaiter_ = std::move(awaiter);
+        context_ = context;
+
         // wake up immediately
-        engine::current_task::GetCurrentTaskContext()
-            .Wakeup(engine::impl::TaskContext::WakeupSource::kDeadlineTimer, engine::impl::Epoch{0});
-        return engine::impl::EarlyNotify{false};
+        auto& current = engine::current_task::GetCurrentTaskContext();
+        UASSERT(awaiter_.get() == static_cast<engine::impl::Awaiter*>(&current));
+        current.Wakeup(engine::impl::TaskContext::WakeupSource::kDeadlineTimer, engine::impl::Epoch{0});
     }
 
-    void DisableWakeups() noexcept override {
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override {
+        UASSERT(awaiter_.get() == &awaiter);
+        UASSERT(context_ == context);
+
         // simulate wait list notification before cleanup
-        engine::current_task::GetCurrentTaskContext()
-            .Wakeup(engine::impl::TaskContext::WakeupSource::kNotify, engine::impl::NoEpoch{});
+        engine::impl::Notify(std::move(awaiter_), context_);
+        return nullptr;
     }
+
+private:
+    boost::intrusive_ptr<engine::impl::Awaiter> awaiter_;
+    std::uintptr_t context_{0};
 };
 
 constexpr size_t kWorkerThreads = 1;
@@ -82,8 +95,8 @@ UTEST(TaskContext, WaitInterruptedReason) {
 UTEST(TaskContext, WaitListWakeupRace) {
     auto& context = engine::current_task::GetCurrentTaskContext();
 
-    WaitListRaceSimulator wait_manager;
-    EXPECT_EQ(context.Sleep(wait_manager, engine::Deadline{}), engine::impl::TaskContext::WakeupSource::kNotify);
+    WaitListRaceSimulator awaitable;
+    EXPECT_EQ(context.Sleep(awaitable, engine::Deadline{}), engine::impl::TaskContext::WakeupSource::kNotify);
 }
 
 USERVER_NAMESPACE_END

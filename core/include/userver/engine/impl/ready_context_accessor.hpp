@@ -15,7 +15,10 @@ public:
 
     void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>&, std::uintptr_t) override {}
 
-    boost::intrusive_ptr<Awaiter> RemoveAwaiter(engine::impl::Awaiter&, std::uintptr_t) noexcept override { return {}; }
+    boost::intrusive_ptr<Awaiter> RemoveAwaiter(engine::impl::Awaiter&, std::uintptr_t) noexcept override {
+        // The awaiter is always notified early by TryAppendAwaiter, nothing to remove.
+        return {};
+    }
 };
 
 }  // namespace engine::impl

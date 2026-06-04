@@ -35,32 +35,6 @@ class TaskContextHolder;
 
 [[noreturn]] void ReportDeadlock();
 
-class WaitStrategy {
-public:
-    // Implementation may set up timers/watchers here. Implementation must make
-    // sure that there is no race between SetupWakeups() and WaitList-specific
-    // wakeup (if "add task to wait list iff not ready" is not protected from
-    // Wakeup, e.g. for WaitListLight). SetupWakeups() *may* call Wakeup() for
-    // current task - sleep_state_ is set in DoStep() and double-checked for such
-    // early wakeups. It may not sleep.
-    //
-    // If EarlyWakeup{true} is returned, then:
-    // - DisableWakeups is not called;
-    // - SetupWakeups should disable wakeup sources itself;
-    // - SetupWakeups may or may not call context.Wakeup.
-    virtual EarlyNotify SetupWakeups() = 0;
-
-    // Implementation must disable all wakeup sources (wait lists, timers) here.
-    // It may not sleep.
-    virtual void DisableWakeups() noexcept = 0;
-
-protected:
-    constexpr WaitStrategy() noexcept = default;
-
-    // Prevent destruction via pointer to base.
-    ~WaitStrategy() = default;
-};
-
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
 class TaskContext final : public ContextAccessor, public Awaiter, public deadlock_detector::Actor {
 public:
@@ -142,7 +116,7 @@ public:
     // causes this to yield and wait for wakeup
     // must only be called from this context
     // "spurious wakeups" may be caused by wakeup queueing
-    WakeupSource Sleep(WaitStrategy& wait_strategy, Deadline deadline);
+    WakeupSource Sleep(WeakAwaitable& awaitable, Deadline deadline);
 
     // sleep epoch increments after each wakeup
     Epoch GetEpoch() const noexcept;

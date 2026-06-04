@@ -111,7 +111,7 @@ public:
 
 private:
     enum class TryLockStatus { kSuccess, kTransientFailure, kPermanentFailure };
-    class SemaphoreWaitStrategy;
+    class SemaphoreAwaitable;
 
     TryLockStatus DoTryLock(Counter count);
     TryLockStatus LockFastPath(Counter count);

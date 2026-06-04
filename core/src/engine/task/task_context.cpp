@@ -176,11 +176,8 @@ FutureStatus TaskContext::WaitUntil(Deadline deadline) const noexcept {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     auto& target = const_cast<TaskContext&>(*this);
 
-    static_assert(noexcept(FutureWaitStrategy{target, current}));
-    auto wait_strategy = FutureWaitStrategy{target, current};
-
     try {
-        const auto wakeup_source = current.Sleep(wait_strategy, deadline);
+        const auto wakeup_source = current.Sleep(target, deadline);
         return ToFutureStatus(wakeup_source);
     } catch (...) {
         // We cannot just refuse to wait because of the lifetime guarantees for tasks and their data.
@@ -298,7 +295,7 @@ void TaskContext::SetBackground(bool is_background) {
     is_background_ = is_background;
 }
 
-TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadline deadline) {
+TaskContext::WakeupSource TaskContext::Sleep(WeakAwaitable& awaitable, Deadline deadline) {
     UASSERT(IsCurrent());
     UASSERT(state_ == Task::State::kRunning);
     UASSERT_MSG(
@@ -320,7 +317,9 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
 
     const auto sleep_epoch = sleep_state_.Load<std::memory_order_seq_cst>().epoch;
 
-    if (static_cast<bool>(wait_strategy.SetupWakeups())) {
+    boost::intrusive_ptr<Awaiter> self{this};
+    awaitable.TryAppendAwaiter(self, GetAwaiterContext());
+    if (self != nullptr) {
         sleep_state_.Store<std::memory_order_release>(MakeNextEpochSleepState(sleep_epoch));
         wakeup_source_ = WakeupSource::kNotify;
         return wakeup_source_;
@@ -351,7 +350,7 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
     if (has_deadline) {
         ArmCancellationTimer();
     }
-    wait_strategy.DisableWakeups();
+    awaitable.RemoveAwaiter(*this, GetAwaiterContext());
 
     const auto old_sleep_state = sleep_state_.Exchange<std::memory_order_acq_rel>(MakeNextEpochSleepState(sleep_epoch));
     wakeup_source_ = GetPrimaryWakeupSource(old_sleep_state.flags);
@@ -753,7 +752,7 @@ void TaskContext::Destroy() noexcept {
 bool HasWaitSucceeded(TaskContext::WakeupSource wakeup_source) noexcept {
     // Typical synchronization primitives sleep in a WaitList until woken up
     // (which is counted as a success), or they can sometimes wake themselves up
-    // using kWaitList.
+    // using kNotify.
     switch (wakeup_source) {
         case TaskContext::WakeupSource::kNotify:
             return true;

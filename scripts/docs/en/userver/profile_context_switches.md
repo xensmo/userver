@@ -91,7 +91,7 @@ $ make -j4 userver-core_unittest && ./userver/core/userver-core_unittest --gtest
 7   INFO  Task 7F3081833C00 changed state to kRunning, delay = 584080us span_id=388dad66e4efd590	stacktrace= 0# userver::logging::impl::ExtendLogExtraWithStacktrace(userver::logging::LogExtra&, userver::utils::Flags<userver::logging::impl::LogExtraStacktraceFlags>) at /userver/core/src/logging/log_extra_stacktrace.cpp:41
  1# userver::engine::impl::(anonymous namespace)::StacktraceFromLoggerLevel(std::shared_ptr<userver::logging::impl::LoggerWithInfo> const&) at /userver/core/src/engine/task/task_context.cpp:73
  2# userver::engine::impl::TaskContext::TraceStateTransition(userver::engine::Task::State) at /userver/core/src/engine/task/task_context.cpp:729
- 3# userver::engine::impl::TaskContext::Sleep(userver::engine::impl::WaitStrategy&) at /userver/core/src/engine/task/task_context.cpp:368
+ 3# userver::engine::impl::TaskContext::Sleep(userver::engine::impl::WeakAwaitable&, userver::engine::Deadline) at /userver/core/src/engine/task/task_context.cpp:368
  4# userver::engine::Mutex::LockSlowPath(userver::engine::impl::TaskContext&, userver::engine::Deadline) at /userver/core/src/engine/mutex.cpp:63
  5# userver::engine::Mutex::try_lock_until(userver::engine::Deadline) at /userver/core/src/engine/mutex.cpp:92
  6# userver::engine::Mutex::lock() at /userver/core/src/engine/mutex.cpp:73
