@@ -758,6 +758,10 @@ class CppStructField:
         else:
             return f'std::optional<{type_}>'
 
+    def property_name_holder_variable(self, object_type: str) -> str:
+        type_prefix = object_type.replace('::', '_')
+        return f'k{type_prefix}FieldName{self.cpp_field_name()}'
+
     def descriptor_type(self, object_type: str) -> str:
         ch = 'USERVER_NAMESPACE::chaotic'
         type_ = self.schema.parser_type('TODO', self.name.title())
@@ -776,7 +780,7 @@ class CppStructField:
             default_var = f'{object_type}::kFieldDefault{name}'
             mode = f'{ch}::Defaulted<{type_}, {self.get_default_cpp_type()}, {default_var}>'
 
-        name_var = f'{object_type}::kFieldName{name}'
+        name_var = self.property_name_holder_variable(object_type)
         return f'{ch}::Field<{object_type}, {mode}, &{object_type}::{name}, {name_var}>'
 
 

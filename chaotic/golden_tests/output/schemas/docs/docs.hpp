@@ -20,8 +20,6 @@
 namespace ns {
 
 struct Circle {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamekind = "kind";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameradius = "radius";
   std::optional<std::string> kind{};
   std::optional<double> radius{};
 
@@ -57,8 +55,6 @@ static constexpr auto kLatitudeMaximum = 90.0;
 using Latitude = double;
 
 struct Object {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamebar = "bar";
   int foo{};
   std::optional<std::string> bar{};
 };
@@ -84,7 +80,6 @@ void WriteToStream(const Object& value, USERVER_NAMESPACE::formats::json::String
                    std::string_view hide_field_name = {});
 
 struct ObjectCpp {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamesome_hyphenated_key = "some-hyphenated-key";
   std::optional<std::string> some_hyphenated_key{};
 };
 
@@ -121,9 +116,6 @@ static constexpr std::string_view kPetNamesAPattern = R"--(\w+)--";
 using PetNames = std::vector<std::string>;
 
 struct Rectangle {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamekind = "kind";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamewidth = "width";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameheight = "height";
   std::optional<std::string> kind{};
   std::optional<double> width{};
   std::optional<double> height{};
@@ -200,9 +192,6 @@ void WriteToStream(const Status& value, USERVER_NAMESPACE::formats::json::String
 std::string ToString(Status value);
 
 struct TreeNode {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamedata = "data";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameleft = "left";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameright = "right";
   std::optional<std::string> data{};
   std::optional<USERVER_NAMESPACE::utils::Box<::ns::TreeNode>> left{};
   std::optional<USERVER_NAMESPACE::utils::Box<::ns::TreeNode>> right{};

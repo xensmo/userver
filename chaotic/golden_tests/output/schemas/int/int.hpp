@@ -10,7 +10,6 @@
 namespace ns {
 
 struct Int {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
   std::optional<int> foo{};
 };
 

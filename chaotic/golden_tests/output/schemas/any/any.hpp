@@ -12,7 +12,6 @@ namespace ns {
 using AnyValue = USERVER_NAMESPACE::formats::json::Value;
 
 struct WithAnyField {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamepayload = "payload";
   std::optional<USERVER_NAMESPACE::formats::json::Value> payload{};
 };
 

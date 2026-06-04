@@ -24,7 +24,6 @@ struct Enum {
       Foo::kThree,
   };
 
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
   std::optional<::ns::Enum::Foo> foo{};
 };
 

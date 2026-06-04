@@ -14,8 +14,6 @@
 namespace ns {
 
 struct A {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNametype = "type";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamea_prop = "a_prop";
   std::optional<std::string> type{};
   std::optional<int> a_prop{};
 
@@ -43,8 +41,6 @@ void WriteToStream(const A& value, USERVER_NAMESPACE::formats::json::StringBuild
                    std::string_view hide_field_name = {});
 
 struct B {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNametype = "type";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameb_prop = "b_prop";
   std::optional<std::string> type{};
   std::optional<int> b_prop{};
 
@@ -72,7 +68,6 @@ void WriteToStream(const B& value, USERVER_NAMESPACE::formats::json::StringBuild
                    std::string_view hide_field_name = {});
 
 struct C {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameversion = "version";
   std::optional<int> version{};
 };
 
@@ -97,7 +92,6 @@ void WriteToStream(const C& value, USERVER_NAMESPACE::formats::json::StringBuild
                    std::string_view hide_field_name = {});
 
 struct D {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameversion = "version";
   std::optional<int> version{};
 };
 
@@ -128,7 +122,6 @@ struct IntegerOneOfDiscriminator {
 
   using Foo = std::variant<::ns::C, ::ns::D>;
 
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
   std::optional<::ns::IntegerOneOfDiscriminator::Foo> foo{};
 };
 
@@ -165,7 +158,6 @@ struct OneOfDiscriminator {
 
   using Foo = std::variant<::ns::A, ::ns::B>;
 
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
   std::optional<::ns::OneOfDiscriminator::Foo> foo{};
 };
 

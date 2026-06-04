@@ -14,11 +14,13 @@
 
 namespace ns {
 
+constexpr inline USERVER_NAMESPACE::utils::StringLiteral k_ns_EnumFieldNamefoo = "foo";
+
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::Enum, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::Enum, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::Enum::Foo>>,
-        &::ns::Enum::foo, ::ns::Enum::kFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<Enum>);
+        &::ns::Enum::foo, k_ns_EnumFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<Enum>);
 
 }  // namespace ns
 

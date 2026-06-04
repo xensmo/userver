@@ -42,7 +42,7 @@ struct IsDefaulted<Defaulted<DescriptorType, T, Default>> : std::true_type {};
 template <
     typename StructType,
     typename ModeDescriptor,
-    typename ModeDescriptor::Value(StructType::*FieldName),
+    typename ModeDescriptor::Value(StructType::*FieldMemberPtr),
     const utils::StringLiteral& RawName>
 struct Field final {
     using Struct = StructType;
@@ -50,7 +50,7 @@ struct Field final {
     using Descriptor = typename ModeDescriptor::Descriptor;
     using FieldType = typename ModeDescriptor::Value;
     static constexpr const utils::StringLiteral& Name = RawName;
-    static constexpr FieldType StructType::*kField = FieldName;
+    static constexpr FieldType StructType::*kField = FieldMemberPtr;
 };
 
 struct UnknownFields {

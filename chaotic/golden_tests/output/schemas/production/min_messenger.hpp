@@ -20,9 +20,6 @@ using V1Login = std::string;
 
 // Current user information, including authorization token if authorized (empty otherwise)
 struct V1CurrentUser {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNametoken = "token";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamelogin = "login";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamename = "name";
   std::optional<std::string> token{};
   ::ns::V1Login login{};
   std::string name{};
@@ -50,10 +47,6 @@ void WriteToStream(const V1CurrentUser& value, USERVER_NAMESPACE::formats::json:
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelMessage {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameid = "id";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNametimestamp = "timestamp";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessage = "message";
   ::ns::V1CurrentUser current_user{};
   std::int64_t id{};
   std::string timestamp{};
@@ -85,9 +78,6 @@ void WriteToStream(const V1ChannelMessage& value, USERVER_NAMESPACE::formats::js
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelMessageByTimestampRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamechannel_id = "channel_id";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefrom = "from";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameto = "to";
   ::ns::V1ChannelId channel_id{};
   std::string from{};
   std::optional<std::string> to{};
@@ -120,7 +110,6 @@ void WriteToStream(const V1ChannelMessageByTimestampRequest& value, USERVER_NAME
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelMessageByTimestampResponse {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessages = "messages";
   std::vector<::ns::V1ChannelMessage> messages{};
 };
 
@@ -152,9 +141,6 @@ void WriteToStream(const V1ChannelMessageByTimestampResponse& value,
                    std::string_view hide_field_name = {});
 
 struct V1ChannelMessageNewRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamechannel_id = "channel_id";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessage = "message";
   ::ns::V1CurrentUser current_user{};
   ::ns::V1ChannelId channel_id{};
   std::string message{};
@@ -189,7 +175,6 @@ void WriteToStream(const V1ChannelMessageNewRequest& value, USERVER_NAMESPACE::f
 using V1MessageId = std::int64_t;
 
 struct V1ChannelMessageNewResponse {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessage_id = "message_id";
   ::ns::V1MessageId message_id{};
 };
 
@@ -220,8 +205,6 @@ void WriteToStream(const V1ChannelMessageNewResponse& value, USERVER_NAMESPACE::
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelNotificationListRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamechannel_id = "channel_id";
   ::ns::V1CurrentUser current_user{};
   ::ns::V1ChannelId channel_id{};
 };
@@ -253,7 +236,6 @@ void WriteToStream(const V1ChannelNotificationListRequest& value, USERVER_NAMESP
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1ChannelNotificationListResponse {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamenotifications = "notifications";
   std::vector<std::int64_t> notifications{};
 };
 
@@ -285,10 +267,6 @@ void WriteToStream(const V1ChannelNotificationListResponse& value, USERVER_NAMES
 
 // Notify other user that message requires his attention.
 struct V1ChannelNotificationNewRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamechannel_id = "channel_id";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessage_id = "message_id";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameother_user_login = "other_user_login";
   ::ns::V1CurrentUser current_user{};
   ::ns::V1ChannelId channel_id{};
   ::ns::V1MessageId message_id{};
@@ -364,9 +342,6 @@ struct V1Error {
     USERVER_NAMESPACE::formats::json::Value extra;
   };
 
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecode = "code";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessage = "message";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamedetails = "details";
   std::string code{};
   std::string message{};
   std::optional<::ns::V1Error::Details> details{};
@@ -413,9 +388,6 @@ void WriteToStream(const V1Error& value, USERVER_NAMESPACE::formats::json::Strin
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1File {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamelogin = "login";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefilename = "filename";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecontent = "content";
   ::ns::V1Login login{};
   std::string filename{};
   std::string content{};
@@ -442,8 +414,6 @@ void WriteToStream(const V1File& value, USERVER_NAMESPACE::formats::json::String
                    std::string_view hide_field_name = {});
 
 struct V1FileByUriRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameuri = "uri";
   ::ns::V1CurrentUser current_user{};
   std::string uri{};
 };
@@ -478,8 +448,6 @@ using V1FileByUriResponse = ::ns::V1File;
 using V1FileNewRequest = ::ns::V1File;
 
 struct V1FileNewResponse {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameuri = "uri";
   ::ns::V1CurrentUser current_user{};
   std::string uri{};
 };
@@ -525,11 +493,6 @@ struct V1LikeTriggerRequest {
       Animation::kOkay, Animation::kLol,     Animation::kSmile,
   };
 
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameidempotency_token = "idempotency_token";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamechannel_id = "channel_id";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamemessage_id = "message_id";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameanimation = "animation";
   ::ns::V1CurrentUser current_user{};
   std::string idempotency_token{};
   ::ns::V1ChannelId channel_id{};
@@ -597,8 +560,6 @@ std::string ToString(V1LikeTriggerRequest::Animation value);
 // successful (the user previously registered), then the HTTP 200 is returned with
 // V1UserAuthorizationResponse object in response body.
 struct V1UserAuthorizationRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamelogin = "login";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamepassword = "password";
   ::ns::V1Login login{};
   std::string password{};
 };
@@ -630,7 +591,6 @@ void WriteToStream(const V1UserAuthorizationRequest& value, USERVER_NAMESPACE::f
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserAuthorizationResponse {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
   ::ns::V1CurrentUser current_user{};
 };
 
@@ -665,11 +625,6 @@ void WriteToStream(const V1UserAuthorizationResponse& value, USERVER_NAMESPACE::
 // User sends `POST /v1/user/registration` request with this object in body. If the registration is
 // successful, then the HTTP 200 is returned with V1UserRegistrationResponse object in response body.
 struct V1UserRegistrationRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamelogin = "login";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamename = "name";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNameemail = "email";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamephone = "phone";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamepassword = "password";
   ::ns::V1Login login{};
   std::string name{};
   std::string email{};
@@ -731,8 +686,6 @@ void WriteToStream(const V1UserStatus& value, USERVER_NAMESPACE::formats::json::
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserStatusByLoginRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamelogin = "login";
   ::ns::V1CurrentUser current_user{};
   ::ns::V1Login login{};
 };
@@ -764,7 +717,6 @@ void WriteToStream(const V1UserStatusByLoginRequest& value, USERVER_NAMESPACE::f
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserStatusByLoginResponse {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamestatus = "status";
   ::ns::V1UserStatus status{};
 };
 
@@ -795,8 +747,6 @@ void WriteToStream(const V1UserStatusByLoginResponse& value, USERVER_NAMESPACE::
                    bool hide_brackets = false, std::string_view hide_field_name = {});
 
 struct V1UserStatusUpdateRequest {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamecurrent_user = "current_user";
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamestatus = "status";
   ::ns::V1CurrentUser current_user{};
   ::ns::V1UserStatus status{};
 };

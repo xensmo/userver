@@ -16,7 +16,6 @@ namespace ns {
 struct OneOf {
   using Foo = std::variant<int, std::string>;
 
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
   std::optional<::ns::OneOf::Foo> foo{};
 };
 
