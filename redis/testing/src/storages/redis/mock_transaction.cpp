@@ -706,6 +706,127 @@ RequestZscore MockTransaction::Zscore(std::string key, std::string member) {
     return AddSubrequest(impl_->Zscore(std::move(key), std::move(member)));
 }
 
+RequestHexpire MockTransaction::Hexpire(std::string key, std::chrono::seconds ttl, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hexpire(std::move(key), ttl, std::move(fields)));
+}
+
+RequestHexpire MockTransaction::Hexpire(
+    std::string key,
+    std::chrono::seconds ttl,
+    ExpireOptions options,
+    std::vector<std::string> fields
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hexpire(std::move(key), ttl, options, std::move(fields)));
+}
+
+RequestHexpire MockTransaction::Hpexpire(
+    std::string key,
+    std::chrono::milliseconds ttl,
+    std::vector<std::string> fields
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hpexpire(std::move(key), ttl, std::move(fields)));
+}
+
+RequestHexpire MockTransaction::Hpexpire(
+    std::string key,
+    std::chrono::milliseconds ttl,
+    ExpireOptions options,
+    std::vector<std::string> fields
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hpexpire(std::move(key), ttl, options, std::move(fields)));
+}
+
+RequestHexpire MockTransaction::Hexpireat(
+    std::string key,
+    std::chrono::system_clock::time_point deadline,
+    std::vector<std::string> fields
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hexpireat(std::move(key), deadline, std::move(fields)));
+}
+
+RequestHexpire MockTransaction::Hexpireat(
+    std::string key,
+    std::chrono::system_clock::time_point deadline,
+    ExpireOptions options,
+    std::vector<std::string> fields
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hexpireat(std::move(key), deadline, options, std::move(fields)));
+}
+
+RequestHexpire MockTransaction::Hpexpireat(
+    std::string key,
+    std::chrono::system_clock::time_point deadline,
+    std::vector<std::string> fields
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hpexpireat(std::move(key), deadline, std::move(fields)));
+}
+
+RequestHexpire MockTransaction::Hpexpireat(
+    std::string key,
+    std::chrono::system_clock::time_point deadline,
+    ExpireOptions options,
+    std::vector<std::string> fields
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hpexpireat(std::move(key), deadline, options, std::move(fields)));
+}
+
+RequestHexpiretime MockTransaction::Hexpiretime(std::string key, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hexpiretime(std::move(key), std::move(fields)));
+}
+
+RequestHpexpiretime MockTransaction::Hpexpiretime(std::string key, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hpexpiretime(std::move(key), std::move(fields)));
+}
+
+RequestHttl MockTransaction::Httl(std::string key, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Httl(std::move(key), std::move(fields)));
+}
+
+RequestHpttl MockTransaction::Hpttl(std::string key, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hpttl(std::move(key), std::move(fields)));
+}
+
+RequestHpersist MockTransaction::Hpersist(std::string key, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hpersist(std::move(key), std::move(fields)));
+}
+
+RequestHgetex MockTransaction::Hgetex(std::string key, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hgetex(std::move(key), std::move(fields)));
+}
+
+RequestHgetex MockTransaction::Hgetex(std::string key, HgetexOptions options, std::vector<std::string> fields) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hgetex(std::move(key), options, std::move(fields)));
+}
+
+RequestHsetex MockTransaction::Hsetex(std::string key, std::vector<HsetexFieldValue> field_values) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hsetex(std::move(key), std::move(field_values)));
+}
+
+RequestHsetex MockTransaction::Hsetex(
+    std::string key,
+    HsetexOptions options,
+    std::vector<HsetexFieldValue> field_values
+) {
+    UpdateShard(key);
+    return AddSubrequest(impl_->Hsetex(std::move(key), options, std::move(field_values)));
+}
+
 RequestJsonSet MockTransaction::JsonSet(std::string key, std::string path, formats::json::Value value) {
     UpdateShard(key);
     return AddSubrequest(impl_->JsonSet(std::move(key), std::move(path), std::move(value)));

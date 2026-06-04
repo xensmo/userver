@@ -14,7 +14,14 @@ USERVER_NAMESPACE_BEGIN
 
 namespace storages::redis {
 
-/// @brief Parsed TTL/PTTL reply (expiration or missing/persistent key)
+/// @brief Parsed TTL / HTTL reply (seconds precision).
+///
+/// Also used for HTTL replies — in which case the value semantics mirror
+/// "field" instead of "key" (kKeyDoesNotExist=-2 means the field does not exist
+/// or the parent hash does not exist; kKeyHasNoExpiration=-1 means the field has
+/// no associated TTL).
+///
+/// For millisecond-precision commands (PTTL / HPTTL) use @c PttlReply.
 class TtlReply final {
 public:
     enum class TtlReplyValue { kKeyDoesNotExist = -2, kKeyHasNoExpiration = -1 };
@@ -30,6 +37,9 @@ public:
     bool KeyExists() const;
     bool KeyHasExpiration() const;
     [[deprecated("Use GetExpire() instead")]] size_t GetExpireSeconds() const { return GetExpire().count(); }
+
+    /// @brief Returns the expiration as `std::chrono::seconds`. Throws
+    /// `KeyHasNoExpirationException` if the key/field has no expiration.
     std::chrono::seconds GetExpire() const;
 
 private:

@@ -14,6 +14,9 @@
 #include <userver/formats/json/value.hpp>
 #include <userver/storages/redis/exception.hpp>
 #include <userver/storages/redis/fwd.hpp>
+#include <userver/storages/redis/hexpiretime_reply.hpp>
+#include <userver/storages/redis/hpexpiretime_reply.hpp>
+#include <userver/storages/redis/pttl_reply.hpp>
 #include <userver/storages/redis/reply_types.hpp>
 #include <userver/storages/redis/request_data_base.hpp>
 #include <userver/storages/redis/scan_tag.hpp>
@@ -265,6 +268,16 @@ using RequestZremrangebyrank = Request<size_t>;
 using RequestZremrangebyscore = Request<size_t>;
 using RequestZscan = ScanRequest<ScanTag::kZscan>;
 using RequestZscore = Request<std::optional<double>>;
+
+// Hash field expiration commands
+using RequestHexpire = Request<std::vector<HexpireReply>>;
+using RequestHexpiretime = Request<std::vector<HexpiretimeReply>>;
+using RequestHpexpiretime = Request<std::vector<HpexpiretimeReply>>;
+using RequestHttl = Request<std::vector<TtlReply>>;
+using RequestHpttl = Request<std::vector<PttlReply>>;
+using RequestHpersist = Request<std::vector<HpersistReply>>;
+using RequestHgetex = Request<std::vector<std::optional<std::string>>>;
+using RequestHsetex = Request<HsetexReply>;
 
 // JSON module commands
 using RequestJsonSet = Request<StatusOk, void>;

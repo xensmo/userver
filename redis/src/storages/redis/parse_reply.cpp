@@ -95,6 +95,26 @@ ParseReplyDataArray(ReplyData&& array_data, const std::string& request_descripti
     return result;
 }
 
+std::vector<int64_t>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<int64_t>>) {
+    const auto& array = array_data.GetArray();
+    std::vector<int64_t> result;
+    result.reserve(array.size());
+
+    for (size_t elem_idx = 0; elem_idx < array.size(); ++elem_idx) {
+        const auto& elem = array[elem_idx];
+        if (!elem.IsInt()) {
+            throw ParseReplyException(
+                "Unexpected redis reply type to '" + request_description + "' request: " + "array[" +
+                std::to_string(elem_idx) + "]: expected " + ReplyData::TypeToString(ReplyData::Type::kInteger) +
+                ", got type=" + elem.GetTypeString() + " elem=" + elem.ToDebugString()
+            );
+        }
+        result.emplace_back(elem.GetInt());
+    }
+    return result;
+}
+
 std::
     vector<std::optional<std::string>>
     ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<std::optional<std::string>>>) {
@@ -300,6 +320,123 @@ PersistReply Parse(ReplyData&& reply_data, const std::string& request_descriptio
             return PersistReply::kKeyOrTimeoutNotFound;
         case 1:
             return PersistReply::kTimeoutRemoved;
+        default:
+            throw ParseReplyException(
+                "Unexpected reply to '" + request_description + "' request: " + std::to_string(value)
+            );
+    }
+}
+
+HexpireReply Parse(ReplyData&& reply_data, const std::string& request_description, To<HexpireReply>) {
+    reply_data.ExpectInt(request_description);
+    const auto value = reply_data.GetInt();
+    switch (value) {
+        case -2:
+            return HexpireReply::kFieldDoesNotExist;
+        case 0:
+            return HexpireReply::kConditionNotMet;
+        case 1:
+            return HexpireReply::kExpirationUpdated;
+        case 2:
+            return HexpireReply::kFieldDeleted;
+        default:
+            throw ParseReplyException(
+                "Unexpected reply to '" + request_description + "' request: " + std::to_string(value)
+            );
+    }
+}
+
+HpersistReply Parse(ReplyData&& reply_data, const std::string& request_description, To<HpersistReply>) {
+    reply_data.ExpectInt(request_description);
+    const auto value = reply_data.GetInt();
+    switch (value) {
+        case -2:
+            return HpersistReply::kFieldDoesNotExist;
+        case -1:
+            return HpersistReply::kFieldHasNoExpiration;
+        case 1:
+            return HpersistReply::kExpirationRemoved;
+        default:
+            throw ParseReplyException(
+                "Unexpected reply to '" + request_description + "' request: " + std::to_string(value)
+            );
+    }
+}
+
+std::vector<HexpireReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HexpireReply>>) {
+    auto& array = array_data.GetArray();
+    std::vector<HexpireReply> result;
+    result.reserve(array.size());
+    for (auto& elem : array) {
+        result.emplace_back(Parse(std::move(elem), request_description, To<HexpireReply>{}));
+    }
+    return result;
+}
+
+std::vector<HpersistReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HpersistReply>>) {
+    auto& array = array_data.GetArray();
+    std::vector<HpersistReply> result;
+    result.reserve(array.size());
+    for (auto& elem : array) {
+        result.emplace_back(Parse(std::move(elem), request_description, To<HpersistReply>{}));
+    }
+    return result;
+}
+
+std::vector<TtlReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<TtlReply>>) {
+    auto& array = array_data.GetArray();
+    std::vector<TtlReply> result;
+    result.reserve(array.size());
+    for (auto& elem : array) {
+        result.emplace_back(TtlReply::Parse(std::move(elem), request_description));
+    }
+    return result;
+}
+
+std::vector<PttlReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<PttlReply>>) {
+    auto& array = array_data.GetArray();
+    std::vector<PttlReply> result;
+    result.reserve(array.size());
+    for (auto& elem : array) {
+        result.emplace_back(PttlReply::Parse(std::move(elem), request_description));
+    }
+    return result;
+}
+
+std::vector<HexpiretimeReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HexpiretimeReply>>) {
+    auto& array = array_data.GetArray();
+    std::vector<HexpiretimeReply> result;
+    result.reserve(array.size());
+    for (auto& elem : array) {
+        result.emplace_back(HexpiretimeReply::Parse(std::move(elem), request_description));
+    }
+    return result;
+}
+
+std::vector<HpexpiretimeReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HpexpiretimeReply>>) {
+    auto& array = array_data.GetArray();
+    std::vector<HpexpiretimeReply> result;
+    result.reserve(array.size());
+    for (auto& elem : array) {
+        result.emplace_back(HpexpiretimeReply::Parse(std::move(elem), request_description));
+    }
+    return result;
+}
+
+HsetexReply Parse(ReplyData&& reply_data, const std::string& request_description, To<HsetexReply>) {
+    reply_data.ExpectInt(request_description);
+    const auto value = reply_data.GetInt();
+    switch (value) {
+        case 0:
+            return HsetexReply::kConditionNotMet;
+        case 1:
+            return HsetexReply::kFieldsSet;
         default:
             throw ParseReplyException(
                 "Unexpected reply to '" + request_description + "' request: " + std::to_string(value)

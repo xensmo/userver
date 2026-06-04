@@ -917,6 +917,156 @@ RequestZscore MockClientBase::Zscore(
     AbortWithStacktrace(kNotMocked);
 }
 
+RequestHexpire MockClientBase::Hexpire(
+    std::string /*key*/,
+    std::chrono::seconds /*ttl*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpire MockClientBase::Hexpire(
+    std::string /*key*/,
+    std::chrono::seconds /*ttl*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpire MockClientBase::Hpexpire(
+    std::string /*key*/,
+    std::chrono::milliseconds /*ttl*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpire MockClientBase::Hpexpire(
+    std::string /*key*/,
+    std::chrono::milliseconds /*ttl*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpire MockClientBase::Hexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpire MockClientBase::Hexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpire MockClientBase::Hpexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpire MockClientBase::Hpexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHexpiretime MockClientBase::Hexpiretime(
+    std::string /*key*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHpexpiretime MockClientBase::Hpexpiretime(
+    std::string /*key*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHttl MockClientBase::Httl(
+    std::string /*key*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHpttl MockClientBase::Hpttl(
+    std::string /*key*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHpersist MockClientBase::Hpersist(
+    std::string /*key*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHgetex MockClientBase::Hgetex(
+    std::string /*key*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHgetex MockClientBase::Hgetex(
+    std::string /*key*/,
+    HgetexOptions /*options*/,
+    std::vector<std::string> /*fields*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHsetex MockClientBase::Hsetex(
+    std::string /*key*/,
+    std::vector<HsetexFieldValue> /*field_values*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
+RequestHsetex MockClientBase::Hsetex(
+    std::string /*key*/,
+    HsetexOptions /*options*/,
+    std::vector<HsetexFieldValue> /*field_values*/,
+    const CommandControl& /*command_control*/
+) {
+    AbortWithStacktrace(kNotMocked);
+}
+
 RequestJsonSet MockClientBase::JsonSet(
     std::string /*key*/,
     std::string /*path*/,

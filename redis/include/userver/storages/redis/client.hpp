@@ -679,6 +679,141 @@ public:
 
     virtual RequestZscore Zscore(std::string key, std::string member, const CommandControl& command_control) = 0;
 
+    // Hash field expiration commands:
+
+    /// @brief Set TTL (in seconds) on one or more hash fields (HEXPIRE).
+    virtual RequestHexpire Hexpire(
+        std::string key,
+        std::chrono::seconds ttl,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set TTL (in seconds) on one or more hash fields with NX/XX/GT/LT modifier (HEXPIRE).
+    virtual RequestHexpire Hexpire(
+        std::string key,
+        std::chrono::seconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set TTL (in milliseconds) on one or more hash fields (HPEXPIRE).
+    virtual RequestHexpire Hpexpire(
+        std::string key,
+        std::chrono::milliseconds ttl,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set TTL (in milliseconds) on one or more hash fields with NX/XX/GT/LT modifier (HPEXPIRE).
+    virtual RequestHexpire Hpexpire(
+        std::string key,
+        std::chrono::milliseconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set absolute expiration deadline on one or more hash fields (HEXPIREAT, seconds-precision).
+    virtual RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set absolute expiration deadline on one or more hash fields with modifier (HEXPIREAT).
+    virtual RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set absolute expiration deadline on one or more hash fields (HPEXPIREAT, ms-precision).
+    virtual RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set absolute expiration deadline on one or more hash fields with modifier (HPEXPIREAT).
+    virtual RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get absolute expiration unix timestamp (seconds) of one or more hash fields (HEXPIRETIME).
+    virtual RequestHexpiretime Hexpiretime(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get absolute expiration unix timestamp (ms) of one or more hash fields (HPEXPIRETIME).
+    virtual RequestHpexpiretime Hpexpiretime(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get remaining TTL (in seconds) of one or more hash fields (HTTL).
+    virtual RequestHttl Httl(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get remaining TTL (in milliseconds) of one or more hash fields (HPTTL).
+    virtual RequestHpttl Hpttl(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Remove the TTL from one or more hash fields.
+    virtual RequestHpersist Hpersist(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get the values of one or more hash fields.
+    virtual RequestHgetex Hgetex(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Get the values of one or more hash fields, optionally updating their TTL.
+    virtual RequestHgetex Hgetex(
+        std::string key,
+        HgetexOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set one or more field/value pairs in a hash without a TTL clause.
+    virtual RequestHsetex Hsetex(
+        std::string key,
+        std::vector<HsetexFieldValue> field_values,
+        const CommandControl& command_control
+    ) = 0;
+
+    /// @brief Set one or more field/value pairs in a hash with optional FNX|FXX and TTL modifiers.
+    virtual RequestHsetex Hsetex(
+        std::string key,
+        HsetexOptions options,
+        std::vector<HsetexFieldValue> field_values,
+        const CommandControl& command_control
+    ) = 0;
+
     // JSON module commands:
 
     /// @brief Set a JSON value at the given key and path.

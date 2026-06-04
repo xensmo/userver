@@ -285,6 +285,68 @@ public:
 
     virtual RequestZscore Zscore(std::string key, std::string member);
 
+    virtual RequestHexpire Hexpire(std::string key, std::chrono::seconds ttl, std::vector<std::string> fields);
+
+    virtual RequestHexpire Hexpire(
+        std::string key,
+        std::chrono::seconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    );
+
+    virtual RequestHexpire Hpexpire(std::string key, std::chrono::milliseconds ttl, std::vector<std::string> fields);
+
+    virtual RequestHexpire Hpexpire(
+        std::string key,
+        std::chrono::milliseconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    );
+
+    virtual RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields
+    );
+
+    virtual RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    );
+
+    virtual RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields
+    );
+
+    virtual RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    );
+
+    virtual RequestHexpiretime Hexpiretime(std::string key, std::vector<std::string> fields);
+
+    virtual RequestHpexpiretime Hpexpiretime(std::string key, std::vector<std::string> fields);
+
+    virtual RequestHttl Httl(std::string key, std::vector<std::string> fields);
+
+    virtual RequestHpttl Hpttl(std::string key, std::vector<std::string> fields);
+
+    virtual RequestHpersist Hpersist(std::string key, std::vector<std::string> fields);
+
+    virtual RequestHgetex Hgetex(std::string key, std::vector<std::string> fields);
+
+    virtual RequestHgetex Hgetex(std::string key, HgetexOptions options, std::vector<std::string> fields);
+
+    virtual RequestHsetex Hsetex(std::string key, std::vector<HsetexFieldValue> field_values);
+
+    virtual RequestHsetex Hsetex(std::string key, HsetexOptions options, std::vector<HsetexFieldValue> field_values);
+
     virtual RequestJsonSet JsonSet(std::string key, std::string path, formats::json::Value value);
 
     virtual RequestJsonSetIfNotExist JsonSetIfNotExist(std::string key, std::string path, formats::json::Value value);

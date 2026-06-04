@@ -285,6 +285,68 @@ public:
 
     RequestZscore Zscore(std::string key, std::string member) override;
 
+    RequestHexpire Hexpire(std::string key, std::chrono::seconds ttl, std::vector<std::string> fields) override;
+
+    RequestHexpire Hexpire(
+        std::string key,
+        std::chrono::seconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    ) override;
+
+    RequestHexpire Hpexpire(std::string key, std::chrono::milliseconds ttl, std::vector<std::string> fields) override;
+
+    RequestHexpire Hpexpire(
+        std::string key,
+        std::chrono::milliseconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    ) override;
+
+    RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields
+    ) override;
+
+    RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    ) override;
+
+    RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields
+    ) override;
+
+    RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields
+    ) override;
+
+    RequestHexpiretime Hexpiretime(std::string key, std::vector<std::string> fields) override;
+
+    RequestHpexpiretime Hpexpiretime(std::string key, std::vector<std::string> fields) override;
+
+    RequestHttl Httl(std::string key, std::vector<std::string> fields) override;
+
+    RequestHpttl Hpttl(std::string key, std::vector<std::string> fields) override;
+
+    RequestHpersist Hpersist(std::string key, std::vector<std::string> fields) override;
+
+    RequestHgetex Hgetex(std::string key, std::vector<std::string> fields) override;
+
+    RequestHgetex Hgetex(std::string key, HgetexOptions options, std::vector<std::string> fields) override;
+
+    RequestHsetex Hsetex(std::string key, std::vector<HsetexFieldValue> field_values) override;
+
+    RequestHsetex Hsetex(std::string key, HsetexOptions options, std::vector<HsetexFieldValue> field_values) override;
+
     RequestJsonSet JsonSet(std::string key, std::string path, formats::json::Value value) override;
 
     RequestJsonSetIfNotExist JsonSetIfNotExist(std::string key, std::string path, formats::json::Value value) override;

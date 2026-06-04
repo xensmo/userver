@@ -511,6 +511,118 @@ RequestZscore MockTransactionImplBase::Zscore(std::string /*key*/, std::string /
     AbortWithStacktrace("Redis method not mocked");
 }
 
+RequestHexpire MockTransactionImplBase::Hexpire(
+    std::string /*key*/,
+    std::chrono::seconds /*ttl*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpire MockTransactionImplBase::Hexpire(
+    std::string /*key*/,
+    std::chrono::seconds /*ttl*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpire MockTransactionImplBase::Hpexpire(
+    std::string /*key*/,
+    std::chrono::milliseconds /*ttl*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpire MockTransactionImplBase::Hpexpire(
+    std::string /*key*/,
+    std::chrono::milliseconds /*ttl*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpire MockTransactionImplBase::Hexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpire MockTransactionImplBase::Hexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpire MockTransactionImplBase::Hpexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpire MockTransactionImplBase::Hpexpireat(
+    std::string /*key*/,
+    std::chrono::system_clock::time_point /*deadline*/,
+    ExpireOptions /*options*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHexpiretime MockTransactionImplBase::Hexpiretime(std::string /*key*/, std::vector<std::string> /*fields*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHpexpiretime MockTransactionImplBase::Hpexpiretime(std::string /*key*/, std::vector<std::string> /*fields*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHttl MockTransactionImplBase::Httl(std::string /*key*/, std::vector<std::string> /*fields*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHpttl MockTransactionImplBase::Hpttl(std::string /*key*/, std::vector<std::string> /*fields*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHpersist MockTransactionImplBase::Hpersist(std::string /*key*/, std::vector<std::string> /*fields*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHgetex MockTransactionImplBase::Hgetex(std::string /*key*/, std::vector<std::string> /*fields*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHgetex MockTransactionImplBase::Hgetex(
+    std::string /*key*/,
+    HgetexOptions /*options*/,
+    std::vector<std::string> /*fields*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHsetex MockTransactionImplBase::Hsetex(std::string /*key*/, std::vector<HsetexFieldValue> /*field_values*/) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
+RequestHsetex MockTransactionImplBase::Hsetex(
+    std::string /*key*/,
+    HsetexOptions /*options*/,
+    std::vector<HsetexFieldValue> /*field_values*/
+) {
+    AbortWithStacktrace("Redis method not mocked");
+}
+
 RequestJsonSet MockTransactionImplBase::JsonSet(
     std::string /*key*/,
     std::string /*path*/,
