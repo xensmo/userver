@@ -5,6 +5,7 @@
 #include <logging/logging_test.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/formats/json/serialize.hpp>
+#include <userver/tracing/manager.hpp>
 #include <userver/tracing/opentelemetry.hpp>
 #include <userver/tracing/span.hpp>
 #include <userver/tracing/span_builder.hpp>
@@ -893,6 +894,30 @@ UTEST_F(Span, SpanBuilderSetSampledFalseChildInherits) {
 
     const tracing::Span child("child");
     EXPECT_FALSE(child.IsSampled());
+}
+
+UTEST_F(Span, OtelTraceFlagsDefaultSampledWhenAbsent) {
+    EXPECT_EQ(tracing::GetInheritedOtelTraceFlags(), tracing::OtelTraceFlags::kSampled);
+}
+
+UTEST_F(Span, OtelTraceFlagsValidSampled) {
+    tracing::SetInheritedOtelTracingData("", "01");
+    EXPECT_EQ(tracing::GetInheritedOtelTraceFlags(), tracing::OtelTraceFlags::kSampled);
+}
+
+UTEST_F(Span, OtelTraceFlagsValidUnsampled) {
+    tracing::SetInheritedOtelTracingData("", "00");
+    EXPECT_EQ(tracing::GetInheritedOtelTraceFlags(), tracing::OtelTraceFlags::kNoTracing);
+}
+
+UTEST_F(Span, OtelTraceFlagsInvalidHexDefaultsSampled) {
+    tracing::SetInheritedOtelTracingData("", "gg");
+    EXPECT_EQ(tracing::GetInheritedOtelTraceFlags(), tracing::OtelTraceFlags::kSampled);
+}
+
+UTEST_F(Span, OtelTraceFlagsEmptyStringDefaultsSampled) {
+    tracing::SetInheritedOtelTracingData("", "");
+    EXPECT_EQ(tracing::GetInheritedOtelTraceFlags(), tracing::OtelTraceFlags::kSampled);
 }
 
 UTEST_F(Span, IsCompatibleWithOpentelemetry) {

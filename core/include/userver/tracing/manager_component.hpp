@@ -59,7 +59,7 @@ public:
     static yaml_config::Schema GetStaticConfigSchema();
 
 private:
-    const GenericTracingManager::Sampling otel_sampling_;
+    const GenericTracingManager::SamplingEnabled otel_sampling_;
     GenericTracingManager default_manager_;
     const TracingManagerBase& tracing_manager_;
 };

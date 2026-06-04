@@ -304,7 +304,7 @@ bool GenericTracingManager::TryFillSpanBuilderFromRequest(
         }
     }
 
-    if (otel_succeeded && sampling_ == Sampling::kEnabled) {
+    if (otel_succeeded && sampling_ == SamplingEnabled::kYes) {
         span_builder
             .SetSampled((GetInheritedOtelTraceFlags() & OtelTraceFlags::kSampled) != OtelTraceFlags::kNoTracing);
     }

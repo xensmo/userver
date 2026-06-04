@@ -4,7 +4,6 @@
 #include <userver/components/statistics_storage.hpp>
 #include <userver/dynamic_config/storage/component.hpp>
 #include <userver/logging/component.hpp>
-#include <userver/tracing/manager_component.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
 #include <ugrpc/server/impl/parse_config.hpp>
@@ -21,13 +20,9 @@ ServerComponent::ServerComponent(const components::ComponentConfig& config, cons
     : ComponentBase(config, context),
       server_(
           context.Scopes(),
-          impl::ParseServerConfig(config),
+          impl::ParseServerConfig(config, context),
           context.FindComponent<components::StatisticsStorage>().GetStorage(),
-          context.FindComponent<components::DynamicConfig>().GetSource(),
-          [&]() -> bool {
-              const auto* tm = context.FindComponentOptional<tracing::DefaultTracingManagerLocator>();
-              return tm && tm->IsOtelTraceSamplingEnabled();
-          }()
+          context.FindComponent<components::DynamicConfig>().GetSource()
       ),
       service_defaults_(std::make_unique<
                         impl::ServiceDefaults>(impl::ParseServiceDefaults(config["service-defaults"], context)))

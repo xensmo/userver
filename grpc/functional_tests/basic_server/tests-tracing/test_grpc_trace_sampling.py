@@ -72,6 +72,37 @@ async def test_grpc_tracestate_propagated_to_outgoing_http(grpc_client, mockserv
     )
 
 
+async def test_grpc_unsampled_suppresses_trace(grpc_client, service_client, mockserver):
+    @mockserver.json_handler('/test-service/echo-no-body')
+    async def _handler(request):
+        return mockserver.make_response()
+
+    async with service_client.capture_logs() as capture:
+        request = greeter_pb2.GreetingRequest(name='test')
+        response = await grpc_client.CallEchoNobody(request, metadata=[('traceparent', UNSAMPLED_TRACEPARENT)])
+        assert response.greeting == 'Call Echo Nobody'
+
+    assert _handler.times_called == 1
+    trace_logs = capture.select(trace_id=UNSAMPLED_TRACE_ID)
+    written_spans = [e.get('stopwatch_name') for e in trace_logs if 'stopwatch_name' in e]
+    assert not written_spans, f'No trace spans must be written when sampled flag is 0, got: {written_spans}'
+
+
+async def test_grpc_sampled_writes_trace(grpc_client, service_client, mockserver):
+    @mockserver.json_handler('/test-service/echo-no-body')
+    async def _handler(request):
+        return mockserver.make_response()
+
+    async with service_client.capture_logs() as capture:
+        request = greeter_pb2.GreetingRequest(name='test')
+        response = await grpc_client.CallEchoNobody(request, metadata=[('traceparent', SAMPLED_TRACEPARENT)])
+        assert response.greeting == 'Call Echo Nobody'
+
+    assert _handler.times_called == 1
+    trace_logs = capture.select(trace_id=SAMPLED_TRACE_ID)
+    assert any('stopwatch_name' in e for e in trace_logs), 'Trace spans must be written when sampled flag is 1'
+
+
 async def test_grpc_no_traceparent_creates_sampled_root(grpc_client, mockserver):
     outgoing_traceparent = None
 

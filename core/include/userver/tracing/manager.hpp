@@ -106,9 +106,9 @@ void SetInheritedOtelTracingData(std::string_view tracestate, std::string_view t
 /// headers and allows customising input and output headers.
 class GenericTracingManager final : public TracingManagerBase {
 public:
-    enum class Sampling {
-        kEnabled,
-        kDisabled,
+    enum class SamplingEnabled : bool {
+        kNo = false,
+        kYes = true,
     };
 
     GenericTracingManager() = delete;
@@ -116,7 +116,7 @@ public:
     GenericTracingManager(
         utils::Flags<Format> in_request_response,
         utils::Flags<Format> new_request,
-        Sampling sampling = Sampling::kDisabled
+        SamplingEnabled sampling = SamplingEnabled::kNo
     )
         : in_request_response_{in_request_response},
           new_request_{new_request},
@@ -134,7 +134,7 @@ public:
 private:
     const utils::Flags<Format> in_request_response_;
     const utils::Flags<Format> new_request_;
-    const Sampling sampling_{Sampling::kDisabled};
+    const SamplingEnabled sampling_{SamplingEnabled::kNo};
 };
 
 }  // namespace tracing

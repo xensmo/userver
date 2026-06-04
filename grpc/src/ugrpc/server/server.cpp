@@ -84,8 +84,7 @@ public:
         utils::ResourceScopeStorage& scope_storage,
         ServerConfig&& config,
         utils::statistics::Storage& statistics_storage,
-        dynamic_config::Source config_source,
-        bool otel_trace_sampling_enabled
+        dynamic_config::Source config_source
     );
     ~Impl();
 
@@ -147,12 +146,11 @@ Server::Impl::Impl(
     utils::ResourceScopeStorage& scope_storage,
     ServerConfig&& config,
     utils::statistics::Storage& statistics_storage,
-    dynamic_config::Source config_source,
-    bool otel_trace_sampling_enabled
+    dynamic_config::Source config_source
 )
     : statistics_storage_(scope_storage, statistics_storage, ugrpc::impl::StatisticsDomain::kServer),
       config_source_(config_source),
-      otel_trace_sampling_enabled_(otel_trace_sampling_enabled)
+      otel_trace_sampling_enabled_(config.otel_trace_sampling_enabled)
 {
     LOG_INFO() << "Configuring the gRPC server";
     ugrpc::impl::SetupNativeLogging();
@@ -393,11 +391,9 @@ Server::Server(
     utils::ResourceScopeStorage& scope_storage,
     ServerConfig&& config,
     utils::statistics::Storage& statistics_storage,
-    dynamic_config::Source config_source,
-    bool otel_trace_sampling_enabled
+    dynamic_config::Source config_source
 )
-    : impl_(std::make_unique<
-            Impl>(scope_storage, std::move(config), statistics_storage, config_source, otel_trace_sampling_enabled))
+    : impl_(std::make_unique<Impl>(scope_storage, std::move(config), statistics_storage, config_source))
 {}
 
 Server::~Server() = default;
