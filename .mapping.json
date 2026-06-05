@@ -6299,6 +6299,7 @@
   "ydb/include/userver/ydb/io/structs.hpp":"taxi/uservices/userver/ydb/include/userver/ydb/io/structs.hpp",
   "ydb/include/userver/ydb/io/supported_types.hpp":"taxi/uservices/userver/ydb/include/userver/ydb/io/supported_types.hpp",
   "ydb/include/userver/ydb/io/traits.hpp":"taxi/uservices/userver/ydb/include/userver/ydb/io/traits.hpp",
+  "ydb/include/userver/ydb/io/tuple.hpp":"taxi/uservices/userver/ydb/include/userver/ydb/io/tuple.hpp",
   "ydb/include/userver/ydb/query.hpp":"taxi/uservices/userver/ydb/include/userver/ydb/query.hpp",
   "ydb/include/userver/ydb/response.hpp":"taxi/uservices/userver/ydb/include/userver/ydb/response.hpp",
   "ydb/include/userver/ydb/settings.hpp":"taxi/uservices/userver/ydb/include/userver/ydb/settings.hpp",
@@ -6363,5 +6364,6 @@
   "ydb/tests/struct_io_test.cpp":"taxi/uservices/userver/ydb/tests/struct_io_test.cpp",
   "ydb/tests/test_utils.hpp":"taxi/uservices/userver/ydb/tests/test_utils.hpp",
   "ydb/tests/topic_test.cpp":"taxi/uservices/userver/ydb/tests/topic_test.cpp",
+  "ydb/tests/tuple_io_test.cpp":"taxi/uservices/userver/ydb/tests/tuple_io_test.cpp",
   "ydb/tests/types_test.cpp":"taxi/uservices/userver/ydb/tests/types_test.cpp"
 }
