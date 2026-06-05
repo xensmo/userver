@@ -4114,6 +4114,7 @@
   "redis/include/userver/storages/redis/hedged_request.hpp":"taxi/uservices/userver/redis/include/userver/storages/redis/hedged_request.hpp",
   "redis/include/userver/storages/redis/hexpiretime_reply.hpp":"taxi/uservices/userver/redis/include/userver/storages/redis/hexpiretime_reply.hpp",
   "redis/include/userver/storages/redis/hpexpiretime_reply.hpp":"taxi/uservices/userver/redis/include/userver/storages/redis/hpexpiretime_reply.hpp",
+  "redis/include/userver/storages/redis/impl/deadline_propagation_meta.hpp":"taxi/uservices/userver/redis/include/userver/storages/redis/impl/deadline_propagation_meta.hpp",
   "redis/include/userver/storages/redis/impl/transaction_subrequest_data.hpp":"taxi/uservices/userver/redis/include/userver/storages/redis/impl/transaction_subrequest_data.hpp",
   "redis/include/userver/storages/redis/key_type.hpp":"taxi/uservices/userver/redis/include/userver/storages/redis/key_type.hpp",
   "redis/include/userver/storages/redis/parse_reply.hpp":"taxi/uservices/userver/redis/include/userver/storages/redis/parse_reply.hpp",

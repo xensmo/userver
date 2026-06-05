@@ -55,29 +55,53 @@ std::optional<std::chrono::milliseconds> GetDeadlineTimeLeft() {
     return inherited_timeout;
 }
 
-bool AdjustDeadline(const SentinelImpl::SentinelCommand& scommand, const dynamic_config::Snapshot& config) {
+enum class DeadlineAdjustResult : std::uint8_t {
+    /// No inherited deadline and deadline not yet expired — command proceeds.
+    kNotAdjusted,
+    /// Deadline was capped by inherited deadline
+    kAdjusted,
+    /// Inherited deadline was already expired — command must be rejected.
+    kExpired,
+};
+
+// AdjustDeadline must live here in SentinelImpl rather than in Request because
+// SentinelImpl::AsyncCommand is the single dispatch point for ALL commands —
+// including those issued by subscribe_sentinel, cluster_topology_holder,
+// cluster_slots_query, cluster_shards_query, and sentinel_query, which bypass
+// Request entirely. Moving the capping to Request would leave those paths
+// uncapped and would require duplicating the dynamic-config gate check.
+DeadlineAdjustResult AdjustDeadline(
+    const SentinelImpl::SentinelCommand& scommand,
+    const dynamic_config::Snapshot& config
+) {
     const auto inherited_deadline = GetDeadlineTimeLeft();
     if (!inherited_deadline) {
-        return true;
+        return DeadlineAdjustResult::kNotAdjusted;
     }
 
     if (config[::dynamic_config::REDIS_DEADLINE_PROPAGATION_VERSION] != kDeadlinePropagationExperimentVersion) {
-        return true;
+        return DeadlineAdjustResult::kNotAdjusted;
     }
 
     if (*inherited_deadline <= std::chrono::seconds{0}) {
-        return false;
+        return DeadlineAdjustResult::kExpired;
     }
 
     auto& cc = scommand.command->control;
-    if (!cc.timeout_single || *cc.timeout_single > *inherited_deadline) {
+    const bool timeout_single_capped = !cc.timeout_single || *cc.timeout_single > *inherited_deadline;
+    const bool timeout_all_capped = !cc.timeout_all || *cc.timeout_all > *inherited_deadline;
+    if (timeout_single_capped) {
         cc.timeout_single = *inherited_deadline;
     }
-    if (!cc.timeout_all || *cc.timeout_all > *inherited_deadline) {
+    if (timeout_all_capped) {
         cc.timeout_all = *inherited_deadline;
     }
 
-    return true;
+    if (timeout_single_capped || timeout_all_capped) {
+        return DeadlineAdjustResult::kAdjusted;
+    }
+
+    return DeadlineAdjustResult::kNotAdjusted;
 }
 
 size_t HashSlot(const std::string& key) {
@@ -355,7 +379,9 @@ void SentinelImpl::Init() {
 }
 
 void SentinelImpl::AsyncCommand(const SentinelCommand& scommand, size_t prev_instance_idx) {
-    if (!AdjustDeadline(scommand, dynamic_config_source_.GetSnapshot())) {
+    const auto deadline_adjust_result = AdjustDeadline(scommand, dynamic_config_source_.GetSnapshot());
+    if (deadline_adjust_result == DeadlineAdjustResult::kExpired) {
+        server::request::MarkTaskInheritedDeadlineExpired();
         auto reply = std::make_shared<
             Reply>("", ReplyData::CreateError("Deadline propagation"), ReplyStatus::kTimeoutError);
         InvokeCommand(scommand.command, std::move(reply), log_extra_);
@@ -369,7 +395,13 @@ void SentinelImpl::AsyncCommand(const SentinelCommand& scommand, size_t prev_ins
     const auto counter = command->counter;
     const CommandPtr command_check_errors(PrepareCommand(
         std::move(command->args),
-        [this, shard, master, start, counter, command](const CommandPtr& ccommand, ReplyPtr reply) {
+        [this,
+         shard,
+         master,
+         start,
+         counter,
+         command,
+         deadline_adjust_result](const CommandPtr& ccommand, ReplyPtr reply) {
             if (counter != command->counter) {
                 return;
             }
@@ -460,6 +492,14 @@ void SentinelImpl::AsyncCommand(const SentinelCommand& scommand, size_t prev_ins
             const std::chrono::duration<double> time = now - start;
             reply->time = time.count();
             command->args = std::move(ccommand->args);
+            // NOTE: We cannot call MarkTaskInheritedDeadlineExpired() here because
+            // this callback is invoked from the redis ev-thread, not from a coroutine.
+            // kTaskInheritedData is a TaskInheritedVariable bound to the current coroutine,
+            // so GetOptional() returns nullptr in the ev-thread and the call would be a no-op.
+            // The deadline signal is set in Request::Get() instead, which runs in the user's coroutine.
+            if (deadline_adjust_result == DeadlineAdjustResult::kAdjusted) {
+                reply->deadline_propagation_meta.SetDeadlinePropagationCapped(utils::impl::InternalTag{});
+            }
             InvokeCommand(command, std::move(reply), log_extra_);
             ccommand->args = std::move(command->args);
         },

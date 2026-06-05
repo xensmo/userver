@@ -11,6 +11,7 @@
 #include <userver/utils/assert.hpp>
 
 #include <userver/storages/redis/base.hpp>
+#include <userver/storages/redis/impl/deadline_propagation_meta.hpp>
 #include <userver/storages/redis/reply_fwd.hpp>
 #include <userver/storages/redis/reply_status.hpp>
 
@@ -197,6 +198,8 @@ public:
     const ReplyStatus status;
     double time = 0.0;
     logging::LogExtra log_extra;
+    /// @cond For internal use only
+    DeadlinePropagationMeta deadline_propagation_meta;
 
     operator bool() const { return IsOk(); }
 
