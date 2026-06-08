@@ -1,7 +1,9 @@
 #include <userver/utest/utest.hpp>
 
 #include <userver/engine/async.hpp>
+#include <userver/engine/deadline.hpp>
 #include <userver/utils/overloaded.hpp>
+#include <userver/ydb/exceptions.hpp>
 #include <userver/ydb/impl/cast.hpp>
 
 #include "test_utils.hpp"
@@ -444,6 +446,32 @@ UTEST_F(YdbTopicProducerFixture, TopicProducerWriteMultiple) {
             EXPECT_TRUE(producer.Write(NYdb::NTopic::TWriteMessage{std::string{msg}}).IsQueued());
         }
         EXPECT_TRUE(producer.Flush().IsSuccess());
+    });
+    task.WaitFor(utest::kMaxTestWaitTime);
+    ASSERT_TRUE(task.IsFinished());
+
+    producer.Close(std::chrono::milliseconds{1000});
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerFlushWithDeadline) {
+    auto producer = CreateProducer();
+
+    auto task = engine::AsyncNoTracing([&] {
+        EXPECT_TRUE(producer.Write(NYdb::NTopic::TWriteMessage{std::string{"hello"}}).IsQueued());
+        EXPECT_TRUE(producer.Flush(engine::Deadline::FromDuration(utest::kMaxTestWaitTime)).IsSuccess());
+    });
+    task.WaitFor(utest::kMaxTestWaitTime);
+    ASSERT_TRUE(task.IsFinished());
+
+    producer.Close(std::chrono::milliseconds{1000});
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerFlushDeadlinePassed) {
+    auto producer = CreateProducer();
+
+    auto task = engine::AsyncNoTracing([&] {
+        EXPECT_TRUE(producer.Write(NYdb::NTopic::TWriteMessage{std::string{"hello"}}).IsQueued());
+        UEXPECT_THROW(producer.Flush(engine::Deadline::Passed()), ydb::DeadlineExceededError);
     });
     task.WaitFor(utest::kMaxTestWaitTime);
     ASSERT_TRUE(task.IsFinished());

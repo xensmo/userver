@@ -80,7 +80,9 @@ NYdb::NTopic::TWriteResult TopicProducer::Write(NYdb::NTopic::TWriteMessage&& me
     return producer_->Write(std::move(message));
 }
 
-NYdb::NTopic::TFlushResult TopicProducer::Flush() { return impl::GetFutureValue(producer_->Flush()); }
+NYdb::NTopic::TFlushResult TopicProducer::Flush(engine::Deadline deadline) {
+    return impl::GetFutureValue(producer_->Flush(), deadline);
+}
 
 NYdb::NTopic::TCloseResult TopicProducer::Close(std::chrono::milliseconds timeout) { return producer_->Close(timeout); }
 

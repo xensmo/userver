@@ -13,6 +13,7 @@
 #include <ydb-cpp-sdk/client/types/executor/executor.h>
 
 #include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/deadline.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -138,8 +139,9 @@ public:
 
     /// @brief Flush all buffered messages to the server.
     ///
-    /// Suspends the current coroutine until all in-flight messages are acknowledged.
-    NYdb::NTopic::TFlushResult Flush();
+    /// Waits until all in-flight messages are acknowledged.
+    /// @param deadline timeout for flush completion
+    NYdb::NTopic::TFlushResult Flush(engine::Deadline deadline = {});
 
     /// @brief Close the producer.
     ///
