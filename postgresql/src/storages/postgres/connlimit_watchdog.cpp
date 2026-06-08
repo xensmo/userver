@@ -70,6 +70,7 @@ void ConnlimitWatchdog::Start() {
           );
         )");
         trx.Execute("ALTER TABLE u_clients ADD COLUMN IF NOT EXISTS cur_user TEXT");
+        trx.Execute("ALTER TABLE u_clients SET UNLOGGED");
         // Beware! Do **not** change queries in StepV*, but rather provide a new StepV* to avoid migration issues.
         trx.Commit();
     } catch (const storages::postgres::AccessRuleViolation& e) {
