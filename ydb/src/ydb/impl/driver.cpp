@@ -8,6 +8,7 @@
 #include <userver/utils/algo.hpp>
 #include <userver/utils/text_light.hpp>
 
+#include <ydb/impl/build_info.hpp>
 #include <ydb/impl/config.hpp>
 #include <ydb/impl/native_metrics.hpp>
 
@@ -69,6 +70,8 @@ Driver::Driver(std::string dbname, impl::DriverSettings settings)
     if (settings.grpc_keepalive_permit_without_calls.has_value()) {
         driver_config.SetGRpcKeepAlivePermitWithoutCalls(*settings.grpc_keepalive_permit_without_calls);
     }
+
+    AppendUserverYdbBuildInfo(driver_config);
 
     driver_ = std::make_unique<NYdb::TDriver>(driver_config);
     NSolomonStatExtension::AddMetricRegistry(*driver_, native_metrics_.get());

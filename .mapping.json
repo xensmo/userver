@@ -6319,6 +6319,8 @@
   "ydb/src/ydb/dist_lock/worker.cpp":"taxi/uservices/userver/ydb/src/ydb/dist_lock/worker.cpp",
   "ydb/src/ydb/exceptions.cpp":"taxi/uservices/userver/ydb/src/ydb/exceptions.cpp",
   "ydb/src/ydb/federated_topic.cpp":"taxi/uservices/userver/ydb/src/ydb/federated_topic.cpp",
+  "ydb/src/ydb/impl/build_info.cpp":"taxi/uservices/userver/ydb/src/ydb/impl/build_info.cpp",
+  "ydb/src/ydb/impl/build_info.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/build_info.hpp",
   "ydb/src/ydb/impl/config.cpp":"taxi/uservices/userver/ydb/src/ydb/impl/config.cpp",
   "ydb/src/ydb/impl/config.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/config.hpp",
   "ydb/src/ydb/impl/dist_lock/semaphore_settings.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/dist_lock/semaphore_settings.hpp",
