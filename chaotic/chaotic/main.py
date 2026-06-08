@@ -50,14 +50,6 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        '-u',
-        '--userver',
-        type=str,
-        default='userver',
-        help='userver namespace',
-    )
-
-    parser.add_argument(
         '-e',
         '--erase-path-prefix',
         type=str,

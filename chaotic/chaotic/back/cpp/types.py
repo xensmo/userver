@@ -660,13 +660,6 @@ class CppStringEnum(CppType):
 
 
 @dataclasses.dataclass
-class CppStructPrimitiveField:
-    raw_cpp_type: str
-    user_cpp_type: str | None = None
-    default: Any = None  # the type already checked at front stage
-
-
-@dataclasses.dataclass
 class CppStructField:
     name: str
     required: bool

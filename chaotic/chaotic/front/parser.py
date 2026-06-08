@@ -44,10 +44,6 @@ ERROR_MESSAGES = {
 }
 
 
-def missing_field_msg(field: str) -> str:
-    return ERROR_MESSAGES['missing'].format(field=field)
-
-
 def convert_error(
     full_filepath: str,
     infile_path: str,
