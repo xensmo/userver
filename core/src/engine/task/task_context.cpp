@@ -563,7 +563,7 @@ void TaskContext::CoroFunc(TaskPipe& task_pipe) {
                     context->TraceStateTransition(Task::State::kRunning);
                     context->payload_->Perform();
                     // We store an exception in the context to be able to handle
-                    // ContextAccessor::GetErrorResult() even when the owning
+                    // Awaitable::GetErrorResult() even when the owning
                     // task is destroyed (and payload_ is reset to nullptr).
                     context->exception_ = context->payload_->GetException();
                     yield_reason_guard.SetYieldReason(YieldReason::kTaskComplete);

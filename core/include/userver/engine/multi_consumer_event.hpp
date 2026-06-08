@@ -5,11 +5,14 @@
 
 #include <atomic>
 
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future_status.hpp>
 #include <userver/engine/impl/context_accessor.hpp>
 #include <userver/engine/impl/wait_list_fwd.hpp>
 #include <userver/utils/fast_pimpl.hpp>
+#include <userver/utils/impl/internal_tag.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -29,7 +32,7 @@ namespace engine {
 /// destroy `MultiConsumerEvent` instance, instead the producer should be responsible for that.
 ///
 /// @see @ref scripts/docs/en/userver/synchronization.md
-class MultiConsumerEvent final : private impl::ContextAccessor {
+class MultiConsumerEvent final : private impl::AwaitableBase {
 public:
     MultiConsumerEvent() noexcept;
 
@@ -57,10 +60,10 @@ public:
     /// Returns true if already signaled.
     [[nodiscard]] bool IsReady() const noexcept override;
 
-    /// @cond
-    // For internal use only.
-    impl::ContextAccessor* TryGetContextAccessor() noexcept { return this; }
-    /// @endcond
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return AwaitableToken{utils::impl::InternalTag{}, this};
+    }
 
 private:
     void TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) override;

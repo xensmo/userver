@@ -148,7 +148,9 @@ ReplyPtr Request::Get() {
     UINVARIANT(false, "Invalid FutureStatus enum value");
 }
 
-engine::impl::ContextAccessor* Request::TryGetContextAccessor() noexcept { return future_.TryGetContextAccessor(); }
+engine::AwaitableToken Request::GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+    return future_.GetAwaitableToken();
+}
 
 }  // namespace storages::redis::impl
 

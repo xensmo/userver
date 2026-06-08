@@ -11,6 +11,7 @@
 
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/utils/fast_pimpl.hpp>
 #include <userver/utils/meta.hpp>
@@ -76,18 +77,17 @@ std::optional<std::size_t> WaitAnyUntil(const std::chrono::time_point<Clock, Dur
 
 namespace impl {
 
-class ContextAccessor;
-
-std::optional<std::size_t> DoWaitAny(utils::span<ContextAccessor*> targets, Deadline deadline);
+std::optional<std::size_t> DoWaitAny(utils::span<AwaitableToken> target_tokens, Deadline deadline);
 
 template <typename Container>
 std::optional<std::size_t> WaitAnyFromContainer(Deadline deadline, Container& tasks) {
     const auto size = std::size(tasks);
-    std::vector<ContextAccessor*> targets;
+    std::vector<AwaitableToken> targets;
     targets.reserve(size);
 
     for (auto& task : tasks) {
-        targets.push_back(task.TryGetContextAccessor());
+        static_assert(engine::Awaitable<decltype(task)>, "Tasks must be awaitable");
+        targets.push_back(task.GetAwaitableToken());
     }
 
     return DoWaitAny(targets, deadline);
@@ -95,7 +95,8 @@ std::optional<std::size_t> WaitAnyFromContainer(Deadline deadline, Container& ta
 
 template <typename... Tasks>
 std::optional<std::size_t> WaitAnyFromTasks(Deadline deadline, Tasks&... tasks) {
-    ContextAccessor* wa_elements[]{tasks.TryGetContextAccessor()...};
+    static_assert((true && ... && engine::Awaitable<Tasks>), "Tasks must be awaitable");
+    AwaitableToken wa_elements[]{tasks.GetAwaitableToken()...};
     return DoWaitAny(wa_elements, deadline);
 }
 
@@ -187,7 +188,7 @@ private:
     template <typename Awaitable>
     void AppendSingle(Awaitable& awaitable);
 
-    void AppendAccessor(impl::ContextAccessor* awaitable);
+    void AppendToken(engine::AwaitableToken awaitable);
 
     boost::intrusive_ptr<Impl> impl_;
 };
@@ -195,16 +196,18 @@ private:
 template <typename Container>
 void WaitAnyContext::AppendFromContainer(Container& awaitables) {
     for (auto& awaitable : awaitables) {
-        AppendAccessor(awaitable.TryGetContextAccessor());
+        static_assert(engine::Awaitable<decltype(awaitable)>, "Awaitable must be a range or a single awaitable");
+        AppendToken(awaitable.GetAwaitableToken());
     }
 }
 
 template <typename Awaitable>
 void WaitAnyContext::AppendSingle(Awaitable& awaitable) {
-    if constexpr (meta::impl::IsSingleRange<Awaitable>) {
+    if constexpr (meta::IsRange<Awaitable>) {
         AppendFromContainer(awaitable);
     } else {
-        AppendAccessor(awaitable.TryGetContextAccessor());
+        static_assert(engine::Awaitable<Awaitable>, "Awaitable must be a range or a single awaitable");
+        AppendToken(awaitable.GetAwaitableToken());
     }
 }
 

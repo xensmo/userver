@@ -36,7 +36,7 @@ class TaskContextHolder;
 [[noreturn]] void ReportDeadlock();
 
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
-class TaskContext final : public ContextAccessor, public Awaiter, public deadlock_detector::Actor {
+class TaskContext final : public AwaitableBase, public Awaiter, public deadlock_detector::Actor {
 public:
     using TaskPipe = coro::Pool::TaskPipe;
     using TaskId = uint64_t;
@@ -148,7 +148,7 @@ public:
     bool HasLocalStorage() const noexcept;
     task_local::Storage& GetLocalStorage() noexcept;
 
-    // ContextAccessor implementation
+    // Awaitable implementation
     bool IsReady() const noexcept override;
     void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) override;
     boost::intrusive_ptr<Awaiter> RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept override;

@@ -3,17 +3,20 @@
 #include <atomic>
 #include <exception>
 
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future_status.hpp>
 #include <userver/engine/impl/context_accessor.hpp>
 #include <userver/engine/impl/wait_list_fwd.hpp>
+#include <userver/utils/impl/internal_tag.hpp>
 #include <userver/utils/result_store.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
-class FutureStateBase : private ContextAccessor {
+class FutureStateBase : private AwaitableBase {
 public:
     bool IsReady() const noexcept final;
 
@@ -22,8 +25,9 @@ public:
     void OnFutureCreated();
     bool IsFutureCreated() const noexcept;
 
-    // Internal helper for WaitAny/WaitAll
-    ContextAccessor* TryGetContextAccessor() noexcept { return this; }
+    AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return AwaitableToken{utils::impl::InternalTag{}, this};
+    }
 
 protected:
     FutureStateBase() noexcept;

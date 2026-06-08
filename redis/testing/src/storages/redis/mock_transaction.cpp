@@ -80,9 +80,9 @@ public:
         return nullptr;
     }
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept override {
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND override {
         UASSERT_MSG(false, "not supported in mocked request");
-        return nullptr;
+        return engine::AwaitableToken{};
     }
 
 private:

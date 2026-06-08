@@ -13,7 +13,7 @@ namespace engine {
 
 namespace impl {
 namespace {
-class UnreachableAwaitable final : public ContextAccessor {
+class UnreachableAwaitable final : public AwaitableBase {
 public:
     UnreachableAwaitable() = default;
 

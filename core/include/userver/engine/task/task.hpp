@@ -3,6 +3,8 @@
 /// @file userver/engine/task/task.hpp
 /// @brief @copybrief engine::Task
 
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/task/task_base.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -36,10 +38,8 @@ public:
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    /// @cond
-    // For internal use only.
-    impl::ContextAccessor* TryGetContextAccessor() noexcept;
-    /// @endcond
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND;
 
 protected:
     /// @cond

@@ -32,7 +32,7 @@ private:
     int fd_[2]{};
 };
 
-class ReadyAwaitableImpl final : public engine::impl::ContextAccessor {
+class ReadyAwaitableImpl final : public engine::impl::AwaitableBase {
 public:
     bool IsReady() const noexcept override { return is_ready_; }
 
@@ -49,7 +49,9 @@ private:
 
 class ReadyAwaitable final {
 public:
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept { return &impl_; }
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return engine::AwaitableToken{utils::impl::InternalTag{}, &impl_};
+    }
 
 private:
     ReadyAwaitableImpl impl_;

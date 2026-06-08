@@ -67,7 +67,7 @@ FdPoller::Kind GetUserMode(int ev_events) {
 
 }  // namespace
 
-class FdPoller::Impl final : public engine::impl::ContextAccessor {
+class FdPoller::Impl final : public engine::impl::AwaitableBase {
 public:
     Impl(ev::ThreadControl control);
 
@@ -111,7 +111,7 @@ public:
         );
     }
 
-    // ContextAccessor implementation
+    // Awaitable implementation
     bool IsReady() const noexcept override { return awaiters_.IsSignaled(); }
 
     void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>& awaiter, std::uintptr_t context) override {
@@ -221,7 +221,9 @@ void FdPoller::ResetReady() noexcept { pimpl_->ResetReady(); }
 
 std::optional<FdPoller::Kind> FdPoller::GetReady() noexcept { return pimpl_->GetReady(); }
 
-engine::impl::ContextAccessor* FdPoller::TryGetContextAccessor() noexcept { return &*pimpl_; }
+AwaitableToken FdPoller::GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+    return AwaitableToken{utils::impl::InternalTag{}, &*pimpl_};
+}
 
 void FdPoller::Reset(int fd, Kind kind) { pimpl_->Reset(fd, kind); }
 

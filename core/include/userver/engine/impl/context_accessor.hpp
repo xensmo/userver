@@ -56,9 +56,13 @@ public:
     virtual std::exception_ptr GetErrorResult() const noexcept { return {}; }
 
 protected:
-    WeakAwaitable();
+    constexpr WeakAwaitable() = default;
 
     ~WeakAwaitable() = default;
+
+private:
+    // Key function to avoid vtable being generated in each translation unit that includes the header.
+    virtual void ImplMoveWeakAwaitableVirtualTableToCpp() final;
 };
 
 // Provides additional guarantees over WeakAwaitable:
@@ -69,14 +73,19 @@ protected:
 // * Each `Awaiter` will only be notified no more than once, and no duplication of `intrusive_ptr` is allowed.
 //
 // This makes it usable with WaitAny.
-//
-// TODO rename to Awaitable.
-class ContextAccessor : public WeakAwaitable {
+class AwaitableBase : public WeakAwaitable {
 protected:
-    ContextAccessor();
+    constexpr AwaitableBase() = default;
 
-    ~ContextAccessor() = default;
+    ~AwaitableBase() = default;
+
+private:
+    // Key function to avoid vtable being generated in each translation unit that includes the header.
+    virtual void ImplMoveAwaitableBaseVirtualTableToCpp() final;
 };
+
+// TODO remove. Use AwaitableBase instead.
+using ContextAccessor = AwaitableBase;
 
 }  // namespace engine::impl
 

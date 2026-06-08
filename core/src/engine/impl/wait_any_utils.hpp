@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <engine/task/task_context.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/impl/context_accessor.hpp>
 #include <userver/utils/fast_scope_guard.hpp>
 #include <userver/utils/span.hpp>
@@ -15,21 +16,22 @@ namespace engine::impl {
 
 class WaitAnyAwaitable final : public WeakAwaitable {
 public:
-    explicit WaitAnyAwaitable(utils::span<ContextAccessor*> targets)
+    explicit WaitAnyAwaitable(utils::span<AwaitableToken> targets)
         : targets_(targets)
     {}
 
     bool IsReady() const noexcept override {
-        return std::ranges::all_of(targets_, [](ContextAccessor* target) {
-            return target == nullptr || target->IsReady();
+        return std::ranges::all_of(targets_, [](const AwaitableToken& target) {
+            return target.IsEmpty() || target.GetAwaitable(utils::impl::InternalTag{}).IsReady();
         });
     }
 
     void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::uintptr_t context) override {
-        for (auto*& target : targets_) {
-            if (!target) {
+        for (auto& target : targets_) {
+            if (target.IsEmpty()) {
                 continue;
             }
+            auto& awaitable = target.GetAwaitable(utils::impl::InternalTag{});
 
             utils::FastScopeGuard disable_wakeups([&]() noexcept {
                 DoDisableWakeups(utils::span{targets_.data(), &target}, *awaiter, context);
@@ -37,7 +39,7 @@ public:
 
             // TryAppendAwaiter might throw.
             auto awaiter_copy = awaiter;
-            target->TryAppendAwaiter(awaiter_copy, context);
+            awaitable.TryAppendAwaiter(awaiter_copy, context);
             if (awaiter_copy != nullptr) {  // target is ready.
                 return;
             }
@@ -56,19 +58,20 @@ public:
 
 private:
     boost::intrusive_ptr<Awaiter> DoDisableWakeups(
-        utils::span<ContextAccessor*> targets,
+        utils::span<AwaitableToken> targets,
         Awaiter& awaiter,
         std::uintptr_t context
     ) const noexcept {
         boost::intrusive_ptr<Awaiter> compound_removal_result;
         bool removed_before_notification = true;
 
-        for (auto* const target : targets) {
-            if (!target) {
+        for (const auto& target : targets) {
+            if (target.IsEmpty()) {
                 continue;
             }
+            auto& awaitable = target.GetAwaitable(utils::impl::InternalTag{});
 
-            auto removal_result = target->RemoveAwaiter(awaiter, context);
+            auto removal_result = awaitable.RemoveAwaiter(awaiter, context);
             removed_before_notification &= (removal_result != nullptr);
             compound_removal_result = std::move(removal_result);
         }
@@ -79,14 +82,14 @@ private:
         return compound_removal_result;
     }
 
-    const utils::span<ContextAccessor*> targets_;
+    const utils::span<AwaitableToken> targets_;
 };
 
-inline bool AreUniqueValues(utils::span<ContextAccessor*> targets) {
-    std::vector<ContextAccessor*> sorted;
+inline bool AreUniqueValues(utils::span<AwaitableToken> targets) {
+    std::vector<AwaitableToken> sorted;
     sorted.reserve(targets.size());
-    std::ranges::copy_if(targets, std::back_inserter(sorted), [](const auto& target) { return target != nullptr; });
-    std::ranges::sort(sorted);
+    std::ranges::copy_if(targets, std::back_inserter(sorted), [](const auto& target) { return !target.IsEmpty(); });
+    std::ranges::sort(sorted, {}, [](const auto& target) { return &target.GetAwaitable(utils::impl::InternalTag{}); });
     return std::ranges::adjacent_find(sorted) == sorted.end();
 }
 

@@ -16,8 +16,10 @@ namespace engine::impl {
 
 namespace {
 
-void RethrowError(ContextAccessor& accessor) {
-    auto exception = accessor.GetErrorResult();
+void RethrowError(AwaitableToken target) {
+    auto& awaitable = target.GetAwaitable(utils::impl::InternalTag{});
+
+    auto exception = awaitable.GetErrorResult();
     if (exception) {
         std::rethrow_exception(exception);
     }
@@ -27,7 +29,7 @@ void RethrowError(ContextAccessor& accessor) {
 
 class WaitAllCheckedContext final {
 public:
-    WaitAllCheckedContext(std::vector<ContextAccessor*>&& targets)
+    WaitAllCheckedContext(std::vector<AwaitableToken>&& targets)
         : impl_(new Impl(std::move(targets)), /*add_ref=*/false)
     {}
     ~WaitAllCheckedContext() noexcept { impl_->Unsubscribe(); }
@@ -41,7 +43,7 @@ public:
 private:
     class Impl final : public impl::PolymorphicAwaiter {
     public:
-        Impl(std::vector<ContextAccessor*>&& targets);
+        Impl(std::vector<AwaitableToken>&& targets);
         ~Impl() noexcept = default;
 
         Impl(Impl&&) = delete;
@@ -54,52 +56,55 @@ private:
         void Unsubscribe() noexcept;
 
     private:
+        static constexpr std::size_t kNoExceptionSource = std::numeric_limits<std::size_t>::max();
+
         void DoNotify(boost::intrusive_ptr<impl::PolymorphicAwaiter> self, std::uintptr_t context) noexcept override;
 
         void Destroy() noexcept override { delete this; }
 
-        std::vector<ContextAccessor*> targets_;
+        std::vector<AwaitableToken> targets_;
         std::size_t next_subscription_index_{0};
         std::atomic<std::size_t> pending_notifications_{0};
-        std::atomic<ContextAccessor*> exception_source_{nullptr};
+        std::atomic<std::size_t> exception_source_index_{kNoExceptionSource};
         engine::SingleConsumerEvent result_ready_;
     };
 
     boost::intrusive_ptr<Impl> impl_;
 };
 
-WaitAllCheckedContext::Impl::Impl(std::vector<ContextAccessor*>&& targets)
+WaitAllCheckedContext::Impl::Impl(std::vector<AwaitableToken>&& targets)
     : PolymorphicAwaiter(Awaiter::InitialRefCounter::kOne),
       targets_(std::move(targets))
 {}
 
 FutureStatus WaitAllCheckedContext::Impl::WaitUntil(Deadline deadline) {
     while (next_subscription_index_ < targets_.size()) {
-        auto target = targets_[next_subscription_index_];
-        if (target == nullptr) {
+        const auto target = targets_[next_subscription_index_];
+        if (target.IsEmpty()) {
             ++next_subscription_index_;
             continue;
         }
+        auto& awaitable = target.GetAwaitable(utils::impl::InternalTag{});
 
         pending_notifications_.fetch_add(1, std::memory_order_relaxed);
         boost::intrusive_ptr<impl::Awaiter> awaiter_ptr{this};
-        target->TryAppendAwaiter(awaiter_ptr, next_subscription_index_++);
+        awaitable.TryAppendAwaiter(awaiter_ptr, next_subscription_index_++);
         if (awaiter_ptr != nullptr) {  // target is already ready.
             pending_notifications_.fetch_sub(1, std::memory_order_relaxed);
-            RethrowError(*target);
+            RethrowError(target);
         }
     }
 
     if (!result_ready_.WaitUntil(deadline, [this]() {
-            return exception_source_.load(std::memory_order_relaxed) != nullptr ||
+            return exception_source_index_.load(std::memory_order_relaxed) != kNoExceptionSource ||
                    pending_notifications_.load(std::memory_order_relaxed) == 0;
         }))
     {
         return current_task::ShouldCancel() ? FutureStatus::kCancelled : FutureStatus::kTimeout;
     }
-    auto exception_source = exception_source_.exchange(nullptr, std::memory_order_relaxed);
-    if (exception_source != nullptr) {
-        RethrowError(*exception_source);
+    auto exception_source_index = exception_source_index_.exchange(kNoExceptionSource, std::memory_order_relaxed);
+    if (exception_source_index != kNoExceptionSource) {
+        RethrowError(targets_[exception_source_index]);
         utils::AbortWithStacktrace("Should never be there");
     }
     UASSERT(pending_notifications_.load(std::memory_order_relaxed) == 0);
@@ -108,10 +113,11 @@ FutureStatus WaitAllCheckedContext::Impl::WaitUntil(Deadline deadline) {
 
 void WaitAllCheckedContext::Impl::Unsubscribe() noexcept {
     for (std::size_t i = 0; i < next_subscription_index_; ++i) {
-        if (targets_[i] == nullptr) {
+        if (targets_[i].IsEmpty()) {
             continue;
         }
-        targets_[i]->RemoveAwaiter(*this, i);
+        auto& awaitable = targets_[i].GetAwaitable(utils::impl::InternalTag{});
+        awaitable.RemoveAwaiter(*this, i);
     }
 }
 
@@ -121,14 +127,15 @@ void WaitAllCheckedContext::Impl::DoNotify(
 ) noexcept {
     UASSERT(context <= std::numeric_limits<std::size_t>::max());
     const auto index = static_cast<std::size_t>(context);
-    UASSERT(targets_[index] != nullptr);
-    UASSERT(targets_[index]->IsReady());
+    const auto target = targets_[index];
+    auto& awaitable = target.GetAwaitable(utils::impl::InternalTag{});
+    UASSERT(awaitable.IsReady());
     UASSERT(pending_notifications_.load(std::memory_order_relaxed) > 0);
 
     bool ready = false;
-    if (targets_[index]->GetErrorResult()) {
-        ContextAccessor* expected{nullptr};
-        if (exception_source_.compare_exchange_strong(expected, targets_[index], std::memory_order_relaxed)) {
+    if (awaitable.GetErrorResult()) {
+        auto expected = kNoExceptionSource;
+        if (exception_source_index_.compare_exchange_strong(expected, index, std::memory_order_relaxed)) {
             ready = true;
         }
     }
@@ -140,8 +147,8 @@ void WaitAllCheckedContext::Impl::DoNotify(
     }
 }
 
-FutureStatus DoWaitAllChecked(std::vector<ContextAccessor*>&& targets, Deadline deadline) {
-    UASSERT_MSG(AreUniqueValues(targets), "Same tasks/futures were detected in WaitAny* call");
+FutureStatus DoWaitAllChecked(std::vector<AwaitableToken>&& targets, Deadline deadline) {
+    UASSERT_MSG(AreUniqueValues(utils::span{targets}), "Same tasks/futures were detected in WaitAny* call");
     WaitAllCheckedContext context{std::move(targets)};
     return context.WaitUntil(deadline);
 }

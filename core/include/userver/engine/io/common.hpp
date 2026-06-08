@@ -8,13 +8,16 @@
 #include <optional>
 #include <span>
 
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/utils/assert.hpp>
+#include <userver/utils/impl/internal_tag.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
-class ContextAccessor;
+class AwaitableBase;
 }
 
 namespace engine::io {
@@ -32,14 +35,18 @@ public:
     /// Suspends current task until the stream has data available.
     [[nodiscard]] virtual bool WaitReadable(Deadline) = 0;
 
-    /// For internal use only
-    impl::ContextAccessor* TryGetContextAccessor() { return ca_; }
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    AwaitableToken GetAwaitableToken() USERVER_IMPL_LIFETIME_BOUND {
+        return AwaitableToken{utils::impl::InternalTag{}, ca_};
+    }
 
 protected:
-    void SetReadableContextAccessor(impl::ContextAccessor* ca) { ca_ = ca; }
+    void SetReadableAwaitableToken(AwaitableToken token) {
+        ca_ = token.IsEmpty() ? nullptr : &token.GetAwaitable(utils::impl::InternalTag{});
+    }
 
 private:
-    impl::ContextAccessor* ca_{nullptr};
+    impl::AwaitableBase* ca_{nullptr};
 };
 
 /// @ingroup userver_base_classes
@@ -80,14 +87,18 @@ public:
     /// Suspends current task until the data is available.
     [[nodiscard]] virtual bool WaitWriteable(Deadline deadline) = 0;
 
-    /// For internal use only
-    impl::ContextAccessor* TryGetContextAccessor() { return ca_; }
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    AwaitableToken GetAwaitableToken() USERVER_IMPL_LIFETIME_BOUND {
+        return AwaitableToken{utils::impl::InternalTag{}, ca_};
+    }
 
 protected:
-    void SetWritableContextAccessor(impl::ContextAccessor* ca) { ca_ = ca; }
+    void SetWritableAwaitableToken(AwaitableToken token) {
+        ca_ = token.IsEmpty() ? nullptr : &token.GetAwaitable(utils::impl::InternalTag{});
+    }
 
 private:
-    impl::ContextAccessor* ca_{nullptr};
+    impl::AwaitableBase* ca_{nullptr};
 };
 
 /// IoData for vector send

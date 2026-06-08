@@ -55,6 +55,8 @@
 #include <queue>
 #include <type_traits>
 
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/engine/wait_any.hpp>
 #include <userver/utils/assert.hpp>
@@ -118,11 +120,12 @@ struct SubrequestWrapper {
         : request(std::move(request))
     {}
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() {
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    engine::AwaitableToken GetAwaitableToken() USERVER_IMPL_LIFETIME_BOUND {
         if (!request) {
-            return nullptr;
+            return engine::AwaitableToken{};
         }
-        return request->TryGetContextAccessor();
+        return request->GetAwaitableToken();
     }
 
     std::optional<RequestType> request;
@@ -302,7 +305,8 @@ struct HedgedRequestBulkFuture {
     /// @copydoc engine::TaskWithResult::Get()
     std::vector<std::optional<ReplyType>> Get() { return task_.Get(); }
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() { return task_.TryGetContextAccessor(); }
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    engine::AwaitableToken GetAwaitableToken() USERVER_IMPL_LIFETIME_BOUND { return task_.GetAwaitableToken(); }
 
 private:
     template <typename TRequestStrategy>
@@ -331,7 +335,8 @@ struct HedgedRequestFuture {
 
     void IgnoreResult() {}
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() { return task_.TryGetContextAccessor(); }
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    engine::AwaitableToken GetAwaitableToken() USERVER_IMPL_LIFETIME_BOUND { return task_.GetAwaitableToken(); }
 
 private:
     template <typename TRequestStrategy>

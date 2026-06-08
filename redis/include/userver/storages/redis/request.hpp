@@ -10,7 +10,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <userver/engine/impl/context_accessor.hpp>
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/formats/json/value.hpp>
 #include <userver/storages/redis/exception.hpp>
 #include <userver/storages/redis/fwd.hpp>
@@ -55,10 +56,10 @@ public:
     /// @throws server or request related exceptions
     ReplyType Get(const std::string& request_description = {}) { return impl_->Get(request_description); }
 
-    /// @cond
-    /// Internal helper for WaitAny/WaitAll
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept { return impl_->TryGetContextAccessor(); }
-    /// @endcond
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return impl_->GetAwaitableToken();
+    }
 
     template <typename T1, typename T2>
     friend class RequestEval;

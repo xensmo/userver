@@ -9,7 +9,7 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine {
 
-class SingleConsumerEvent::EventAwaitable final : public impl::ContextAccessor {
+class SingleConsumerEvent::EventAwaitable final : public impl::AwaitableBase {
 public:
     explicit EventAwaitable(SingleConsumerEvent& event)
         : event_(event)

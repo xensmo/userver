@@ -3,11 +3,14 @@
 /// @file userver/engine/single_use_event.hpp
 /// @brief @copybrief engine::SingleUseEvent
 
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future_status.hpp>
 #include <userver/engine/impl/context_accessor.hpp>
 #include <userver/engine/impl/wait_list_fwd.hpp>
 #include <userver/utils/fast_pimpl.hpp>
+#include <userver/utils/impl/internal_tag.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -42,7 +45,7 @@ namespace engine {
 /// @snippet engine/single_use_event_test.cpp  Wait and destroy
 ///
 /// @see @ref scripts/docs/en/userver/synchronization.md
-class SingleUseEvent final : private impl::ContextAccessor {
+class SingleUseEvent final : private impl::AwaitableBase {
 public:
     SingleUseEvent() noexcept;
 
@@ -77,10 +80,10 @@ public:
     /// Returns true iff already signaled.
     [[nodiscard]] bool IsReady() const noexcept override;
 
-    /// @cond
-    // For internal use only.
-    impl::ContextAccessor* TryGetContextAccessor() noexcept { return this; }
-    /// @endcond
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return AwaitableToken{utils::impl::InternalTag{}, this};
+    }
 
 private:
     void TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) override;
