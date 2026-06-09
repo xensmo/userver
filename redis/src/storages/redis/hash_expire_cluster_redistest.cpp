@@ -19,6 +19,14 @@ const storages::redis::CommandControl kDefaultCc{
     1,
 };
 
+/// Use this CommandControl for read commands that follow a write in tests,
+/// to avoid replication lag causing flaky failures.
+const storages::redis::CommandControl kMasterCC = [] {
+    auto cc = kDefaultCc;
+    cc.force_request_to_master = true;
+    return cc;
+}();
+
 std::chrono::system_clock::time_point FutureDeadlineUtc() {
     return utils::datetime::UtcStringtime("2067-06-07T06:07:00Z", utils::datetime::kIsoFormat);
 }
@@ -49,7 +57,7 @@ UTEST_F(RedisClusterClientTest, HexpireBasicSec) {
 
     // Httl returns a positive value (in seconds) close to expected
     {
-        auto reply = client->Httl(key, {"f1"}, kDefaultCc).Get();
+        auto reply = client->Httl(key, {"f1"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].KeyExists());
         EXPECT_TRUE(reply[0].KeyHasExpiration());
@@ -59,7 +67,7 @@ UTEST_F(RedisClusterClientTest, HexpireBasicSec) {
 
     // Field without TTL: Httl reports no expiration
     {
-        auto reply = client->Httl(key, {"f2"}, kDefaultCc).Get();
+        auto reply = client->Httl(key, {"f2"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].KeyExists());
         EXPECT_FALSE(reply[0].KeyHasExpiration());
@@ -67,7 +75,7 @@ UTEST_F(RedisClusterClientTest, HexpireBasicSec) {
 
     // Missing field: Httl reports the field does not exist
     {
-        auto reply = client->Httl(key, {"nope"}, kDefaultCc).Get();
+        auto reply = client->Httl(key, {"nope"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_FALSE(reply[0].KeyExists());
     }
@@ -95,7 +103,7 @@ UTEST_F(RedisClusterClientTest, HexpireBasicMs) {
 
     // Hpttl returns a positive value (in ms) close to expected
     {
-        auto reply = client->Hpttl(key, {"f1"}, kDefaultCc).Get();
+        auto reply = client->Hpttl(key, {"f1"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].KeyExists());
         EXPECT_TRUE(reply[0].KeyHasExpiration());
@@ -105,7 +113,7 @@ UTEST_F(RedisClusterClientTest, HexpireBasicMs) {
 
     // Field without TTL: Hpttl reports no expiration
     {
-        auto reply = client->Hpttl(key, {"f2"}, kDefaultCc).Get();
+        auto reply = client->Hpttl(key, {"f2"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].KeyExists());
         EXPECT_FALSE(reply[0].KeyHasExpiration());
@@ -113,7 +121,7 @@ UTEST_F(RedisClusterClientTest, HexpireBasicMs) {
 
     // Missing field: Hpttl reports the field does not exist
     {
-        auto reply = client->Hpttl(key, {"nope"}, kDefaultCc).Get();
+        auto reply = client->Hpttl(key, {"nope"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_FALSE(reply[0].KeyExists());
     }
@@ -314,7 +322,7 @@ UTEST_F(RedisClusterClientTest, HexpireDeletesOnZeroSec) {
     }
 
     {
-        auto reply = client->Hget(key, "f1", kDefaultCc).Get();
+        auto reply = client->Hget(key, "f1", kMasterCC).Get();
         EXPECT_FALSE(reply.has_value());
     }
 
@@ -338,7 +346,7 @@ UTEST_F(RedisClusterClientTest, HexpireDeletesOnZeroMs) {
     }
 
     {
-        auto reply = client->Hget(key, "f1", kDefaultCc).Get();
+        auto reply = client->Hget(key, "f1", kMasterCC).Get();
         EXPECT_FALSE(reply.has_value());
     }
 
@@ -364,7 +372,7 @@ UTEST_F(RedisClusterClientTest, HexpireatBasicSec) {
     }
 
     {
-        auto reply = client->Hexpiretime(key, {"f1"}, kDefaultCc).Get();
+        auto reply = client->Hexpiretime(key, {"f1"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].FieldExists());
         ASSERT_TRUE(reply[0].HasExpiration());
@@ -393,7 +401,7 @@ UTEST_F(RedisClusterClientTest, HexpireatBasicMs) {
     }
 
     {
-        auto reply = client->Hpexpiretime(key, {"f1"}, kDefaultCc).Get();
+        auto reply = client->Hpexpiretime(key, {"f1"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].FieldExists());
         ASSERT_TRUE(reply[0].HasExpiration());
@@ -422,7 +430,7 @@ UTEST_F(RedisClusterClientTest, Hpersist) {
     }
 
     {
-        auto reply = client->Httl(key, {"with_ttl"}, kDefaultCc).Get();
+        auto reply = client->Httl(key, {"with_ttl"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].KeyExists());
         EXPECT_FALSE(reply[0].KeyHasExpiration());
@@ -455,7 +463,7 @@ UTEST_F(RedisClusterClientTest, HgetexPlain) {
     UASSERT_NO_THROW(client->Hexpire(key, std::chrono::seconds(120), {"f1", "f2"}, kDefaultCc).Get());
 
     {
-        auto reply = client->Hgetex(key, {"f1", "f2", "missing"}, kDefaultCc).Get();
+        auto reply = client->Hgetex(key, {"f1", "f2", "missing"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 3U);
         ASSERT_TRUE(reply[0].has_value());
         EXPECT_EQ(reply[0].value(), "v1");
@@ -466,7 +474,7 @@ UTEST_F(RedisClusterClientTest, HgetexPlain) {
 
     // TTL should be unchanged
     {
-        auto reply = client->Httl(key, {"f1", "f2"}, kDefaultCc).Get();
+        auto reply = client->Httl(key, {"f1", "f2"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 2U);
         EXPECT_TRUE(reply[0].KeyHasExpiration());
         EXPECT_GT(reply[0].GetExpire().count(), 0);
@@ -507,7 +515,7 @@ UTEST_F(RedisClusterClientTest, HgetexWithExpire) {
     }
 
     {
-        auto reply = client->Hpttl(key, {"f1", "f2"}, kDefaultCc).Get();
+        auto reply = client->Hpttl(key, {"f1", "f2"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 2U);
         EXPECT_TRUE(reply[0].KeyHasExpiration());
         EXPECT_GT(reply[0].GetExpire().count(), 0);
@@ -541,7 +549,7 @@ UTEST_F(RedisClusterClientTest, HgetexWithPersist) {
     }
 
     {
-        auto reply = client->Httl(key, {"f1", "f2"}, kDefaultCc).Get();
+        auto reply = client->Httl(key, {"f1", "f2"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 2U);
         EXPECT_TRUE(reply[0].KeyExists());
         EXPECT_FALSE(reply[0].KeyHasExpiration());
@@ -572,7 +580,7 @@ UTEST_F(RedisClusterClientTest, HgetexExAt) {
     }
 
     {
-        auto reply = client->Hpexpiretime(key, {"f1"}, kDefaultCc).Get();
+        auto reply = client->Hpexpiretime(key, {"f1"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].FieldExists());
         ASSERT_TRUE(reply[0].HasExpiration());
@@ -605,13 +613,13 @@ UTEST_F(RedisClusterClientTest, HsetexBasic) {
     }
 
     {
-        auto reply = client->Hget(key, "f1", kDefaultCc).Get();
+        auto reply = client->Hget(key, "f1", kMasterCC).Get();
         ASSERT_TRUE(reply.has_value());
         EXPECT_EQ(reply.value(), "v1");
     }
 
     {
-        auto reply = client->Hpttl(key, {"f1", "f2"}, kDefaultCc).Get();
+        auto reply = client->Hpttl(key, {"f1", "f2"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 2U);
         EXPECT_TRUE(reply[0].KeyHasExpiration());
         EXPECT_GT(reply[0].GetExpire().count(), 0);
@@ -727,7 +735,7 @@ UTEST_F(RedisClusterClientTest, HsetexKeepTtl) {
 
     // TTL should be roughly the original 60s
     {
-        auto reply = client->Httl(key, {"f1"}, kDefaultCc).Get();
+        auto reply = client->Httl(key, {"f1"}, kMasterCC).Get();
         ASSERT_EQ(reply.size(), 1U);
         EXPECT_TRUE(reply[0].KeyHasExpiration());
         EXPECT_GT(reply[0].GetExpire().count(), 0);
@@ -735,7 +743,7 @@ UTEST_F(RedisClusterClientTest, HsetexKeepTtl) {
     }
 
     {
-        auto reply = client->Hget(key, "f1", kDefaultCc).Get();
+        auto reply = client->Hget(key, "f1", kMasterCC).Get();
         ASSERT_TRUE(reply.has_value());
         EXPECT_EQ(reply.value(), "v1_updated");
     }
@@ -807,7 +815,7 @@ UTEST_F(RedisClusterClientTest, HsetexMultipleFieldValues) {
         EXPECT_EQ(reply, storages::redis::HsetexReply::kFieldsSet);
     }
 
-    auto all = client->Hgetall(key, kDefaultCc).Get();
+    auto all = client->Hgetall(key, kMasterCC).Get();
     ASSERT_EQ(all.size(), 3U);
     EXPECT_EQ(all["f1"], "v1");
     EXPECT_EQ(all["f2"], "v2");

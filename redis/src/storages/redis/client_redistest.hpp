@@ -6,14 +6,6 @@
 
 USERVER_NAMESPACE_BEGIN
 
-/// Use this CommandControl for read commands that follow a write in tests,
-/// to avoid replication lag causing flaky failures.
-inline const storages::redis::CommandControl kMasterCC = [] {
-    storages::redis::CommandControl cc{};
-    cc.force_request_to_master = true;
-    return cc;
-}();
-
 class RedisClientTest : public BaseRedisClientTest {
 public:
     void SetUp() override {

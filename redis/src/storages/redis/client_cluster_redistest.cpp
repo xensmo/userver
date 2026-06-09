@@ -20,6 +20,14 @@ std::string MakeKey2(size_t idx, int add) {
 
 constexpr storages::redis::CommandControl kDefaultCc{std::chrono::milliseconds(300), std::chrono::milliseconds(300), 1};
 
+/// Use this CommandControl for read commands that follow a write in tests,
+/// to avoid replication lag causing flaky failures.
+const storages::redis::CommandControl kMasterCC = [] {
+    auto cc = kDefaultCc;
+    cc.force_request_to_master = true;
+    return cc;
+}();
+
 }  // namespace
 
 UTEST_F(RedisClusterClientTest, SetGet) {
@@ -34,7 +42,7 @@ UTEST_F(RedisClusterClientTest, SetGet) {
     }
 
     for (size_t i = 0; i < num_keys; ++i) {
-        auto req = client->Get(MakeKey(i), kDefaultCc);
+        auto req = client->Get(MakeKey(i), kMasterCC);
         auto reply = req.Get();
         ASSERT_TRUE(reply);
         EXPECT_EQ(*reply, std::to_string(add + i));
@@ -69,7 +77,7 @@ UTEST_F(RedisClusterClientTest, SetAndGetPrevious) {
         EXPECT_EQ(previous_value.value(), std::to_string(add + i));
         EXPECT_TRUE(client->Ttl(MakeKey(i), kDefaultCc).Get().KeyHasExpiration());
 
-        auto current_value = client->Get(MakeKey(i), kDefaultCc).Get();
+        auto current_value = client->Get(MakeKey(i), kMasterCC).Get();
         ASSERT_TRUE(current_value.has_value());
         EXPECT_EQ(current_value, std::to_string(add - i));
     }
@@ -97,7 +105,7 @@ UTEST_F(RedisClusterClientTest, Mget) {
     }
 
     for (size_t i = 0; i < num_keys; ++i) {
-        auto req = client->Mget({MakeKey(i), MakeKey2(i, add)}, kDefaultCc);
+        auto req = client->Mget({MakeKey(i), MakeKey2(i, add)}, kMasterCC);
         auto reply = req.Get();
         ASSERT_EQ(reply.size(), 2);
 
@@ -228,7 +236,7 @@ UTEST_F(RedisClusterClientTest, TransactionDistinctShards) {
 
 UTEST_F(RedisClusterClientTest, Generic) {
     auto client = GetClient();
-    const storages::redis::CommandControl command_control{};
+    auto command_control = kMasterCC;
     constexpr size_t kKeyIndex = 0;
     /// [Sample generic command usage]
     client->GenericCommand<void>("set", {"key0", "foo"}, kKeyIndex, command_control).Wait();
@@ -285,10 +293,10 @@ UTEST_F(RedisClusterClientTest, Eval) {
     end
 )~"};
 
-    auto val1 = client->Eval<std::string>(lua_script, {"the_key"}, {"mismatched_value"}, {}).Get();
+    auto val1 = client->Eval<std::string>(lua_script, {"the_key"}, {"mismatched_value"}, kMasterCC).Get();
     EXPECT_EQ(val1, "mismatched");
 
-    auto val2 = client->Eval<std::string>(lua_script, {"the_key"}, {"the_value"}, {}).Get();
+    auto val2 = client->Eval<std::string>(lua_script, {"the_key"}, {"the_value"}, kMasterCC).Get();
     EXPECT_EQ(val2, "del");
     /// [Sample eval usage]
 }
@@ -320,21 +328,21 @@ UTEST_F(RedisClusterClientTest, EvalSha) {
 
     // ...
 
-    auto val1 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"mismatched_value"}, {}).Get();
+    auto val1 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"mismatched_value"}, kMasterCC).Get();
     if (val1.IsNoScriptError()) {
         upload_scripts();
 
         // retry...
-        val1 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"mismatched_value"}, {}).Get();
+        val1 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"mismatched_value"}, kMasterCC).Get();
     }
     EXPECT_EQ(val1.Get(), "mismatched");
 
-    auto val2 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"the_value"}, {}).Get();
+    auto val2 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"the_value"}, kMasterCC).Get();
     if (val2.IsNoScriptError()) {
         upload_scripts();
 
         // retry...
-        val2 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"the_value"}, {}).Get();
+        val2 = client->EvalSha<std::string>(script_sha, {"the_key"}, {"the_value"}, kMasterCC).Get();
     }
     EXPECT_EQ(val2.Get(), "del");
     /// [Sample evalsha usage]
@@ -364,7 +372,7 @@ UTEST_F(RedisClusterClientTest, EvalReadOnly) {
         end
     )~"};
 
-    auto val1 = client->EvalReadOnly<std::string>(read_only_script, {"the_key"}, {}, {}).Get();
+    auto val1 = client->EvalReadOnly<std::string>(read_only_script, {"the_key"}, {}, kMasterCC).Get();
     EXPECT_EQ(val1, "the_value_from_redis");
 
     // Script that attempts to modify data
@@ -374,11 +382,11 @@ UTEST_F(RedisClusterClientTest, EvalReadOnly) {
     )~"};
 
     // EvalReadOnly should fail when script tries to modify data
-    auto req = client->EvalReadOnly<std::string>(modifying_script, {"the_key"}, {}, {});
+    auto req = client->EvalReadOnly<std::string>(modifying_script, {"the_key"}, {}, kMasterCC);
     UASSERT_THROW(req.Get(), storages::redis::RequestFailedException);
 
     // Verify the value was not modified
-    auto final_value = client->Get("the_key", {}).Get();
+    auto final_value = client->Get("the_key", kMasterCC).Get();
     ASSERT_TRUE(final_value);
     EXPECT_EQ(*final_value, "the_value");
 
@@ -417,12 +425,12 @@ UTEST_F(RedisClusterClientTest, EvalShaReadOnly) {
     client->Set("the_key", "the_value", {}).Get();
 
     // Test read-only script execution
-    auto val1 = client->EvalShaReadOnly<std::string>(read_only_script_sha, {"the_key"}, {}, {}).Get();
+    auto val1 = client->EvalShaReadOnly<std::string>(read_only_script_sha, {"the_key"}, {}, kMasterCC).Get();
     if (val1.IsNoScriptError()) {
         upload_script(read_only_script);
 
         // retry...
-        val1 = client->EvalShaReadOnly<std::string>(read_only_script_sha, {"the_key"}, {}, {}).Get();
+        val1 = client->EvalShaReadOnly<std::string>(read_only_script_sha, {"the_key"}, {}, kMasterCC).Get();
     }
     EXPECT_EQ(val1.Get(), "the_value_from_redis");
 
@@ -434,11 +442,11 @@ UTEST_F(RedisClusterClientTest, EvalShaReadOnly) {
     const auto modifying_script_sha = upload_script(modifying_script);
 
     // EvalShaReadOnly should fail when script tries to modify data
-    auto req = client->EvalShaReadOnly<std::string>(modifying_script_sha, {"the_key"}, {}, {});
+    auto req = client->EvalShaReadOnly<std::string>(modifying_script_sha, {"the_key"}, {}, kMasterCC);
     UASSERT_THROW(req.Get(), storages::redis::RequestFailedException);
 
     // Verify the value was not modified
-    auto final_value = client->Get("the_key", {}).Get();
+    auto final_value = client->Get("the_key", kMasterCC).Get();
     ASSERT_TRUE(final_value);
     EXPECT_EQ(*final_value, "the_value");
 
@@ -521,7 +529,7 @@ UTEST_F(RedisClusterClientTest, LongWork) {
         }
 
         for (size_t i = 0; i < num_keys; ++i) {
-            auto req = client->Get(MakeKey(i), kDefaultCc);
+            auto req = client->Get(MakeKey(i), kMasterCC);
             try {
                 req.Get();
             } catch (const storages::redis::RequestFailedException& ex) {
