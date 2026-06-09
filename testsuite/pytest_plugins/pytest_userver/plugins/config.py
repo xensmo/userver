@@ -518,10 +518,36 @@ def allowed_url_prefixes_extra() -> list[str]:
 
 
 @pytest.fixture(scope='session')
-def userver_config_http_client(
+def allowed_url_prefixes(
     mockserver_info,
     mockserver_ssl_info,
     allowed_url_prefixes_extra,
+) -> list[str]:
+    """
+    Returns final list of allowed urls prefixes when running in testsuite.
+
+    For most of cases you DO NOT want to override this fixture. Use "allowed_url_prefixes_extra" instead.
+
+    @ingroup userver_testsuite_fixtures
+    """
+    allowed_urls: list[str] = [mockserver_info.base_url]
+
+    if mockserver_ssl_info:
+        allowed_urls.append(mockserver_ssl_info.base_url)
+
+    allowed_urls += allowed_url_prefixes_extra
+
+    # Add WebSocket prefixes (ws:// and wss://) alongside HTTP prefixes
+    allowed_urls.append(mockserver_info.ws_url('/'))
+    if mockserver_ssl_info:
+        allowed_urls.append(mockserver_ssl_info.ws_url('/'))
+
+    return allowed_urls
+
+
+@pytest.fixture(scope='session')
+def userver_config_http_client(
+    allowed_url_prefixes,
 ) -> ServiceConfigPatch:
     """
     Returns a function that adjusts the static configuration file for testsuite.
@@ -542,17 +568,7 @@ def userver_config_http_client(
         http_client_core['testsuite-enabled'] = True
         http_client_core['testsuite-timeout'] = '10s'
 
-        allowed_urls = [mockserver_info.base_url]
-        if mockserver_ssl_info:
-            allowed_urls.append(mockserver_ssl_info.base_url)
-        allowed_urls += allowed_url_prefixes_extra
-
-        # Add WebSocket prefixes (ws:// and wss://) alongside HTTP prefixes
-        allowed_urls.append(mockserver_info.ws_url('/'))
-        if mockserver_ssl_info:
-            allowed_urls.append(mockserver_ssl_info.ws_url('/'))
-
-        http_client_core['testsuite-allowed-url-prefixes'] = allowed_urls
+        http_client_core['testsuite-allowed-url-prefixes'] = allowed_url_prefixes
 
     return patch_config
 
