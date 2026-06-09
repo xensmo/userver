@@ -30,10 +30,16 @@ template <typename RawType, typename... Validators>
 void WriteToStream(
     const Primitive<RawType, Validators...>& ps,
     formats::json::StringBuilder& sw,
-    bool hide_brackets,
+    bool hide_brackets = false,
     std::string_view hide_field_name = {}
 ) {
-    WriteToStream(ps.value, sw, hide_brackets, hide_field_name);
+    if constexpr (requires { WriteToStream(ps.value, sw, hide_brackets, hide_field_name); }) {
+        WriteToStream(ps.value, sw, hide_brackets, hide_field_name);
+    } else {
+        UASSERT(hide_brackets == false);
+        UASSERT(hide_field_name.empty());
+        WriteToStream(ps.value, sw);
+    }
 }
 
 }  // namespace chaotic

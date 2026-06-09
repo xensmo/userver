@@ -449,6 +449,7 @@
   "chaotic/tests/back/cpp/conftest.py":"taxi/uservices/userver/chaotic/tests/back/cpp/conftest.py",
   "chaotic/tests/back/cpp/test_external.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_external.py",
   "chaotic/tests/back/cpp/test_json_schema.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_json_schema.py",
+  "chaotic/tests/back/cpp/test_tr_allof.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_tr_allof.py",
   "chaotic/tests/back/cpp/test_tr_any.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_tr_any.py",
   "chaotic/tests/back/cpp/test_tr_array.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_tr_array.py",
   "chaotic/tests/back/cpp/test_tr_const.py":"taxi/uservices/userver/chaotic/tests/back/cpp/test_tr_const.py",

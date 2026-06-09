@@ -86,7 +86,7 @@ template <const auto* Settings, typename... T>
 void WriteToStream(
     const OneOfWithDiscriminator<Settings, T...>& var,
     formats::json::StringBuilder& sw,
-    bool hide_brackets,
+    bool hide_brackets = false,
     std::string_view hide_field_name = {}
 ) {
     std::optional<formats::json::StringBuilder::ObjectGuard> guard;

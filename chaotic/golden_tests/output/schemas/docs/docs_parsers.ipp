@@ -27,14 +27,13 @@ Circle Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Circle>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  Circle res;
+  auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__Circle_PropertiesNames);
 
-  res.kind = value["kind"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
-  res.radius = value["radius"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>();
-
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
-      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
-      k__ns__Circle_PropertiesNames);
+  Circle res{
+      .kind = value["kind"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+      .radius = value["radius"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>(),
+      .extra = std::move(extra),
+  };
 
   return res;
 }
@@ -48,10 +47,10 @@ Object Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Object>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  Object res;
-
-  res.foo = value["foo"].template As<USERVER_NAMESPACE::chaotic::Primitive<int>>();
-  res.bar = value["bar"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
+  Object res{
+      .foo = value["foo"].template As<USERVER_NAMESPACE::chaotic::Primitive<int>>(),
+      .bar = value["bar"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__Object_PropertiesNames);
 
@@ -67,10 +66,10 @@ ObjectCpp Parse(Value value, USERVER_NAMESPACE::formats::parse::To<ObjectCpp>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  ObjectCpp res;
-
-  res.some_hyphenated_key =
-      value["some-hyphenated-key"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
+  ObjectCpp res{
+      .some_hyphenated_key =
+          value["some-hyphenated-key"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__ObjectCpp_PropertiesNames);
 
@@ -86,15 +85,14 @@ Rectangle Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Rectangle>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  Rectangle res;
+  auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__Rectangle_PropertiesNames);
 
-  res.kind = value["kind"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
-  res.width = value["width"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>();
-  res.height = value["height"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>();
-
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
-      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
-      k__ns__Rectangle_PropertiesNames);
+  Rectangle res{
+      .kind = value["kind"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+      .width = value["width"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>(),
+      .height = value["height"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>(),
+      .extra = std::move(extra),
+  };
 
   return res;
 }
@@ -126,17 +124,15 @@ TreeNode Parse(Value value, USERVER_NAMESPACE::formats::parse::To<TreeNode>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  TreeNode res;
-
-  res.data = value["data"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
-  res.left =
-      value["left"]
-          .template As<
-              std::optional<USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>>();
-  res.right =
-      value["right"]
-          .template As<
-              std::optional<USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>>();
+  TreeNode res{
+      .data = value["data"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+      .left = value["left"]
+                  .template As<std::optional<
+                      USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>>(),
+      .right = value["right"]
+                   .template As<std::optional<
+                       USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__TreeNode_PropertiesNames);
 

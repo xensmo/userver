@@ -52,6 +52,17 @@
 {% endmacro %}
 
 
+{% macro generate_cpp_struct_aggregate_initialization(type, extra_variable) %}
+    {%- for property_name, field in type.fields.items() -%}
+        .{{ field.cpp_field_name() }} =
+            value["{{ property_name }}"].template As<{{ field.cpp_field_parse_type() }}>
+                ({{ field.get_default() }}),
+    {%- endfor -%}
+    {%- if type.extra_type -%}
+        .extra={{ extra_variable }},
+    {%- endif -%}
+{% endmacro %}
+
 {% macro generate_parser_definition(type) %}
     {# handle subtypes #}
     {%- for schema in type.subtypes() -%}
@@ -67,18 +78,9 @@
             value.CheckNotMissing();
             value.CheckObjectOrNull();
 
-            {{ local_name }} res;
-
-            {# properties #}
-            {%- for property_name, field in type.fields.items() -%}
-                res.{{ field.cpp_field_name() }} =
-                    value["{{ property_name }}"].template As<{{ field.cpp_field_parse_type() }}>
-                    ({{ field.get_default() }});
-            {%- endfor %}
-
             {# additionalProperties #}
             {% if type.extra_type %}
-                res.extra =
+                auto extra =
                     {%- if type.extra_type == True %}
                         {{ userver }}::chaotic::ExtractAdditionalPropertiesTrue(
                     {%- else %}
@@ -87,10 +89,14 @@
                             {{ type.extra_container() }}
                         >(
                     {%- endif -%}
-                        Parse(std::move(value), {{ userver }}::formats::parse::To<{{ userver }}::formats::json::Value>()), k{{type.cpp_global_struct_field_name()}}_PropertiesNames
+                            value, k{{type.cpp_global_struct_field_name()}}_PropertiesNames
                         );
 
             {% endif %}
+
+            {{ local_name }} res{
+                {{ generate_cpp_struct_aggregate_initialization(type, 'std::move(extra)') }}
+            };
 
             {% if cpp_struct_is_strict_parsing(type) %}
                 {{ userver }}::chaotic::ValidateNoAdditionalProperties(
@@ -128,15 +134,45 @@
         template <{{ userver }}::formats::common::IsFormatValue Value>
         {{ local_name }} Parse(Value value, {{ userver }}::formats::parse::To<{{ local_name }}>)
         {
+            {% if type.has_nested_additional_properties() %}
+                constexpr {{ userver }}::utils::TrivialSet kPropertiesNames = [](auto selector) {
+                    return selector().template Type<std::string_view>()
+                        {%- for parent in type.parents -%}
+                            {% if parent.get_py_type() == 'CppRef' %}
+                                {% set parent = parent.orig_cpp_type %}
+                            {%- endif -%}
+                        
+                            {%- if parent.get_py_type() == 'CppStruct' -%}
+                                {%- for property_name, field in parent.fields.items() -%}
+                                    .Case("{{ property_name }}")
+                                {%- endfor %}
+                            {%- endif -%}
+                        {%- endfor -%}
+                    ;
+                };
+
+                auto extra = {{ userver }}::chaotic::ExtractAdditionalPropertiesTrue(value, kPropertiesNames);
+            {% endif %}
+
             return {{ local_name }}(
                 {%- for parent in type.parents -%}
-                    value.template As<{{ shortest_cpp_name(parent, blacklist=['Value']) }}>()
+                    {% if parent.get_py_type() == 'CppRef' %}
+                        {% set parent = parent.orig_cpp_type %}
+                    {% endif%}
+                
+                    {% if parent.get_py_type() == 'CppStruct' %}
+                        {{ shortest_cpp_name(parent, blacklist=['Value']) }}{
+                            {{ generate_cpp_struct_aggregate_initialization(parent, 'extra') }}
+                        }
+                    {% else %}
+                        {{ NOT_IMPLEMENTED('"allOf" for nested type "{{ parent.get_py_type() }}". Details: ' + parent) }}
+                    {% endif %}
                     {%- if not loop.last %} , {% endif -%}
                 {%- endfor -%}
             );
         }
     {% else %}
-        {{ NOT_IMPLEMENTED(type) }}
+        {{ NOT_IMPLEMENTED('Parser generation for "{{ type.get_py_type() }}". Details: ' + type) }}
     {% endif %}
 {% endmacro %}
 

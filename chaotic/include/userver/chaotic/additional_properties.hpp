@@ -15,9 +15,12 @@ USERVER_NAMESPACE_BEGIN
 
 namespace chaotic {
 
-template <typename BuilderFunc, typename Value>
-Value ExtractAdditionalPropertiesTrue(const Value& json, const utils::TrivialSet<BuilderFunc>& names_to_exclude) {
-    typename Value::Builder builder(formats::common::Type::kObject);
+template <typename BuilderFunc>
+formats::json::Value ExtractAdditionalPropertiesTrue(
+    const formats::json::Value& json,
+    const utils::TrivialSet<BuilderFunc>& names_to_exclude
+) {
+    formats::json::ValueBuilder builder(formats::common::Type::kObject);
 
     for (const auto& [name, value] : formats::common::Items(json)) {
         if (names_to_exclude.Contains(name)) {
@@ -30,6 +33,14 @@ Value ExtractAdditionalPropertiesTrue(const Value& json, const utils::TrivialSet
 }
 
 template <typename BuilderFunc, typename Value>
+formats::json::Value ExtractAdditionalPropertiesTrue(
+    const Value& non_json,
+    const utils::TrivialSet<BuilderFunc>& names_to_exclude
+) {
+    return chaotic::ExtractAdditionalPropertiesTrue(non_json.template As<formats::json::Value>(), names_to_exclude);
+}
+
+template <typename BuilderFunc, typename Value>
 void ValidateNoAdditionalProperties(const Value& json, const utils::TrivialSet<BuilderFunc>& names_to_exclude) {
     for (const auto& [name, value] : formats::common::Items(json)) {
         if (names_to_exclude.Contains(name)) {
@@ -39,12 +50,13 @@ void ValidateNoAdditionalProperties(const Value& json, const utils::TrivialSet<B
         chaotic::ThrowForValue<Value>(fmt::format("Unknown property '{}'", name), value);
     }
 }
-template <typename T, template <typename...> typename Map, typename Value, typename BuilderFunc>
-Map<std::string, formats::common::ParseType<Value, T>> ExtractAdditionalProperties(
-    const Value& json,
+
+template <typename T, template <typename...> typename Map, typename BuilderFunc>
+Map<std::string, formats::common::ParseType<formats::json::Value, T>> ExtractAdditionalProperties(
+    const formats::json::Value& json,
     const utils::TrivialSet<BuilderFunc>& names_to_exclude
 ) {
-    Map<std::string, formats::common::ParseType<Value, T>> map;
+    Map<std::string, formats::common::ParseType<formats::json::Value, T>> map;
 
     for (const auto& [name, value] : formats::common::Items(json)) {
         if (names_to_exclude.Contains(name)) {
@@ -54,6 +66,14 @@ Map<std::string, formats::common::ParseType<Value, T>> ExtractAdditionalProperti
         map.emplace(name, value.template As<T>());
     }
     return map;
+}
+
+template <typename T, template <typename...> typename Map, typename Value, typename BuilderFunc>
+Map<std::string, formats::common::ParseType<formats::json::Value, T>> ExtractAdditionalProperties(
+    const Value& non_json,
+    const utils::TrivialSet<BuilderFunc>& names_to_exclude
+) {
+    return chaotic::ExtractAdditionalProperties<T, Map>(non_json.template As<formats::json::Value>(), names_to_exclude);
 }
 
 }  // namespace chaotic

@@ -21,9 +21,9 @@ Int Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Int>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  Int res;
-
-  res.foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
+  Int res{
+      .foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__Int_PropertiesNames);
 

@@ -83,13 +83,52 @@
             {% elif type.get_py_type() == 'CppStructAllOf' -%}
                 {{ start_object }}
 
-                constexpr auto kAllOfHideBrackets = true;
+                {% if type.has_nested_additional_properties() %}
+                    {{ userver }}::formats::json::ValueBuilder vb = {{ userver }}::formats::common::Type::kObject;
+                {% endif %}
+
                 {% for parent in type.parents %}
-                {
-                    const {{ parent.cpp_global_name() }}& obj = value;
-                    WriteToStream({{ parent.parser_type('', '') }}{obj}, sw, kAllOfHideBrackets, hide_field_name);
-                }
+                    {% if parent.get_py_type() == 'CppRef' %}
+                        {% set parent = parent.orig_cpp_type %}
+                    {% endif%}
+                
+                    {% if parent.get_py_type() == 'CppStruct' %}
+                        {%- for fname, field in parent.fields.items() -%}
+
+                            {% if field.is_optional() %}
+                                if (value.{{ field.cpp_field_name() }} && hide_field_name != "{{ fname }}") {
+                                    sw.Key("{{ fname }}");
+                                    WriteToStream({{ field.schema.parser_type('', '') }}{
+                                        *value.{{ field.cpp_field_name() }}
+                                    }, sw);
+                                }
+                            {% else %}
+                                if (hide_field_name != "{{ fname }}") {
+                                    sw.Key("{{ fname }}");
+                                    WriteToStream({{ field.schema.parser_type('', '') }}{
+                                        value.{{ field.cpp_field_name() }}
+                                    }, sw);
+                                }
+                            {% endif %}
+
+                        {%- endfor %}
+                        
+                        
+                        {%- if parent.extra_type -%}
+                            {{userver}}::formats::common::Merge(vb, static_cast<const {{ parent.cpp_global_name() }}&>(value).extra);
+                        {%- endif -%}
+                    {% else %}
+                        {{ NOT_IMPLEMENTED(parent) }}
+                    {% endif %}
                 {% endfor %}
+
+                {% if type.has_nested_additional_properties() %}
+                    auto additional_properties = vb.ExtractValue();
+                    for (const auto& [name, item]: {{ userver }}::formats::common::Items(additional_properties)) {
+                        sw.Key(name);
+                        WriteToStream(item, sw);
+                    }
+                {% endif %}
             {% else %}
                 {{ NOT_IMPLEMENTED() }}
             {% endif %}

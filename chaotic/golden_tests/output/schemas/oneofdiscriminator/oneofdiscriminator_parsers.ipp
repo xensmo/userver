@@ -22,14 +22,13 @@ A Parse(Value value, USERVER_NAMESPACE::formats::parse::To<A>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  A res;
+  auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__A_PropertiesNames);
 
-  res.type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
-  res.a_prop = value["a_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
-
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
-      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
-      k__ns__A_PropertiesNames);
+  A res{
+      .type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+      .a_prop = value["a_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>(),
+      .extra = std::move(extra),
+  };
 
   return res;
 }
@@ -43,14 +42,13 @@ B Parse(Value value, USERVER_NAMESPACE::formats::parse::To<B>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  B res;
+  auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__B_PropertiesNames);
 
-  res.type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
-  res.b_prop = value["b_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
-
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
-      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
-      k__ns__B_PropertiesNames);
+  B res{
+      .type = value["type"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+      .b_prop = value["b_prop"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>(),
+      .extra = std::move(extra),
+  };
 
   return res;
 }
@@ -64,9 +62,9 @@ C Parse(Value value, USERVER_NAMESPACE::formats::parse::To<C>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  C res;
-
-  res.version = value["version"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
+  C res{
+      .version = value["version"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__C_PropertiesNames);
 
@@ -82,9 +80,9 @@ D Parse(Value value, USERVER_NAMESPACE::formats::parse::To<D>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  D res;
-
-  res.version = value["version"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>();
+  D res{
+      .version = value["version"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<int>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__D_PropertiesNames);
 
@@ -99,12 +97,12 @@ IntegerOneOfDiscriminator Parse(Value value, USERVER_NAMESPACE::formats::parse::
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  IntegerOneOfDiscriminator res;
-
-  res.foo = value["foo"]
-                .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
-                    &::ns::IntegerOneOfDiscriminator::kFoo_Settings, USERVER_NAMESPACE::chaotic::Primitive<::ns::C>,
-                    USERVER_NAMESPACE::chaotic::Primitive<::ns::D>>>>();
+  IntegerOneOfDiscriminator res{
+      .foo = value["foo"]
+                 .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
+                     &::ns::IntegerOneOfDiscriminator::kFoo_Settings, USERVER_NAMESPACE::chaotic::Primitive<::ns::C>,
+                     USERVER_NAMESPACE::chaotic::Primitive<::ns::D>>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__IntegerOneOfDiscriminator_PropertiesNames);
 
@@ -120,12 +118,12 @@ OneOfDiscriminator Parse(Value value, USERVER_NAMESPACE::formats::parse::To<OneO
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  OneOfDiscriminator res;
-
-  res.foo = value["foo"]
-                .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
-                    &::ns::OneOfDiscriminator::kFoo_Settings, USERVER_NAMESPACE::chaotic::Primitive<::ns::A>,
-                    USERVER_NAMESPACE::chaotic::Primitive<::ns::B>>>>();
+  OneOfDiscriminator res{
+      .foo = value["foo"]
+                 .template As<std::optional<USERVER_NAMESPACE::chaotic::OneOfWithDiscriminator<
+                     &::ns::OneOfDiscriminator::kFoo_Settings, USERVER_NAMESPACE::chaotic::Primitive<::ns::A>,
+                     USERVER_NAMESPACE::chaotic::Primitive<::ns::B>>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__OneOfDiscriminator_PropertiesNames);
 

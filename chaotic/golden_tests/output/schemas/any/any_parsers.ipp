@@ -20,9 +20,9 @@ WithAnyField Parse(Value value, USERVER_NAMESPACE::formats::parse::To<WithAnyFie
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  WithAnyField res;
-
-  res.payload = value["payload"].template As<std::optional<USERVER_NAMESPACE::formats::json::Value>>();
+  WithAnyField res{
+      .payload = value["payload"].template As<std::optional<USERVER_NAMESPACE::formats::json::Value>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__WithAnyField_PropertiesNames);
 

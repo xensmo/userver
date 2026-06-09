@@ -55,7 +55,7 @@
 
 
 {% macro generate_to_json_string_definition(type) %}
-    {% if type.get_py_type() == 'CppStruct' %}
+    {% if type.get_py_type() in ('CppStruct', 'CppStructAllOf') %}
         std::string ToJsonString(const {{ shortest_cpp_name(type) }}& value) {
           {% if generate_stream_writer %}
               {{ userver }}::formats::json::StringBuilder builder;

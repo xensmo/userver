@@ -460,6 +460,8 @@ TEST(Simple, AllOf) {
 
     EXPECT_EQ(obj.foo, 1);
     EXPECT_EQ(obj.bar, 2);
+    EXPECT_TRUE(static_cast<ns::Object1&>(obj).extra.IsEmpty()) << ToString(static_cast<ns::Object1&>(obj).extra);
+    EXPECT_TRUE(static_cast<ns::AllOf__P1&>(obj).extra.IsEmpty()) << ToString(static_cast<ns::AllOf__P1&>(obj).extra);
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
@@ -472,6 +474,80 @@ TEST(Simple, AllOfSax) {
 
     EXPECT_EQ(obj.foo, 1);
     EXPECT_EQ(obj.bar, 2);
+    EXPECT_TRUE(static_cast<ns::Object1&>(obj).extra.IsEmpty()) << ToString(static_cast<ns::Object1&>(obj).extra);
+    EXPECT_TRUE(static_cast<ns::AllOf__P1&>(obj).extra.IsEmpty()) << ToString(static_cast<ns::AllOf__P1&>(obj).extra);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, AllOfAndAdditional) {
+    auto json = formats::json::MakeObject("foo", 1, "bar", 2, "additional", "value", "additional1", "value1");
+    auto obj = json.As<ns::AllOf>();
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(obj.bar, 2);
+
+    const auto& obj1 = static_cast<ns::Object1&>(obj);
+    EXPECT_EQ(obj1.extra.GetSize(), 2) << ToString(obj1.extra);
+    EXPECT_EQ(obj1.extra["additional"].As<std::string>(), "value") << ToString(obj1.extra);
+    EXPECT_EQ(obj1.extra["additional1"].As<std::string>(), "value1") << ToString(obj1.extra);
+
+    const auto& obj2 = static_cast<ns::AllOf__P1&>(obj);
+    EXPECT_EQ(obj2.extra.GetSize(), 2) << ToString(obj2.extra);
+    EXPECT_EQ(obj2.extra["additional"].As<std::string>(), "value") << ToString(obj2.extra);
+    EXPECT_EQ(obj2.extra["additional1"].As<std::string>(), "value1") << ToString(obj2.extra);
+
+    EXPECT_EQ(obj1.extra, obj2.extra);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, AllOfAndAdditionalSax) {
+    auto json = formats::json::MakeObject("foo", 1, "bar", 2, "additional", "value", "additional1", "value1");
+    auto obj = ParseToType<ns::AllOf>(ToString(json));
+    EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
+
+    EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(obj.bar, 2);
+
+    const auto& obj1 = static_cast<ns::Object1&>(obj);
+    EXPECT_EQ(obj1.extra.GetSize(), 2) << ToString(obj1.extra);
+    EXPECT_EQ(obj1.extra["additional"].As<std::string>(), "value") << ToString(obj1.extra);
+    EXPECT_EQ(obj1.extra["additional1"].As<std::string>(), "value1") << ToString(obj1.extra);
+
+    const auto& obj2 = static_cast<ns::AllOf__P1&>(obj);
+    EXPECT_EQ(obj2.extra.GetSize(), 2) << ToString(obj2.extra);
+    EXPECT_EQ(obj2.extra["additional"].As<std::string>(), "value") << ToString(obj2.extra);
+    EXPECT_EQ(obj2.extra["additional1"].As<std::string>(), "value1") << ToString(obj2.extra);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, AllOfNoAdditional) {
+    auto json = formats::json::MakeObject("foo", 1, "type", "2", "integer", 3);
+    auto obj = json.As<ns::AllOfNoAdditional>();
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json);
+
+    EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(obj.type, "2");
+    EXPECT_EQ(obj.integer, 3);
+
+    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
+    EXPECT_EQ(json_back, json) << ToString(json_back);
+}
+
+TEST(Simple, AllOfNoAdditionalSax) {
+    auto json = formats::json::MakeObject("foo", 1, "type", "2", "integer", 3);
+    auto obj = ParseToType<ns::AllOfNoAdditional>(ToString(json));
+    EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json);
+
+    EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(obj.type, "2");
+    EXPECT_EQ(obj.integer, 3);
 
     auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
     EXPECT_EQ(json_back, json) << ToString(json_back);
@@ -626,6 +702,7 @@ TEST(Simple, AllOfOneOf) {
     EXPECT_EQ(formats::json::FromString(TestStreamJson(obj)), json);
 
     EXPECT_EQ(obj.value.foo, 1);
+    EXPECT_TRUE(obj.value.extra.IsEmpty()) << ToString(obj.value.extra);
 
     ns::OneOfDiscriminatorForAllOf& oneof = obj.value;
     EXPECT_EQ(std::get<1>(oneof).type, "B");
@@ -639,8 +716,7 @@ TEST(Simple, AllOfOneOf) {
     EXPECT_EQ(formats::json::FromString(ToJsonString(obj)), json);
     EXPECT_NE(ToJsonString(obj).find("\"type\""), std::string::npos) << "No 'type'";
     EXPECT_EQ(ToJsonString(obj).find("\"type\""), ToJsonString(obj).rfind("\"type\"")) << "Multiple 'type's";
-}
-*/
+}*/
 
 TEST(Simple, Indirect) {
     auto json = formats::json::MakeObject(

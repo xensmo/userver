@@ -194,18 +194,24 @@ void WriteToStream([[maybe_unused]] const AllOf::Foo& value, USERVER_NAMESPACE::
   std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
   if (!hide_brackets) guard.emplace(sw);
 
-  constexpr auto kAllOfHideBrackets = true;
+  USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
 
-  {
-    const ::ns::AllOf::Foo__P0& obj = value;
-    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::AllOf::Foo__P0>{obj}, sw, kAllOfHideBrackets,
-                  hide_field_name);
+  if (value.foo && hide_field_name != "foo") {
+    sw.Key("foo");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.foo}, sw);
   }
+  USERVER_NAMESPACE::formats::common::Merge(vb, static_cast<const ::ns::AllOf::Foo__P0&>(value).extra);
 
-  {
-    const ::ns::AllOf::Foo__P1& obj = value;
-    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::AllOf::Foo__P1>{obj}, sw, kAllOfHideBrackets,
-                  hide_field_name);
+  if (value.bar && hide_field_name != "bar") {
+    sw.Key("bar");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<int>{*value.bar}, sw);
+  }
+  USERVER_NAMESPACE::formats::common::Merge(vb, static_cast<const ::ns::AllOf::Foo__P1&>(value).extra);
+
+  auto additional_properties = vb.ExtractValue();
+  for (const auto& [name, item] : USERVER_NAMESPACE::formats::common::Items(additional_properties)) {
+    sw.Key(name);
+    WriteToStream(item, sw);
   }
 }
 

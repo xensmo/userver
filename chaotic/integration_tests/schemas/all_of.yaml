@@ -35,6 +35,11 @@ definitions:
             integer:
                 type: integer
 
+    AllOfNoAdditional:
+        allOf:
+          - $ref: '#/definitions/OneOfB'
+          - $ref: '#/definitions/Object1'
+
     OneOfDiscriminatorForAllOf:
         oneOf:
           - $ref: '#/definitions/OneOfA'
@@ -52,6 +57,7 @@ definitions:
                 #       - value
                 #     properties:
                 #         value:
-                #           allOf:
-                #             - $ref: '#/definitions/Object1'
-                #             - $ref: '#/definitions/OneOfDiscriminatorForAllOf'
+                #             allOf:
+                #               - $ref: '#/definitions/Object1'
+                #               - $ref: '#/definitions/OneOfDiscriminatorForAllOf'
+
