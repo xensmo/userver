@@ -87,10 +87,7 @@ const std::string& Driver::GetDbPath() const { return dbpath_; }
 
 utils::RetryBudget& Driver::GetRetryBudget() { return retry_budget_; }
 
-void DumpMetric(utils::statistics::Writer& writer, const Driver& driver) {
-    writer["native"] = *driver.native_metrics_;
-    writer["retry_budget"] = driver.retry_budget_;
-}
+void DumpMetric(utils::statistics::Writer& writer, const Driver& driver) { writer["native"] = *driver.native_metrics_; }
 
 std::string JoinPath(std::string_view database_path, std::string_view path) {
     UASSERT(!utils::text::EndsWith(database_path, "/"));

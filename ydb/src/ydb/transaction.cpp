@@ -185,12 +185,7 @@ void Transaction::Commit(OperationSettings settings) {
 
             [[maybe_unused]] auto error_guard = ErrorGuard();
 
-            impl::GetFutureValueChecked(
-                tx.Commit(commit_settings),
-                "Commit",
-                table_client_.driver_->GetRetryBudget(),
-                context
-            );
+            impl::GetFutureValueChecked(tx.Commit(commit_settings), "Commit", table_client_.GetRetryBudget(), context);
 
             error_guard.Release();
             is_active_ = false;
@@ -222,7 +217,7 @@ void Transaction::Rollback() {
             impl::GetFutureValueChecked(
                 tx.Rollback(rollback_settings),
                 "Rollback",
-                table_client_.driver_->GetRetryBudget(),
+                table_client_.GetRetryBudget(),
                 context
             );
 
@@ -302,7 +297,7 @@ ExecuteResponse Transaction::Execute(
             return impl::GetFutureValueChecked(
                 std::forward<decltype(execute_future)>(execute_future),
                 "Transaction::Execute",
-                table_client_.driver_->GetRetryBudget(),
+                table_client_.GetRetryBudget(),
                 context
             );
         },
