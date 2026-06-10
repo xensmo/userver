@@ -5,6 +5,8 @@ definitions:
         properties:
             foo:
                 type: integer
+                minimum: 1
+                maximum: 100
 
     AllOf:
         allOf:
@@ -34,6 +36,8 @@ definitions:
                 type: string
             integer:
                 type: integer
+                minimum: 1
+                maximum: 10
 
     AllOfNoAdditional:
         allOf:

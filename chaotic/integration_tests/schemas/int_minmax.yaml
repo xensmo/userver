@@ -7,6 +7,12 @@ definitions:
         type: integer
         exclusiveMinimum: 1
         exclusiveMaximum: 20
+    IntegerMinMaxObject:
+        type: object
+        additionalProperties: false
+        properties:
+            value:
+                $ref: '#/definitions/IntegerMinMax'
     IntegerObject:
         type: object
         additionalProperties: false
