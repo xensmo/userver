@@ -885,6 +885,8 @@
   "core/functional_tests/https/static_config.yaml":"taxi/uservices/userver/core/functional_tests/https/static_config.yaml",
   "core/functional_tests/https/tests-deadline/conftest.py":"taxi/uservices/userver/core/functional_tests/https/tests-deadline/conftest.py",
   "core/functional_tests/https/tests-deadline/test_server.py":"taxi/uservices/userver/core/functional_tests/https/tests-deadline/test_server.py",
+  "core/functional_tests/https/tests-http-https-listener/conftest.py":"taxi/uservices/userver/core/functional_tests/https/tests-http-https-listener/conftest.py",
+  "core/functional_tests/https/tests-http-https-listener/test_listener.py":"taxi/uservices/userver/core/functional_tests/https/tests-http-https-listener/test_listener.py",
   "core/functional_tests/https/tests-secdist-inline/conftest.py":"taxi/uservices/userver/core/functional_tests/https/tests-secdist-inline/conftest.py",
   "core/functional_tests/https/tests-secdist-inline/test_test.py":"taxi/uservices/userver/core/functional_tests/https/tests-secdist-inline/test_test.py",
   "core/functional_tests/https_no_passphrase/CMakeLists.txt":"taxi/uservices/userver/core/functional_tests/https_no_passphrase/CMakeLists.txt",
