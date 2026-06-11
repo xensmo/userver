@@ -151,6 +151,11 @@ void PrintTo(MetricValue value, std::ostream* out) {
     *out << fmt::to_string(value);
 }
 
+void PrintTo(Rate value, std::ostream* out) {
+    UASSERT(out);
+    *out << fmt::to_string(value.value);
+}
+
 }  // namespace utils::statistics
 
 USERVER_NAMESPACE_END

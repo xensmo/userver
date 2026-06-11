@@ -149,6 +149,11 @@ if(USERVER_FEATURE_YDB AND USERVER_FEATURE_MONGODB)
     add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-ydb_service)
 endif()
 
+if(USERVER_FEATURE_YDB)
+    add_subdirectory(ydb_topic_writer_service)
+    add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-ydb_topic_writer_service)
+endif()
+
 if(USERVER_FEATURE_SQLITE)
     add_subdirectory(sqlite_service)
     add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}-sqlite_service)
