@@ -67,6 +67,11 @@ Value Serialize(StringLiteral literal, formats::serialize::To<Value>) {
     return typename Value::Builder(std::string_view{literal}).ExtractValue();
 }
 
+template <typename StringBuilder>
+void WriteToStream(StringLiteral literal, StringBuilder& sw) {
+    WriteToStream(std::string_view{literal}, sw);
+}
+
 }  // namespace utils
 
 USERVER_NAMESPACE_END

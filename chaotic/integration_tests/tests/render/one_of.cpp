@@ -32,23 +32,43 @@ TEST(Simple, OneOfSax) {
     EXPECT_EQ(TestDomSerializer(obj), json);
 }
 
-// TODO: Number $ref validators are not applied inside oneOf (Number is generated as plain double)
-// TEST(Simple, OneOfRefValidatorMinimum) {
-//     auto json = formats::json::ValueBuilder(0.5).ExtractValue();
-//     UEXPECT_THROW_MSG(
-//         json.As<ns::OneOf>(),
-//         chaotic::Error<formats::json::Value>,
-//         "Error at path '/': Invalid value, minimum=1, given=0"
-//     );
-// }
-//
-// TEST(Simple, OneOfRefValidatorMinimumSax) {
-//     UEXPECT_THROW_MSG(
-//         CallSaxParser<ns::OneOf>("0.5"),
-//         formats::json::parser::ParseError,
-//         "Invalid value, minimum=1, given=0"
-//     );
-// }
+TEST(Simple, OneOfNumber) {
+    auto json = formats::json::ValueBuilder(0.1).ExtractValue();
+    auto obj = json.As<ns::OneOf>();
+    EXPECT_EQ(TestWriteToStream(obj), json);
+
+    EXPECT_EQ(std::get<double>(obj), 0.1);
+
+    EXPECT_EQ(TestDomSerializer(obj), json);
+}
+
+TEST(Simple, OneOfNumberSax) {
+    auto json = formats::json::ValueBuilder(0.1).ExtractValue();
+    auto obj = CallSaxParser<ns::OneOf>(ToString(json));
+    EXPECT_EQ(TestWriteToStream(obj), json);
+
+    EXPECT_EQ(std::get<double>(obj), 0.1);
+
+    EXPECT_EQ(TestDomSerializer(obj), json);
+}
+
+TEST(Simple, OneOfRefValidatorMinimum) {
+    auto json = formats::json::MakeObject("oneof", 0.5);
+    static_assert(std::is_base_of_v<formats::json::Exception, formats::json::ParseException>);
+    UEXPECT_THROW_MSG(
+        json.As<ns::ObjectOneOfNoDiscriminator>(),
+        formats::json::ParseException,
+        "Error at path '/': Invalid value, minimum=1, given=0.5"
+    );
+}
+
+TEST(Simple, OneOfRefValidatorMinimumSax) {
+    UEXPECT_THROW_MSG(
+        CallSaxParser<ns::ObjectOneOfNoDiscriminator>(R"({"oneof":0.1})"),
+        formats::json::parser::ParseError,
+        "Invalid value, minimum=1, given=0.1"
+    );
+}
 
 TEST(Simple, OneOfWithDiscriminatorRefValidatorMinimum) {
     auto json = formats::json::MakeObject("oneof", formats::json::MakeObject("type", "ObjectFoo", "foo", 0));

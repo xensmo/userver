@@ -34,17 +34,14 @@ TEST(Const, StringConstSerialize) {
     const ns::StringConst val{};
     auto json = TestDomSerializer(val);
     EXPECT_EQ(json.As<std::string>(), "active");
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(val), json);
+    EXPECT_EQ(TestWriteToStream(val), json);
 }
 
 TEST(Const, StringConstSax) {
     auto val = CallSaxParser<ns::StringConst>(R"("active")");
     EXPECT_EQ(val, ns::StringConst{});
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(val), formats::json::FromString(R"("active")"));
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(val), TestDomSerializer(val));
+    EXPECT_EQ(TestWriteToStream(val), formats::json::FromString(R"("active")"));
+    EXPECT_EQ(TestWriteToStream(val), TestDomSerializer(val));
 }
 
 // ---- IntConst ----
@@ -156,17 +153,14 @@ TEST(Const, StandaloneStringConstSerialize) {
     const ns::StandaloneStringConst val{};
     auto json = TestDomSerializer(val);
     EXPECT_EQ(json.As<std::string>(), "standalone");
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(val), json);
+    EXPECT_EQ(TestWriteToStream(val), json);
 }
 
 TEST(Const, StandaloneStringConstSax) {
     auto val = CallSaxParser<ns::StandaloneStringConst>(R"("standalone")");
     EXPECT_EQ(val, ns::StandaloneStringConst{});
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(val), formats::json::FromString(R"("standalone")"));
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(val), TestDomSerializer(val));
+    EXPECT_EQ(TestWriteToStream(val), formats::json::FromString(R"("standalone")"));
+    EXPECT_EQ(TestWriteToStream(val), TestDomSerializer(val));
 }
 
 // ---- ObjectWithConst ----
@@ -177,8 +171,7 @@ TEST(Const, ObjectWithConstValid) {
     EXPECT_EQ(obj.status, ns::StringConst{});
     EXPECT_EQ(obj.code, ns::IntConst{});
     EXPECT_EQ(obj.enabled, ns::BoolConst{});
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(obj), json);
+    EXPECT_EQ(TestWriteToStream(obj), json);
 }
 
 TEST(Const, ObjectWithConstSax) {
@@ -187,8 +180,7 @@ TEST(Const, ObjectWithConstSax) {
     EXPECT_EQ(obj.status, ns::StringConst{});
     EXPECT_EQ(obj.code, ns::IntConst{});
     EXPECT_EQ(obj.enabled, ns::BoolConst{});
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(obj), json);
+    EXPECT_EQ(TestWriteToStream(obj), json);
 }
 
 TEST(Const, ObjectWithConstInvalidStatus) {
@@ -216,8 +208,7 @@ TEST(Const, ObjectWithConstSerialize) {
     EXPECT_EQ(json["status"].As<std::string>(), "active");
     EXPECT_EQ(json["code"].As<int>(), 42);
     EXPECT_EQ(json["enabled"].As<bool>(), true);
-    // TODO:
-    // EXPECT_EQ(TestWriteToStream(obj), json);
+    EXPECT_EQ(TestWriteToStream(obj), json);
 }
 
 TEST(Const, ObjectWithConstOperatorEq) {

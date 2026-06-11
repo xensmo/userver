@@ -12,6 +12,13 @@ definitions:
             additionalProperties: false
             properties: {}
 
+    ObjectOneOfNoDiscriminator:
+        type: object
+        additionalProperties: false
+        properties:
+            oneof:
+                $ref: '#/definitions/OneOf'
+
     ObjectOneOfWithDiscriminator:
         type: object
         additionalProperties: false
