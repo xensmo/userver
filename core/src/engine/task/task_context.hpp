@@ -118,7 +118,7 @@ public:
     // "spurious wakeups" may be caused by wakeup queueing
     WakeupSource Sleep(WeakAwaitable& awaitable, Deadline deadline);
 
-    // sleep epoch increments after each wakeup
+    // sleep epoch increments before each sleep attempt
     Epoch GetEpoch() const noexcept;
 
     // Awaiter's context. Effectively returns the same value as GetEpoch()

@@ -40,7 +40,8 @@ struct WaitListRaceSimulator final : public engine::impl::WeakAwaitable {
         // wake up immediately
         auto& current = engine::current_task::GetCurrentTaskContext();
         UASSERT(awaiter_.get() == static_cast<engine::impl::Awaiter*>(&current));
-        current.Wakeup(engine::impl::TaskContext::WakeupSource::kDeadlineTimer, engine::impl::Epoch{0});
+        current
+            .Wakeup(engine::impl::TaskContext::WakeupSource::kDeadlineTimer, static_cast<engine::impl::Epoch>(context));
     }
 
     boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
