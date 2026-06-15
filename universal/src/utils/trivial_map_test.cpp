@@ -4,6 +4,28 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace {
+
+struct EmptyFunctor {
+    constexpr auto operator()(auto selector) const {
+        return selector()
+            .Case("zero", 0)
+            .Case("one", 1)
+            .Case("two", 2)
+            .Case("three", 3)
+            .Case("four", 4)
+            .Case("fifty five", 55);
+    }
+};
+
+struct NoUniqueAddressCheck {
+    int i;
+    [[no_unique_address]] utils::TrivialBiMap<EmptyFunctor> f;
+};
+static_assert(sizeof(NoUniqueAddressCheck) == sizeof(int));
+
+}  // namespace
+
 /// [sample string bimap]
 constexpr utils::TrivialBiMap kToInt = [](auto selector) {
     return selector()

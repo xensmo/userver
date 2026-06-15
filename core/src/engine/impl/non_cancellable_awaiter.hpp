@@ -33,7 +33,7 @@ public:
     void Destroy() noexcept override { delete this; }
 
 private:
-    CallbackType callback_;
+    [[no_unique_address]] CallbackType callback_;
 };
 
 // If Awaitable is already ready, then calls `callback` immediately.

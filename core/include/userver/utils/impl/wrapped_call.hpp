@@ -145,7 +145,7 @@ private:
         {}
 
         Function func;
-        std::tuple<Args...> args;
+        [[no_unique_address]] std::tuple<Args...> args;
     };
 
     std::optional<Data> data_;

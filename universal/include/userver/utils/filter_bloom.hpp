@@ -68,8 +68,8 @@ private:
     Counter MinFrequency(const HashedType& hashed_value_1, const HashedType& hashed_value_2) const;
 
     utils::FixedArray<Counter> counters_;
-    const Hash1 hasher_1_;
-    const Hash2 hasher_2_;
+    [[no_unique_address]] const Hash1 hasher_1_;
+    [[no_unique_address]] const Hash2 hasher_2_;
 
     static constexpr std::size_t kHashFunctionsCount = 4;
 };

@@ -881,7 +881,7 @@ public:
     constexpr Iterator cend() const { return end(); }
 
 private:
-    const BuilderFunc func_;
+    [[no_unique_address]] const BuilderFunc func_;
 };
 
 template <typename BuilderFunc>
@@ -953,7 +953,7 @@ public:
     }
 
 private:
-    const BuilderFunc func_;
+    [[no_unique_address]] const BuilderFunc func_;
 };
 
 template <typename BuilderFunc>

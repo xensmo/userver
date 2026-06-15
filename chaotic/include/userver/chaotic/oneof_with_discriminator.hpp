@@ -20,7 +20,7 @@ struct OneOfStringSettings {
     using KeyType = std::string;
 
     utils::StringLiteral property_name;
-    utils::TrivialSet<BuilderFunc> mapping;
+    [[no_unique_address]] utils::TrivialSet<BuilderFunc> mapping;
 
     static std::string_view FieldToString(const KeyType& key) { return key; }
 };
@@ -33,7 +33,7 @@ struct OneOfIntegerSettings {
     using KeyType = int64_t;
 
     utils::StringLiteral property_name;
-    utils::TrivialSet<BuilderFunc> mapping;
+    [[no_unique_address]] utils::TrivialSet<BuilderFunc> mapping;
 
     static std::string FieldToString(KeyType key) { return std::to_string(key); }
 };

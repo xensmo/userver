@@ -39,7 +39,7 @@ public:
     }
 
 private:
-    Equal equality_;
+    [[no_unique_address]] Equal equality_;
 };
 
 /// @brief Compares utils::CachedHash only by keys (EBO-optimized for non-final Equal)

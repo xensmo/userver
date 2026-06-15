@@ -131,7 +131,7 @@ private:
     void NotifyDumper();
 
     std::vector<Way> caches_;
-    Hash hash_fn_;
+    [[no_unique_address]] Hash hash_fn_;
     std::shared_ptr<dump::Dumper> dumper_{nullptr};
 };
 
