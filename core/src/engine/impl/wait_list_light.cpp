@@ -104,6 +104,19 @@ void WaitListLight::SetSignalAndNotifyOne() {
 boost::intrusive_ptr<Awaiter> WaitListLight::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
     const AwaiterWithContext expected{&awaiter, context};
 
+    // Non-locked fast path if the awaiting side is calling Remove after it has been notified by this WaitListLight.
+    if (const auto torn_awaiter = state_.LoadWithTearing(); torn_awaiter.awaiter != &awaiter) {
+        UASSERT_MSG(
+            torn_awaiter.awaiter == nullptr || torn_awaiter.awaiter == kSignaled,
+            fmt::format(
+                "An unexpected awaiter is occupying the WaitListLight: expected={} actual={}",
+                expected,
+                torn_awaiter
+            )
+        );
+        return {};
+    }
+
     auto old_awaiter = expected;
     const bool success = state_.compare_exchange_strong<
         std::memory_order_release,
@@ -113,8 +126,7 @@ boost::intrusive_ptr<Awaiter> WaitListLight::Remove(Awaiter& awaiter, std::uintp
         UASSERT_MSG(
             old_awaiter.awaiter == nullptr || old_awaiter.awaiter == kSignaled,
             fmt::format(
-                "An unexpected awaiter is occupying the "
-                "WaitListLight: expected={} actual={}",
+                "An unexpected awaiter is occupying the WaitListLight: expected={} actual={}",
                 expected,
                 old_awaiter
             )

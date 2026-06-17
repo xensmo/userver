@@ -398,7 +398,7 @@ void TaskProcessor::ProcessTasks() noexcept {
 
         try {
             const impl::TaskCounter::RunningToken token{GetTaskCounter()};
-            context->DoStep();
+            context->DoStep(std::move(context));
         } catch (const std::exception& ex) {
             LOG_ERROR() << "uncaught exception from DoStep: " << ex;
         }

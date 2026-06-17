@@ -134,7 +134,11 @@ bool AsyncFlatCombiningQueue::DoTryStopConsuming() noexcept {
 
 void AsyncFlatCombiningQueue::NotifyAsyncConsumer() noexcept {
     UASSERT(consuming_task_context_);
-    consuming_task_context_->Wakeup(TaskContext::WakeupSource::kNotify, NoEpoch{});
+    TaskContext::Wakeup(
+        boost::intrusive_ptr<TaskContext>{consuming_task_context_},
+        TaskContext::WakeupSource::kNotify,
+        NoEpoch{}
+    );
 }
 
 template <auto TryStartWaiting>

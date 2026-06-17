@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <optional>
 
 #include <ev.h>
 
@@ -17,7 +18,6 @@
 #include <userver/engine/impl/actor.hpp>
 #include <userver/engine/impl/awaiter.hpp>
 #include <userver/engine/impl/context_accessor.hpp>
-#include <userver/engine/impl/detached_tasks_sync_block.hpp>
 #include <userver/engine/impl/task_local_storage.hpp>
 #include <userver/engine/impl/wait_list_fwd.hpp>
 #include <userver/engine/task/cancel.hpp>
@@ -85,7 +85,7 @@ public:
     [[nodiscard]] FutureStatus WaitUntil(Deadline) const noexcept;
 
     TaskProcessor& GetTaskProcessor() { return task_processor_; }
-    void DoStep();
+    void DoStep(boost::intrusive_ptr<TaskContext>&& self);
 
     // normally non-blocking, causes wakeup
     void RequestCancel(TaskCancellationReason);
@@ -124,12 +124,11 @@ public:
     // Awaiter's context. Effectively returns the same value as GetEpoch()
     std::uintptr_t GetAwaiterContext() const noexcept;
 
-    // causes this to return from the nearest sleep
+    // causes `self` to return from the nearest sleep
     // i.e. wakeup is queued if task is running
     // normally non-blocking, except corner cases in TaskProcessor::Schedule()
-    void Wakeup(WakeupSource, Epoch epoch) noexcept;
-    void Wakeup(WakeupSource, NoEpoch) noexcept;
-    void Wakeup(WakeupSource, std::uintptr_t context) noexcept;
+    static void Wakeup(boost::intrusive_ptr<TaskContext>&& self, WakeupSource, Epoch epoch) noexcept;
+    static void Wakeup(boost::intrusive_ptr<TaskContext>&& self, WakeupSource, NoEpoch) noexcept;
 
     static void CoroFunc(TaskPipe& task_pipe);
 
@@ -178,7 +177,11 @@ private:
 
     void SetState(Task::State) noexcept;
 
-    void Schedule() noexcept;
+    // Sets the wakeup `source` flag in sleep_state_ if it still refers to `epoch`.
+    // Returns the previous SleepState, or std::nullopt if the epoch has already changed.
+    std::optional<SleepState> SetSleepStateWakeupSourceForEpoch(WakeupSource source, Epoch epoch) noexcept;
+
+    static void Schedule(boost::intrusive_ptr<TaskContext>&& self) noexcept;
     static bool ShouldSchedule(SleepState::Flags flags, WakeupSource source) noexcept;
 
     void ProfilerStartExecution() noexcept;
@@ -204,7 +207,6 @@ private:
     std::exception_ptr exception_;
 
     std::atomic<Task::State> state_{Task::State::kNew};
-    std::atomic<DetachedTasksSyncBlock::Token*> detached_token_{nullptr};
     std::atomic<TaskCancellationReason> cancellation_reason_{TaskCancellationReason::kNone};
     FastPimplGenericWaitList finish_awaiters_;
 
@@ -219,7 +221,6 @@ private:
     std::size_t trace_csw_left_;
 
     AtomicSleepState sleep_state_{SleepState{SleepFlags::kSleeping, Epoch{0}}};
-    WakeupSource wakeup_source_{WakeupSource::kNone};
 
     CountedCoroutinePtr coro_;
     TaskPipe* task_pipe_{nullptr};

@@ -20,9 +20,11 @@ std::size_t Awaiter::UseCount() const noexcept {
 
 void Awaiter::NotifyTaskContext(boost::intrusive_ptr<Awaiter> self, std::uintptr_t context) noexcept {
     UASSERT(self);
-    // TODO move `self` into `Wakeup` to propagate intrusive_ptr to the task queue.
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    static_cast<TaskContext&>(*self).Wakeup(TaskContext::WakeupSource::kNotify, static_cast<Epoch>(context));
+    TaskContext::Wakeup(
+        boost::static_pointer_cast<TaskContext>(std::move(self)),
+        TaskContext::WakeupSource::kNotify,
+        static_cast<Epoch>(context)
+    );
 }
 
 PolymorphicAwaiter& Awaiter::CastToPolymorphic() noexcept {

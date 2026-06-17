@@ -41,23 +41,23 @@ bool SingleConsumerEvent::IsAutoReset() const noexcept { return is_auto_reset_; 
 bool SingleConsumerEvent::WaitForEvent() { return WaitForEventUntil(Deadline{}); }
 
 bool SingleConsumerEvent::WaitForEventUntil(Deadline deadline) {
-    if (GetIsSignaled()) {
-        return true;  // optimistic path
+    // optimistic path
+    if (waiters_->IsSignaled()) {
+        if (is_auto_reset_) {
+            waiters_->GetAndResetSignal();
+        }
+        return true;
     }
 
     impl::TaskContext& current = current_task::GetCurrentTaskContext();
     EventAwaitable awaitable{*this};
 
-    while (true) {
-        if (GetIsSignaled()) {
-            return true;
-        }
-
-        const auto wakeup_source = current.Sleep(awaitable, deadline);
-        if (!impl::HasWaitSucceeded(wakeup_source)) {
-            return false;
-        }
+    const auto wakeup_source = current.Sleep(awaitable, deadline);
+    if (!impl::HasWaitSucceeded(wakeup_source)) {
+        return false;
     }
+
+    return GetIsSignaled();
 }
 
 void SingleConsumerEvent::Reset() noexcept { waiters_->GetAndResetSignal(); }
