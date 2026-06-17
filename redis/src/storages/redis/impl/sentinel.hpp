@@ -148,10 +148,9 @@ public:
 
     virtual void SetConfigDefaultCommandControl(const std::shared_ptr<CommandControl>& cc);
 
-    void SetConnectionInfo(std::vector<ConnectionInfo> info_array);
-    const std::string& ShardGroupName() const;
+    void UpdateSettings(const USERVER_NAMESPACE::secdist::RedisSettings& settings);
 
-    void UpdateCredentials(const Credentials& credentials);
+    const std::string& ShardGroupName() const;
 
     using UserMessageCallback = std::function<Outcome(const std::string& channel, const std::string& message)>;
     using UserPmessageCallback = std::function<
