@@ -129,6 +129,12 @@ private:
 template <class T>
 concept HasNewVersion = requires { &T::StepV3; };
 
+template <class T>
+concept HasOldVersions = requires {
+    &T::StepV1;
+    &T::StepV2;
+};
+
 static_assert(
     !HasNewVersion<pg::ConnlimitWatchdog>,
     "Please update the following test for StepV* and increment the version check in above concept"
@@ -138,7 +144,7 @@ static_assert(
 // services can be deployed on different versions of userver and rolled back to random version
 UTEST_F(Watchdog, AllPermutations) {
     static_assert(
-        (&pg::ConnlimitWatchdog::StepV1) && (&pg::ConnlimitWatchdog::StepV2),
+        HasOldVersions<pg::ConnlimitWatchdog>,
         "Do not remove old versions of StepV*, because there may be users that still use it and they may update "
         "userver one day. So we need to make sure that the update (and a rollback) will be successful."
     );
