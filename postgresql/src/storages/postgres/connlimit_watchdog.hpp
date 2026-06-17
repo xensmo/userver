@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <string_view>
 
 #include <userver/hostinfo/blocking/get_hostname.hpp>
 #include <userver/storages/postgres/postgres_fwd.hpp>
@@ -44,7 +45,7 @@ private:
     void UpdateConnectionsLimit(std::size_t max_connections, std::size_t instances);
 
     void DoStep(
-        const std::string& hostname,
+        std::string_view hostname,
         const Query& update_max_connections_query,
         const Query& select_instances_query
     );

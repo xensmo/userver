@@ -13,6 +13,7 @@
 #include <userver/storages/postgres/detail/time_types.hpp>
 #include <userver/storages/postgres/exceptions.hpp>
 #include <userver/testsuite/testpoint.hpp>
+#include <userver/utils/algo.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/impl/userver_experiments.hpp>
@@ -92,7 +93,7 @@ ConnectionPool::ConnectionPool(
     Dsn dsn,
     clients::dns::Resolver* resolver,
     engine::TaskProcessor& bg_task_processor,
-    const std::string& db_name,
+    std::string_view db_name,
     const PoolSettings& settings,
     const ConnectionSettings& conn_settings,
     const StatementMetricsSettings& statement_metrics_settings,
@@ -126,7 +127,7 @@ ConnectionPool::ConnectionPool(
       cc_sensor_(*this),
       cc_limiter_(*this),
       cc_controller_(
-          "postgres" + db_name,
+          USERVER_NAMESPACE::utils::StrCat("postgres", db_name),
           cc_sensor_,
           cc_limiter_,
           stats_.congestion_control,
@@ -153,7 +154,7 @@ std::shared_ptr<ConnectionPool> ConnectionPool::Create(
     Dsn dsn,
     clients::dns::Resolver* resolver,
     engine::TaskProcessor& bg_task_processor,
-    const std::string& db_name,
+    std::string_view db_name,
     const InitMode& init_mode,
     const PoolSettings& pool_settings,
     const ConnectionSettings& conn_settings,

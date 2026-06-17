@@ -3,6 +3,7 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <array>
 #include <string>
 #include <string_view>
 #include <userver/alerts/source.hpp>
@@ -42,12 +43,25 @@ constexpr std::string_view kStatementVacuum = "vacuum";
 constexpr std::string_view kStatementListen = "listen {}";
 constexpr std::string_view kStatementUnlisten = "unlisten {}";
 
-const std::string kSetConfigSQL = fmt::format("SELECT set_config($1, $2, $3) as {}", kSetConfigQueryResultName);
-const Query::Name kSetConfigName{"set_config"};
-const Query kSetConfigQuery{kSetConfigSQL, kSetConfigName};
+constexpr auto kSetConfigSQL = []() {
+    constexpr std::string_view kSetConfigSQLPrefix = "SELECT set_config($1, $2, $3) as ";
+
+    std::array<char, kSetConfigSQLPrefix.size() + kSetConfigQueryResultName.size() + 1> result{};
+    char* output = result.data();
+    for (char c : kSetConfigSQLPrefix) {
+        *output++ = c;
+    }
+    for (char c : kSetConfigQueryResultName) {
+        *output++ = c;
+    }
+    return result;
+}();
+
+constexpr Query::NameLiteral kSetConfigName{"set_config"};
+const Query kSetConfigQuery{USERVER_NAMESPACE::utils::StringLiteral{kSetConfigSQL.data()}, kSetConfigName};
 
 // we hope lc_messages is en_US, we don't control it anyway
-const std::string kBadCachedPlanErrorMessage = "cached plan must not change result type";
+constexpr std::string_view kBadCachedPlanErrorMessage = "cached plan must not change result type";
 
 bool IsWordBorder(char c) { return !std::isalnum(static_cast<unsigned char>(c)) && c != '"' && c != '_' && c != '-'; }
 
@@ -532,7 +546,7 @@ void ConnectionImpl::Finish() { stats_.trx_end_time = SteadyClock::now(); }
 
 Connection::StatementId ConnectionImpl::PortalBind(
     const Query& query,
-    const std::string& portal_name,
+    USERVER_NAMESPACE::utils::zstring_view portal_name,
     const QueryParameters& params,
     OptionalCommandControl statement_cmd_ctl
 ) {
@@ -575,7 +589,7 @@ Connection::StatementId ConnectionImpl::PortalBind(
 
 ResultSet ConnectionImpl::PortalExecute(
     Connection::StatementId statement_id,
-    const std::string& portal_name,
+    USERVER_NAMESPACE::utils::zstring_view portal_name,
     std::uint32_t n_rows,
     OptionalCommandControl statement_cmd_ctl
 ) {
@@ -1041,7 +1055,7 @@ const ConnectionImpl::PreparedStatementInfo& ConnectionImpl::PrepareStatement(
 
 void ConnectionImpl::AddIntoPipeline(
     CommandControl cc,
-    const std::string& meta_statement_name,
+    USERVER_NAMESPACE::utils::zstring_view meta_statement_name,
     const detail::QueryParameters& params,
     const ResultSet& description,
     tracing::ScopeTime& scope

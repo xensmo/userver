@@ -3,6 +3,8 @@
 /// @file userver/storages/postgres/dist_lock_strategy.hpp
 /// @brief @copybrief storages::postgres::DistLockStrategy
 
+#include <string_view>
+
 #include <userver/dist_lock/dist_lock_settings.hpp>
 #include <userver/dist_lock/dist_lock_strategy.hpp>
 #include <userver/engine/deadline.hpp>
@@ -19,8 +21,8 @@ class DistLockStrategy final : public dist_lock::DistLockStrategyBase {
 public:
     DistLockStrategy(
         ClusterPtr cluster,
-        const std::string& table,
-        const std::string& lock_name,
+        std::string_view table,
+        std::string_view lock_name,
         const dist_lock::DistLockSettings& settings
     );
 

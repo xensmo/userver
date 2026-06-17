@@ -1,6 +1,7 @@
 #include <userver/storages/postgres/component.hpp>
 
 #include <optional>
+#include <string_view>
 
 #include <storages/postgres/default_command_controls.hpp>
 #include <storages/postgres/detail/connection.hpp>
@@ -42,7 +43,7 @@ namespace {
 
 constexpr auto kStatisticsName = "postgresql";
 
-storages::postgres::ConnlimitMode ParseConnlimitMode(const std::string& value) {
+storages::postgres::ConnlimitMode ParseConnlimitMode(std::string_view value) {
     if (value == "manual") {
         return storages::postgres::ConnlimitMode::kManual;
     }
@@ -50,7 +51,7 @@ storages::postgres::ConnlimitMode ParseConnlimitMode(const std::string& value) {
         return storages::postgres::ConnlimitMode::kAuto;
     }
 
-    UINVARIANT(false, "Unknown connlimit mode: " + value);
+    UINVARIANT(false, std::string("Unknown connlimit mode: ").append(value));
 }
 
 storages::postgres::OmitDescribeInExecuteMode ParseOmitDescribe(const dynamic_config::Snapshot& snapshot) {

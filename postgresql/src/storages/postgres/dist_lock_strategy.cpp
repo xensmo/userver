@@ -17,7 +17,7 @@ namespace {
 // key - $1
 // owner - $2
 // timeout in seconds - $3
-Query MakeAcquireQuery(const std::string& table) {
+Query MakeAcquireQuery(std::string_view table) {
     static constexpr std::string_view kAcquireQueryFmt = R"(
     INSERT INTO {} AS t (key, owner, expiration_time) SELECT
     $1, $2, current_timestamp + make_interval(secs => $3)
@@ -40,7 +40,7 @@ Query MakeAcquireQuery(const std::string& table) {
 
 // key - $1
 // owner - $2
-Query MakeReleaseQuery(const std::string& table) {
+Query MakeReleaseQuery(std::string_view table) {
     static constexpr std::string_view kReleaseQueryFmt = R"(
     DELETE FROM {}
     WHERE key = $1
@@ -50,7 +50,7 @@ Query MakeReleaseQuery(const std::string& table) {
     return {fmt::format(FMT_COMPILE(kReleaseQueryFmt), table), Query::Name{"dist_lock_release"}};
 }
 
-std::string MakeOwnerId(const std::string& prefix, const std::string& locker) {
+std::string MakeOwnerId(std::string_view prefix, std::string_view locker) {
     return fmt::format(FMT_COMPILE("{}:{}"), prefix, locker);
 }
 
@@ -58,8 +58,8 @@ std::string MakeOwnerId(const std::string& prefix, const std::string& locker) {
 
 DistLockStrategy::DistLockStrategy(
     ClusterPtr cluster,
-    const std::string& table,
-    const std::string& lock_name,
+    std::string_view table,
+    std::string_view lock_name,
     const dist_lock::DistLockSettings& settings
 )
     : cluster_(std::move(cluster)),

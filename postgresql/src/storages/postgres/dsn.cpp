@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <string_view>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -26,7 +27,7 @@ namespace {
 const std::string kPostgreSQLDefaultHost = "localhost";
 const std::string kPostgreSQLDefaultPort = "5432";
 
-std::vector<std::string> SplitDsnValue(const std::string& value) {
+std::vector<std::string> SplitDsnValue(std::string_view value) {
     return USERVER_NAMESPACE::utils::text::Split(value, ",", USERVER_NAMESPACE::utils::text::SplitFlags::kNone);
 }
 

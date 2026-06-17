@@ -143,7 +143,7 @@ void ConnlimitWatchdog::Stop() { periodic_.Stop(); }
 std::size_t ConnlimitWatchdog::GetConnlimit() const noexcept { return connlimit_.load(); }
 
 void ConnlimitWatchdog::DoStep(
-    const std::string& hostname,
+    std::string_view hostname,
     const Query& update_max_connections_query,
     const Query& select_instances_query
 ) {

@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <memory>
+#include <string_view>
 #include <vector>
 
 #include <userver/clients/dns/resolver_fwd.hpp>
@@ -47,7 +48,7 @@ public:
         Dsn dsn,
         clients::dns::Resolver* resolver,
         engine::TaskProcessor& bg_task_processor,
-        const std::string& db_name,
+        std::string_view db_name,
         const PoolSettings& settings,
         const ConnectionSettings& conn_settings,
         const StatementMetricsSettings& statement_metrics_settings,
@@ -65,7 +66,7 @@ public:
         Dsn dsn,
         clients::dns::Resolver* resolver,
         engine::TaskProcessor& bg_task_processor,
-        const std::string& db_name,
+        std::string_view db_name,
         const InitMode& init_mode,
         const PoolSettings& pool_settings,
         const ConnectionSettings& conn_settings,
