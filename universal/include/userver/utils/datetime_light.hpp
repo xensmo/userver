@@ -166,7 +166,6 @@ std::chrono::system_clock::time_point UtcStringtime(
 std::chrono::system_clock::time_point Stringtime(const std::string& timestring);
 
 /// @brief Extracts time point from a string of a specified format
-/// @throws utils::datetime::DateParseError
 /// @see kRfc3339Format, kTaximeterFormat, kStartOfTheEpoch,
 /// kDefaultDriverTimezone, kDefaultTimezone, kDefaultFormat, kIsoFormat
 std::optional<std::chrono::system_clock::time_point> OptionalStringtime(

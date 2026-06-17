@@ -62,7 +62,8 @@ public:
         return utils::impl::CastWrappedCall<T>(GetPayload()).Retrieve();
     }
 
-    using Task::TryGetContextAccessor;
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    using Task::GetAwaitableToken;
 
     /// @cond
     static constexpr WaitMode kWaitMode = WaitMode::kSingleAwaiter;

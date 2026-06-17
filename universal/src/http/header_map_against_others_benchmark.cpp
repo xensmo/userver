@@ -76,7 +76,7 @@ public:
     }
 
 private:
-    KeyEq cmp_{};
+    [[no_unique_address]] KeyEq cmp_{};
     std::vector<std::pair<std::string, std::string>> values_;
 };
 

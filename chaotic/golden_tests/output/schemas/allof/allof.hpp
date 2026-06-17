@@ -13,14 +13,12 @@ namespace ns {
 
 struct AllOf {
   struct Foo__P0 {
-    static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
     std::optional<std::string> foo{};
 
     USERVER_NAMESPACE::formats::json::Value extra;
   };
 
   struct Foo__P1 {
-    static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamebar = "bar";
     std::optional<int> bar{};
 
     USERVER_NAMESPACE::formats::json::Value extra;
@@ -32,7 +30,6 @@ struct AllOf {
     Foo(AllOf::Foo__P0&& a0, AllOf::Foo__P1&& a1) : AllOf::Foo__P0(std::move(a0)), AllOf::Foo__P1(std::move(a1)) {}
   };
 
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
   std::optional<::ns::AllOf::Foo> foo{};
 };
 
@@ -84,6 +81,8 @@ AllOf Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::forma
 
 AllOf FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<AllOf>);
 
+std::string ToJsonString(const AllOf& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const AllOf::Foo__P0& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
 
@@ -95,6 +94,18 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
 
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const AllOf& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const AllOf::Foo__P0& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
+
+void WriteToStream(const AllOf::Foo__P1& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
+
+void WriteToStream(const AllOf::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   bool hide_brackets = false, std::string_view hide_field_name = {});
+
+void WriteToStream(const AllOf& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 }  // namespace ns
 

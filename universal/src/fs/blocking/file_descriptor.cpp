@@ -82,7 +82,7 @@ FileDescriptor::FileDescriptor(int fd)
     UASSERT(fd != kNoFd);
 }
 
-FileDescriptor FileDescriptor::Open(const std::string& path, OpenMode flags, boost::filesystem::perms perms) {
+FileDescriptor FileDescriptor::Open(utils::zstring_view path, OpenMode flags, boost::filesystem::perms perms) {
     UASSERT(!path.empty());
     const auto fd = utils::CheckSyscall(::open(path.c_str(), ToNative(flags), perms), "opening file '{}'", path);
     return FileDescriptor{fd};
@@ -93,7 +93,7 @@ FileDescriptor FileDescriptor::AdoptFd(int fd) noexcept {
     return FileDescriptor{fd};
 }
 
-FileDescriptor FileDescriptor::OpenDirectory(const std::string& path) {
+FileDescriptor FileDescriptor::OpenDirectory(utils::zstring_view path) {
     UASSERT(!path.empty());
     const auto fd = utils::CheckSyscall(::open(path.c_str(), O_RDONLY | O_DIRECTORY), "opening directory '{}'", path);
     return FileDescriptor{fd};

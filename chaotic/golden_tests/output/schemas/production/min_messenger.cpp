@@ -1,3 +1,4 @@
+
 #include <userver/chaotic/type_bundle_cpp.hpp>
 
 #include "min_messenger.hpp"
@@ -10,6 +11,12 @@ V1CurrentUser FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1CurrentUser, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                          USERVER_NAMESPACE::chaotic::sax::Parser<V1CurrentUser>>>(json);
+}
+
+std::string ToJsonString(const V1CurrentUser& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1CurrentUser& lhs, const V1CurrentUser& rhs) {
@@ -54,10 +61,40 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1CurrentUser& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.token && hide_field_name != "token") {
+    sw.Key("token");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<128>,
+                                                        USERVER_NAMESPACE::chaotic::MaxLength<128>>{*value.token},
+                  sw);
+  }
+
+  if (hide_field_name != "login") {
+    sw.Key("login");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.login}, sw);
+  }
+
+  if (hide_field_name != "name") {
+    sw.Key("name");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{value.name}, sw);
+  }
+}
+
 V1ChannelMessage FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessage>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelMessage, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                             USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessage>>>(json);
+}
+
+std::string ToJsonString(const V1ChannelMessage& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelMessage& lhs, const V1ChannelMessage& rhs) {
@@ -102,12 +139,46 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelMessage& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "id") {
+    sw.Key("id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.id}, sw);
+  }
+
+  if (hide_field_name != "timestamp") {
+    sw.Key("timestamp");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{value.timestamp}, sw);
+  }
+
+  if (hide_field_name != "message") {
+    sw.Key("message");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>{value.message},
+        sw);
+  }
+}
+
 V1ChannelMessageByTimestampRequest FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelMessageByTimestampRequest,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
           USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageByTimestampRequest>>>(json);
+}
+
+std::string ToJsonString(const V1ChannelMessageByTimestampRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelMessageByTimestampRequest& lhs, const V1ChannelMessageByTimestampRequest& rhs) {
@@ -150,12 +221,40 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelMessageByTimestampRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "channel_id") {
+    sw.Key("channel_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.channel_id}, sw);
+  }
+
+  if (hide_field_name != "from") {
+    sw.Key("from");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{value.from}, sw);
+  }
+
+  if (value.to && hide_field_name != "to") {
+    sw.Key("to");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{*value.to}, sw);
+  }
+}
+
 V1ChannelMessageByTimestampResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageByTimestampResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelMessageByTimestampResponse,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
           USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageByTimestampResponse>>>(json);
+}
+
+std::string ToJsonString(const V1ChannelMessageByTimestampResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelMessageByTimestampResponse& lhs, const V1ChannelMessageByTimestampResponse& rhs) {
@@ -196,11 +295,31 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelMessageByTimestampResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "messages") {
+    sw.Key("messages");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Array<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1ChannelMessage>,
+                                                    std::vector<::ns::V1ChannelMessage>>{value.messages},
+                  sw);
+  }
+}
+
 V1ChannelMessageNewRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelMessageNewRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                       USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageNewRequest>>>(json);
+}
+
+std::string ToJsonString(const V1ChannelMessageNewRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelMessageNewRequest& lhs, const V1ChannelMessageNewRequest& rhs) {
@@ -242,11 +361,41 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelMessageNewRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "channel_id") {
+    sw.Key("channel_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.channel_id}, sw);
+  }
+
+  if (hide_field_name != "message") {
+    sw.Key("message");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>{value.message},
+        sw);
+  }
+}
+
 V1ChannelMessageNewResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1ChannelMessageNewResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelMessageNewResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                        USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelMessageNewResponse>>>(json);
+}
+
+std::string ToJsonString(const V1ChannelMessageNewResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelMessageNewResponse& lhs, const V1ChannelMessageNewResponse& rhs) {
@@ -283,12 +432,30 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelMessageNewResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "message_id") {
+    sw.Key("message_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.message_id}, sw);
+  }
+}
+
 V1ChannelNotificationListRequest FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelNotificationListRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                             USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationListRequest>>>(
       json);
+}
+
+std::string ToJsonString(const V1ChannelNotificationListRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelNotificationListRequest& lhs, const V1ChannelNotificationListRequest& rhs) {
@@ -327,12 +494,35 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelNotificationListRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "channel_id") {
+    sw.Key("channel_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.channel_id}, sw);
+  }
+}
+
 V1ChannelNotificationListResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationListResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelNotificationListResponse,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
           USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationListResponse>>>(json);
+}
+
+std::string ToJsonString(const V1ChannelNotificationListResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelNotificationListResponse& lhs, const V1ChannelNotificationListResponse& rhs) {
@@ -371,12 +561,32 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelNotificationListResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "notifications") {
+    sw.Key("notifications");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Array<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>,
+                                                    std::vector<std::int64_t>>{value.notifications},
+                  sw);
+  }
+}
+
 V1ChannelNotificationNewRequest FromJsonString(std::string_view json,
                                                USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelNotificationNewRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                            USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationNewRequest>>>(
       json);
+}
+
+std::string ToJsonString(const V1ChannelNotificationNewRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelNotificationNewRequest& lhs, const V1ChannelNotificationNewRequest& rhs) {
@@ -424,12 +634,48 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelNotificationNewRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "channel_id") {
+    sw.Key("channel_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.channel_id}, sw);
+  }
+
+  if (hide_field_name != "message_id") {
+    sw.Key("message_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.message_id}, sw);
+  }
+
+  if (value.other_user_login && hide_field_name != "other_user_login") {
+    sw.Key("other_user_login");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{
+            *value.other_user_login},
+        sw);
+  }
+}
+
 V1ChannelNotificationNewResponse FromJsonString(
     std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1ChannelNotificationNewResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1ChannelNotificationNewResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                             USERVER_NAMESPACE::chaotic::sax::Parser<V1ChannelNotificationNewResponse>>>(
       json);
+}
+
+std::string ToJsonString(const V1ChannelNotificationNewResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1ChannelNotificationNewResponse& lhs, const V1ChannelNotificationNewResponse& rhs) {
@@ -469,11 +715,24 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1ChannelNotificationNewResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+}
+
 V1Error FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1Error>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1Error,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<V1Error>>>(
       json);
+}
+
+std::string ToJsonString(const V1Error& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1Error::Details& lhs, const V1Error::Details& rhs) {
@@ -551,11 +810,49 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1Error::Details& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  for (const auto& [field_key, field_value] : USERVER_NAMESPACE::formats::common::Items(value.extra)) {
+    sw.Key(field_key);
+    WriteToStream(field_value, sw);
+  }
+}
+
+void WriteToStream([[maybe_unused]] const V1Error& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "code") {
+    sw.Key("code");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{value.code}, sw);
+  }
+
+  if (hide_field_name != "message") {
+    sw.Key("message");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{value.message}, sw);
+  }
+
+  if (value.details && hide_field_name != "details") {
+    sw.Key("details");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1Error::Details>{*value.details}, sw);
+  }
+}
+
 V1File FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1File>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1File,
       USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<V1File>>>(
       json);
+}
+
+std::string ToJsonString(const V1File& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1File& lhs, const V1File& rhs) {
@@ -594,10 +891,40 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1File& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "login") {
+    sw.Key("login");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.login}, sw);
+  }
+
+  if (hide_field_name != "filename") {
+    sw.Key("filename");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>,
+                                                        USERVER_NAMESPACE::chaotic::MaxLength<256>>{value.filename},
+                  sw);
+  }
+
+  if (hide_field_name != "content") {
+    sw.Key("content");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::string>{value.content}, sw);
+  }
+}
+
 V1FileByUriRequest FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1FileByUriRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1FileByUriRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                               USERVER_NAMESPACE::chaotic::sax::Parser<V1FileByUriRequest>>>(json);
+}
+
+std::string ToJsonString(const V1FileByUriRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1FileByUriRequest& lhs, const V1FileByUriRequest& rhs) {
@@ -636,10 +963,34 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1FileByUriRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "uri") {
+    sw.Key("uri");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.uri}, sw);
+  }
+}
+
 V1FileNewResponse FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1FileNewResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1FileNewResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                              USERVER_NAMESPACE::chaotic::sax::Parser<V1FileNewResponse>>>(json);
+}
+
+std::string ToJsonString(const V1FileNewResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1FileNewResponse& lhs, const V1FileNewResponse& rhs) {
@@ -678,11 +1029,34 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1FileNewResponse& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "uri") {
+    sw.Key("uri");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.uri}, sw);
+  }
+}
+
 V1LikeTriggerRequest FromJsonString(std::string_view json,
                                     USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1LikeTriggerRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                 USERVER_NAMESPACE::chaotic::sax::Parser<V1LikeTriggerRequest>>>(json);
+}
+
+std::string ToJsonString(const V1LikeTriggerRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1LikeTriggerRequest& lhs, const V1LikeTriggerRequest& rhs) {
@@ -776,6 +1150,51 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1LikeTriggerRequest::Animation& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw) {
+  const auto result = k__ns__V1LikeTriggerRequest__Animation_Mapping.TryFindByFirst(value);
+  if (result.has_value()) {
+    WriteToStream(*result, sw);
+  } else {
+    throw std::runtime_error("Bad enum value");
+  }
+}
+
+void WriteToStream([[maybe_unused]] const V1LikeTriggerRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "idempotency_token") {
+    sw.Key("idempotency_token");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<16>,
+                                              USERVER_NAMESPACE::chaotic::MaxLength<256>>{value.idempotency_token},
+        sw);
+  }
+
+  if (hide_field_name != "channel_id") {
+    sw.Key("channel_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.channel_id}, sw);
+  }
+
+  if (hide_field_name != "message_id") {
+    sw.Key("message_id");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>{value.message_id}, sw);
+  }
+
+  if (hide_field_name != "animation") {
+    sw.Key("animation");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1LikeTriggerRequest::Animation>{value.animation}, sw);
+  }
+}
+
 std::string ToString(V1LikeTriggerRequest::Animation value) {
   const auto result = k__ns__V1LikeTriggerRequest__Animation_Mapping.TryFindByFirst(value);
   if (result.has_value()) {
@@ -789,6 +1208,12 @@ V1UserAuthorizationRequest FromJsonString(std::string_view json,
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserAuthorizationRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                       USERVER_NAMESPACE::chaotic::sax::Parser<V1UserAuthorizationRequest>>>(json);
+}
+
+std::string ToJsonString(const V1UserAuthorizationRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserAuthorizationRequest& lhs, const V1UserAuthorizationRequest& rhs) {
@@ -829,11 +1254,37 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1UserAuthorizationRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "login") {
+    sw.Key("login");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.login}, sw);
+  }
+
+  if (hide_field_name != "password") {
+    sw.Key("password");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>{value.password},
+        sw);
+  }
+}
+
 V1UserAuthorizationResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1UserAuthorizationResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserAuthorizationResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                        USERVER_NAMESPACE::chaotic::sax::Parser<V1UserAuthorizationResponse>>>(json);
+}
+
+std::string ToJsonString(const V1UserAuthorizationResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserAuthorizationResponse& lhs, const V1UserAuthorizationResponse& rhs) {
@@ -870,11 +1321,29 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1UserAuthorizationResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+}
+
 V1UserRegistrationRequest FromJsonString(std::string_view json,
                                          USERVER_NAMESPACE::formats::parse::To<V1UserRegistrationRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserRegistrationRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                      USERVER_NAMESPACE::chaotic::sax::Parser<V1UserRegistrationRequest>>>(json);
+}
+
+std::string ToJsonString(const V1UserRegistrationRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserRegistrationRequest& lhs, const V1UserRegistrationRequest& rhs) {
@@ -924,10 +1393,54 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1UserRegistrationRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "login") {
+    sw.Key("login");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.login}, sw);
+  }
+
+  if (hide_field_name != "name") {
+    sw.Key("name");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>{value.name}, sw);
+  }
+
+  if (hide_field_name != "email") {
+    sw.Key("email");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.email}, sw);
+  }
+
+  if (hide_field_name != "phone") {
+    sw.Key("phone");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.phone}, sw);
+  }
+
+  if (hide_field_name != "password") {
+    sw.Key("password");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>{value.password},
+        sw);
+  }
+}
+
 V1UserStatus FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1UserStatus>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserStatus, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                         USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatus>>>(json);
+}
+
+std::string ToJsonString(const V1UserStatus& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserStatus& lhs, const V1UserStatus& rhs) {
@@ -968,11 +1481,28 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1UserStatus& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  for (const auto& [field_key, field_value] : USERVER_NAMESPACE::formats::common::Items(value.extra)) {
+    sw.Key(field_key);
+    WriteToStream(field_value, sw);
+  }
+}
+
 V1UserStatusByLoginRequest FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserStatusByLoginRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                       USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusByLoginRequest>>>(json);
+}
+
+std::string ToJsonString(const V1UserStatusByLoginRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserStatusByLoginRequest& lhs, const V1UserStatusByLoginRequest& rhs) {
@@ -1012,11 +1542,35 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1UserStatusByLoginRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "login") {
+    sw.Key("login");
+    WriteToStream(
+        USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>{value.login}, sw);
+  }
+}
+
 V1UserStatusByLoginResponse FromJsonString(std::string_view json,
                                            USERVER_NAMESPACE::formats::parse::To<V1UserStatusByLoginResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserStatusByLoginResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                        USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusByLoginResponse>>>(json);
+}
+
+std::string ToJsonString(const V1UserStatusByLoginResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserStatusByLoginResponse& lhs, const V1UserStatusByLoginResponse& rhs) {
@@ -1053,11 +1607,29 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1UserStatusByLoginResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "status") {
+    sw.Key("status");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>{value.status}, sw);
+  }
+}
+
 V1UserStatusUpdateRequest FromJsonString(std::string_view json,
                                          USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateRequest>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserStatusUpdateRequest, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                      USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusUpdateRequest>>>(json);
+}
+
+std::string ToJsonString(const V1UserStatusUpdateRequest& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserStatusUpdateRequest& lhs, const V1UserStatusUpdateRequest& rhs) {
@@ -1096,11 +1668,34 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   return vb.ExtractValue();
 }
 
+void WriteToStream([[maybe_unused]] const V1UserStatusUpdateRequest& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (hide_field_name != "current_user") {
+    sw.Key("current_user");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>{value.current_user}, sw);
+  }
+
+  if (hide_field_name != "status") {
+    sw.Key("status");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>{value.status}, sw);
+  }
+}
+
 V1UserStatusUpdateResponse FromJsonString(std::string_view json,
                                           USERVER_NAMESPACE::formats::parse::To<V1UserStatusUpdateResponse>) {
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       V1UserStatusUpdateResponse, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<
                                       USERVER_NAMESPACE::chaotic::sax::Parser<V1UserStatusUpdateResponse>>>(json);
+}
+
+std::string ToJsonString(const V1UserStatusUpdateResponse& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const V1UserStatusUpdateResponse& lhs, const V1UserStatusUpdateResponse& rhs) {
@@ -1138,6 +1733,13 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   USERVER_NAMESPACE::formats::json::ValueBuilder vb = USERVER_NAMESPACE::formats::common::Type::kObject;
 
   return vb.ExtractValue();
+}
+
+void WriteToStream([[maybe_unused]] const V1UserStatusUpdateResponse& value,
+                   USERVER_NAMESPACE::formats::json::StringBuilder& sw, [[maybe_unused]] bool hide_brackets,
+                   [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
 }
 
 }  // namespace ns

@@ -48,7 +48,7 @@ private:
 class HttpClientDeadline : public ::testing::Test {
 protected:
     void PushResponseCode(int code) {
-        const bool success = producer_.Push(int{code});
+        const bool success = producer_.Push(std::move(code));
         ASSERT_TRUE(success);
     }
 

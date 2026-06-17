@@ -24,16 +24,16 @@ V1CurrentUser Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Current
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1CurrentUser res;
-
-  res.token =
-      value["token"]
-          .template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<
-              std::string, USERVER_NAMESPACE::chaotic::MinLength<128>, USERVER_NAMESPACE::chaotic::MaxLength<128>>>>();
-  res.login =
-      value["login"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
-  res.name = value["name"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>();
+  V1CurrentUser res{
+      .token = value["token"]
+                   .template As<std::optional<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<128>,
+                                                             USERVER_NAMESPACE::chaotic::MaxLength<128>>>>(),
+      .login = value["login"]
+                   .template As<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+      .name = value["name"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1CurrentUser_PropertiesNames);
 
@@ -49,14 +49,15 @@ V1ChannelMessage Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Chan
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelMessage res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.id = value["id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
-  res.timestamp = value["timestamp"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>();
-  res.message =
-      value["message"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>();
+  V1ChannelMessage res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .id = value["id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+      .timestamp = value["timestamp"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>(),
+      .message =
+          value["message"]
+              .template As<
+                  USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1ChannelMessage_PropertiesNames);
 
@@ -74,11 +75,11 @@ V1ChannelMessageByTimestampRequest Parse(Value value,
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelMessageByTimestampRequest res;
-
-  res.channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
-  res.from = value["from"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>();
-  res.to = value["to"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
+  V1ChannelMessageByTimestampRequest res{
+      .channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+      .from = value["from"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>(),
+      .to = value["to"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value,
                                                              k__ns__V1ChannelMessageByTimestampRequest_PropertiesNames);
@@ -95,12 +96,13 @@ V1ChannelMessageByTimestampResponse Parse(Value value,
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelMessageByTimestampResponse res;
-
-  res.messages =
-      value["messages"]
-          .template As<USERVER_NAMESPACE::chaotic::Array<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1ChannelMessage>,
-                                                         std::vector<::ns::V1ChannelMessage>>>();
+  V1ChannelMessageByTimestampResponse res{
+      .messages =
+          value["messages"]
+              .template As<
+                  USERVER_NAMESPACE::chaotic::Array<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1ChannelMessage>,
+                                                    std::vector<::ns::V1ChannelMessage>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(
       value, k__ns__V1ChannelMessageByTimestampResponse_PropertiesNames);
@@ -118,13 +120,14 @@ V1ChannelMessageNewRequest Parse(Value value, USERVER_NAMESPACE::formats::parse:
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelMessageNewRequest res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
-  res.message =
-      value["message"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>();
+  V1ChannelMessageNewRequest res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+      .message =
+          value["message"]
+              .template As<
+                  USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1ChannelMessageNewRequest_PropertiesNames);
 
@@ -139,9 +142,9 @@ V1ChannelMessageNewResponse Parse(Value value, USERVER_NAMESPACE::formats::parse
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelMessageNewResponse res;
-
-  res.message_id = value["message_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
+  V1ChannelMessageNewResponse res{
+      .message_id = value["message_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1ChannelMessageNewResponse_PropertiesNames);
 
@@ -157,10 +160,10 @@ V1ChannelNotificationListRequest Parse(Value value,
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelNotificationListRequest res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
+  V1ChannelNotificationListRequest res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value,
                                                              k__ns__V1ChannelNotificationListRequest_PropertiesNames);
@@ -177,12 +180,12 @@ V1ChannelNotificationListResponse Parse(Value value,
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelNotificationListResponse res;
-
-  res.notifications =
-      value["notifications"]
-          .template As<USERVER_NAMESPACE::chaotic::Array<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>,
-                                                         std::vector<std::int64_t>>>();
+  V1ChannelNotificationListResponse res{
+      .notifications =
+          value["notifications"]
+              .template As<USERVER_NAMESPACE::chaotic::Array<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>,
+                                                             std::vector<std::int64_t>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value,
                                                              k__ns__V1ChannelNotificationListResponse_PropertiesNames);
@@ -206,15 +209,15 @@ V1ChannelNotificationNewRequest Parse(Value value,
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelNotificationNewRequest res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
-  res.message_id = value["message_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
-  res.other_user_login =
-      value["other_user_login"]
-          .template As<std::optional<
-              USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>>();
+  V1ChannelNotificationNewRequest res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+      .message_id = value["message_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+      .other_user_login =
+          value["other_user_login"]
+              .template As<std::optional<
+                  USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value,
                                                              k__ns__V1ChannelNotificationNewRequest_PropertiesNames);
@@ -231,7 +234,9 @@ V1ChannelNotificationNewResponse Parse(Value value,
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1ChannelNotificationNewResponse res;
+  V1ChannelNotificationNewResponse res{
+
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value,
                                                              k__ns__V1ChannelNotificationNewResponse_PropertiesNames);
@@ -252,11 +257,12 @@ V1Error::Details Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Erro
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1Error::Details res;
+  auto extra =
+      USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__V1Error__Details_PropertiesNames);
 
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
-      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
-      k__ns__V1Error__Details_PropertiesNames);
+  V1Error::Details res{
+      .extra = std::move(extra),
+  };
 
   return res;
 }
@@ -266,12 +272,12 @@ V1Error Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Error>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1Error res;
-
-  res.code = value["code"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>();
-  res.message = value["message"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>();
-  res.details =
-      value["details"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1Error::Details>>>();
+  V1Error res{
+      .code = value["code"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>(),
+      .message = value["message"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>(),
+      .details =
+          value["details"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1Error::Details>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1Error_PropertiesNames);
 
@@ -287,16 +293,16 @@ V1File Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1File>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1File res;
-
-  res.login =
-      value["login"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
-  res.filename =
-      value["filename"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>,
-                                                             USERVER_NAMESPACE::chaotic::MaxLength<256>>>();
-  res.content = value["content"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>();
+  V1File res{
+      .login = value["login"]
+                   .template As<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+      .filename =
+          value["filename"]
+              .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>,
+                                                                 USERVER_NAMESPACE::chaotic::MaxLength<256>>>(),
+      .content = value["content"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::string>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1File_PropertiesNames);
 
@@ -312,12 +318,12 @@ V1FileByUriRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Fi
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1FileByUriRequest res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.uri =
-      value["uri"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
+  V1FileByUriRequest res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .uri = value["uri"]
+                 .template As<
+                     USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1FileByUriRequest_PropertiesNames);
 
@@ -333,12 +339,12 @@ V1FileNewResponse Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1Fil
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1FileNewResponse res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.uri =
-      value["uri"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
+  V1FileNewResponse res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .uri = value["uri"]
+                 .template As<
+                     USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1FileNewResponse_PropertiesNames);
 
@@ -385,17 +391,17 @@ V1LikeTriggerRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1LikeTriggerRequest res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.idempotency_token =
-      value["idempotency_token"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<16>,
-                                                             USERVER_NAMESPACE::chaotic::MaxLength<256>>>();
-  res.channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
-  res.message_id = value["message_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>();
-  res.animation =
-      value["animation"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1LikeTriggerRequest::Animation>>();
+  V1LikeTriggerRequest res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .idempotency_token =
+          value["idempotency_token"]
+              .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<16>,
+                                                                 USERVER_NAMESPACE::chaotic::MaxLength<256>>>(),
+      .channel_id = value["channel_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+      .message_id = value["message_id"].template As<USERVER_NAMESPACE::chaotic::Primitive<std::int64_t>>(),
+      .animation = value["animation"]
+                       .template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1LikeTriggerRequest::Animation>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1LikeTriggerRequest_PropertiesNames);
 
@@ -410,14 +416,15 @@ V1UserAuthorizationRequest Parse(Value value, USERVER_NAMESPACE::formats::parse:
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserAuthorizationRequest res;
-
-  res.login =
-      value["login"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
-  res.password =
-      value["password"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>>();
+  V1UserAuthorizationRequest res{
+      .login = value["login"]
+                   .template As<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+      .password =
+          value["password"]
+              .template As<
+                  USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1UserAuthorizationRequest_PropertiesNames);
 
@@ -432,9 +439,9 @@ V1UserAuthorizationResponse Parse(Value value, USERVER_NAMESPACE::formats::parse
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserAuthorizationResponse res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
+  V1UserAuthorizationResponse res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1UserAuthorizationResponse_PropertiesNames);
 
@@ -452,23 +459,24 @@ V1UserRegistrationRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserRegistrationRequest res;
-
-  res.login =
-      value["login"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
-  res.name =
-      value["name"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>();
-  res.email =
-      value["email"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
-  res.phone =
-      value["phone"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
-  res.password =
-      value["password"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>>();
+  V1UserRegistrationRequest res{
+      .login = value["login"]
+                   .template As<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+      .name = value["name"]
+                  .template As<
+                      USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<1>>>(),
+      .email = value["email"]
+                   .template As<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+      .phone = value["phone"]
+                   .template As<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+      .password =
+          value["password"]
+              .template As<
+                  USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<6>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1UserRegistrationRequest_PropertiesNames);
 
@@ -484,11 +492,11 @@ V1UserStatus Parse(Value value, USERVER_NAMESPACE::formats::parse::To<V1UserStat
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserStatus res;
+  auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__V1UserStatus_PropertiesNames);
 
-  res.extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
-      Parse(std::move(value), USERVER_NAMESPACE::formats::parse::To<USERVER_NAMESPACE::formats::json::Value>()),
-      k__ns__V1UserStatus_PropertiesNames);
+  V1UserStatus res{
+      .extra = std::move(extra),
+  };
 
   return res;
 }
@@ -501,12 +509,12 @@ V1UserStatusByLoginRequest Parse(Value value, USERVER_NAMESPACE::formats::parse:
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserStatusByLoginRequest res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.login =
-      value["login"]
-          .template As<USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>();
+  V1UserStatusByLoginRequest res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .login = value["login"]
+                   .template As<
+                       USERVER_NAMESPACE::chaotic::Primitive<std::string, USERVER_NAMESPACE::chaotic::MinLength<3>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1UserStatusByLoginRequest_PropertiesNames);
 
@@ -521,9 +529,9 @@ V1UserStatusByLoginResponse Parse(Value value, USERVER_NAMESPACE::formats::parse
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserStatusByLoginResponse res;
-
-  res.status = value["status"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>>();
+  V1UserStatusByLoginResponse res{
+      .status = value["status"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1UserStatusByLoginResponse_PropertiesNames);
 
@@ -538,10 +546,10 @@ V1UserStatusUpdateRequest Parse(Value value, USERVER_NAMESPACE::formats::parse::
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserStatusUpdateRequest res;
-
-  res.current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>();
-  res.status = value["status"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>>();
+  V1UserStatusUpdateRequest res{
+      .current_user = value["current_user"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1CurrentUser>>(),
+      .status = value["status"].template As<USERVER_NAMESPACE::chaotic::Primitive<::ns::V1UserStatus>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1UserStatusUpdateRequest_PropertiesNames);
 
@@ -556,7 +564,9 @@ V1UserStatusUpdateResponse Parse(Value value, USERVER_NAMESPACE::formats::parse:
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  V1UserStatusUpdateResponse res;
+  V1UserStatusUpdateResponse res{
+
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__V1UserStatusUpdateResponse_PropertiesNames);
 

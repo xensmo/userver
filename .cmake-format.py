@@ -93,6 +93,7 @@ with section('parse'):  # noqa: F821
                 'GENERATE_SERIALIZERS',
                 'PARSE_EXTRA_FORMATS',
                 'NO_SAX_PARSE',
+                'NO_STREAM_WRITER',
             ],
         },
         'userver_testsuite_requirements': {

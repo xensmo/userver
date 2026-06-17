@@ -66,7 +66,7 @@ Sentinel::Sentinel(
     const std::vector<std::string>& shards,
     const std::vector<ConnectionInfo>& conns,
     std::string shard_group_name,
-    const Password& password,
+    const Credentials& credentials,
     ConnectionSecurity connection_security,
     dynamic_config::Source dynamic_config_source,
     SentinelStaticConfig creation_config,
@@ -99,7 +99,7 @@ Sentinel::Sentinel(
             shards,
             conns,
             std::move(shard_group_name),
-            password,
+            credentials,
             connection_security,
             std::move(creation_config),
             dynamic_config_source,
@@ -130,7 +130,9 @@ std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
     const SentinelStaticConfig& creation_config,
     const testsuite::RedisControl& testsuite_redis_control
 ) {
+    const auto& username = settings.username;
     const auto& password = settings.password;
+    const auto& sentinel_username = settings.sentinel_username;
     const auto& sentinel_password = settings.sentinel_password;
 
     const std::vector<std::string>& shards = settings.shards;
@@ -149,7 +151,9 @@ std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
         conns.emplace_back(
             sentinel.host,
             sentinel.port,
-            (creation_config.key_shard_factory.IsClusterStrategy() ? password : sentinel_password),
+            (creation_config.key_shard_factory.IsClusterStrategy()
+                 ? Credentials{username, password}
+                 : Credentials{sentinel_username, sentinel_password}),
             false,
             settings.secure_connection
         );
@@ -163,7 +167,7 @@ std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
             shards,
             conns,
             std::move(shard_group_name),
-            password,
+            Credentials{username, password},
             settings.secure_connection,
             dynamic_config_source,
             creation_config,
@@ -385,7 +389,7 @@ void Sentinel::SetConfigDefaultCommandControl(const std::shared_ptr<CommandContr
 
 const std::string& Sentinel::ShardGroupName() const { return shard_group_name_; }
 
-void Sentinel::UpdatePassword(const Password& password) { impl_->UpdatePassword(password); }
+void Sentinel::UpdateCredentials(const Credentials& credentials) { impl_->UpdateCredentials(credentials); }
 
 void Sentinel::SetConnectionInfo(std::vector<ConnectionInfo> info_array) {
     std::vector<ConnectionInfoInt> cii;

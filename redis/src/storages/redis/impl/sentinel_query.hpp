@@ -12,20 +12,20 @@ USERVER_NAMESPACE_BEGIN
 namespace storages::redis::impl {
 
 struct GetHostsRequest {
-    static GetHostsRequest QuerySentinelMasters(Shard& sentinel_shard, Password password) {
-        return GetHostsRequest(sentinel_shard, std::move(password));
+    static GetHostsRequest QuerySentinelMasters(Shard& sentinel_shard, Credentials credentials) {
+        return GetHostsRequest(sentinel_shard, std::move(credentials));
     }
-    static GetHostsRequest QuerySentinelSlaves(Shard& sentinel_shard, std::string shard_name, Password password) {
-        return GetHostsRequest(sentinel_shard, std::move(shard_name), std::move(password));
+    static GetHostsRequest QuerySentinelSlaves(Shard& sentinel_shard, std::string shard_name, Credentials credentials) {
+        return GetHostsRequest(sentinel_shard, std::move(shard_name), std::move(credentials));
     }
 
 private:
     // For MASTERS
-    GetHostsRequest(Shard& sentinel_shard, Password password)
+    GetHostsRequest(Shard& sentinel_shard, Credentials credentials)
         : sentinel_shard(sentinel_shard),
           command({"SENTINEL", "MASTERS"}),
           master(true),
-          password(std::move(password))
+          credentials(std::move(credentials))
     {
         UASSERT(command.GetCommandCount() == 1);
         UASSERT_MSG(
@@ -35,11 +35,11 @@ private:
     }
 
     // For SLAVES
-    GetHostsRequest(Shard& sentinel_shard, std::string shard_name, Password password)
+    GetHostsRequest(Shard& sentinel_shard, std::string shard_name, Credentials credentials)
         : sentinel_shard(sentinel_shard),
           command({"SENTINEL", "SLAVES", std::move(shard_name)}),
           master(false),
-          password(std::move(password))
+          credentials(std::move(credentials))
     {
         UASSERT(command.GetCommandCount() == 1);
     }
@@ -49,7 +49,7 @@ public:
     CmdArgs command;
 
     bool master;
-    Password password;
+    Credentials credentials;
 };
 
 using ProcessGetHostsRequestCb = std::function<
@@ -65,7 +65,7 @@ class GetHostsContext : public std::enable_shared_from_this<GetHostsContext> {
 public:
     GetHostsContext(
         bool allow_empty,
-        const Password& password,
+        const Credentials& credentials,
         ProcessGetHostsRequestCb&& callback,
         size_t expected_responses_cnt
     );
@@ -78,7 +78,7 @@ private:
 
     std::mutex mutex_;
     const bool allow_empty_;
-    const Password password_;
+    const Credentials credentials_;
     const ProcessGetHostsRequestCb callback_;
     size_t response_got_{0};
     size_t responses_parsed_{0};

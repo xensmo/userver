@@ -1,7 +1,6 @@
 #include <userver/engine/io/fd_poller.hpp>
 
 #include <engine/ev/watcher.hpp>
-#include <engine/impl/future_utils.hpp>
 #include <engine/impl/wait_list_light_with_epoch.hpp>
 #include <engine/task/task_context.hpp>
 
@@ -68,7 +67,7 @@ FdPoller::Kind GetUserMode(int ev_events) {
 
 }  // namespace
 
-class FdPoller::Impl final : public engine::impl::ContextAccessor {
+class FdPoller::Impl final : public engine::impl::AwaitableBase {
 public:
     Impl(ev::ThreadControl control);
 
@@ -112,7 +111,7 @@ public:
         );
     }
 
-    // ContextAccessor implementation
+    // Awaitable implementation
     bool IsReady() const noexcept override { return awaiters_.IsSignaled(); }
 
     void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>& awaiter, std::uintptr_t context) override {
@@ -122,10 +121,12 @@ public:
         }
     }
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {
-        awaiters_.Remove(awaiter, context);
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override {
+        auto removed_awaiter = awaiters_.Remove(awaiter, context);
         // we need to stop watcher manually to avoid racy wakeups later
         watcher_.StopAsync();
+        return removed_awaiter;
     }
 
 private:
@@ -154,8 +155,7 @@ std::optional<FdPoller::Kind> FdPoller::Impl::Wait(Deadline deadline) {
 
     auto& current = current_task::GetCurrentTaskContext();
 
-    engine::impl::FutureWaitStrategy wait_strategy{*this, current};
-    current.Sleep(wait_strategy, deadline);
+    current.Sleep(*this, deadline);
 
     // Don't call heavy synchronous Stop() here. The epoch system will handle stale notifications.
     return GetReady();
@@ -221,7 +221,9 @@ void FdPoller::ResetReady() noexcept { pimpl_->ResetReady(); }
 
 std::optional<FdPoller::Kind> FdPoller::GetReady() noexcept { return pimpl_->GetReady(); }
 
-engine::impl::ContextAccessor* FdPoller::TryGetContextAccessor() noexcept { return &*pimpl_; }
+AwaitableToken FdPoller::GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+    return AwaitableToken{utils::impl::InternalTag{}, &*pimpl_};
+}
 
 void FdPoller::Reset(int fd, Kind kind) { pimpl_->Reset(fd, kind); }
 

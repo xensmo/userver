@@ -221,6 +221,7 @@ private:
         const ResultSet* description_ptr
     );
 
+    void Rollback(std::optional<engine::Deadline> deadline);
     void Cancel();
 
     void ReportStatement(std::string_view name);

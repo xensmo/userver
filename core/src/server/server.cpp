@@ -190,8 +190,11 @@ ServerImpl::ServerImpl(
     for (auto& port : config_.listener.ports) {
         port.ReadTlsSettings(secdist);
         port.InitSslCtx();
-    }
 
+        if (port.ssl_ctx) {
+            port.ssl_ctx->SetHttpVersion(config_.listener.connection_config.http_version);
+        }
+    }
     main_port_info_.Init(config_, config_.listener, component_context, false);
     if (config_.max_response_size_in_flight) {
         main_port_info_.data_accounter.SetMaxPendingResponsesSizeInBytes(*config_.max_response_size_in_flight);

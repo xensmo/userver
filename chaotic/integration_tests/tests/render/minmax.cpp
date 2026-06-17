@@ -5,8 +5,37 @@
 #include <userver/formats/json/parser/exception.hpp>
 
 #include <schemas/int_minmax.hpp>
+#include <schemas/int_minmax_sax_parsers.hpp>
+
+#include "helper.hpp"
 
 USERVER_NAMESPACE_BEGIN
+
+TEST(MinMax, InclusiveInt) {
+    auto json = formats::json::MakeObject("value", 0);
+    UEXPECT_THROW_MSG(
+        json.As<ns::IntegerMinMaxObject>(),
+        chaotic::Error<formats::json::Value>,
+        "Error at path 'value': Invalid value, minimum=1, given=0"
+    );
+
+    json = formats::json::MakeObject("value", 21);
+    UEXPECT_THROW_MSG(
+        json.As<ns::IntegerMinMaxObject>(),
+        chaotic::Error<formats::json::Value>,
+        "Error at path 'value': Invalid value, maximum=20, given=21"
+    );
+
+    json = formats::json::MakeObject("value", 10);
+    EXPECT_EQ(json.As<ns::IntegerMinMaxObject>().value, 10);
+}
+
+TEST(MinMax, InclusiveIntSax) {
+    auto json = formats::json::MakeObject("value", 10);
+    auto obj = CallSaxParser<ns::IntegerMinMaxObject>(ToString(json));
+    EXPECT_EQ(obj.value, 10);
+    EXPECT_EQ(TestWriteToStream(obj), json);
+}
 
 TEST(MinMax, ExclusiveInt) {
     auto json = formats::json::MakeObject("foo", 1);

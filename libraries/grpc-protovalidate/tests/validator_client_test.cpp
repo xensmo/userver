@@ -68,11 +68,9 @@ class GrpcClientValidatorTest
       public testing::WithParamInterface<grpc_protovalidate::client::Settings> {
 public:
     GrpcClientValidatorTest()
-        : ugrpc::tests::ServiceWithClientFixture<UnitTestServiceValidator, types::UnitTestServiceClient>(
-              ugrpc::server::ServerConfig{},
-              ugrpc::server::Middlewares{},
-              ugrpc::client::Middlewares{std::make_shared<grpc_protovalidate::client::Middleware>(GetParam())}
-          )
+        : ugrpc::tests::ServiceWithClientFixture<UnitTestServiceValidator, types::UnitTestServiceClient>({
+              .client_middlewares = {std::make_shared<grpc_protovalidate::client::Middleware>(GetParam())},
+          })
     {}
 };
 

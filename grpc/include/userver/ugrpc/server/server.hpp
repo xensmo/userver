@@ -76,6 +76,9 @@ struct ServerConfig final {
 
     /// TLS settings
     TlsConfig tls;
+
+    /// Whether to apply OpenTelemetry trace-sampling to incoming gRPC requests.
+    bool otel_trace_sampling_enabled{false};
 };
 
 /// @brief Manages the gRPC server

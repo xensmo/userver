@@ -21,9 +21,9 @@ String Parse(Value value, USERVER_NAMESPACE::formats::parse::To<String>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  String res;
-
-  res.foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>();
+  String res{
+      .foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__String_PropertiesNames);
 

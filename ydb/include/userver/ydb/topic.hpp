@@ -9,9 +9,11 @@
 #include <string>
 
 #include <ydb-cpp-sdk/client/topic/client.h>
+#include <ydb-cpp-sdk/client/topic/producer.h>
 #include <ydb-cpp-sdk/client/types/executor/executor.h>
 
 #include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/deadline.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -119,6 +121,44 @@ private:
     std::shared_ptr<NYdb::NTopic::IWriteSession> write_session_;
 };
 
+/// @brief Producer used to write messages to a topic.
+///
+/// @see https://ydb.tech/docs/en/reference/ydb-sdk/topic#write
+class TopicProducer final {
+public:
+    /// @cond
+    /// For internal use only.
+    explicit TopicProducer(std::shared_ptr<NYdb::NTopic::IProducer> producer);
+    /// @endcond
+
+    /// @brief Write a single message to the topic.
+    ///
+    /// Adds the message to the internal buffer and returns immediately.
+    /// Use Flush() to wait for the buffered messages to be persistently written.
+    NYdb::NTopic::TWriteResult Write(NYdb::NTopic::TWriteMessage&& message);
+
+    /// @brief Flush all buffered messages to the server.
+    ///
+    /// Waits until all in-flight messages are acknowledged.
+    /// @param deadline timeout for flush completion
+    NYdb::NTopic::TFlushResult Flush(engine::Deadline deadline = {});
+
+    /// @brief Close the producer.
+    ///
+    /// Waits for all in-flight messages to be acknowledged.
+    /// Force closes after timeout.
+    NYdb::NTopic::TCloseResult Close(std::chrono::milliseconds timeout);
+
+    /// @brief Get native producer.
+    ///
+    /// @warning Use with care! Facilities from @ref userver/drivers/subscribable_futures.hpp can help
+    /// with non-blocking wait operations.
+    NYdb::NTopic::IProducer& GetNativeTopicProducer() USERVER_IMPL_LIFETIME_BOUND;
+
+private:
+    std::shared_ptr<NYdb::NTopic::IProducer> producer_;
+};
+
 /// @ingroup userver_clients
 ///
 /// @brief YDB Topic Client
@@ -144,6 +184,9 @@ public:
 
     /// Create write session
     TopicWriteSession CreateWriteSession(const NYdb::NTopic::TWriteSessionSettings& settings);
+
+    /// Create producer
+    TopicProducer CreateProducer(const NYdb::NTopic::TProducerSettings& settings);
 
     /// Get native topic client
     /// @warning Use with care! Facilities from

@@ -64,7 +64,7 @@ public:
         const std::vector<std::string>& shards,
         const std::vector<ConnectionInfo>& conns,
         std::string shard_group_name,
-        const Password& password,
+        const Credentials& credentials,
         ConnectionSecurity connection_security,
         dynamic_config::Source dynamic_config_source,
         SentinelStaticConfig creation_config,
@@ -151,7 +151,7 @@ public:
     void SetConnectionInfo(std::vector<ConnectionInfo> info_array);
     const std::string& ShardGroupName() const;
 
-    void UpdatePassword(const Password& password);
+    void UpdateCredentials(const Credentials& credentials);
 
     using UserMessageCallback = std::function<Outcome(const std::string& channel, const std::string& message)>;
     using UserPmessageCallback = std::function<

@@ -102,6 +102,12 @@ class Schema(base_model.BaseModel):
 _NOT_IMPL = Schema()
 
 
+class AnyValue(Schema):
+    """Represents a JSON schema with no type constraint — any JSON value."""
+
+    __hash__ = Schema.__hash__
+
+
 class Ref(Schema):
     ref: str  # type: ignore
     indirect: bool
@@ -399,6 +405,53 @@ class OneOfWithDiscriminator(Schema):
         for variant in self.oneOf:
             cb(variant, self)
             variant.visit_children(cb)
+
+    __hash__ = Schema.__hash__
+
+
+class ConstType(enum.Enum):
+    STRING = 'string'
+    INTEGER = 'integer'
+    INTEGER32 = 'int32'
+    INTEGER64 = 'int64'
+    BOOLEAN = 'boolean'
+
+
+ConstValue = str | int | bool
+
+
+CONST_TYPE_TO_CPP = {
+    ConstType.STRING: 'std::string',
+    ConstType.INTEGER: 'int',
+    ConstType.INTEGER32: 'std::int32_t',
+    ConstType.INTEGER64: 'std::int64_t',
+    ConstType.BOOLEAN: 'bool',
+}
+
+
+CONST_TYPE_ADAPTER: pydantic.TypeAdapter[ConstValue] = pydantic.TypeAdapter(
+    pydantic.StrictBool | pydantic.StrictInt | pydantic.StrictStr,
+)
+
+
+CONST_PYTHON_TYPE_TO_TYPE = {
+    str: ConstType.STRING,
+    int: ConstType.INTEGER,
+    bool: ConstType.BOOLEAN,
+}
+
+
+class ConstSchema(Schema):
+    const: ConstValue
+    const_type: ConstType
+
+    @classmethod
+    def allowed_input_fields(cls) -> set[str]:
+        fields = set(cls.model_fields)
+        fields.discard('const_type')
+        fields.discard('source_location_')
+        fields.update({'type', 'format'})
+        return fields
 
     __hash__ = Schema.__hash__
 

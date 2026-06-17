@@ -136,16 +136,16 @@ Socket::Socket(AddrDomain domain, SocketType type)
     : domain_(domain),
       fd_control_(MakeSocket(domain, type))
 {
-    SetReadableContextAccessor(fd_control_->Read().TryGetContextAccessor());
-    SetWritableContextAccessor(fd_control_->Write().TryGetContextAccessor());
+    SetReadableAwaitableToken(fd_control_->Read().GetAwaitableToken());
+    SetWritableAwaitableToken(fd_control_->Write().GetAwaitableToken());
 }
 
 Socket::Socket(int fd, AddrDomain domain)
     : domain_(domain),
       fd_control_(impl::FdControl::Adopt(fd))
 {
-    SetReadableContextAccessor(fd_control_->Read().TryGetContextAccessor());
-    SetWritableContextAccessor(fd_control_->Write().TryGetContextAccessor());
+    SetReadableAwaitableToken(fd_control_->Read().GetAwaitableToken());
+    SetWritableAwaitableToken(fd_control_->Write().GetAwaitableToken());
 // MAC_COMPAT: no socket domain access on mac
 #ifdef SO_DOMAIN
     if (domain_ != AddrDomain::kUnspecified) {
@@ -287,8 +287,12 @@ std::optional<size_t> Socket::RecvNoblock(void* buf, size_t len) {
     throw IoException("Attempt to RecvNoblock from closed socket");
 }
 
+size_t Socket::SendAll(std::span<const IoData> list, Deadline deadline) {
+    return SendAll(list.data(), list.size(), deadline);
+}
+
 size_t Socket::SendAll(std::initializer_list<IoData> list, Deadline deadline) {
-    return SendAll(list.begin(), list.size(), deadline);
+    return SendAll(std::span<const IoData>{list.begin(), list.size()}, deadline);
 }
 
 size_t Socket::SendAll(const IoData* list, std::size_t list_size, Deadline deadline) {

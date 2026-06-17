@@ -139,6 +139,7 @@ private:
 
     ugrpc::impl::StatisticsStorage statistics_storage_;
     const dynamic_config::Source config_source_;
+    const bool otel_trace_sampling_enabled_;
 };
 
 Server::Impl::Impl(
@@ -148,7 +149,8 @@ Server::Impl::Impl(
     dynamic_config::Source config_source
 )
     : statistics_storage_(scope_storage, statistics_storage, ugrpc::impl::StatisticsDomain::kServer),
-      config_source_(config_source)
+      config_source_(config_source),
+      otel_trace_sampling_enabled_(config.otel_trace_sampling_enabled)
 {
     LOG_INFO() << "Configuring the gRPC server";
     ugrpc::impl::SetupNativeLogging();
@@ -218,6 +220,7 @@ impl::ServiceInternals Server::Impl::MakeServiceInternals(ServiceConfig&& config
         std::move(config.middlewares),
         config_source_,
         std::move(config.status_codes_log_level),
+        otel_trace_sampling_enabled_,
     };
 }
 

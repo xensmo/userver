@@ -19,7 +19,12 @@
 
 USERVER_NAMESPACE_BEGIN
 
-namespace chaotic::sax::impl {
+namespace chaotic {
+template <const auto& Value>
+struct ConstValue;
+
+namespace sax {
+namespace impl {
 
 template <typename RawParser, typename UserType>
 class WithType final : private formats::json::parser::Subscriber<typename RawParser::ResultType> {
@@ -141,12 +146,13 @@ private:
     formats::json::parser::Subscriber<ResultType>* subscriber_{nullptr};
 };
 
-}  // namespace chaotic::sax::impl
-
-namespace chaotic::sax {
+}  // namespace impl
 
 template <typename T>
 sax::Parser<T> ParserOf(Type<Primitive<T>>);
+
+template <const auto& Value>
+impl::JsonDomParser<ConstValue<Value>> ParserOf(Type<ConstValue<Value>>);
 
 template <typename RawType, typename UserType>
 auto ParserOf(Type<WithType<RawType, UserType>>)
@@ -195,6 +201,8 @@ sax::impl::JsonDomParser<std::variant<Fields...>> ParserOf(Type<std::variant<Fie
 template <typename... Fields>
 sax::Parser<std::variant<Fields...>> ParserOf(Type<Variant<Fields...>>);
 
-}  // namespace chaotic::sax
+}  // namespace sax
+
+}  // namespace chaotic
 
 USERVER_NAMESPACE_END

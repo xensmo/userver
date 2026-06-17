@@ -25,6 +25,161 @@ Changelog news also go to the
 
 ## Changelog
 
+### Release v3.1
+
+Breaking Change:
+
+* Changed `X-Request-Deadline` header format from ISO timestamp to Unix epoch microseconds.
+</br> Migration: Update clients to send deadlines as `uint64_t` microseconds since Unix epoch instead of ISO strings.
+
+* Renamed @ref engine::AsyncNoSpan to @ref engine::AsyncNoTracing.
+</br> Migration: Update all references from `AsyncNoSpan` to `AsyncNoTracing`.
+
+* Removed obscure overloads of @ref engine::Async and @ref utils::Async variants.
+</br> Migration: Use @ref utils::TaskBuilder for complex task settings instead of the removed overloads.
+
+* Changed @ref ugrpc::tests::Service constructor signature.
+</br> Migration: Pass server config, middlewares, and client settings through @ref ugrpc::tests::ServiceConfigs instead of direct constructor parameters.
+
+* Replaced @ref utils::void_t with C++20 requires constraints in PostgreSQL type traits.
+</br> Migration: Update custom type trait specializations to use requires clauses instead of `std::enable_if` conditions.
+
+* Raised minimum GCC version from 11.1 to 11.2 and minimum Clang version from 14 to 16 to enable C++20 heterogeneous lookup in hash containers.
+</br> Migration: Update your GCC compiler to version 11.2 or newer and Clang to version 16 or newer.
+
+* Changed YDB topic API: `GetNativeTopicReadSession/GetNativeTopicWriteSession` now return references instead of `std::shared_ptr`.
+</br> Migration: Remove dereference operator `(*)` or `->` when calling methods on the returned native session objects.
+
+* Added a second stage to graceful shutdown for server http and ugrpc: after failing health checks, listeners are now closed to stop accepting new connections while allowing in-flight requests to complete.
+</br> Migration: replace deprecated `graceful_shutdown_interval` with `graceful_shutdown_continue_accepting_requests_interval` and `graceful_shutdown_pending_requests_completion_interval`; the old option is currently only a fallback and will be removed in the future.
+
+* Refactored meta utilities: replaced `meta::DetectedType` and `meta::DetectedOr` with C++20 template constraints and type aliases; replaced `meta::IsVector` with `meta::IsVectorLike` and removed `meta::IsIterator` (use `std::input_or_output_iterator` instead); removed transitive `<vector>` include from @ref userver/utils/meta.hpp. These changes improve compile times and reduce header dependencies.
+</br> Migration: Replace `meta::DetectedType` with plain type aliases and C++20 `requires` constraints; replace `meta::DetectedOr` with template specialization using `std::type_identity`; replace `meta::IsVector` with `meta::IsVectorLike`; replace `meta::IsIterator` with `std::input_or_output_iterator`; add `#include <vector>` if you were relying on the transitive include from `userver/utils/meta.hpp`.
+
+* Switched from `date` library to C++20 `std::chrono` for date/time operations, reducing preprocessed file size by ~641KB and include count by 162 for @ref userver/utils/datetime/cpp_20_calendar.hpp.
+</br> Migration: Replace `date::make_time` with `std::chrono::hh_mm_ss`; replace `date::` with `std::chrono::`; replace `using namespace utils::datetime::date::literals` and `using namespace date::literals` with `using namespace std::literals::chrono_literals;`; if your standard library does not support `std::chrono::parse`, use `utils::datetime::UtcStringtime` from userver; if your standard library does not support `std::chrono::format`, use `utils::datetime::UtcTimestring` from userver.
+
+* Changed @ref ugrpc::server::ContextBase::GetServerContext return type from `grpc::ServerContext&` to `grpc::ServerContextBase&` to allow future internal implementation changes (e.g., using grpc++ Callback API).
+</br> Migration: Update any code that stores the return value of `GetServerContext()` or passes it to functions to use `grpc::ServerContextBase&` instead of `grpc::ServerContext&`.
+
+Features:
+
+* chaotic OpenAPI generator:
+  * (experimental) Added comprehensive OpenAPI code generation for server-side HTTP handlers and corresponding `config.yaml`. Support with multiple content types, request body parsing, logging customization, and URL masking for sensitive parameters
+
+* odbc
+  * Improved ODBC driver support including connection pooling, transactions, deadlines, and component configuration. Many thanks to [Andrey Balabekyan](https://github.com/V0S7ER) for the PR!
+
+* ScyllaDB
+  * Added ScyllaDB driver: asynchronous C++ driver for ScyllaDB and Apache Cassandra with full CQL support, typed operations, and lightweight transactions. Many thanks to [Uzhanin Egor](https://github.com/gearonixx) for the PR!
+
+* chaotic
+  * Improved support for `allOf` schemas with additionalProperties in chaotic serialization
+  * Added support for JSON Schema `const` keyword in chaotic code generation
+  * Added support for `any` type in chaotic schema generator, allowing arbitrary JSON values without type constraints.
+  * Added JSON stream writer generation for chaotic schemas, improving serialization performance
+  * Added support for `uniqueItems` validation in chaotic array schemas for `integer`, `string`, and `boolean` types
+  * Added support for emoji characters in enum and field names by escaping them as Unicode code points. Many thanks to [Halfdarkangel](https://github.com/Halfdarkangel) for the PR!
+
+* engine
+  * Added @ref engine::AwaitableToken and the @ref engine::Awaitable concept for integration with @ref engine::WaitAny, @ref engine::WaitAnyContext and @ref engine::WaitAllChecked.
+  * Replaced `TryGetContextAccessor()` hooks with `GetAwaitableToken()`. This API is now stable, you can create your own awaitables by implementing `GetAwaitableToken()`.
+  * Added @ref clients::http::ResponseFuture::IsReady.
+  * Added @ref utils::AsyncHideSpan for spawning tasks without extra tracing spans while keeping logs linked; use @ref engine::AsyncNoTracing only to detach tracing or for log-free tasks.
+
+* grpc
+  * Added validation for proto2 required fields before sending responses, providing better error messages
+  * Added absolute timepoint propagation support for gRPC client-side deadline propagation
+  * gRPC server now processes calls in subtasks, enabling Congestion Control to properly handle service overload
+  * Added graceful shutdown headers to trailing metadata for streaming calls when shutdown starts after initial metadata has been sent
+  * grpc.Mockserver now properly manages mock lifecycle with scope-based ownership, enabling nested and overlapping mock scopes for complex testing scenarios
+
+* kafka
+  * Kafka consumer now automatically recreates itself after fatal librdkafka errors (configurable via `restart_after_failure_delay`)
+
+* logging
+  * @ref tracing::Span::SetLocalLogLevel now overrides the global log level in both directions - can raise the threshold (suppress logs) or lower it (enable debug logs even if the global level is higher)
+
+* mongo
+  * Added `OperationError` getter to @ref mongo::WriteResult for better error handling with `SuppressServerExceptions` option
+
+* PostgreSQL
+  * Added `connecting_interval_ms` option to @ref components::Postgres connection pool for throttling connection attempts
+  * Added PostgreSQL support for `std::span` types as array formatters
+
+* redis
+  * Added support for Redis hash field expiration commands (`HEXPIRE`, `HPEXPIRE`, ...)
+  * Added `SetAndGetPrevious` method to Redis client and transaction interfaces for atomic set-with-TTL operations that return the previous value
+  * Added support for suppressing per-channel Redis Pub/Sub metrics to reduce metrics volume when using many channels
+  * Added Redis JSON module support with `json.set`, `json.get`, `json.mset`, and `json.mget` commands
+  * Added Redis `CLUSTER SHARDS` topology discovery support, including failed hosts in shard metadata to better distinguish connection issues from cluster-reported node failures.
+  * Added support for Redis ACL authentication (Redis 6+) with username/password credentials
+  * Added support for multiple channels in Redis subscribe commands (`Subscribe`, `Psubscribe`, `Ssubscribe`)
+  * Added support for parsing all Redis command control configuration fields including `account_in_statistics`, `force_shard_idx`, `chunk_size`, `force_retries_to_master_on_nil_reply`, and `retry_counter`
+
+* crypto
+  * Added @ref PublicKey::LoadFromPrivateKey method to derive public keys from private keys. Many thanks to [Georgij Tsarin](https://github.com/crystarm) for the PR!
+
+* http2
+  * Added full HTTP/2 over TLS support with ALPN negotiation. Many thanks to [SSE4](https://github.com/SSE4) for the PR!
+
+* OpenTelemetry
+  * Added support for OpenTelemetry trace sampling flags. When `otel-trace-sampling-enabled` is true, spans will respect the W3C trace-context sampled flag (unsampled spans are not written to tracing systems). Added @ref Span::IsSampled() and @ref Span::SetSampled() methods for manual control.
+
+* ydb
+  * Added support for YDB tuple type serialization with `std::tuple` support
+  * Added @ref ydb::TopicWriteSession support to YDB client for coroutine-friendly topic writing. Many thanks to [Vasily Sviridov](https://github.com/vasily-sviridov) for the PR!
+  * Added deadline support for YDB topic producer flush operations
+  * Added @ref ydb::TopicProducer wrapper for YDB topic message publishing
+  * Added TCP and gRPC keepalive configuration options to YDB driver
+  * Added YDB database routing via dynamic config for blue-green deployments and live migrations
+
+Optimizations:
+  * Reduced binary size across universal and related libraries by moving some definitions out of headers, reducing template/codegen bloat, and tuning debug-info generation, saving approximately 0.3–1% in tested binaries.
+  * Optimized gRPC server to parse and serialize messages from raw `grpc::ByteBuffer`, allowing congestion control to reject calls before parsing unary request payloads.
+  * Optimized various utility functions to use string views instead of strings, reducing unnecessary string copies.
+  * Improved compilation times for @ref utils::TaskBuilder by reducing unnecessary lambda-call code generation and template instantiation overhead, without changing the public API.
+  * Optimized chaotic generated headers by reducing heavy transitive includes, improving compilation time for small dynamic-config users by up to ~5% and reducing preprocessed file size.
+  * Performed mass code cleanup for C++20, using concepts, ranges, comparisons and other features. This slightly improved build times and made the code more readable.
+
+Fixes:
+
+* chaotic
+  * Fixed chrono milliseconds conversion in chaotic. Many thanks to [Fedor Shatokhin](https://github.com/FedShat) for the PR!
+  * Fixed chaotic bash wrapper to respect the CMake `libdir` path variable. Many thanks to [Halfdarkangel](https://github.com/Halfdarkangel) for the PR!
+
+* crypto
+  * Fixed OpenSSL error queue handling to prevent error misattribution, and fixed malformed certificate chains loaded from strings to be reported as regular errors instead of invariant violations. Many thanks to [seriouscoder43](https://github.com/seriouscoder43) for the PR!
+
+* PostgreSQL
+  * Fixed incorrect `std::forward` usage in PostgreSQL code. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
+
+* s3api
+  * Fixed `ListBucketContentsParsed` handling for truncated bucket listings. Many thanks to [Merzlikin Matvey](https://github.com/Merzlikin-Matvey) for the PR!
+
+* universal
+  * Fixed address-taking utilities to use `std::addressof` in `FindTransparentOrNullptr`, `FindOrNullptr`, `utils::Required`, and `utils::OptionalRef`, improving correctness for types with overloaded `operator&`. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
+  * Fixed `GenerateFixedArray` support for generators returning `const&`. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
+  * Made comparison operators of `utils::CachedHash` consistent. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
+
+* WebSocket
+  * Fixed potential `size_t` overflow in WebSocket frame length checks. Many thanks to [netliomax25-code](https://github.com/netliomax25-code) for the PR!
+
+Build:
+
+  * Fixed userver build without `USERVER_FEATURE_UBOOST_CORO`. Many thanks to [Halfdarkangel](https://github.com/Halfdarkangel) for the PR!
+  * Added Debian Trixie build support for system Abseil package using its own `string_view`. Many thanks to [SSE4](https://github.com/SSE4) for the PR!
+  * Added Debian Trixie build support by using `libgrpc++1.51t64` instead of unavailable `libgrpc++1`. Many thanks to [SSE4](https://github.com/SSE4) for the PR!
+  * Enabled ClickHouse support by default and updated the required `clickhouse-cpp` version to `>= 2.6.0`. Many thanks to [Vasily Sviridov](https://github.com/vasily-sviridov) for the PR!
+  * Upgraded llhttp to 9.4.1. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+  * Added CMake support for mongo-c-driver 2.x.x. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+  * Upgraded `get_cpm.cmake` to 0.42.1. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+
+Documentation:
+
+  * Removed duplicate documentation entries. Many thanks to [Alexander Ermakov](https://github.com/ermakov0) for the PR!
+  * Adjusted `RateCounter` description in documentation. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
+  * Removed incorrect `deprecated` tag from documentation. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
 
 ### Release v3.0
 

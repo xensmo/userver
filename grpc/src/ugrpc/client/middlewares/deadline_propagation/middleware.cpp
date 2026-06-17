@@ -41,9 +41,8 @@ void UpdateDeadline(MiddlewareCallContext& context) {
         const auto deadline_header = std::to_string(original_absolute_deadline->time_since_epoch().count());
         client_context.AddMetadata(ugrpc::impl::kXRequestDeadline, ugrpc::impl::ToGrpcString(deadline_header));
     } else if (task_deadline.IsReachable()) {
-        const auto absolute_deadline =
-            std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()) +
-            std::chrono::duration_cast<std::chrono::microseconds>(task_deadline.TimeLeft());
+        const auto absolute_deadline = std::chrono::ceil<
+            std::chrono::microseconds>(std::chrono::system_clock::now() + task_deadline.TimeLeft());
         const auto deadline_header = std::to_string(absolute_deadline.time_since_epoch().count());
         client_context.AddMetadata(ugrpc::impl::kXRequestDeadline, ugrpc::impl::ToGrpcString(deadline_header));
     }

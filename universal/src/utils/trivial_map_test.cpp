@@ -4,6 +4,28 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace {
+
+struct EmptyFunctor {
+    constexpr auto operator()(auto selector) const {
+        return selector()
+            .Case("zero", 0)
+            .Case("one", 1)
+            .Case("two", 2)
+            .Case("three", 3)
+            .Case("four", 4)
+            .Case("fifty five", 55);
+    }
+};
+
+struct NoUniqueAddressCheck {
+    int i;
+    [[no_unique_address]] utils::TrivialBiMap<EmptyFunctor> f;
+};
+static_assert(sizeof(NoUniqueAddressCheck) == sizeof(int));
+
+}  // namespace
+
 /// [sample string bimap]
 constexpr utils::TrivialBiMap kToInt = [](auto selector) {
     return selector()
@@ -132,7 +154,7 @@ TEST(TrivialBiMap, StaticConstexprContainsLocalType) {
     struct IntsPair {
         int x;
         int y;
-        bool operator==(IntsPair other) const { return x == other.x && y == other.y; }
+        bool operator==(const IntsPair&) const = default;
     };
     static constexpr utils::TrivialSet kKnownTwos = [](auto selector) {
         return selector()
@@ -145,6 +167,9 @@ TEST(TrivialBiMap, StaticConstexprContainsLocalType) {
 
     EXPECT_TRUE(kKnownTwos.Contains((IntsPair{.x = 2, .y = 0})));
     EXPECT_FALSE(kKnownTwos.Contains((IntsPair{.x = 9, .y = 0})));
+    EXPECT_EQ(kKnownTwos.size(), 5);
+    EXPECT_EQ(kKnownTwos.GetKeyByIndex(1), (IntsPair{.x = 1, .y = 1}));
+    EXPECT_EQ(kKnownTwos.GetKeyByIndex(4), (IntsPair{.x = 1, .y = 1}));
 }
 
 TEST(TrivialBiMap, StringToString) {
@@ -224,6 +249,9 @@ TEST(TrivialBiMap, MakeTrivialSet) {
     EXPECT_EQ(kSet.GetIndex("zero"), 0);
     EXPECT_EQ(kSet.GetIndex(std::string{"three"}), 3);
     EXPECT_EQ(kSet.GetIndex("ten"), std::nullopt);
+
+    EXPECT_EQ(kSet.GetKeyByIndex(0), "zero");
+    EXPECT_EQ(kSet.GetKeyByIndex(3), "three");
 }
 
 TEST(TrivialBiMap, FindICaseBySecond) {

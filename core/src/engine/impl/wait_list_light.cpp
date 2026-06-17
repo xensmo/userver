@@ -30,6 +30,8 @@ USERVER_NAMESPACE_BEGIN
 namespace engine::impl {
 namespace {
 
+constexpr bool kAdopt = false;
+
 Awaiter* const kSignaled = reinterpret_cast<Awaiter*>(1);
 
 void DoNotify(AwaiterWithContext awaiter) {
@@ -99,7 +101,7 @@ void WaitListLight::SetSignalAndNotifyOne() {
     DoNotify(old_awaiter);
 }
 
-void WaitListLight::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
+boost::intrusive_ptr<Awaiter> WaitListLight::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
     const AwaiterWithContext expected{&awaiter, context};
 
     auto old_awaiter = expected;
@@ -117,10 +119,10 @@ void WaitListLight::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
                 old_awaiter
             )
         );
-        return;
+        return {};
     }
 
-    intrusive_ptr_release(&awaiter);
+    return boost::intrusive_ptr<Awaiter>{&awaiter, kAdopt};
 }
 
 bool WaitListLight::GetAndResetSignal() noexcept {

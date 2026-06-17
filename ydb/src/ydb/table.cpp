@@ -73,6 +73,65 @@ NYdb::NQuery::EStatsMode ConvertStatsMode(NYdb::NTable::ECollectQueryStatsMode c
 
 }  // namespace
 
+struct TableClient::Connection final {
+    std::shared_ptr<impl::Driver> driver;
+    NYdb::NScheme::TSchemeClient scheme_client;
+    NYdb::NTable::TTableClient table_client;
+    NYdb::NQuery::TQueryClient query_client;
+
+    Connection(
+        std::shared_ptr<impl::Driver> driver,
+        const NYdb::NTable::TClientSettings& table_settings,
+        const NYdb::NQuery::TClientSettings& query_settings
+    )
+        : driver(std::move(driver)),
+          scheme_client(this->driver->GetNativeDriver(), table_settings),
+          table_client(this->driver->GetNativeDriver(), table_settings),
+          query_client(this->driver->GetNativeDriver(), query_settings)
+    {}
+
+    Connection(const Connection&) = delete;
+    Connection(Connection&&) = delete;
+    Connection& operator=(const Connection&) = delete;
+    Connection& operator=(Connection&&) = delete;
+
+    ~Connection() {
+        // Only NYdb::NTable::TTableClient (legacy Table API) exposes an explicit
+        // async Stop() that drains its session pool and must be awaited before the
+        // driver is destroyed (using the client after Stop() is UB). The newer
+        // NYdb::NQuery::TQueryClient and the scheme client have no Stop() and
+        // release their pools via RAII on destruction, so nothing to await there.
+        try {
+            impl::GetFutureValue(table_client.Stop());
+        } catch (const std::exception& ex) {
+            LOG_ERROR() << "Error while stopping TTableClient: " << ex;
+        }
+    }
+};
+
+namespace {
+
+utils::SharedRef<TableClient::Connection> MakeConnection(
+    const impl::TableSettings& settings,
+    std::shared_ptr<impl::Driver> driver
+) {
+    NYdb::NTable::TSessionPoolSettings table_pool_settings;
+    table_pool_settings.MaxActiveSessions(settings.max_pool_size)
+        .MinPoolSize(settings.min_pool_size)
+        .RetryLimit(settings.get_session_retry_limit);
+    NYdb::NTable::TClientSettings table_settings;
+    table_settings.SessionPoolSettings(table_pool_settings);
+
+    NYdb::NQuery::TSessionPoolSettings query_pool_settings;
+    query_pool_settings.MaxActiveSessions(settings.max_pool_size).MinPoolSize(settings.min_pool_size);
+    NYdb::NQuery::TClientSettings query_settings;
+    query_settings.SessionPoolSettings(query_pool_settings);
+
+    return utils::MakeSharedRef<TableClient::Connection>(std::move(driver), table_settings, query_settings);
+}
+
+}  // namespace
+
 TableClient::TableClient(
     impl::TableSettings settings,
     OperationSettings operation_settings,
@@ -91,40 +150,17 @@ TableClient::TableClient(
               ? utils::span{*settings.by_query_timings_buckets}
               : impl::kDefaultPerQueryBounds
       )),
-      driver_(std::move(driver))
+      own_connection_(MakeConnection(settings, std::move(driver))),
+      routed_connection_(own_connection_),
+      current_connection_(utils::NotNull<Connection*>{own_connection_.GetBase().get()})
 {
-    {
-        NYdb::NTable::TSessionPoolSettings session_pool_settings;
-        session_pool_settings.MaxActiveSessions(settings.max_pool_size)
-            .MinPoolSize(settings.min_pool_size)
-            .RetryLimit(settings.get_session_retry_limit);
-        NYdb::NTable::TClientSettings client_settings;
-        client_settings.SessionPoolSettings(session_pool_settings);
-        table_client_ = std::make_unique<NYdb::NTable::TTableClient>(driver_->GetNativeDriver(), client_settings);
-        scheme_client_ = std::make_unique<NYdb::NScheme::TSchemeClient>(driver_->GetNativeDriver(), client_settings);
-    }
-
-    {
-        NYdb::NQuery::TSessionPoolSettings session_pool_settings;
-        session_pool_settings.MaxActiveSessions(settings.max_pool_size).MinPoolSize(settings.min_pool_size);
-        NYdb::NQuery::TClientSettings client_settings;
-        client_settings.SessionPoolSettings(session_pool_settings);
-        query_client_ = std::make_unique<NYdb::NQuery::TQueryClient>(driver_->GetNativeDriver(), client_settings);
-    }
-
     if (settings.sync_start) {
-        LOG_DEBUG() << "Synchronously starting ydb client with name '" << driver_->GetDbName() << "'";
+        LOG_DEBUG() << "Synchronously starting ydb client with name '" << own_connection_->driver->GetDbName() << "'";
         Select1();
     }
 }
 
-TableClient::~TableClient() {
-    try {
-        impl::GetFutureValue(table_client_->Stop());
-    } catch (const std::exception& ex) {
-        LOG_ERROR() << "Error while stopping TTableClient: " << ex.what();
-    }
-}
+TableClient::~TableClient() = default;
 
 template <typename QuerySettings, typename Func>
 auto TableClient::ExecuteWithPathImpl(
@@ -232,11 +268,24 @@ void TableClient::Select1() {
     }
 }
 
-NYdb::NTable::TTableClient& TableClient::GetNativeTableClient() { return *table_client_; }
+TableClient::Connection& TableClient::CurrentConnection() const noexcept {
+    return *current_connection_.load(std::memory_order_acquire);
+}
 
-NYdb::NQuery::TQueryClient& TableClient::GetNativeQueryClient() { return *query_client_; }
+utils::SharedRef<TableClient::Connection> TableClient::GetOwnConnection() const noexcept { return own_connection_; }
 
-utils::RetryBudget& TableClient::GetRetryBudget() { return driver_->GetRetryBudget(); }
+void TableClient::SwitchConnection(utils::SharedRef<Connection> connection) noexcept {
+    current_connection_.store(utils::NotNull<Connection*>{connection.GetBase().get()}, std::memory_order_release);
+    routed_connection_ = std::move(connection);
+}
+
+NYdb::NTable::TTableClient& TableClient::GetNativeTableClient() { return CurrentConnection().table_client; }
+
+NYdb::NQuery::TQueryClient& TableClient::GetNativeQueryClient() { return CurrentConnection().query_client; }
+
+NYdb::NScheme::TSchemeClient& TableClient::GetNativeSchemeClient() { return CurrentConnection().scheme_client; }
+
+utils::RetryBudget& TableClient::GetRetryBudget() { return CurrentConnection().driver->GetRetryBudget(); }
 
 void TableClient::MakeDirectory(const std::string& path, MakeDirectorySettings query_settings) {
     ExecuteWithPathImpl(
@@ -245,7 +294,7 @@ void TableClient::MakeDirectory(const std::string& path, MakeDirectorySettings q
         /*settings=*/{},
         std::move(query_settings),
         [this](NYdb::NTable::TTableClient&, const std::string& full_path, const MakeDirectorySettings& query_settings) {
-            return scheme_client_->MakeDirectory(impl::ToString(full_path), query_settings);
+            return GetNativeSchemeClient().MakeDirectory(impl::ToString(full_path), query_settings);
         }
     );
 }
@@ -260,7 +309,7 @@ void TableClient::RemoveDirectory(const std::string& path, RemoveDirectorySettin
             NYdb::NTable::TTableClient&,
             const std::string& full_path,
             const RemoveDirectorySettings& query_settings
-        ) { return scheme_client_->RemoveDirectory(impl::ToString(full_path), query_settings); }
+        ) { return GetNativeSchemeClient().RemoveDirectory(impl::ToString(full_path), query_settings); }
     );
 }
 
@@ -274,7 +323,7 @@ NYdb::NScheme::TDescribePathResult TableClient::DescribePath(
         /*settings=*/{},
         std::move(query_settings),
         [this](NYdb::NTable::TTableClient&, const std::string& full_path, const DescribePathSettings& query_settings) {
-            return scheme_client_->DescribePath(impl::ToString(full_path), query_settings);
+            return GetNativeSchemeClient().DescribePath(impl::ToString(full_path), query_settings);
         }
     );
 }
@@ -304,7 +353,7 @@ NYdb::NScheme::TListDirectoryResult TableClient::ListDirectory(
         /*settings=*/{},
         std::move(query_settings),
         [this](NYdb::NTable::TTableClient&, const std::string& full_path, const ListDirectorySettings& query_settings) {
-            return scheme_client_->ListDirectory(impl::ToString(full_path), query_settings);
+            return GetNativeSchemeClient().ListDirectory(impl::ToString(full_path), query_settings);
         }
     );
 }
@@ -346,7 +395,7 @@ Transaction TableClient::Begin(utils::StringLiteral transaction_name, Transactio
 }
 
 Transaction TableClient::Begin(utils::StringLiteral transaction_name, OperationSettings settings) {
-    return Begin(DynamicTransactionName{transaction_name.data()}, std::move(settings));
+    return Begin(DynamicTransactionName{transaction_name.c_str()}, std::move(settings));
 }
 
 Transaction TableClient::Begin(DynamicTransactionName transaction_name, OperationSettings settings) {
@@ -486,7 +535,7 @@ ExecuteResponse TableClient::ExecuteQuery(
 }
 
 void TableClient::RetryTx(utils::StringLiteral transaction_name, RetryTxSettings retry_settings, RetryTxFunction fn) {
-    RetryTx(DynamicTransactionName{transaction_name.data()}, std::move(retry_settings), std::move(fn));
+    RetryTx(DynamicTransactionName{transaction_name.c_str()}, std::move(retry_settings), std::move(fn));
 }
 
 void TableClient::RetryTx(DynamicTransactionName transaction_name, RetryTxSettings retry_settings, RetryTxFunction fn) {
@@ -588,21 +637,25 @@ void TableClient::RetryTx(DynamicTransactionName transaction_name, RetryTxSettin
     );
 }
 
-std::string TableClient::JoinDbPath(std::string_view path) const { return impl::JoinPath(driver_->GetDbPath(), path); }
+std::string TableClient::JoinDbPath(std::string_view path) const {
+    return impl::JoinPath(CurrentConnection().driver->GetDbPath(), path);
+}
 
 void DumpMetric(utils::statistics::Writer& writer, const TableClient& table_client) {
     writer = *table_client.stats_;
 
+    // Snapshot the connection once so a concurrent SwitchConnection() can't mix
+    // numbers from two different connections.
+    auto& connection = table_client.CurrentConnection();
     writer["pool"]["current-size"] =
-        std::max(table_client.table_client_->GetCurrentPoolSize(), table_client.query_client_->GetCurrentPoolSize());
-    writer["pool"]["active-sessions"] = std::max(
-        table_client.table_client_->GetActiveSessionCount(),
-        table_client.query_client_->GetActiveSessionCount()
-    );
-    writer["pool"]["max-size"] = std::max(
-        table_client.table_client_->GetActiveSessionsLimit(),
-        table_client.query_client_->GetActiveSessionsLimit()
-    );
+        std::max(connection.table_client.GetCurrentPoolSize(), connection.query_client.GetCurrentPoolSize());
+    writer["pool"]["active-sessions"] =
+        std::max(connection.table_client.GetActiveSessionCount(), connection.query_client.GetActiveSessionCount());
+    writer["pool"]["max-size"] =
+        std::max(connection.table_client.GetActiveSessionsLimit(), connection.query_client.GetActiveSessionsLimit());
+    // The retry budget lives on the connection's driver, so it follows routing
+    // and is reported under this client's logical ydb_database label.
+    writer["retry_budget"] = connection.driver->GetRetryBudget();
 }
 
 PreparedArgsBuilder TableClient::GetBuilder() const { return PreparedArgsBuilder{}; }

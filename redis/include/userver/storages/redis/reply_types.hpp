@@ -20,6 +20,12 @@ namespace storages::redis {
 
 enum class HsetReply { kCreated, kUpdated };
 
+/// @brief Result of HSETEX.
+enum class HsetexReply : std::int8_t {
+    kConditionNotMet = 0,  ///< FNX/FXX condition failed; no fields written
+    kFieldsSet = 1,        ///< Fields written
+};
+
 struct Point {
     double lon;
     double lat;
@@ -73,6 +79,21 @@ struct MemberScore final {
 };
 
 enum class PersistReply { kKeyOrTimeoutNotFound, kTimeoutRemoved };
+
+/// @brief Per-field result of HEXPIRE / HPEXPIRE / HEXPIREAT / HPEXPIREAT.
+enum class HexpireReply : std::int8_t {
+    kFieldDoesNotExist = -2,
+    kConditionNotMet = 0,    ///< NX/XX/GT/LT predicate failed
+    kExpirationUpdated = 1,  ///< TTL applied
+    kFieldDeleted = 2,       ///< ttl <= 0 / already in the past — field removed
+};
+
+/// @brief Per-field result of HPERSIST.
+enum class HpersistReply : std::int8_t {
+    kFieldDoesNotExist = -2,
+    kFieldHasNoExpiration = -1,
+    kExpirationRemoved = 1,
+};
 
 template <ScanTag>
 struct ScanReplyElem;

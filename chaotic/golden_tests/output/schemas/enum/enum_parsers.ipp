@@ -41,9 +41,9 @@ Enum Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Enum>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  Enum res;
-
-  res.foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::Enum::Foo>>>();
+  Enum res{
+      .foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<::ns::Enum::Foo>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__Enum_PropertiesNames);
 

@@ -10,10 +10,14 @@
 #include <unordered_set>
 #include <vector>
 
-#include <userver/engine/impl/context_accessor.hpp>
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/formats/json/value.hpp>
 #include <userver/storages/redis/exception.hpp>
 #include <userver/storages/redis/fwd.hpp>
+#include <userver/storages/redis/hexpiretime_reply.hpp>
+#include <userver/storages/redis/hpexpiretime_reply.hpp>
+#include <userver/storages/redis/pttl_reply.hpp>
 #include <userver/storages/redis/reply_types.hpp>
 #include <userver/storages/redis/request_data_base.hpp>
 #include <userver/storages/redis/scan_tag.hpp>
@@ -52,10 +56,10 @@ public:
     /// @throws server or request related exceptions
     ReplyType Get(const std::string& request_description = {}) { return impl_->Get(request_description); }
 
-    /// @cond
-    /// Internal helper for WaitAny/WaitAll
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept { return impl_->TryGetContextAccessor(); }
-    /// @endcond
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return impl_->GetAwaitableToken();
+    }
 
     template <typename T1, typename T2>
     friend class RequestEval;
@@ -265,6 +269,16 @@ using RequestZremrangebyrank = Request<size_t>;
 using RequestZremrangebyscore = Request<size_t>;
 using RequestZscan = ScanRequest<ScanTag::kZscan>;
 using RequestZscore = Request<std::optional<double>>;
+
+// Hash field expiration commands
+using RequestHexpire = Request<std::vector<HexpireReply>>;
+using RequestHexpiretime = Request<std::vector<HexpiretimeReply>>;
+using RequestHpexpiretime = Request<std::vector<HpexpiretimeReply>>;
+using RequestHttl = Request<std::vector<TtlReply>>;
+using RequestHpttl = Request<std::vector<PttlReply>>;
+using RequestHpersist = Request<std::vector<HpersistReply>>;
+using RequestHgetex = Request<std::vector<std::optional<std::string>>>;
+using RequestHsetex = Request<HsetexReply>;
 
 // JSON module commands
 using RequestJsonSet = Request<StatusOk, void>;

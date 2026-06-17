@@ -16,8 +16,12 @@ TEST(SentinelQuery, SingleBadReply) {
         called++;
         size = info.size();
     };
-    auto context = std::make_shared<
-        storages::redis::impl::GetHostsContext>(true, storages::redis::Password("pass"), cb, 1);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        true,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        1
+    );
 
     auto reply = std::make_shared<storages::redis::Reply>("cmd", storages::redis::ReplyData("str"));
     context->GenerateCallback()(nullptr, reply);
@@ -65,8 +69,12 @@ TEST(SentinelQuery, SingleOkReply) {
         called++;
         size = info.size();
     };
-    auto context = std::make_shared<
-        storages::redis::impl::GetHostsContext>(true, storages::redis::Password("pass"), cb, 1);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        true,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        1
+    );
 
     auto reply = GenerateReply(kHost1, false, false, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -85,8 +93,12 @@ TEST(SentinelQuery, SingleSDownReply) {
         called++;
         size = info.size();
     };
-    auto context = std::make_shared<
-        storages::redis::impl::GetHostsContext>(true, storages::redis::Password("pass"), cb, 1);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        true,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        1
+    );
 
     auto reply = GenerateReply(kHost2, false, true, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -105,8 +117,12 @@ TEST(SentinelQuery, MultipleOkOkOk) {
         called++;
         size = info.size();
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost1, false, false, false, false);
 
@@ -131,8 +147,12 @@ TEST(SentinelQuery, MultipleOkOkMastererr) {
         called++;
         size = info.size();
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost1, false, false, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -157,8 +177,12 @@ TEST(SentinelQuery, MultipleOkMastererrMastererr) {
         called++;
         size = info.size();
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost1, false, false, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -183,8 +207,12 @@ TEST(SentinelQuery, MultipleOkOkSDown) {
         called++;
         size = info.size();
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost1, false, false, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -209,8 +237,12 @@ TEST(SentinelQuery, MultipleOkSDownSDown) {
         called++;
         size = info.size();
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost1, false, false, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -235,8 +267,12 @@ TEST(SentinelQuery, MultipleOkOkODown) {
         called++;
         size = info.size();
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost1, false, false, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -262,8 +298,12 @@ TEST(SentinelQuery, DifferentAnswers1) {
         const auto& shard_info = info[0];
         EXPECT_EQ(shard_info.HostPort().first, kHost1);
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost1, true, false, false, false);
     context->GenerateCallback()(nullptr, reply);
@@ -284,8 +324,12 @@ TEST(SentinelQuery, DifferentAnswers2) {
         const auto& shard_info = info[0];
         EXPECT_EQ(shard_info.HostPort().first, kHost1);
     };
-    auto
-        context = std::make_shared<storages::redis::impl::GetHostsContext>(1, storages::redis::Password("pass"), cb, 3);
+    auto context = std::make_shared<storages::redis::impl::GetHostsContext>(
+        1,
+        storages::redis::Credentials{"", storages::redis::Password("pass")},
+        cb,
+        3
+    );
 
     auto reply = GenerateReply(kHost2, true, false, false, false);
     context->GenerateCallback()(nullptr, reply);

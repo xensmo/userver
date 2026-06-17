@@ -7,6 +7,7 @@
 #include <exception>
 #include <map>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 
 USERVER_NAMESPACE_BEGIN
@@ -161,6 +162,13 @@ public:
 class SeekInvalidArgumentException final : public std::invalid_argument {
 public:
     using std::invalid_argument::invalid_argument;
+};
+
+/// @brief Fatal librdkafka consumer error; polling stops and consumer is recreated.
+/// @ref ConsumerImpl::ThrowIfRestartRequired
+class ConsumerRestartRequiredException final : public std::runtime_error {
+public:
+    explicit ConsumerRestartRequiredException(const std::string& message);
 };
 
 }  // namespace kafka

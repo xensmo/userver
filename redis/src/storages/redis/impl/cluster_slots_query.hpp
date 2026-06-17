@@ -20,17 +20,17 @@ namespace storages::redis::impl {
 static constexpr size_t kClusterHashSlots = 16384;
 
 struct GetClusterSlotsRequest {
-    GetClusterSlotsRequest(Shard& sentinel_shard, Password password, std::string shard_group_name)
+    GetClusterSlotsRequest(Shard& sentinel_shard, Credentials credentials, std::string shard_group_name)
         : sentinel_shard(sentinel_shard),
           command({"CLUSTER", "SLOTS"}),
-          password(std::move(password)),
+          credentials(std::move(credentials)),
           shard_group_name(std::move(shard_group_name))
     {}
 
     Shard& sentinel_shard;
     CmdArgs command;
 
-    Password password;
+    Credentials credentials;
     std::string shard_group_name;
 };
 
@@ -81,7 +81,7 @@ using ClusterSlotsResponse = std::map<SlotInterval, MasterSlavesConnInfos>;
 class GetClusterSlotsContext {
 public:
     GetClusterSlotsContext(
-        Password password,
+        Credentials credentials,
         std::shared_ptr<const std::vector<std::string>> shard_names,
         std::string shard_group_name,
         ProcessGetClusterHostsRequestCb&& callback,
@@ -101,7 +101,7 @@ private:
     void ProcessResponsesOnce();
 
     const std::string shard_group_name_;
-    const Password password_;
+    const Credentials credentials_;
     const std::shared_ptr<const std::vector<std::string>> shard_names_;
     const ProcessGetClusterHostsRequestCb callback_;
     std::atomic<size_t> response_got_{0};
@@ -119,7 +119,7 @@ void ProceResponseOnceImpl(
     const ProcessGetClusterHostsRequestCb& callback,
     const std::string& shard_group_name,
     const std::vector<std::string>& shard_names,
-    const Password& password,
+    const Credentials& credentials,
     size_t expected_responses_cnt,
     size_t responses_parsed,
     bool is_non_cluster

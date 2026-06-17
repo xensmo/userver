@@ -177,7 +177,7 @@ void GetClusterSlotsContext::ProcessRequest(
 ) {
     auto ids = request.sentinel_shard.GetAllInstancesServerId();
     auto context = std::make_shared<GetClusterSlotsContext>(
-        request.password,
+        request.credentials,
         std::move(shard_names),
         request.shard_group_name,
         std::move(callback),
@@ -196,14 +196,14 @@ void GetClusterSlotsContext::ProcessRequest(
 }
 
 GetClusterSlotsContext::GetClusterSlotsContext(
-    Password password,
+    Credentials credentials,
     std::shared_ptr<const std::vector<std::string>> shard_names,
     std::string shard_group_name,
     ProcessGetClusterHostsRequestCb&& callback,
     size_t expected_responses_cnt
 )
     : shard_group_name_(std::move(shard_group_name)),
-      password_(std::move(password)),
+      credentials_(std::move(credentials)),
       shard_names_(std::move(shard_names)),
       callback_(std::move(callback)),
       expected_responses_cnt_(expected_responses_cnt)
@@ -251,7 +251,7 @@ void ProceResponseOnceImpl(
     const ProcessGetClusterHostsRequestCb& callback,
     const std::string& shard_group_name,
     const std::vector<std::string>& shard_names,
-    const Password& password,
+    const Credentials& credentials,
     size_t expected_responses_cnt,
     size_t responses_parsed,
     bool is_non_cluster
@@ -353,10 +353,10 @@ void ProceResponseOnceImpl(
         } else {
             std::ranges::sort(res);
             for (auto& shard_host_info : res) {
-                shard_host_info.master.SetPassword(password);
+                shard_host_info.master.SetCredentials(credentials);
                 shard_host_info.master.SetName(shard_names[shard_index]);
                 for (auto& slave : shard_host_info.slaves) {
-                    slave.SetPassword(password);
+                    slave.SetCredentials(credentials);
                     slave.SetName(shard_names[shard_index]);
                 }
                 ++shard_index;
@@ -373,7 +373,7 @@ void GetClusterSlotsContext::ProcessResponsesOnce() {
         callback_,
         shard_group_name_,
         *shard_names_,
-        password_,
+        credentials_,
         expected_responses_cnt_.load(),
         responses_parsed_.load(),
         is_non_cluster_.load()

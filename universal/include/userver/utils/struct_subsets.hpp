@@ -34,6 +34,20 @@ constexpr auto IsDefinedAndAggregate(Args...) -> bool {
     return false;
 }
 
+template <typename TOwner, typename TMember>
+USERVER_IMPL_NODEBUG_INLINE_FUNC decltype(auto) ForwardLikeExplicit(TMember& member) noexcept {
+    if constexpr (std::is_lvalue_reference_v<TOwner> || std::is_lvalue_reference_v<TMember>) {
+        return member;
+    } else {
+        return std::move(member);
+    }
+}
+
+template <typename TOwner, typename TMember>
+USERVER_IMPL_NODEBUG_INLINE_FUNC decltype(auto) ForwardLikeExplicit(const TMember& member) noexcept {
+    return member;
+}
+
 }  // namespace utils::impl
 
 USERVER_NAMESPACE_END
@@ -42,7 +56,7 @@ USERVER_NAMESPACE_END
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define USERVER_IMPL_STRUCT_MAP(r, data, elem) \
-    USERVER_NAMESPACE::utils::ForwardLike<OtherDeps, decltype(other.elem)>(other.elem),
+    USERVER_NAMESPACE::utils::impl::ForwardLikeExplicit<OtherDeps, decltype(other.elem)>(other.elem),
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define USERVER_IMPL_MAKE_FROM_SUPERSET(Self, ...)                                                     \

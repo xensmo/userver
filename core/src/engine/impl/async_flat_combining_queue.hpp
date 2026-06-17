@@ -34,7 +34,7 @@ public:
 
 private:
     template <auto TryStartWaiting>
-    class WaitStrategy;
+    class Awaitable;
 
     NodeBase* DoTryPop() noexcept;
 

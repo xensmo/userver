@@ -77,7 +77,7 @@ json
       "stacktrace" : " 0# engine::TracePlugin::HookBeforeSleep(engine::impl::TaskContext const&) at /home/segoon/arcadia3/taxi/uservices/userver/core/src/engine/tracer_plugin.cpp:33
 	 1# engine::PluginManager::HookBeforeSleep(engine::impl::TaskContext const&) at /home/segoon/arcadia3/taxi/uservices/userver/core/src/engine/plugin_manager.hpp:74
 	 2# engine::TaskProcessor::HookBeforeSleep(engine::impl::TaskContext const&) at /home/segoon/arcadia3/taxi/uservices/userver/core/src/engine/task/task_processor.cpp:327
-	 3# engine::impl::TaskContext::Sleep(engine::impl::WaitStrategy&, engine::Deadline) at /home/segoon/arcadia3/taxi/uservices/userver/core/src/engine/task/task_context.cpp:333
+	 3# engine::impl::TaskContext::Sleep(engine::impl::WeakAwaitable&, engine::Deadline) at /home/segoon/arcadia3/taxi/uservices/userver/core/src/engine/task/task_context.cpp:333
 	 4# engine::SingleConsumerEvent::WaitForEventUntil(engine::Deadline) at /home/segoon/arcadia3/taxi/uservices/userver/core/src/engine/single_consumer_event.cpp:54
 	 5# bool engine::SingleConsumerEvent::WaitForEventUntil<std::__y1::chrono::steady_clock, std::__y1::chrono::duration<long long, std::__y1::ratio<1l, 1000000000l>>>(std::__y1::chrono::time_point<std::__y1::chrono::steady_clock, std::__y1::chrono::duration<long long, std::__y1::ratio<1l, 1000000000l>>>) at /-S/taxi/uservices/userver/core/include/userver/engine/single_consumer_event.hpp:119
 	 6# utils::PeriodicTask::Impl::Run() at /-S/taxi/uservices/userver/core/src/utils/periodic_task.cpp:202

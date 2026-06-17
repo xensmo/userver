@@ -63,7 +63,7 @@ public:
         const std::vector<std::string>& shards,
         const std::vector<ConnectionInfo>& conns,
         std::string shard_group_name,
-        const Password& password,
+        const Credentials& credentials,
         ConnectionSecurity connection_security,
         SentinelStaticConfig creation_config,
         dynamic_config::Source dynamic_config_source,
@@ -102,7 +102,7 @@ public:
     static size_t GetClusterSlotsCalledCounter();
 
     void SetConnectionInfo(const std::vector<ConnectionInfoInt>& info_array);
-    void UpdatePassword(const Password& password);
+    void UpdateCredentials(const Credentials& credentials);
 
 private:
     void Init();  // used from constructor

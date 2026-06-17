@@ -1,55 +1,35 @@
 #include <userver/formats/json/inline.hpp>
 #include <userver/utest/assert_macros.hpp>
 
-#include <boost/uuid/string_generator.hpp>
-
-#include <userver/chaotic/array.hpp>
 #include <userver/chaotic/exception.hpp>
-#include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
-#include <userver/formats/json/value.hpp>
+#include <userver/formats/json/serialize.hpp>
 #include <userver/formats/json/value_builder.hpp>
 #include <userver/formats/parse/to.hpp>
 #include <userver/formats/serialize/variant.hpp>
 #include <userver/formats/yaml/serialize.hpp>
 #include <userver/formats/yaml/value.hpp>
-#include <userver/formats/yaml/value_builder.hpp>
 
-#include <schemas/all_of.hpp>
-#include <schemas/all_of_sax_parsers.hpp>
-#include <schemas/date.hpp>
-#include <schemas/extra_container.hpp>
-#include <schemas/indirect.hpp>
-#include <schemas/indirect_sax_parsers.hpp>
-#include <schemas/object_empty.hpp>
-#include <schemas/object_name.hpp>
-#include <schemas/object_object.hpp>
 #include <schemas/object_single_field.hpp>
 #include <schemas/object_single_field_sax_parsers.hpp>
-#include <schemas/one_of.hpp>
-#include <schemas/one_of_sax_parsers.hpp>
-#include <schemas/oneofdiscriminator.hpp>
-#include <schemas/oneofdiscriminator_sax_parsers.hpp>
-#include <schemas/string64.hpp>
-#include <schemas/uri.hpp>
-#include <schemas/uuid.hpp>
+
+#include "helper.hpp"
 
 USERVER_NAMESPACE_BEGIN
-
-// Make sure that chaotic and SAX parser exceptions have common base
-static_assert(std::is_base_of_v<formats::json::Exception, chaotic::Error<formats::json::Value>>);
-static_assert(std::is_base_of_v<formats::json::Exception, formats::json::parser::ParseError>);
-
-TEST(Simple, Empty) {
-    auto json = formats::json::MakeObject();
-    auto obj = json.As<ns::ObjectEmpty>();
-    EXPECT_EQ(obj, ns::ObjectEmpty());
-}
 
 TEST(Simple, Integer) {
     auto json = formats::json::MakeObject("int3", 1, "integer", 3);
     auto obj = json.As<ns::SimpleObject>();
     EXPECT_EQ(obj.integer, 3);
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
+    EXPECT_EQ(TestWriteToStream(obj), TestDomSerializer(obj));
+}
+
+TEST(Simple, IntegerSax) {
+    auto json = formats::json::MakeObject("int3", 1, "integer", 3);
+    auto obj = CallSaxParser<ns::SimpleObject>(ToString(json));
+    EXPECT_EQ(obj.integer, 3);
+    EXPECT_EQ(TestWriteToStream(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, DefaultFieldValue) {
@@ -79,6 +59,7 @@ TEST(Simple, ObjectDefault) {
     auto json = formats::json::MakeObject("int3", 1);
     auto obj = json.As<ns::SimpleObject>();
     EXPECT_EQ(obj.int_, 1);
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, ObjectRequired) {
@@ -127,12 +108,9 @@ TEST(Simple, ObjectTypes) {
         obj,
         (ns::ObjectTypes{true, 1, 1.1, "foo", ns::ObjectTypes::Object{}, {1}, {}, ns::ObjectTypes::String_Enum::kX1})
     );
-}
+    EXPECT_EQ(TestToJsonString(obj), json);
 
-template <typename T>
-T ParseToType(std::string_view input) {
-    using Parser = chaotic::sax::Parser<T>;
-    return formats::json::parser::ParseToType<T, Parser>(input);
+    EXPECT_EQ(TestDomSerializer(obj), json);
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesInt) {
@@ -141,9 +119,10 @@ TEST(Simple, ObjectWithAdditionalPropertiesInt) {
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
+    EXPECT_EQ(TestToJsonString(obj), json);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
+    EXPECT_EQ(TestDomSerializer(obj), json);
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, ParseObjectWithAdditionalPropertiesIntFromYaml) {
@@ -158,15 +137,24 @@ three: 3
     EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
 }
 
+TEST(Simple, ObjectWithAdditionalPropertiesIntMinimum) {
+    auto json = formats::json::MakeObject("one", 1, "two", 1);
+    UEXPECT_THROW_MSG(
+        json.As<ns::ObjectWithAdditionalPropertiesInt>(),
+        chaotic::Error<formats::json::Value>,
+        "Error at path 'two': Invalid value, minimum=2, given=1"
+    );
+}
+
 TEST(Simple, ObjectWithAdditionalPropertiesIntSax) {
     auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3);
-    auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesInt>(ToString(json));
+    auto obj = CallSaxParser<ns::ObjectWithAdditionalPropertiesInt>(ToString(json));
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, (std::unordered_map<std::string, int>{{"two", 2}, {"three", 3}}));
+    EXPECT_EQ(TestToJsonString(obj), json);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
+    EXPECT_EQ(TestDomSerializer(obj), json);
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesTrue) {
@@ -175,9 +163,9 @@ TEST(Simple, ObjectWithAdditionalPropertiesTrue) {
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
+    EXPECT_EQ(TestToJsonString(obj), json);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
+    EXPECT_EQ(TestDomSerializer(obj), json);
 }
 
 TEST(Simple, ParseObjectWithAdditionalPropertiesTrueFromYaml) {
@@ -191,14 +179,18 @@ object: {}
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesTrueSax) {
     auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3, "object", formats::json::MakeObject());
-    auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesTrue>(ToString(json));
+    auto obj = CallSaxParser<ns::ObjectWithAdditionalPropertiesTrue>(ToString(json));
 
     EXPECT_EQ(obj.one, 1);
     EXPECT_EQ(obj.extra, formats::json::MakeObject("two", 2, "three", 3, "object", formats::json::MakeObject()));
+    EXPECT_EQ(TestToJsonString(obj), json);
+
+    EXPECT_EQ(TestDomSerializer(obj), json);
 }
 
 TEST(Simple, ObjectExtraMemberFalse) {
@@ -207,15 +199,16 @@ TEST(Simple, ObjectExtraMemberFalse) {
 
     EXPECT_EQ(obj.one, 1);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, formats::json::MakeObject("one", 1)) << ToString(json_back);
+    EXPECT_EQ(TestDomSerializer(obj), formats::json::MakeObject("one", 1));
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, ObjectExtraMemberFalseSax) {
     auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3, "object", formats::json::MakeObject());
-    auto obj = ParseToType<ns::ObjectWithAdditionalPropertiesTrueExtraMemberFalse>(ToString(json));
+    auto obj = CallSaxParser<ns::ObjectWithAdditionalPropertiesTrueExtraMemberFalse>(ToString(json));
 
     EXPECT_EQ(obj.one, 1);
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesFalseStrict) {
@@ -230,7 +223,7 @@ TEST(Simple, ObjectWithAdditionalPropertiesFalseStrict) {
 TEST(Simple, ObjectWithAdditionalPropertiesFalseStrictSax) {
     auto json = formats::json::MakeObject("foo", 1, "bar", 2);
     UEXPECT_THROW_MSG(
-        ParseToType<ns::ObjectWithAdditionalPropertiesFalseStrict>(ToString(json)),
+        CallSaxParser<ns::ObjectWithAdditionalPropertiesFalseStrict>(ToString(json)),
         formats::json::parser::ParseError,
         "Parse error at pos 14, path 'bar': unknown field 'bar' for type "
         "'ns::ObjectWithAdditionalPropertiesFalseStrict', the latest token was ,\"bar\""
@@ -240,10 +233,11 @@ TEST(Simple, ObjectWithAdditionalPropertiesFalseStrictSax) {
 TEST(Simple, IntegerEnum) {
     auto json = formats::json::MakeObject("one", 1);
     auto obj = json["one"].As<ns::IntegerEnum>();
-    EXPECT_EQ(obj, ns::IntegerEnum::k1);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json["one"]) << ToString(json_back);
+    EXPECT_EQ(obj, ns::IntegerEnum::k1);
+    EXPECT_EQ(TestWriteToStream(obj), json["one"]);
+
+    EXPECT_EQ(TestDomSerializer(obj), json["one"]);
 
     auto json2 = formats::json::MakeObject("one", 5);
     UEXPECT_THROW_MSG(
@@ -268,15 +262,15 @@ TEST(Simple, IntegerEnum) {
 }
 
 TEST(Simple, IntegerEnumSax) {
-    auto obj = ParseToType<ns::IntegerEnum>("1");
+    auto obj = CallSaxParser<ns::IntegerEnum>("1");
     EXPECT_EQ(obj, ns::IntegerEnum::k1);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back.As<int>(), 1) << ToString(json_back);
+    EXPECT_EQ(TestDomSerializer(obj).As<int>(), 1);
+    EXPECT_EQ(TestWriteToStream(obj), TestDomSerializer(obj));
 
     auto json2 = formats::json::MakeObject("one", 5);
     UEXPECT_THROW_MSG(
-        ParseToType<ns::IntegerEnum>("5"),
+        CallSaxParser<ns::IntegerEnum>("5"),
         formats::json::parser::ParseError,
         "Parse error at pos 1, path '': Invalid enum value (5) for type ::ns::IntegerEnum, the latest token was 5"
     );
@@ -286,9 +280,9 @@ TEST(Simple, StringEnum) {
     auto json = formats::json::MakeObject("one", "foo");
     auto obj = json["one"].As<ns::StringEnum>();
     EXPECT_EQ(obj, ns::StringEnum::kFoo);
+    EXPECT_EQ(TestWriteToStream(obj), json["one"]);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json["one"]) << ToString(json_back);
+    EXPECT_EQ(TestDomSerializer(obj), json["one"]);
 
     auto json2 = formats::json::MakeObject("one", "zoo");
     UEXPECT_THROW_MSG(
@@ -335,14 +329,14 @@ TEST(Simple, StringEnum) {
 }
 
 TEST(Simple, StringEnumSax) {
-    auto obj = ParseToType<ns::StringEnum>("\"foo\"");
+    auto obj = CallSaxParser<ns::StringEnum>("\"foo\"");
     EXPECT_EQ(obj, ns::StringEnum::kFoo);
 
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back.As<std::string>(), "foo") << ToString(json_back);
+    EXPECT_EQ(TestDomSerializer(obj).As<std::string>(), "foo");
+    EXPECT_EQ(TestWriteToStream(obj), TestDomSerializer(obj));
 
     UEXPECT_THROW_MSG(
-        ParseToType<ns::StringEnum>("\"zoo\""),
+        CallSaxParser<ns::StringEnum>("\"zoo\""),
         formats::json::parser::ParseError,
         "Parse error at pos 5, path '': Invalid enum value (zoo) for type ::ns::StringEnum, the "
         "latest token was \"zoo\""
@@ -365,216 +359,10 @@ TEST(Simple, StringEnumPgInteraction) {
     EXPECT_EQ(result, ns::StringEnum::kFoo);
 }
 
-TEST(Simple, AllOf) {
-    auto json = formats::json::MakeObject("foo", 1, "bar", 2);
-    auto obj = json.As<ns::AllOf>();
-
-    EXPECT_EQ(obj.foo, 1);
-    EXPECT_EQ(obj.bar, 2);
-
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
-}
-
-TEST(Simple, AllOfSax) {
-    auto json = formats::json::MakeObject("foo", 1, "bar", 2);
-    auto obj = ParseToType<ns::AllOf>(ToString(json));
-
-    EXPECT_EQ(obj.foo, 1);
-    EXPECT_EQ(obj.bar, 2);
-
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
-}
-
-TEST(Simple, OneOf) {
-    auto json = formats::json::MakeObject();
-    auto obj = json.As<ns::OneOf>();
-
-    EXPECT_EQ(std::get<ns::OneOf__O2>(obj), ns::OneOf__O2());
-
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
-}
-
-TEST(Simple, OneOfSax) {
-    auto json = formats::json::MakeObject();
-    auto obj = ParseToType<ns::OneOf>(ToString(json));
-
-    EXPECT_EQ(std::get<ns::OneOf__O2>(obj), ns::OneOf__O2());
-
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
-}
-
-TEST(Simple, OneOfWithDiscriminator) {
-    auto json = formats::json::MakeObject("oneof", formats::json::MakeObject("type", "ObjectFoo", "foo", 42));
-    auto obj = json.As<ns::ObjectOneOfWithDiscriminator>();
-    EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
-    EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
-
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
-}
-
-TEST(Simple, OneOfWithDiscriminatorSax) {
-    auto json = formats::json::MakeObject("oneof", formats::json::MakeObject("type", "ObjectFoo", "foo", 42));
-    auto obj = ParseToType<ns::ObjectOneOfWithDiscriminator>(ToString(json));
-    EXPECT_EQ(std::get<0>(obj.oneof.value()).type, "ObjectFoo");
-    EXPECT_EQ(std::get<0>(obj.oneof.value()).foo, 42);
-
-    auto json_back = formats::json::ValueBuilder{obj}.ExtractValue();
-    EXPECT_EQ(json_back, json) << ToString(json_back);
-}
-
-TEST(Simple, OneOfWithDiscriminatorMapping) {
-    EXPECT_EQ(ns::IntegerOneOfDiscriminator::kFoo_Settings.mapping.Describe(), "'42', '52'");
-    EXPECT_EQ(ns::OneOfDiscriminator::kFoo_Settings.mapping.Describe(), "'aaa', 'bbb'");
-}
-
-TEST(Simple, Indirect) {
-    auto json = formats::json::MakeObject(
-        "data",
-        "smth",
-        "left",
-        formats::json::MakeObject("data", "left"),
-        "right",
-        formats::json::MakeObject("data", "right", "left", formats::json::MakeObject("data", "rightleft"))
-    );
-
-    auto obj = json.As<ns::TreeNode>();
-    EXPECT_EQ(obj.data, "smth");
-    EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
-    EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));
-}
-
-TEST(Simple, IndirectSax) {
-    auto json = formats::json::MakeObject(
-        "data",
-        "smth",
-        "left",
-        formats::json::MakeObject("data", "left"),
-        "right",
-        formats::json::MakeObject("data", "right", "left", formats::json::MakeObject("data", "rightleft"))
-    );
-
-    auto obj = ParseToType<ns::TreeNode>(ToString(json));
-    EXPECT_EQ(obj.data, "smth");
-    EXPECT_EQ(obj.left, (ns::TreeNode{"left", std::nullopt, std::nullopt}));
-    EXPECT_EQ(obj.right, (ns::TreeNode{"right", ns::TreeNode{"rightleft", std::nullopt, std::nullopt}, std::nullopt}));
-}
-
 TEST(Simple, HyphenField) {
     const ns::ObjectWithHyphenField obj;
     EXPECT_EQ(obj.foo_field, std::nullopt);
-}
-
-TEST(Simple, SubSubObjectSmoke) { [[maybe_unused]] const ns::Objectx::Objectx_::Objectx__ x; }
-
-TEST(Simple, ExtraType) {
-    static_assert(std::is_same_v<
-                  decltype(std::declval<ns::ObjectWithExtraType>().extra),
-                  std::map<std::string, std::string>>);
-}
-
-TEST(Simple, CppName) {
-    const ns::ObjectName obj;
-    EXPECT_EQ(obj.bar, std::nullopt);
-}
-
-TEST(Simple, Date) {
-    auto json = formats::json::MakeObject("created_at", "2020-10-01");
-    auto obj = json.As<ns::ObjectDate>();
-
-    EXPECT_EQ(obj.created_at, utils::datetime::Date(2020, 10, 01));
-}
-
-TEST(Simple, DateTime) {
-    auto date = "2020-10-01T12:34:56+12:34";
-    auto json = formats::json::MakeObject("updated_at", date);
-    auto obj = json.As<ns::ObjectDate>();
-
-    const utils::datetime::TimePointTz
-        tp{utils::datetime::UtcStringtime("2020-10-01T00:00:56Z"), std::chrono::seconds(12 * 60 * 60 + 34 * 60)};
-    EXPECT_EQ(obj.updated_at, tp);
-
-    auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["updated_at"].As<std::string>();
-    EXPECT_EQ(str, date);
-}
-
-TEST(Simple, DateTimeExtra) {
-    auto date = "2020-10-01T12:34:56+12:34";
-    auto json = formats::json::MakeObject("updated_at_extra", date);
-    auto obj = json.As<ns::ObjectDate>();
-
-    const utils::datetime::TimePointTz
-        tp{utils::datetime::UtcStringtime("2020-10-01T00:00:56Z"), std::chrono::seconds(12 * 60 * 60 + 34 * 60)};
-    EXPECT_EQ(obj.updated_at_extra->time_point, tp);
-
-    auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["updated_at_extra"].As<std::string>();
-    EXPECT_EQ(str, date);
-}
-
-TEST(Simple, DateTimeIsoBasic) {
-    auto date = "2020-10-01T12:34:56+1234";
-    auto json = formats::json::MakeObject("deleted_at", date);
-    auto obj = json.As<ns::ObjectDate>();
-
-    const utils::datetime::TimePointTzIsoBasic
-        tp{utils::datetime::UtcStringtime("2020-10-01T00:00:56Z"), std::chrono::seconds(12 * 60 * 60 + 34 * 60)};
-    EXPECT_EQ(obj.deleted_at, tp);
-
-    auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["deleted_at"].As<std::string>();
-    EXPECT_EQ(str, date);
-}
-
-TEST(Simple, DateTimeFraction) {
-    auto date = "2020-10-01T12:34:56.789+0000";
-    auto json = formats::json::MakeObject("modified_at", date);
-    auto obj = json.As<ns::ObjectDate>();
-
-    const utils::datetime::TimePointTz
-        tp{utils::datetime::UtcStringtime("2020-10-01T12:34:56Z"), std::chrono::seconds(0)};
-    EXPECT_EQ(obj.modified_at->GetTimePoint() - tp.GetTimePoint(), std::chrono::milliseconds(789));
-    EXPECT_EQ(obj.modified_at->GetTzOffset(), std::chrono::seconds(0));
-
-    auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["modified_at"].As<std::string>();
-    EXPECT_EQ(str, date) << str;
-}
-
-TEST(Simple, Uuid) {
-    auto uuid = "01234567-89ab-cdef-0123-456789abcdef";
-    auto json = formats::json::MakeObject("uuid", uuid);
-    auto obj = json.As<ns::ObjectUuid>();
-
-    const boost::uuids::string_generator gen;
-    const boost::uuids::uuid expected = gen(uuid);
-    EXPECT_EQ(obj.uuid, expected);
-
-    auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["uuid"].As<std::string>();
-    EXPECT_EQ(str, uuid);
-}
-
-TEST(Simple, Uri) {
-    auto uri = "http://example.com";
-    auto json = formats::json::MakeObject("uri", uri);
-    auto obj = json.As<ns::ObjectUri>();
-
-    EXPECT_EQ(obj.uri, uri);
-
-    auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["uri"].As<std::string>();
-    EXPECT_EQ(str, uri);
-}
-
-TEST(Simple, String64) {
-    auto str64 = crypto::base64::String64{"hello, userver!"};
-    auto obj = ns::ObjectString64{str64};
-
-    auto str = Serialize(obj, formats::serialize::To<formats::json::Value>())["value"].As<std::string>();
-    EXPECT_EQ(str, "aGVsbG8sIHVzZXJ2ZXIh");
-
-    auto new_obj = formats::json::MakeObject("value", str).As<ns::ObjectString64>();
-    EXPECT_EQ(new_obj.value, str64);
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, RequiredNullableType) {
@@ -587,6 +375,9 @@ TEST(Simple, RequiredNullableExists) {
     auto obj = json.As<ns::ObjectWithNullable>();
 
     EXPECT_EQ(obj.foo, 1);
+    EXPECT_EQ(TestToJsonString(obj), json);
+
+    EXPECT_EQ(TestDomSerializer(obj), json);
 }
 
 TEST(Simple, RequiredNullableNull) {
@@ -594,6 +385,7 @@ TEST(Simple, RequiredNullableNull) {
     auto obj = json.As<ns::ObjectWithNullable>();
 
     EXPECT_EQ(obj.foo, std::nullopt);
+    EXPECT_EQ(TestToJsonString(obj), TestDomSerializer(obj));
 }
 
 TEST(Simple, RequiredNullableMissing) {
@@ -601,6 +393,9 @@ TEST(Simple, RequiredNullableMissing) {
     auto obj = json.As<ns::ObjectWithNullable>();
 
     EXPECT_EQ(obj.foo, std::nullopt);
+    EXPECT_EQ(TestToJsonString(obj), json);
+
+    EXPECT_EQ(TestDomSerializer(obj), json);
 }
 
 USERVER_NAMESPACE_END

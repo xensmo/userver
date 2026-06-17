@@ -45,7 +45,7 @@ grpc::AsyncGenericService& GenericServiceWorker::GetService() {
 }
 
 void GenericServiceWorker::Start() {
-    impl::StartServing(impl_->generic_service_data, impl_->generic_service, &GenericServiceBase::Handle);
+    impl::StartProcessing(impl_->generic_service_data, impl_->generic_service, &GenericServiceBase::Handle);
 }
 
 }  // namespace ugrpc::server::impl

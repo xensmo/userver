@@ -11,12 +11,14 @@
 
 #include <userver/chaotic/type_bundle_hpp.hpp>
 
+{% import 'templates/stream_writer.jinja' as sw %}
+
 {% macro generate_type(type) %}
     {% if type.get_py_type() == 'CppStruct' %}
         {{ type.cpp_comment() }}
         struct {{ type.cpp_local_name() }} {
             {#- handle subtypes -#}
-            {%- for fname, field in type.fields.items() -%}
+            {%- for field in type.fields.values() -%}
                     {{- generate_type(field.schema) -}}
             {%- endfor -%}
 
@@ -26,18 +28,13 @@
                 {% endif %}
             {% endif %}
 
-            {# properties #}
-            {%- for fname, field in type.fields.items() -%}
-                static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldName{{ field.cpp_field_name() }} = "{{ field.name }}";
-            {%- endfor %}
-
-            {%- for fname, field in type.fields.items() -%}
+            {%- for field in type.fields.values() -%}
                 {% if field.get_default() != '' %}
                     static constexpr auto kFieldDefault{{ field.cpp_field_name() }} = {{ field.get_default_raw() }};
                 {% endif %}
             {%- endfor %}
 
-            {%- for fname, field in type.fields.items() -%}
+            {%- for field in type.fields.values() -%}
                 {{ field.cpp_field_type() }} {{ field.cpp_field_name() }}
                     { {{ field.get_default() }} };
             {%- endfor %}
@@ -48,6 +45,11 @@
         };
     {% elif type.get_py_type() == 'CppPrimitiveType' %}
         {{ generate_validators_data_declaration(type) }}
+    {% elif type.get_py_type() == 'CppConstType' %}
+        inline constexpr {{ type.const_declaration_type() }} k{{ type.prefix }}Const =
+            {{ type.get_const_value() }};
+
+        using {{ type.prefix }} = USERVER_NAMESPACE::chaotic::ConstValue<k{{ type.prefix }}Const>;
     {% elif type.get_py_type() == 'CppRef' %}
         {# nothing #}
     {% elif type.get_py_type() == 'CppIntEnum' %}
@@ -154,8 +156,10 @@
                 {%- if not loop.last %} , {% endif -%}
             {%- endfor -%}
         >;
+    {% elif not type.needs_new_type() %}
+        {# No new type #}
     {% else %}
-        // {{ type.get_py_type() }}
+        {{ NOT_IMPLEMENTED(type) }}
     {% endif %}
 {% endmacro %}
 
@@ -215,10 +219,16 @@
     {% endif %}
 {% endmacro %}
 
-{% macro generate_from_json_string_declaration(type) %}    
+{% macro generate_from_json_string_declaration(type) %}
     {% if type.get_py_type() == 'CppStruct' %}
         {{ type.cpp_local_name() }} FromJsonString(std::string_view json,
             {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
+    {% endif %}
+{% endmacro %}
+
+{% macro generate_to_json_string_declaration(type) %}
+    {% if type.get_py_type() in ('CppStruct', 'CppStructAllOf') %}
+         std::string ToJsonString(const {{ type.cpp_local_name() }}& value);
     {% endif %}
 {% endmacro %}
 
@@ -325,12 +335,18 @@
 
     {% if has_json_parse(parse_formats) %}
         {{ generate_from_json_string_declaration(type) }}
+        {% if generate_serializer %}
+            {{ generate_to_json_string_declaration(type) }}
+        {% endif %}
     {% endif %}
 
     {{ generate_string_parser_declaration(type) }}
 
     {% if generate_serializer %}
         {{ generate_serializer_declaration(type) }}
+        {% if generate_stream_writer %}
+            {{ sw.generate_stream_writer_declaration(userver, type) }}
+        {% endif %}
     {% endif %}
 
     {{ generate_tostring_declaration(type) }}
@@ -338,6 +354,6 @@
 
 {{ common.switch_namespace('') }}
 
-{% for name, type in types.items() %}
+{% for type in types.values() %}
     {{ generate_fmt_formatter_declaration(type) }}
 {% endfor %}

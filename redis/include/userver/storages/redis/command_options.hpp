@@ -260,6 +260,107 @@ struct JsonKeyPathValue final {
     formats::json::Value value;
 };
 
+/// @brief Options for HGETEX command — at most one TTL action per call.
+struct HgetexOptions {
+    /// What to do with the TTL of each fetched field.
+    enum class TtlAction : std::uint8_t {
+        /// Leave the TTL unchanged (no modifier on the wire).
+        kKeep,
+        /// EX seconds — set TTL to a duration; @c ttl is interpreted as whole seconds.
+        kSetSeconds,
+        /// PX milliseconds — set TTL to a duration; @c ttl is used as-is in milliseconds.
+        kSetMilliseconds,
+        /// EXAT unix-ts-sec — set absolute expiration; @c ttl is interpreted as whole seconds since epoch.
+        kSetAtSeconds,
+        /// PXAT unix-ts-ms — set absolute expiration; @c ttl is used as-is in milliseconds since epoch.
+        kSetAtMilliseconds,
+        /// PERSIST — remove TTL from the fields; @c ttl is ignored.
+        kPersist,
+    };
+
+    TtlAction ttl_action{TtlAction::kKeep};
+    std::chrono::milliseconds ttl{0};
+
+    /// @brief Do not touch the TTL of the read fields (no modifier on the wire).
+    static HgetexOptions Keep();
+    /// @brief Remove TTL on all read fields (PERSIST modifier).
+    static HgetexOptions Persist();
+    /// @brief Set TTL to a relative duration. Posted on the wire as PX (ms-precision).
+    static HgetexOptions Expire(std::chrono::milliseconds ttl);
+    /// @brief Set TTL to an absolute deadline. Posted on the wire as PXAT (ms-precision).
+    static HgetexOptions ExpireAt(std::chrono::system_clock::time_point deadline);
+};
+
+/// @brief Single field/value entry for HSETEX.
+struct HsetexFieldValue {
+    std::string field;
+    std::string value;
+};
+
+/// @brief Options for HSETEX (FNX/FXX combined with EX/PX/EXAT/PXAT/KEEPTTL).
+struct HsetexOptions {
+    /// Existence precondition for the affected fields.
+    enum class Exist : std::uint8_t {
+        /// No precondition (default).
+        kSetAlways,
+        /// FNX — set only if none of the affected fields currently exists.
+        kSetIfNoneExist,
+        /// FXX — set only if all of the affected fields currently exist.
+        kSetIfAllExist,
+    };
+    /// What TTL clause to attach to the new values.
+    enum class TtlAction : std::uint8_t {
+        /// No TTL clause on the wire — server applies default behavior.
+        kNone,
+        /// EX seconds.
+        kSetSeconds,
+        /// PX milliseconds.
+        kSetMilliseconds,
+        /// EXAT unix-ts-sec.
+        kSetAtSeconds,
+        /// PXAT unix-ts-ms.
+        kSetAtMilliseconds,
+        /// KEEPTTL — keep the existing TTL of each field if any; @c ttl is ignored.
+        kKeepTtl,
+    };
+
+    Exist exist{Exist::kSetAlways};
+    TtlAction ttl_action{TtlAction::kNone};
+    std::chrono::milliseconds ttl{0};
+
+    /// @brief No TTL clause on the wire — server applies default behavior.
+    static HsetexOptions NoTtl();
+    /// @brief KEEPTTL — keep the existing TTL of each field if any.
+    static HsetexOptions KeepTtl();
+    /// @brief Set TTL to a relative duration. Posted on the wire as PX (ms-precision).
+    static HsetexOptions Expire(std::chrono::milliseconds ttl);
+    /// @brief Set TTL to an absolute deadline. Posted on the wire as PXAT (ms-precision).
+    static HsetexOptions ExpireAt(std::chrono::system_clock::time_point deadline);
+
+    /// @brief Chainable modifier — FNX: write only if **none** of the affected
+    /// fields currently exist.
+    HsetexOptions& OnlyIfNoneOfFieldsExist() & {
+        exist = Exist::kSetIfNoneExist;
+        return *this;
+    }
+    /// @brief Chainable modifier — FXX: write only if **all** of the affected
+    /// fields currently exist.
+    HsetexOptions& OnlyIfAllFieldsExist() & {
+        exist = Exist::kSetIfAllExist;
+        return *this;
+    }
+    /// @brief FNX (rvalue overload).
+    HsetexOptions OnlyIfNoneOfFieldsExist() && {
+        exist = Exist::kSetIfNoneExist;
+        return std::move(*this);
+    }
+    /// @brief FXX (rvalue overload).
+    HsetexOptions OnlyIfAllFieldsExist() && {
+        exist = Exist::kSetIfAllExist;
+        return std::move(*this);
+    }
+};
+
 }  // namespace storages::redis
 
 USERVER_NAMESPACE_END

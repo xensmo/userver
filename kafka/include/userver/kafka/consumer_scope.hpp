@@ -71,6 +71,8 @@ public:
     /// @warning If callback throws, it called over and over again with the batch
     /// with the same messages, until successful invocation.
     /// Though, user should consider idempotent message processing mechanism.
+    /// @note On fatal librdkafka consumer errors the client is recreated automatically
+    /// (see `restart_after_failure_delay`).
     using Callback = std::function<void(MessageBatchView)>;
 
     /// @brief Stops the consumer (if not yet stopped).

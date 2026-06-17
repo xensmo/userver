@@ -140,11 +140,12 @@ Span::Impl::Impl(
     if (parent) {
         log_extra_inheritable_ = parent->log_extra_inheritable_;
         local_log_level_ = parent->local_log_level_;
+        is_sampled_ = parent->is_sampled_;
     }
 }
 
 Span::Impl::~Impl() {
-    if (!ShouldLog()) {
+    if (!ShouldLog() || !is_sampled_) {
         return;
     }
 
@@ -435,6 +436,10 @@ void Span::SetParentLink(std::string_view parent_link) { pimpl_->SetParentLink(p
 
 bool Span::ShouldLogDefault() const noexcept { return pimpl_->ShouldLog(); }
 
+bool Span::IsSampled() const noexcept { return pimpl_->is_sampled_; }
+
+void Span::SetSampled(const bool sampled) noexcept { pimpl_->is_sampled_ = sampled; }
+
 void Span::DetachFromCoroStack() {
     if (pimpl_) {
         pimpl_->DetachFromCoroStack();
@@ -461,11 +466,11 @@ std::optional<std::string_view> Span::GetSpanIdForChildLogs() const { return pim
 
 std::string_view Span::GetName() const { return pimpl_->GetName(); }
 
-ScopeTime::Duration Span::GetTotalDuration(const std::string& scope_name) const {
+ScopeTime::Duration Span::GetTotalDuration(std::string_view scope_name) const {
     return pimpl_->GetTimeStorage().DurationTotal(scope_name);
 }
 
-ScopeTime::DurationMillis Span::GetTotalElapsedTime(const std::string& scope_name) const {
+ScopeTime::DurationMillis Span::GetTotalElapsedTime(std::string_view scope_name) const {
     return std::chrono::duration_cast<ScopeTime::DurationMillis>(GetTotalDuration(scope_name));
 }
 

@@ -3,10 +3,10 @@
 /// @file userver/fs/blocking/file_descriptor.hpp
 /// @brief @copybrief fs::blocking::FileDescriptor
 
-#include <string>
 #include <string_view>
 
 #include <userver/utils/boost_filesystem_file_status.hpp>
+#include <userver/utils/zstring_view.hpp>
 
 #include <userver/fs/blocking/open_mode.hpp>
 
@@ -24,7 +24,7 @@ public:
     /// @brief Open a file using `::open`
     /// @throws std::runtime_error
     static FileDescriptor Open(
-        const std::string& path,
+        utils::zstring_view path,
         OpenMode flags,
         boost::filesystem::perms perms = boost::filesystem::perms::owner_read | boost::filesystem::perms::owner_write
     );
@@ -32,7 +32,7 @@ public:
     /// @brief Open a directory node
     /// @note The only valid operation for such a `FileDescriptor` is `FSync`.
     /// @throws std::runtime_error
-    static FileDescriptor OpenDirectory(const std::string& path);
+    static FileDescriptor OpenDirectory(utils::zstring_view path);
 
     /// @brief Use the file descriptor directly
     static FileDescriptor AdoptFd(int fd) noexcept;

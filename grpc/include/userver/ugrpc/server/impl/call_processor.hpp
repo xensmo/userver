@@ -96,8 +96,9 @@ template <typename CallTraits>
 class CallProcessor final {
 public:
     using Responder = impl::Responder<CallTraits>;
+    using Request = typename CallTraits::Request;
     using Response = typename CallTraits::Response;
-    using InitialRequest = typename CallTraits::InitialRequest;
+    using SerializedInitialRequest = typename CallTraits::SerializedInitialRequest;
     using Context = typename CallTraits::Context;
     using ServiceBase = typename CallTraits::ServiceBase;
     using ServiceMethod = typename CallTraits::ServiceMethod;
@@ -106,14 +107,14 @@ public:
     CallProcessor(
         CallParams&& params,
         RawResponder& raw_responder,
-        InitialRequest& initial_request,
+        SerializedInitialRequest& serialized_initial_request,
         ServiceBase& service,
         ServiceMethod service_method
     )
         : state_(std::move(params)),
           responder_(state_, raw_responder),
           middleware_call_context_(utils::impl::InternalTag{}, state_, status_),
-          initial_request_(initial_request),
+          serialized_initial_request_(serialized_initial_request),
           service_(service),
           service_method_(service_method)
     {}
@@ -121,7 +122,11 @@ public:
     void DoCall() {
         auto scope_time = state_.GetSpan().CreateScopeTime("finish");
 
-        RunOnCallStart();
+        DeserializeInitialRequest();
+
+        if (status_.ok()) {
+            RunOnCallStart();
+        }
 
         bool finished = false;
         const utils::FastScopeGuard post_finish_hooks_guard([this, &finished]() noexcept {
@@ -157,15 +162,22 @@ public:
     }
 
 private:
+    void DeserializeInitialRequest() {
+        if constexpr (IsSingleRequestMethod(CallTraits::kRpcType)) {
+            initial_request_.emplace();
+            status_ = impl::DeserializeMessage(std::move(serialized_initial_request_), *initial_request_);
+        }
+    }
+
     auto CallHandler() {
         Context context{utils::impl::InternalTag{}, state_};
 
         if constexpr (!IsSingleRequestMethod(CallTraits::kRpcType)) {
             return (service_.*service_method_)(context, responder_);
         } else if constexpr (CallTraits::kRpcType == RpcType::kUnary) {
-            return (service_.*service_method_)(context, std::move(initial_request_));
+            return (service_.*service_method_)(context, std::move(*initial_request_));
         } else if constexpr (CallTraits::kRpcType == RpcType::kServerStreaming) {
-            return (service_.*service_method_)(context, std::move(initial_request_), responder_);
+            return (service_.*service_method_)(context, std::move(*initial_request_), responder_);
         } else {
             static_assert(!sizeof(CallTraits), "Unexpected RpcType");
         }
@@ -181,8 +193,10 @@ private:
             // On fail, we must call OnRpcFinish only for middlewares for which OnRpcStart has been called successfully.
             // So, we watch to count of these middlewares.
             ++success_pre_hooks_count_;
-            if constexpr (std::is_base_of_v<google::protobuf::Message, InitialRequest>) {
-                RunWithCatch([this, &m] { m->PostRecvMessage(middleware_call_context_, initial_request_); });
+            if constexpr (IsSingleRequestMethod(CallTraits::kRpcType) &&
+                          std::is_base_of_v<google::protobuf::Message, Request>)
+            {
+                RunWithCatch([this, &m] { m->PostRecvMessage(middleware_call_context_, *initial_request_); });
                 if (!status_.ok()) {
                     return;
                 }
@@ -222,7 +236,7 @@ private:
     }
 
     template <typename Func>
-    void RunWithCatch(Func&& func) {
+    void RunWithCatch(Func func) {
         try {
             func();
         } catch (MiddlewareRpcInterruptionError& ex) {
@@ -245,7 +259,8 @@ private:
     MiddlewareCallContext middleware_call_context_;
     // Initial request is the request which is sent to the service together with RPC initiation.
     // Unary-request RPCs have an initial request, client-streaming RPCs don't.
-    InitialRequest& initial_request_;
+    SerializedInitialRequest& serialized_initial_request_;
+    std::optional<Request> initial_request_;
     ServiceBase& service_;
     const ServiceMethod service_method_;
 

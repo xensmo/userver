@@ -176,6 +176,7 @@ class OneToOneFileRenderer:
         parse_extra_formats: bool = False,
         generate_serializer: bool = False,
         generate_sax_parser: bool = False,
+        generate_stream_writer: bool = False,
     ) -> None:
         self._relative_to = relative_to
         self._vfilepath_to_relfilepath_map = vfilepath_to_relfilepath
@@ -183,6 +184,7 @@ class OneToOneFileRenderer:
         self._parse_extra_formats = parse_extra_formats
         self._generate_serializer = generate_serializer
         self._generate_sax_parser = generate_sax_parser
+        self._generate_stream_writer = generate_stream_writer
 
     @staticmethod
     def filepath_wo_ext(filepath: str) -> str:
@@ -306,6 +308,7 @@ class OneToOneFileRenderer:
                 'parse_formats': parse_formats,
                 'generate_serializer': self._generate_serializer,
                 'generate_sax_parser': self._generate_sax_parser,
+                'generate_stream_writer': self._generate_stream_writer,
             }
 
             output_files: list[CppOutputFile] = []

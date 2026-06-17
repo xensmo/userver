@@ -24,7 +24,7 @@ namespace impl {
 class TaskContextHolder;
 class TaskContext;
 class DetachedTasksSyncBlock;
-class ContextAccessor;
+class AwaitableBase;
 }  // namespace impl
 
 /// @brief Base class for all the asynchronous tasks

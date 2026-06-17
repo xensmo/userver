@@ -13,12 +13,13 @@
 
 namespace ns {
 
+constexpr inline USERVER_NAMESPACE::utils::StringLiteral k_ns_StringFieldNamefoo = "foo";
+
 [[maybe_unused]] USERVER_NAMESPACE::chaotic::sax::Parser<USERVER_NAMESPACE::chaotic::Object<
     ::ns::String, USERVER_NAMESPACE::chaotic::UnknownFields::Forbid,
     USERVER_NAMESPACE::chaotic::Field<
         ::ns::String, USERVER_NAMESPACE::chaotic::Optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>,
-        &::ns::String::foo, ::ns::String::kFieldNamefoo>>>
-    ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<::ns::String>);
+        &::ns::String::foo, k_ns_StringFieldNamefoo>>> ParserOf(USERVER_NAMESPACE::chaotic::sax::Type<String>);
 
 }  // namespace ns
 

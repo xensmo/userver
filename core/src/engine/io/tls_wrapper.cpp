@@ -212,7 +212,7 @@ enum InterruptAction {
 
 }  // namespace
 
-class TlsWrapper::ReadContextAccessor final : public engine::impl::ContextAccessor {
+class TlsWrapper::ReadContextAccessor final : public engine::impl::AwaitableBase {
 public:
     explicit ReadContextAccessor(TlsWrapper::Impl& impl);
 
@@ -220,11 +220,12 @@ public:
 
     void TryAppendAwaiter(boost::intrusive_ptr<engine::impl::Awaiter>& awaiter, std::uintptr_t context) override;
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override;
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override;
 
     std::exception_ptr GetErrorResult() const noexcept override;
 
-    engine::impl::ContextAccessor& GetSocketContextAccessor() const noexcept;
+    engine::AwaitableToken GetSocketReadAwaitableToken() const noexcept;
 
     TlsWrapper::Impl& impl;
 };
@@ -432,7 +433,8 @@ bool TlsWrapper::ReadContextAccessor::IsReady() const noexcept {
     if (!ssl || SSL_has_pending(ssl)) {
         return true;
     }
-    return GetSocketContextAccessor().IsReady();
+    auto token = GetSocketReadAwaitableToken();
+    return token.GetAwaitable(utils::impl::InternalTag{}).IsReady();
 }
 
 void TlsWrapper::ReadContextAccessor::TryAppendAwaiter(
@@ -444,21 +446,25 @@ void TlsWrapper::ReadContextAccessor::TryAppendAwaiter(
         return;
     }
 
-    GetSocketContextAccessor().TryAppendAwaiter(awaiter, context);
+    auto token = GetSocketReadAwaitableToken();
+    token.GetAwaitable(utils::impl::InternalTag{}).TryAppendAwaiter(awaiter, context);
 }
 
-void TlsWrapper::ReadContextAccessor::RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept {
-    GetSocketContextAccessor().RemoveAwaiter(awaiter, context);
+boost::intrusive_ptr<engine::impl::Awaiter> TlsWrapper::ReadContextAccessor::RemoveAwaiter(
+    engine::impl::Awaiter& awaiter,
+    std::uintptr_t context
+) noexcept {
+    auto token = GetSocketReadAwaitableToken();
+    return token.GetAwaitable(utils::impl::InternalTag{}).RemoveAwaiter(awaiter, context);
 }
 
 std::exception_ptr TlsWrapper::ReadContextAccessor::GetErrorResult() const noexcept {
-    return GetSocketContextAccessor().GetErrorResult();
+    auto token = GetSocketReadAwaitableToken();
+    return token.GetAwaitable(utils::impl::InternalTag{}).GetErrorResult();
 }
 
-engine::impl::ContextAccessor& TlsWrapper::ReadContextAccessor::GetSocketContextAccessor() const noexcept {
-    auto* ca = impl.bio_data.socket.GetReadableBase().TryGetContextAccessor();
-    UASSERT(ca);
-    return *ca;
+engine::AwaitableToken TlsWrapper::ReadContextAccessor::GetSocketReadAwaitableToken() const noexcept {
+    return impl.bio_data.socket.GetReadableBase().GetAwaitableToken();
 }
 
 TlsWrapper::TlsWrapper(Socket&& socket)
@@ -525,10 +531,10 @@ TlsWrapper::TlsWrapper(TlsWrapper&& other) noexcept : impl_(std::move(other.impl
 void TlsWrapper::SetupContextAccessors() {
     // Cannot use raw Socket's accessor as some data might be already read into
     // a local buffer
-    SetReadableContextAccessor(&impl_->read_accessor);
+    SetReadableAwaitableToken(engine::AwaitableToken{utils::impl::InternalTag{}, &impl_->read_accessor});
 
     engine::io::WritableBase& write_dir = impl_->bio_data.socket;
-    SetWritableContextAccessor(write_dir.TryGetContextAccessor());
+    SetWritableAwaitableToken(write_dir.GetAwaitableToken());
 }
 
 bool TlsWrapper::IsValid() const { return impl_->ssl && !impl_->is_in_shutdown; }
@@ -582,7 +588,7 @@ size_t TlsWrapper::SendAll(const void* buf, size_t len, Deadline deadline) {
     );
 }
 
-[[nodiscard]] size_t TlsWrapper::WriteAll(std::initializer_list<IoData> list, Deadline deadline) {
+[[nodiscard]] size_t TlsWrapper::WriteAll(std::span<const IoData> list, Deadline deadline) {
     static constexpr std::size_t kBufSize = 4'096;
     std::byte buf[kBufSize];
 

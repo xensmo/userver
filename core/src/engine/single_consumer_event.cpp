@@ -9,24 +9,25 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine {
 
-class SingleConsumerEvent::EventWaitStrategy final : public impl::WaitStrategy {
+class SingleConsumerEvent::EventAwaitable final : public impl::AwaitableBase {
 public:
-    EventWaitStrategy(SingleConsumerEvent& event, impl::TaskContext& current)
-        : event_(event),
-          current_(current)
+    explicit EventAwaitable(SingleConsumerEvent& event)
+        : event_(event)
     {}
 
-    impl::EarlyNotify SetupWakeups() override {
-        boost::intrusive_ptr<impl::Awaiter> awaiter_ptr{&current_};
-        event_.waiters_->GetSignalOrAppend(awaiter_ptr, current_.GetAwaiterContext());
-        return impl::EarlyNotify{awaiter_ptr != nullptr};
+    bool IsReady() const noexcept override { return event_.IsReady(); }
+
+    void TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) override {
+        event_.waiters_->GetSignalOrAppend(awaiter, context);
     }
 
-    void DisableWakeups() noexcept override { event_.waiters_->Remove(current_, current_.GetAwaiterContext()); }
+    boost::intrusive_ptr<impl::Awaiter> RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override {
+        return event_.waiters_->Remove(awaiter, context);
+    }
 
 private:
     SingleConsumerEvent& event_;
-    impl::TaskContext& current_;
 };
 
 SingleConsumerEvent::SingleConsumerEvent() noexcept = default;
@@ -45,14 +46,14 @@ bool SingleConsumerEvent::WaitForEventUntil(Deadline deadline) {
     }
 
     impl::TaskContext& current = current_task::GetCurrentTaskContext();
-    EventWaitStrategy wait_manager{*this, current};
+    EventAwaitable awaitable{*this};
 
     while (true) {
         if (GetIsSignaled()) {
             return true;
         }
 
-        const auto wakeup_source = current.Sleep(wait_manager, deadline);
+        const auto wakeup_source = current.Sleep(awaitable, deadline);
         if (!impl::HasWaitSucceeded(wakeup_source)) {
             return false;
         }

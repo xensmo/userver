@@ -44,7 +44,7 @@ public:
         : HttpHandlerJsonBase(config, context),
           sqlite_client_(context.FindComponent<components::SQLite>("batch-database").GetClient())
     {
-        sqlite_client_->Execute(storages::sqlite::OperationType::kReadWrite, db::sql::kCreateTable.data());
+        sqlite_client_->Execute(storages::sqlite::OperationType::kReadWrite, db::sql::kCreateTable.c_str());
     }
 
     formats::json::Value
@@ -74,17 +74,17 @@ private:
 
         if (rows.size() > 1) {
             sqlite_client_
-                ->ExecuteMany(storages::sqlite::OperationType::kReadWrite, db::sql::kInsertKeyValue.data(), rows);
+                ->ExecuteMany(storages::sqlite::OperationType::kReadWrite, db::sql::kInsertKeyValue.c_str(), rows);
         } else {
             sqlite_client_->ExecuteDecompose(
                 storages::sqlite::OperationType::kReadWrite,
-                db::sql::kInsertKeyValue.data(),
+                db::sql::kInsertKeyValue.c_str(),
                 rows.back()
             );
         }
 
         auto records =
-            sqlite_client_->Execute(storages::sqlite::OperationType::kReadOnly, db::sql::kSelectAllKeyValue.data())
+            sqlite_client_->Execute(storages::sqlite::OperationType::kReadOnly, db::sql::kSelectAllKeyValue.c_str())
                 .AsVector<Row>();
 
         std::ranges::sort(records, [](const auto& lhs, const auto& rhs) { return lhs.key < rhs.key; });
@@ -97,7 +97,7 @@ private:
 
     formats::json::Value GetValues() const {
         auto rows =
-            sqlite_client_->Execute(storages::sqlite::OperationType::kReadOnly, db::sql::kSelectAllKeyValue.data())
+            sqlite_client_->Execute(storages::sqlite::OperationType::kReadOnly, db::sql::kSelectAllKeyValue.c_str())
                 .AsVector<Row>();
         std::ranges::sort(rows, [](const Row& lhs, const Row& rhs) -> bool { return lhs.key < rhs.key; });
 

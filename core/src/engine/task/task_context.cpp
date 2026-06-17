@@ -97,8 +97,8 @@ private:
     EhGlobals& eh_store_;
 };
 
-constexpr SleepState MakeNextEpochSleepState(Epoch current) {
-    return {SleepFlags::kNone, Epoch{utils::UnderlyingValue(current) + 1}};
+constexpr SleepState MakeNextEpochSleepState(SleepState current) {
+    return {SleepFlags::kNone, Epoch{utils::UnderlyingValue(current.epoch) + 1}};
 }
 
 auto* const kFinishedDetachedToken = reinterpret_cast<DetachedTasksSyncBlock::Token*>(1);
@@ -176,11 +176,8 @@ FutureStatus TaskContext::WaitUntil(Deadline deadline) const noexcept {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     auto& target = const_cast<TaskContext&>(*this);
 
-    static_assert(noexcept(FutureWaitStrategy{target, current}));
-    auto wait_strategy = FutureWaitStrategy{target, current};
-
     try {
-        const auto wakeup_source = current.Sleep(wait_strategy, deadline);
+        const auto wakeup_source = current.Sleep(target, deadline);
         return ToFutureStatus(wakeup_source);
     } catch (...) {
         // We cannot just refuse to wait because of the lifetime guarantees for tasks and their data.
@@ -195,7 +192,6 @@ void TaskContext::DoStep() {
         return;
     }
 
-    SleepState::Flags clear_flags{SleepFlags::kSleeping};
     if (!coro_) {
         try {
             coro_ = task_processor_.GetCoroutine();
@@ -207,10 +203,8 @@ void TaskContext::DoStep() {
             throw;
         }
 
-        clear_flags |= SleepFlags::kWakeupByBootstrap;
         ArmCancellationTimer();
     }
-    sleep_state_.ClearFlags<std::memory_order_relaxed>(clear_flags);
 
     // eh_globals is replaced in task scope, we must proxy the exception
     std::exception_ptr uncaught;
@@ -255,14 +249,24 @@ void TaskContext::DoStep() {
                 // Synchronization point for relaxed SetState()
                 auto prev_sleep_state = sleep_state_.FetchOrFlags<std::memory_order_seq_cst>(new_flags);
 
-                // The previous kWakeupBy* flags in sleep_state_ are not cleared here,
-                // which allows RequestCancel to cancel the next sleep session.
                 UASSERT(!(prev_sleep_state.flags & SleepFlags::kSleeping));
                 if (new_flags & SleepFlags::kNonCancellable) {
                     prev_sleep_state.flags.Clear({SleepFlags::kWakeupByCancelRequest, SleepFlags::kNonCancellable});
                 }
+
                 if (prev_sleep_state.flags) {
                     Schedule();
+                } else if (!(new_flags & SleepFlags::kNonCancellable) &&
+                           cancellation_reason_.load() != TaskCancellationReason::kNone) [[unlikely]]
+                {
+                    // cancellation_reason_ is the source of truth. The edge-triggered cancellation in sleep_state_
+                    // may have been erased by Sleep() while advancing the epoch.
+                    //
+                    // If RequestCancel() already did its seq_cst sleep_state_ wakeup before FetchOrFlags() above,
+                    // then this seq_cst load observes its prior cancellation_reason_ write.
+                    // Otherwise RequestCancel() runs wakeup after FetchOrFlags(), observes kSleeping,
+                    // and schedules the task itself.
+                    Wakeup(WakeupSource::kCancelRequest, prev_sleep_state.epoch);
                 }
             }
             break;
@@ -278,8 +282,7 @@ void TaskContext::RequestCancel(TaskCancellationReason reason) {
         LOG_TRACE()
             << "task with task_id=" << ReadableTaskId(current_task::GetCurrentTaskContextUnchecked())
             << " cancelled task with task_id=" << ReadableTaskId(this) << logging::LogExtra::Stacktrace();
-        const auto epoch = GetEpoch();
-        Wakeup(WakeupSource::kCancelRequest, epoch);
+        Wakeup(WakeupSource::kCancelRequest, NoEpoch{});
     }
 }
 
@@ -298,7 +301,7 @@ void TaskContext::SetBackground(bool is_background) {
     is_background_ = is_background;
 }
 
-TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadline deadline) {
+TaskContext::WakeupSource TaskContext::Sleep(WeakAwaitable& awaitable, Deadline deadline) {
     UASSERT(IsCurrent());
     UASSERT(state_ == Task::State::kRunning);
     UASSERT_MSG(
@@ -312,16 +315,20 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
         UASSERT_MSG(std::exchange(within_sleep_, false), "within_sleep_ should report being in Sleep");
     }};
 
-    // If the previous Sleep woke up due to both kCancelRequest and kWaitList, the
-    // cancellation signal would be lost, so we must check it here.
+    const auto new_sleep_state = MakeNextEpochSleepState(sleep_state_.Load<std::memory_order_relaxed>());
+    sleep_state_.Store<std::memory_order_relaxed>(new_sleep_state);
+
+    // Fast path for already visible cancellation; missed cancellations are recovered in DoStep.
     if (ShouldCancel()) {
         return TaskContext::WakeupSource::kCancelRequest;
     }
 
-    const auto sleep_epoch = sleep_state_.Load<std::memory_order_seq_cst>().epoch;
+    const auto sleep_epoch = new_sleep_state.epoch;
+    const auto awaiter_context = static_cast<std::uintptr_t>(sleep_epoch);
 
-    if (static_cast<bool>(wait_strategy.SetupWakeups())) {
-        sleep_state_.Store<std::memory_order_release>(MakeNextEpochSleepState(sleep_epoch));
+    boost::intrusive_ptr<Awaiter> self{this};
+    awaitable.TryAppendAwaiter(self, awaiter_context);
+    if (self != nullptr) {
         wakeup_source_ = WakeupSource::kNotify;
         return wakeup_source_;
     }
@@ -351,10 +358,10 @@ TaskContext::WakeupSource TaskContext::Sleep(WaitStrategy& wait_strategy, Deadli
     if (has_deadline) {
         ArmCancellationTimer();
     }
-    wait_strategy.DisableWakeups();
+    awaitable.RemoveAwaiter(*this, awaiter_context);
 
-    const auto old_sleep_state = sleep_state_.Exchange<std::memory_order_acq_rel>(MakeNextEpochSleepState(sleep_epoch));
-    wakeup_source_ = GetPrimaryWakeupSource(old_sleep_state.flags);
+    const auto sleep_flags = sleep_state_.Load<std::memory_order_acquire>().flags;
+    wakeup_source_ = GetPrimaryWakeupSource(sleep_flags);
     return wakeup_source_;
 }
 
@@ -389,8 +396,8 @@ void TaskContext::ArmCancellationTimer() {
 }
 
 bool TaskContext::ShouldSchedule(SleepState::Flags prev_flags, WakeupSource source) noexcept {
-    /* ShouldSchedule() returns true only for the first Wakeup().  All Wakeup()s
-     * are serialized due to seq_cst in FetchOr().
+    /* ShouldSchedule() returns true only for the first Wakeup(). All Wakeup()s
+     * are serialized due to seq_cst modifications of sleep_state_.
      */
 
     if (!(prev_flags & SleepFlags::kSleeping)) {
@@ -440,14 +447,6 @@ void TaskContext::Wakeup(WakeupSource source, Epoch epoch) noexcept {
             return;
         }
 
-        if (source == WakeupSource::kCancelRequest && prev_sleep_state.flags & SleepFlags::kNonCancellable) {
-            // We do not need to wakeup because:
-            // - *this is non cancellable and the epoch is correct
-            // - or even if the sleep_state_ changed and the task is now cancellable
-            //   then epoch changed and wakeup request is not for the current sleep.
-            return;
-        }
-
         auto new_sleep_state = prev_sleep_state;
         new_sleep_state.flags |= static_cast<SleepFlags>(source);
 
@@ -474,7 +473,6 @@ void TaskContext::Wakeup(WakeupSource source, Epoch epoch) noexcept {
 void TaskContext::Wakeup(WakeupSource source, NoEpoch) noexcept {
     UASSERT(source != WakeupSource::kDeadlineTimer);
     UASSERT(source != WakeupSource::kBootstrap);
-    UASSERT(source != WakeupSource::kCancelRequest);
 
     if (IsFinished()) {
         return;
@@ -564,7 +562,7 @@ void TaskContext::CoroFunc(TaskPipe& task_pipe) {
                     context->TraceStateTransition(Task::State::kRunning);
                     context->payload_->Perform();
                     // We store an exception in the context to be able to handle
-                    // ContextAccessor::GetErrorResult() even when the owning
+                    // Awaitable::GetErrorResult() even when the owning
                     // task is destroyed (and payload_ is reset to nullptr).
                     context->exception_ = context->payload_->GetException();
                     yield_reason_guard.SetYieldReason(YieldReason::kTaskComplete);
@@ -608,8 +606,8 @@ void TaskContext::TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, std::
     finish_awaiters_->GetSignalOrAppend(awaiter, context);
 }
 
-void TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
-    finish_awaiters_->Remove(awaiter, context);
+boost::intrusive_ptr<Awaiter> TaskContext::RemoveAwaiter(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    return finish_awaiters_->Remove(awaiter, context);
 }
 
 std::exception_ptr TaskContext::GetErrorResult() const noexcept {
@@ -753,7 +751,7 @@ void TaskContext::Destroy() noexcept {
 bool HasWaitSucceeded(TaskContext::WakeupSource wakeup_source) noexcept {
     // Typical synchronization primitives sleep in a WaitList until woken up
     // (which is counted as a success), or they can sometimes wake themselves up
-    // using kWaitList.
+    // using kNotify.
     switch (wakeup_source) {
         case TaskContext::WakeupSource::kNotify:
             return true;

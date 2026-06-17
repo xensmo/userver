@@ -22,7 +22,7 @@ using namespace std::chrono_literals;
 
 namespace {
 
-class TestAwaitable final : engine::impl::ContextAccessor {
+class TestAwaitable final : engine::impl::AwaitableBase {
 public:
     TestAwaitable() = default;
     TestAwaitable(const TestAwaitable&) = delete;
@@ -30,7 +30,13 @@ public:
     TestAwaitable& operator=(const TestAwaitable&) = delete;
     TestAwaitable& operator=(TestAwaitable&&) = delete;
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept { return ready_ ? nullptr : this; }
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        if (ready_) {
+            return {};
+        }
+
+        return engine::AwaitableToken{utils::impl::InternalTag{}, this};
+    }
 
     void SetReady() {
         ready_ = true;
@@ -51,14 +57,15 @@ public:
         context_ = context;
     }
 
-    void RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context) noexcept override {
+    boost::intrusive_ptr<engine::impl::Awaiter> RemoveAwaiter(engine::impl::Awaiter& awaiter, std::uintptr_t context)
+        noexcept override {
         UINVARIANT(context_ == context, "Context does not match");
 
         if (awaiter_ == nullptr) {
-            return;
+            return {};
         }
         UINVARIANT(awaiter_.get() == &awaiter, "Awaiter does not match");
-        awaiter_ = nullptr;
+        return std::move(awaiter_);
     }
 
 private:

@@ -13,7 +13,11 @@
 #include <userver/formats/json/value.hpp>
 #include <userver/storages/redis/fwd.hpp>
 
+#include <userver/storages/redis/hexpiretime_reply.hpp>
+#include <userver/storages/redis/hpexpiretime_reply.hpp>
+#include <userver/storages/redis/pttl_reply.hpp>
 #include <userver/storages/redis/reply_types.hpp>
+#include <userver/storages/redis/ttl_reply.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -47,6 +51,9 @@ struct To {};
 std::vector<std::string>
 ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<std::string>>);
 
+std::vector<int64_t>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<int64_t>>);
+
 std::
     vector<std::optional<std::string>>
     ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<std::optional<std::string>>>);
@@ -59,6 +66,24 @@ ParseReplyDataArray(ReplyData&& array_data, const std::string& request_descripti
 
 std::vector<GeoPoint>
 ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<GeoPoint>>);
+
+std::vector<HexpireReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HexpireReply>>);
+
+std::vector<HpersistReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HpersistReply>>);
+
+std::vector<TtlReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<TtlReply>>);
+
+std::vector<PttlReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<PttlReply>>);
+
+std::vector<HexpiretimeReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HexpiretimeReply>>);
+
+std::vector<HpexpiretimeReply>
+ParseReplyDataArray(ReplyData&& array_data, const std::string& request_description, To<std::vector<HpexpiretimeReply>>);
 
 std::
     vector<std::optional<Point>>
@@ -79,7 +104,13 @@ Parse(ReplyData&& reply_data, const std::string& request_description, To<std::ch
 
 HsetReply Parse(ReplyData&& reply_data, const std::string& request_description, To<HsetReply>);
 
+HsetexReply Parse(ReplyData&& reply_data, const std::string& request_description, To<HsetexReply>);
+
 PersistReply Parse(ReplyData&& reply_data, const std::string& request_description, To<PersistReply>);
+
+HexpireReply Parse(ReplyData&& reply_data, const std::string& request_description, To<HexpireReply>);
+
+HpersistReply Parse(ReplyData&& reply_data, const std::string& request_description, To<HpersistReply>);
 
 KeyType Parse(ReplyData&& reply_data, const std::string& request_description, To<KeyType>);
 

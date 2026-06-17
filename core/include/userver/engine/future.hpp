@@ -8,9 +8,12 @@
 #include <future>
 #include <memory>
 
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/future_status.hpp>
 #include <userver/engine/impl/future_state.hpp>
+#include <userver/utils/impl/internal_tag.hpp>
 
 // TODO remove extra includes
 #include <userver/utils/assert.hpp>
@@ -108,12 +111,10 @@ public:
     /// @throw std::future_error if Future holds no state.
     FutureStatus wait_until(Deadline deadline) const;
 
-    /// @cond
-    // Internal helper for WaitAny/WaitAll
-    impl::ContextAccessor* TryGetContextAccessor() noexcept {
-        return state_ ? state_->TryGetContextAccessor() : nullptr;
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return state_ ? state_->GetAwaitableToken() : AwaitableToken{};
     }
-    /// @endcond
 
 private:
     friend class Promise<T>;

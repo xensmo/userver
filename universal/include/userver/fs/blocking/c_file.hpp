@@ -5,10 +5,10 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <string>
 #include <string_view>
 
 #include <userver/utils/boost_filesystem_file_status.hpp>
+#include <userver/utils/zstring_view.hpp>
 
 #include <userver/fs/blocking/open_mode.hpp>
 #include <userver/utils/fast_pimpl.hpp>
@@ -34,7 +34,7 @@ public:
     /// @brief Opens the file
     /// @throws std::runtime_error
     CFile(
-        const std::string& path,
+        utils::zstring_view path,
         OpenMode flags,
         boost::filesystem::perms perms = boost::filesystem::perms::owner_read | boost::filesystem::perms::owner_write
     );

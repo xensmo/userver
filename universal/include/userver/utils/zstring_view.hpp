@@ -74,6 +74,11 @@ Value Serialize(zstring_view view, formats::serialize::To<Value>) {
     return typename Value::Builder(std::string_view{view}).ExtractValue();
 }
 
+template <typename StringBuilder>
+void WriteToStream(zstring_view view, StringBuilder& sw) {
+    WriteToStream(std::string_view{view}, sw);
+}
+
 }  // namespace utils
 
 USERVER_NAMESPACE_END

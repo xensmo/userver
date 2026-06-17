@@ -288,10 +288,10 @@ UTEST_P(PostgreConnection, RollbackOnBusyOeErroredConnection) {
     CheckConnection(GetConn());
 
     EXPECT_EQ(pg::ConnectionState::kIdle, GetConn()->GetState());
+    UEXPECT_NO_THROW(GetConn()->Begin({}, {}));
     // Network timeout
     const DefaultCommandControlScope
         scope(pg::CommandControl{std::chrono::milliseconds{10}, std::chrono::milliseconds{0}});
-    GetConn()->Begin({}, {});
     UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1)"), pg::ConnectionTimeoutError);
     EXPECT_EQ(pg::ConnectionState::kTranActive, GetConn()->GetState());
     UEXPECT_NO_THROW(GetConn()->Rollback());
@@ -301,7 +301,7 @@ UTEST_P(PostgreConnection, RollbackOnBusyOeErroredConnection) {
     // Query cancelled
     const DefaultCommandControlScope scope2(pg::CommandControl{std::chrono::seconds{2}, std::chrono::milliseconds{200}}
     );
-    GetConn()->Begin({}, {});
+    UEXPECT_NO_THROW(GetConn()->Begin({}, {}));
     UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1.5)"), pg::QueryCancelled);
     EXPECT_EQ(pg::ConnectionState::kTranError, GetConn()->GetState());
     UEXPECT_NO_THROW(GetConn()->Rollback());
@@ -314,10 +314,10 @@ UTEST_P(PostgreConnection, CommitOnBusyOeErroredConnection) {
     CheckConnection(GetConn());
 
     EXPECT_EQ(pg::ConnectionState::kIdle, GetConn()->GetState());
+    UEXPECT_NO_THROW(GetConn()->Begin({}, {}));
     // Network timeout
     const DefaultCommandControlScope
         scope(pg::CommandControl{std::chrono::milliseconds{10}, std::chrono::milliseconds{0}});
-    GetConn()->Begin({}, {});
     UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1)"), pg::ConnectionTimeoutError);
     EXPECT_EQ(pg::ConnectionState::kTranActive, GetConn()->GetState());
     UEXPECT_THROW(GetConn()->Commit(), std::exception);
@@ -327,7 +327,7 @@ UTEST_P(PostgreConnection, CommitOnBusyOeErroredConnection) {
     // Query cancelled
     const DefaultCommandControlScope scope2(pg::CommandControl{std::chrono::seconds{2}, std::chrono::milliseconds{200}}
     );
-    GetConn()->Begin({}, {});
+    UEXPECT_NO_THROW(GetConn()->Begin({}, {}));
     UEXPECT_THROW(GetConn()->Execute("select pg_sleep(1.5)"), pg::QueryCancelled);
     EXPECT_EQ(pg::ConnectionState::kTranError, GetConn()->GetState());
 

@@ -241,12 +241,12 @@ std::string InstanceUpChecker::GetReason() const {
 
 GetHostsContext::GetHostsContext(
     bool allow_empty,
-    const Password& password,
+    const Credentials& credentials,
     ProcessGetHostsRequestCb&& callback,
     size_t expected_responses_cnt
 )
     : allow_empty_(allow_empty),
-      password_(password),
+      credentials_(credentials),
       callback_(std::move(callback)),
       expected_responses_cnt_(expected_responses_cnt)
 {}
@@ -304,7 +304,7 @@ void GetHostsContext::ProcessResponsesOnce() {
             const auto& properties = group.second.front();
 
             try {
-                ConnectionInfoInt info{{properties.at("ip"), std::stoi(properties.at("port")), password_}};
+                ConnectionInfoInt info{{properties.at("ip"), std::stoi(properties.at("port")), credentials_}};
                 info.SetName(properties.at("name"));
 
                 const InstanceUpChecker instance_up_checker(status, expected_responses_cnt_);
@@ -331,7 +331,7 @@ void ProcessGetHostsRequest(GetHostsRequest request, ProcessGetHostsRequestCb ca
     const auto allow_empty = !request.master;
 
     auto ids = request.sentinel_shard.GetAllInstancesServerId();
-    auto context = std::make_shared<GetHostsContext>(allow_empty, request.password, std::move(callback), ids.size());
+    auto context = std::make_shared<GetHostsContext>(allow_empty, request.credentials, std::move(callback), ids.size());
 
     for (const auto& id : ids) {
         auto cmd = PrepareCommand(request.command.Clone(), context->GenerateCallback());

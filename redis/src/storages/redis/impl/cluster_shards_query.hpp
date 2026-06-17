@@ -7,12 +7,12 @@ USERVER_NAMESPACE_BEGIN
 namespace storages::redis::impl {
 
 struct GetClusterShardsRequest {
-    GetClusterShardsRequest(Shard& sentinel_shard, Password password, std::string shard_group_name);
+    GetClusterShardsRequest(Shard& sentinel_shard, Credentials credentials, std::string shard_group_name);
 
     Shard& sentinel_shard;
     CmdArgs command;
 
-    Password password;
+    Credentials credentials;
     std::string shard_group_name;
 };
 
@@ -37,7 +37,7 @@ using ClusterShardsResponse = std::vector<ClusterShardsShard>;
 class GetClusterShardsContext {
 public:
     GetClusterShardsContext(
-        Password password,
+        Credentials credentials,
         std::shared_ptr<const std::vector<std::string>> shard_names,
         std::string shard_group_name,
         ProcessGetClusterHostsRequestCb&& callback,
@@ -57,7 +57,7 @@ private:
     void ProcessResponsesOnce();
 
     const std::string shard_group_name_;
-    const Password password_;
+    const Credentials credentials_;
     const std::shared_ptr<const std::vector<std::string>> shard_names_;
     const ProcessGetClusterHostsRequestCb callback_;
     std::atomic<size_t> response_got_{0};

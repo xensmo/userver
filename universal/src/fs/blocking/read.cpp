@@ -33,13 +33,15 @@ std::string ReadFileContents(utils::zstring_view path) {
     return buffer.str();
 }
 
-bool FileExists(const std::string& path) { return boost::filesystem::exists(path); }
+bool FileExists(utils::zstring_view path) { return boost::filesystem::exists(path.c_str()); }
 
-boost::filesystem::file_type GetFileType(const std::string& path) { return boost::filesystem::status(path).type(); }
+boost::filesystem::file_type GetFileType(utils::zstring_view path) {
+    return boost::filesystem::status(path.c_str()).type();
+}
 
-FileInfoWithDataMap ReadRecursiveFilesInfoWithData(const std::string& path, utils::Flags<SettingsReadFile> flags) {
+FileInfoWithDataMap ReadRecursiveFilesInfoWithData(utils::zstring_view path, utils::Flags<SettingsReadFile> flags) {
     FileInfoWithDataMap data{};
-    for (auto it = boost::filesystem::recursive_directory_iterator(path);
+    for (auto it = boost::filesystem::recursive_directory_iterator(path.c_str());
          it != boost::filesystem::recursive_directory_iterator();
          ++it)
     {

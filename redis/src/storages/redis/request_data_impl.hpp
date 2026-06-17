@@ -4,6 +4,7 @@
 #include <string>
 
 #include <storages/redis/impl/request.hpp>
+#include <userver/compiler/impl/lifetime.hpp>
 #include <userver/storages/redis/base.hpp>
 #include <userver/utils/assert.hpp>
 
@@ -57,8 +58,8 @@ public:
 
     ReplyPtr GetRaw() override { return GetReply(); }
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept override {
-        return request_.TryGetContextAccessor();
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND override {
+        return request_.GetAwaitableToken();
     }
 
 private:
@@ -96,9 +97,9 @@ public:
         return {};
     }
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept override {
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND override {
         UASSERT_MSG(false, "Not implemented");
-        return nullptr;
+        return engine::AwaitableToken{};
     }
 
 private:
@@ -120,9 +121,9 @@ public:
 
     ReplyPtr GetRaw() override { return std::move(reply_); }
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept override {
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND override {
         UASSERT_MSG(false, "Not implemented");
-        return nullptr;
+        return engine::AwaitableToken{};
     }
 
 private:

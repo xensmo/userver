@@ -10,7 +10,6 @@
 namespace ns {
 
 struct String {
-  static constexpr USERVER_NAMESPACE::utils::StringLiteral kFieldNamefoo = "foo";
   std::optional<std::string> foo{};
 };
 
@@ -26,8 +25,13 @@ String Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::form
 
 String FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<String>);
 
+std::string ToJsonString(const String& value);
+
 USERVER_NAMESPACE::formats::json::Value Serialize(
     const String& value, USERVER_NAMESPACE::formats::serialize::To<USERVER_NAMESPACE::formats::json::Value>);
+
+void WriteToStream(const String& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw, bool hide_brackets = false,
+                   std::string_view hide_field_name = {});
 
 }  // namespace ns
 

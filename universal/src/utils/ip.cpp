@@ -42,7 +42,7 @@ std::string AddressToString(const AddressBase<N>& address) {
 }
 
 template <IsAddressType Address>
-NetworkBase<Address> NetworkFromString(const std::string& str) {
+NetworkBase<Address> NetworkFromString(std::string_view str) {
     const auto throw_exception = []() {
         throw std::invalid_argument(fmt::format(
             "Error while converting {} to string",
@@ -57,7 +57,7 @@ NetworkBase<Address> NetworkFromString(const std::string& str) {
     if (end != std::string::npos) {
         throw_exception();
     }
-    const auto addr = AddressFromString<Address::kAddressSize>(str.substr(0, pos));
+    const auto addr = AddressFromString<Address::kAddressSize>(std::string{str.substr(0, pos)});
     const int prefix_len = utils::FromString<int>(str.substr(pos + 1));
     if (prefix_len < 0 || prefix_len > NetworkBase<Address>::kMaximumPrefixLength) {
         throw_exception();
@@ -145,7 +145,7 @@ std::string NetworkV4ToString(const NetworkV4& network) {
     return fmt::format("{}/{}", AddressV4ToString(network.GetAddress()), network.GetPrefixLength());
 }
 
-NetworkV4 NetworkV4FromString(const std::string& str) { return NetworkFromString<AddressV4>(str); }
+NetworkV4 NetworkV4FromString(std::string_view str) { return NetworkFromString<AddressV4>(str); }
 
 NetworkV4 TransformToCidrFormat(NetworkV4 network) { return TransformToCidrNetwork<AddressV4>(network); }
 
@@ -153,7 +153,7 @@ std::string NetworkV6ToString(const NetworkV6& network) {
     return fmt::format("{}/{}", AddressV6ToString(network.GetAddress()), network.GetPrefixLength());
 }
 
-NetworkV6 NetworkV6FromString(const std::string& str) { return NetworkFromString<AddressV6>(str); }
+NetworkV6 NetworkV6FromString(std::string_view str) { return NetworkFromString<AddressV6>(str); }
 
 NetworkV6 TransformToCidrFormat(NetworkV6 network) { return TransformToCidrNetwork<AddressV6>(network); }
 

@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cerrno>
 
+#include <userver/compiler/impl/lifetime.hpp>
 #include <userver/engine/io/exception.hpp>
 #include <userver/engine/io/fd_control_holder.hpp>
 #include <userver/engine/io/fd_poller.hpp>
@@ -99,7 +100,9 @@ public:
         const Context&... context
     );
 
-    engine::impl::ContextAccessor* TryGetContextAccessor() noexcept { return poller_.TryGetContextAccessor(); }
+    engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND {
+        return poller_.GetAwaitableToken();
+    }
 
 private:
     friend class FdControl;

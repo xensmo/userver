@@ -33,13 +33,13 @@ public:
     void Destroy() noexcept override { delete this; }
 
 private:
-    CallbackType callback_;
+    [[no_unique_address]] CallbackType callback_;
 };
 
-// If ContextAccessor is already ready, then calls `callback` immediately.
+// If Awaitable is already ready, then calls `callback` immediately.
 // Callback should be able to run outside a coroutine.
 template <typename CallbackType>
-void AppendNonCancellableAwaiter(ContextAccessor& awaitable, CallbackType&& callback) {
+void AppendNonCancellableAwaiter(AwaitableBase& awaitable, CallbackType&& callback) {
     using AwaiterType = NonCancellableAwaiter<std::remove_const_t<std::remove_reference_t<CallbackType>>>;
     boost::intrusive_ptr<Awaiter> awaiter{new AwaiterType(std::forward<CallbackType>(callback)), /*add_ref=*/false};
     awaitable.TryAppendAwaiter(awaiter, 0);

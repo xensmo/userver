@@ -38,6 +38,8 @@ public:
 
     ydb::TopicClient& GetTopicClient() { return *topic_client_; }
 
+    std::shared_ptr<ydb::TopicClient> GetTopicClientPtr() { return topic_client_; }
+
     NYdb::NTopic::TTopicClient& GetNativeTopicClient() { return topic_client_->GetNativeTopicClient(); }
 
     ydb::FederatedTopicClient& GetFederatedTopicClient() { return *federated_topic_client_; }

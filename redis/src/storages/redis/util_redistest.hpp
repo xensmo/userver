@@ -59,6 +59,7 @@ public:
         }
 
         json_supported_ = ProbeJsonSupport();
+        hash_expire_supported_ = ProbeHashExpireSupport();
     }
 
     bool CheckRedisVersion(Version since) const {
@@ -84,6 +85,8 @@ public:
 
     bool HasJsonCommands() const { return json_supported_; }
 
+    bool HasHashExpireCommands() const { return hash_expire_supported_; }
+
     static std::string SkipMsgByVersion(std::string_view command, Version version) {
         return fmt::format("{} command available since {}.{}.{}", command, version.major, version.minor, version.patch);
     }
@@ -95,9 +98,30 @@ public:
         );
     }
 
+    static std::string SkipMsgHashExpireUnsupported(std::string_view command) {
+        return fmt::format(
+            "{} requires hash field expiration commands (Redis 8+ / Valkey 9+) to be available on the server",
+            command
+        );
+    }
+
 private:
     bool ProbeJsonSupport() {
         auto reply = this->GetSentinel()->MakeRequest({"command", "info", "json.set"}, "none", false).Get();
+        if (!reply->IsOk() || !reply->data.IsArray()) {
+            return false;
+        }
+        const auto arr = reply->data.GetArray();
+        // COMMAND INFO returns array of size N (one entry per requested command)
+        // nil when command is unknown, and a non-empty array describing the command otherwise
+        if (arr.empty()) {
+            return false;
+        }
+        return !arr[0].IsNil();
+    }
+
+    bool ProbeHashExpireSupport() {
+        auto reply = this->GetSentinel()->MakeRequest({"command", "info", "hexpire"}, "none", false).Get();
         if (!reply->IsOk() || !reply->data.IsArray()) {
             return false;
         }
@@ -129,6 +153,7 @@ private:
     std::optional<Version> valkey_version_;
     ServerKind server_kind_{ServerKind::kRedis};
     bool json_supported_{false};
+    bool hash_expire_supported_{false};
 };
 
 using BaseRedisClientTest = BaseRedisClientTestEx<storages::redis::utest::impl::RedisConnectionState>;

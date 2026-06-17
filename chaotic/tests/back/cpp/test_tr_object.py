@@ -21,7 +21,7 @@ def test_empty(simple_gen):
             user_cpp_type=None,
             fields={},
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 def test_optional_nullable(simple_gen):
@@ -60,7 +60,7 @@ def test_additional_properties_simple(simple_gen, cpp_primitive_type):
                 raw_cpp_type_str='int',
             ),
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 @pytest.mark.skip(reason='see comment in translator.py: _gen_field()')
@@ -91,7 +91,7 @@ def test_field_external(simple_gen, cpp_primitive_type):
                 ),
             },
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 def test_field_with_default(simple_gen, cpp_primitive_type):
@@ -122,13 +122,17 @@ def test_field_with_default(simple_gen, cpp_primitive_type):
                 ),
             },
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 def test_field_escaping(simple_gen, cpp_primitive_type):
     schemas = simple_gen({
         'type': 'object',
-        'properties': {'🙂🔥': {'type': 'integer', 'default': 1}},
+        'properties': {
+            '🙂🔥': {'type': 'integer', 'default': 1},
+            'new': {'type': 'integer', 'default': 1},
+            'with#white space!': {'type': 'integer', 'default': 1},
+        },
         'additionalProperties': False,
     })
     assert schemas == {
@@ -151,9 +155,33 @@ def test_field_escaping(simple_gen, cpp_primitive_type):
                         default=1,
                     ),
                 ),
+                'new': cpp_types.CppStructField(
+                    name='new_',
+                    required=False,
+                    schema=cpp_primitive_type(
+                        validators=cpp_types.CppPrimitiveValidator(
+                            namespace='::type',
+                            prefix='New',
+                        ),
+                        raw_cpp_type_str='int',
+                        default=1,
+                    ),
+                ),
+                'with#white space!': cpp_types.CppStructField(
+                    name='with_white_space_',
+                    required=False,
+                    schema=cpp_primitive_type(
+                        validators=cpp_types.CppPrimitiveValidator(
+                            namespace='::type',
+                            prefix='With_White_Space_',
+                        ),
+                        raw_cpp_type_str='int',
+                        default=1,
+                    ),
+                ),
             },
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 def test_field_inplace(simple_gen, cpp_primitive_type):
@@ -184,7 +212,7 @@ def test_field_inplace(simple_gen, cpp_primitive_type):
                 ),
             },
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 def test_field_is_struct(simple_gen):
@@ -222,7 +250,7 @@ def test_field_is_struct(simple_gen):
                 ),
             },
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 def test_field_required(simple_gen):
@@ -257,7 +285,7 @@ def test_field_required(simple_gen):
                 ),
             },
         ),
-    }
+    }, f'Generated schema is: {schemas}'
 
 
 def test_extra_member_nonboolean(simple_gen):

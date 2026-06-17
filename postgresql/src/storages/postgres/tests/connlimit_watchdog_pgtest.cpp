@@ -114,8 +114,6 @@ public:
 
     pgd::ClusterImpl& GetCluster() { return cluster_; }
 
-    void SetUp() override { scope_.Set(utils::impl::kPgConnlimitWatchdogFallbackExperiment, true); }
-
 private:
     void ClearTable() {
         auto t = GetTransaction(cluster_);
@@ -127,27 +125,6 @@ private:
     pgd::ClusterImpl cluster_;
     utils::impl::UserverExperimentsScope scope_;
 };
-
-class WatchdogWithNewConnectionsReservation : public Watchdog {
-public:
-    void SetUp() override {
-        Watchdog::SetUp();
-        scope_.Set(utils::impl::kPgConnlimitWatchdogReservationExperiment, true);
-    }
-
-private:
-    utils::impl::UserverExperimentsScope scope_;
-};
-
-UTEST_F(Watchdog, Basic) {
-    EXPECT_EQ(kTestsuiteConnlimit, DoStepV1());
-
-    // There are two hosts after 'StepV2'.
-    EXPECT_EQ(kTestsuiteConnlimit / 2, DoStepV2());
-
-    // There are two hosts after 'StepV2'.
-    EXPECT_EQ(kTestsuiteConnlimit / 2, DoStepV1());
-}
 
 template <class T>
 concept HasNewVersion = requires { &T::StepV3; };
@@ -255,7 +232,7 @@ UTEST_F(Watchdog, FallbackConnlimit) {
     ASSERT_EQ(kFallbackConnlimit, watchdog.GetConnlimit());
 }
 
-UTEST_F(WatchdogWithNewConnectionsReservation, CheckLimit) {
+UTEST_F(Watchdog, CheckLimit) {
     constexpr auto
         kConnectionsLimit = kTestsuiteServerConnlimit - static_cast<std::size_t>(kTestsuiteServerConnlimit * 0.05);
 

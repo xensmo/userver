@@ -1,3 +1,4 @@
+
 #include <userver/chaotic/type_bundle_cpp.hpp>
 
 #include "enum.hpp"
@@ -10,6 +11,12 @@ Enum FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To
   return USERVER_NAMESPACE::formats::json::parser::ParseToType<
       Enum, USERVER_NAMESPACE::chaotic::sax::impl::RemoveUserTypeParser<USERVER_NAMESPACE::chaotic::sax::Parser<Enum>>>(
       json);
+}
+
+std::string ToJsonString(const Enum& value) {
+  USERVER_NAMESPACE::formats::json::StringBuilder builder;
+  WriteToStream(value, builder);
+  return builder.GetString();
 }
 
 bool operator==(const Enum& lhs, const Enum& rhs) { return lhs.foo == rhs.foo && true; }
@@ -78,6 +85,26 @@ USERVER_NAMESPACE::formats::json::Value Serialize(
   }
 
   return vb.ExtractValue();
+}
+
+void WriteToStream([[maybe_unused]] const Enum::Foo& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw) {
+  const auto result = k__ns__Enum__Foo_Mapping.TryFindByFirst(value);
+  if (result.has_value()) {
+    WriteToStream(*result, sw);
+  } else {
+    throw std::runtime_error("Bad enum value");
+  }
+}
+
+void WriteToStream([[maybe_unused]] const Enum& value, USERVER_NAMESPACE::formats::json::StringBuilder& sw,
+                   [[maybe_unused]] bool hide_brackets, [[maybe_unused]] std::string_view hide_field_name) {
+  std::optional<USERVER_NAMESPACE::formats::json::StringBuilder::ObjectGuard> guard;
+  if (!hide_brackets) guard.emplace(sw);
+
+  if (value.foo && hide_field_name != "foo") {
+    sw.Key("foo");
+    WriteToStream(USERVER_NAMESPACE::chaotic::Primitive<::ns::Enum::Foo>{*value.foo}, sw);
+  }
 }
 
 std::string ToString(Enum::Foo value) {

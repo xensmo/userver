@@ -37,13 +37,13 @@ void GenericWaitList::GetSignalOrAppend(boost::intrusive_ptr<Awaiter>& awaiter, 
 }
 
 // noexcept: awaiters_ are never valueless_by_exception
-void GenericWaitList::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
-    utils::Visit(
+boost::intrusive_ptr<Awaiter> GenericWaitList::Remove(Awaiter& awaiter, std::uintptr_t context) noexcept {
+    return utils::Visit(
         awaiters_,  //
-        [&awaiter, context](WaitListLight& ws) { ws.Remove(awaiter, context); },
+        [&awaiter, context](WaitListLight& ws) { return ws.Remove(awaiter, context); },
         [&awaiter, context](WaitListAndSignal& ws) {
             WaitList::Lock lock{ws.wl};
-            ws.wl.Remove(lock, awaiter, context);
+            return ws.wl.Remove(lock, awaiter, context);
         }
     );
 }

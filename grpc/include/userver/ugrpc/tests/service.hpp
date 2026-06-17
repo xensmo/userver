@@ -4,7 +4,6 @@
 /// @brief Base classes for testing and benchmarking ugrpc service
 /// implementations in a simplified gRPC environment.
 
-#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -116,50 +115,35 @@ server::Middlewares GetDefaultServerMiddlewares();
 /// @brief return list of default client middleware factories for tests
 client::Middlewares GetDefaultClientMiddlewares();
 
+/// @brief Options for @ref ugrpc::tests::Service. Use designated initialization to construct.
+struct ServiceConfigs {
+    server::ServerConfig server_config{};
+    client::ClientFactorySettings client_factory_settings{};
+    server::Middlewares server_middlewares{GetDefaultServerMiddlewares()};
+    client::Middlewares client_middlewares{GetDefaultClientMiddlewares()};
+};
+
 /// @brief Sets up a mini gRPC server using a single service implementation.
 /// @see @ref ugrpc::tests::ServiceBase
 template <typename GrpcService>
 class Service : public ServiceBase {
 public:
-    /// Default-constructs the service.
-    Service()
-        : Service(std::in_place)
-    {}
-
     /// Passes @a args to the service.
     template <typename... Args>
-    explicit Service(std::in_place_t, Args&&... args)
-        : Service(server::ServerConfig{}, std::in_place, std::forward<Args>(args)...)
+    explicit Service(std::in_place_t = std::in_place, Args&&... args)
+        : Service(ServiceConfigs{}, std::in_place, std::forward<Args>(args)...)
     {}
 
-    /// Passes @a args to the service, @a server_config to @ref ServiceBase::ServiceBase.
+    /// Passes @a args to the service, sets up the server and client according to @a configs.
     template <typename... Args>
-    explicit Service(server::ServerConfig&& server_config, std::in_place_t = std::in_place, Args&&... args)
-        : Service(
-              std::move(server_config),
-              GetDefaultServerMiddlewares(),
-              GetDefaultClientMiddlewares(),
-              std::in_place,
-              std::forward<Args>(args)...
-          )
-    {}
-
-    /// Passes @a args to the service, @a server_config to @ref ServiceBase::ServiceBase, sets custom middlewares.
-    template <typename... Args>
-    Service(
-        server::ServerConfig&& server_config,
-        server::Middlewares server_middlewares,
-        client::Middlewares client_middlewares,
-        std::in_place_t = std::in_place,
-        Args&&... args
-    )
-        : ServiceBase(std::move(server_config)),
+    explicit Service(ServiceConfigs&& configs, std::in_place_t = std::in_place, Args&&... args)
+        : ServiceBase(std::move(configs.server_config)),
           service_(std::forward<Args>(args)...)
     {
-        SetServerMiddlewares(std::move(server_middlewares));
-        SetClientMiddlewares(std::move(client_middlewares));
+        SetServerMiddlewares(std::move(configs.server_middlewares));
+        SetClientMiddlewares(std::move(configs.client_middlewares));
         RegisterService(service_);
-        StartServer();
+        StartServer(std::move(configs.client_factory_settings));
     }
 
     ~Service() override { StopServer(); }

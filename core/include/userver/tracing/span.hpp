@@ -147,13 +147,13 @@ public:
 
     /// Returns total time elapsed for a certain scope of this span.
     /// If there is no record for the scope, returns 0.
-    ScopeTime::Duration GetTotalDuration(const std::string& scope_name) const;
+    ScopeTime::Duration GetTotalDuration(std::string_view scope_name) const;
 
     /// Returns total time elapsed for a certain scope of this span.
     /// If there is no record for the scope, returns 0.
     ///
     /// Prefer using Span::GetTotalDuration()
-    ScopeTime::DurationMillis GetTotalElapsedTime(const std::string& scope_name) const;
+    ScopeTime::DurationMillis GetTotalElapsedTime(std::string_view scope_name) const;
 
     /// Add a tag that is used on each logging in this Span and all
     /// future children.
@@ -257,6 +257,21 @@ public:
     /// @returns true if this span would be logged with the current local and
     /// global log levels to the default logger.
     bool ShouldLogDefault() const noexcept;
+
+    /// @returns true if this span is sampled. Defaults to true for root spans
+    /// and when the incoming sampled status is unknown. Unsampled spans are not
+    /// written to the tracing system. Inherited by child spans.
+    bool IsSampled() const noexcept;
+
+    /// Mark this span and all future child spans as sampled or unsampled.
+    /// Unsampled spans are not written to the tracing system.
+    ///
+    /// Called automatically by userver handler implementations when OTel trace
+    /// sampling is enabled (see `otel-trace-sampling-enabled` in
+    /// tracing::DefaultTracingManagerLocator). Can
+    /// also be called manually in periodics and other primary sources of a
+    /// request chain to control the fraction of traces written.
+    void SetSampled(bool sampled) noexcept;
 
     /// Detach the Span from current engine::Task so it is not
     /// returned by CurrentSpan() any more.

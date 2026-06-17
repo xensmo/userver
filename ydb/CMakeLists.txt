@@ -23,9 +23,10 @@ userver_module(
     LINK_LIBRARIES ${YDB_LIBRARIES}
     INCLUDE_DIRS ${ydb-cpp-sdk_INCLUDE_DIRS}
     UTEST_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+    UTEST_LINK_LIBRARIES userver-ydb-utest
     GENERATE_DYNAMIC_CONFIGS
     DEPENDS core
-    EMBED_FILES src/ydb/component.yaml src/ydb/dist_lock/component_base.yaml
+    EMBED_FILES src/ydb/component.yaml src/ydb/dist_lock/component_base.yaml src/ydb/topic_writer_component.yaml
 )
 
 _userver_directory_install(
@@ -33,6 +34,8 @@ _userver_directory_install(
     FILES "${USERVER_ROOT_DIR}/cmake/SetupYdbCPPSDK.cmake"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/userver"
 )
+
+add_subdirectory(utest)
 
 if(USERVER_BUILD_TESTS)
     add_subdirectory(functional_tests)

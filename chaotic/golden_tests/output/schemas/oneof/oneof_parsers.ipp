@@ -22,11 +22,12 @@ OneOf Parse(Value value, USERVER_NAMESPACE::formats::parse::To<OneOf>) {
   value.CheckNotMissing();
   value.CheckObjectOrNull();
 
-  OneOf res;
-
-  res.foo = value["foo"]
-                .template As<std::optional<USERVER_NAMESPACE::chaotic::Variant<
-                    USERVER_NAMESPACE::chaotic::Primitive<int>, USERVER_NAMESPACE::chaotic::Primitive<std::string>>>>();
+  OneOf res{
+      .foo =
+          value["foo"]
+              .template As<std::optional<USERVER_NAMESPACE::chaotic::Variant<
+                  USERVER_NAMESPACE::chaotic::Primitive<int>, USERVER_NAMESPACE::chaotic::Primitive<std::string>>>>(),
+  };
 
   USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__OneOf_PropertiesNames);
 

@@ -61,7 +61,7 @@ public:
     void Append(Lock& lock, boost::intrusive_ptr<impl::Awaiter> awaiter, std::uintptr_t context) noexcept;
 
     /// @brief Remove the task from the `WaitList` without notifying
-    void Remove(Lock& lock, impl::Awaiter& awaiter, std::uintptr_t context) noexcept;
+    boost::intrusive_ptr<impl::Awaiter> Remove(Lock& lock, impl::Awaiter& awaiter, std::uintptr_t context) noexcept;
 
     void NotifyOne(Lock&);
     void NotifyAll(Lock&);

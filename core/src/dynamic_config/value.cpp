@@ -32,7 +32,11 @@ void DocsMap::Set(std::string name, formats::json::Value obj) {
     docs_.insert_or_assign(std::move(name), std::move(obj));
 }
 
-void DocsMap::Remove(const std::string& name) { docs_.erase(name); }
+void DocsMap::Remove(std::string_view name) {
+    if (auto it = docs_.find(name); it != docs_.end()) {
+        docs_.erase(it);
+    }
+}
 
 void DocsMap::Parse(std::string_view json_string, bool empty_ok) {
     Parse(formats::json::FromString(json_string), empty_ok);

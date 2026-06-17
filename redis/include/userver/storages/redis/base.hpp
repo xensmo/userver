@@ -19,12 +19,22 @@ namespace storages::redis {
 
 using Password = utils::NonLoggable<class PasswordTag, std::string>;
 
+/// @brief Redis node authentication credentials (ACL-aware).
+///
+/// When `username` is empty, the legacy `AUTH <password>` command is used.
+/// When `username` is non-empty, the ACL `AUTH <username> <password>` command
+/// is used (requires Redis 6+).
+struct Credentials {
+    std::string username;
+    Password password;
+};
+
 enum class ConnectionSecurity { kNone, kTLS };
 
 struct ConnectionInfo {
     std::string host = "localhost";
     int port = 26379;
-    Password password;
+    Credentials credentials;
     bool read_only = false;
     ConnectionSecurity connection_security = ConnectionSecurity::kNone;
     using HostVector = std::vector<std::string>;
@@ -34,14 +44,14 @@ struct ConnectionInfo {
     ConnectionInfo(
         std::string host,
         int port,
-        Password password,
+        Credentials credentials,
         bool read_only = false,
         ConnectionSecurity security = ConnectionSecurity::kNone,
         std::size_t db_index = 0
     )
         : host{std::move(host)},
           port{port},
-          password{std::move(password)},
+          credentials{std::move(credentials)},
           read_only{read_only},
           connection_security(security),
           database_index(db_index)

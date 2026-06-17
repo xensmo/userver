@@ -5,7 +5,8 @@
 
 #include <string>
 
-#include <userver/engine/impl/context_accessor.hpp>
+#include <userver/compiler/impl/lifetime.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/storages/redis/reply_fwd.hpp>
 #include <userver/storages/redis/reply_types.hpp>
 #include <userver/storages/redis/scan_tag.hpp>
@@ -32,7 +33,8 @@ public:
 
     virtual ReplyPtr GetRaw() = 0;
 
-    virtual engine::impl::ContextAccessor* TryGetContextAccessor() noexcept = 0;
+    /// Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    virtual engine::AwaitableToken GetAwaitableToken() noexcept USERVER_IMPL_LIFETIME_BOUND = 0;
 };
 
 template <ScanTag TScanTag>

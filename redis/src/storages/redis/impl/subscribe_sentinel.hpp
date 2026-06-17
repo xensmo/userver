@@ -22,7 +22,7 @@ public:
         const std::vector<ConnectionInfo>& conns,
         std::string shard_group_name,
         dynamic_config::Source dynamic_config_source,
-        const Password& password,
+        const Credentials& credentials,
         ConnectionSecurity connection_security,
         const testsuite::RedisControl& testsuite_redis_control,
         std::size_t database_index,

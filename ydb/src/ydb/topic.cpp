@@ -70,6 +70,27 @@ NYdb::NTopic::IWriteSession& TopicWriteSession::GetNativeTopicWriteSession() USE
     return *write_session_;
 }
 
+TopicProducer::TopicProducer(std::shared_ptr<NYdb::NTopic::IProducer> producer)
+    : producer_(std::move(producer))
+{
+    UASSERT(producer_);
+}
+
+NYdb::NTopic::TWriteResult TopicProducer::Write(NYdb::NTopic::TWriteMessage&& message) {
+    return producer_->Write(std::move(message));
+}
+
+NYdb::NTopic::TFlushResult TopicProducer::Flush(engine::Deadline deadline) {
+    return impl::GetFutureValue(producer_->Flush(), deadline);
+}
+
+NYdb::NTopic::TCloseResult TopicProducer::Close(std::chrono::milliseconds timeout) { return producer_->Close(timeout); }
+
+NYdb::NTopic::IProducer& TopicProducer::GetNativeTopicProducer() USERVER_IMPL_LIFETIME_BOUND {
+    UASSERT(producer_);
+    return *producer_;
+}
+
 TopicClient::TopicClient(std::shared_ptr<impl::Driver> driver, [[maybe_unused]] impl::TopicSettings settings)
     : driver_{std::move(driver)},
       // TODO: use shared thread pool executors from driver?
@@ -112,6 +133,10 @@ TopicReadSession TopicClient::CreateReadSession(const NYdb::NTopic::TReadSession
 
 TopicWriteSession TopicClient::CreateWriteSession(const NYdb::NTopic::TWriteSessionSettings& settings) {
     return TopicWriteSession{topic_client_->CreateWriteSession(settings)};
+}
+
+TopicProducer TopicClient::CreateProducer(const NYdb::NTopic::TProducerSettings& settings) {
+    return TopicProducer{topic_client_->CreateProducer(settings)};
 }
 
 NYdb::NTopic::TTopicClient& TopicClient::GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND {

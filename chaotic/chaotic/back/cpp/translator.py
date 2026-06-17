@@ -8,6 +8,7 @@ from typing import NoReturn
 
 import transliterate
 
+from chaotic import cpp_keywords
 from chaotic import cpp_names
 from chaotic import error
 from chaotic.back.cpp import type_name
@@ -259,6 +260,20 @@ class Generator:
             return '::' + namespace + '::' + name
         else:
             return '::' + name
+
+    def _gen_any_value(
+        self,
+        name: type_name.TypeName,
+        schema: types.AnyValue,
+    ) -> cpp_types.CppType:
+        return cpp_types.CppAnyValue(
+            json_schema=schema,
+            nullable=False,
+            raw_cpp_type=type_name.TypeName(
+                'USERVER_NAMESPACE::formats::json::Value',
+            ),
+            user_cpp_type=None,
+        )
 
     def _gen_boolean(
         self,
@@ -516,6 +531,14 @@ class Generator:
             if not initially_with_leading_underscore and name.startswith('_'):
                 name = name[1:]
 
+        if not name:
+            name = '_'
+
+        if name[0].isnumeric():
+            name = 'x' + name
+        elif cpp_keywords.is_cpp_keyword(name):
+            name = name + '_'
+
         return name
 
     def _gen_field(
@@ -729,7 +752,7 @@ class Generator:
         assert strict_parsing is not None
 
         return cpp_types.CppStruct(
-            raw_cpp_type=name,
+            raw_cpp_type=name.parent().joinns(self._normalize_name(name.in_local_scope())),
             user_cpp_type=user_cpp_type,
             json_schema=schema,
             nullable=schema.nullable,
@@ -737,6 +760,23 @@ class Generator:
             extra_type=extra_type,
             autodiscover_default_dict=self._config.autodiscover_default_dict,
             strict_parsing=strict_parsing,
+        )
+
+    def _gen_const(
+        self,
+        name: type_name.TypeName,
+        schema: types.ConstSchema,
+    ) -> cpp_types.CppType:
+        cpp_type = types.CONST_TYPE_TO_CPP[schema.const_type]
+        return cpp_types.CppConstType(
+            json_schema=schema,
+            nullable=False,
+            raw_cpp_type=name,
+            user_cpp_type=None,
+            const_value=schema.const,
+            cpp_type=cpp_type,
+            prefix=name.in_local_scope(),
+            namespace=name.namespace(),
         )
 
     def _gen_ref(
@@ -765,10 +805,12 @@ class Generator:
 
 # pylint: disable=protected-access
 SCHEMA_GENERATORS = {
+    types.AnyValue: Generator._gen_any_value,
     types.Boolean: Generator._gen_boolean,
     types.Integer: Generator._gen_integer,
     types.Number: Generator._gen_number,
     types.String: Generator._gen_string,
+    types.ConstSchema: Generator._gen_const,
     types.SchemaObject: Generator._gen_object,
     types.Array: Generator._gen_array,
     types.Ref: Generator._gen_ref,

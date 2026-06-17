@@ -9,38 +9,37 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine::impl {
 
+// The consumer is not allowed to leave before being notified, thus this is only a WeakAwaitable.
 template <auto TryStartWaiting>
-class AsyncFlatCombiningQueue::WaitStrategy final : public impl::WaitStrategy {
+class AsyncFlatCombiningQueue::Awaitable final : public impl::WeakAwaitable {
 public:
-    WaitStrategy(AsyncFlatCombiningQueue& queue, TaskContext& context)
-        : queue_(queue),
-          context_(context)
-    {
-        // No deadlines or cancellations are allowed, because else this task may
-        // walk away and be destroyed, and the notification will be sent to a dead
-        // task.
-        UASSERT(!context_.IsCancellable());
-    }
+    explicit Awaitable(AsyncFlatCombiningQueue& queue)
+        : queue_(queue)
+    {}
 
-    EarlyNotify SetupWakeups() override {
+    bool IsReady() const noexcept override { return false; }
+
+    void TryAppendAwaiter(boost::intrusive_ptr<Awaiter>& awaiter, [[maybe_unused]] std::uintptr_t context) override {
         if (std::invoke(TryStartWaiting, queue_)) {
             // We will be woken up if and only if our notifier_node_ is seen by
             // another thread or task. No deadlines or cancellations are allowed,
             // otherwise another consumer may see notifier_node_ later and wake up
             // a dead task.
-            return EarlyNotify{false};
-        } else {
-            return EarlyNotify{true};
+            awaiter = nullptr;
         }
     }
 
-    void DisableWakeups() noexcept override {
+    boost::intrusive_ptr<Awaiter> RemoveAwaiter(
+        [[maybe_unused]] Awaiter& awaiter,
+        [[maybe_unused]] std::uintptr_t context
+    ) noexcept override {
+        // The notification happened through consuming_task_context_, but we'll pretend that the awaitable did it.
         // We won't be notified anymore, since we are the sole consumer now.
+        return nullptr;
     }
 
 private:
     AsyncFlatCombiningQueue& queue_;
-    TaskContext& context_;
 };
 
 AsyncFlatCombiningQueue::Consumer::Consumer(AsyncFlatCombiningQueue& queue)
@@ -146,9 +145,12 @@ void AsyncFlatCombiningQueue::Wait() noexcept {
     if (consuming_task_context_ != &current) {
         consuming_task_context_ = &current;
     }
+    // No deadlines or cancellations are allowed, otherwise this task may walk away and be destroyed,
+    // and the notification will be sent to a dead task.
+    UASSERT(!current.IsCancellable());
 
-    WaitStrategy<TryStartWaiting> wait_strategy{*this, current};
-    [[maybe_unused]] const auto wakeup_source = current.Sleep(wait_strategy, Deadline{});
+    Awaitable<TryStartWaiting> awaitable{*this};
+    [[maybe_unused]] const auto wakeup_source = current.Sleep(awaitable, Deadline{});
     UASSERT(wakeup_source == TaskContext::WakeupSource::kNotify);
 
     UASSERT(consuming_task_context_ == &current);

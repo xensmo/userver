@@ -15,6 +15,14 @@ const storages::redis::CommandControl kDefaultCc{
     1,
 };
 
+/// Use this CommandControl for read commands that follow a write in tests,
+/// to avoid replication lag causing flaky failures.
+const storages::redis::CommandControl kMasterCC = [] {
+    auto cc = kDefaultCc;
+    cc.force_request_to_master = true;
+    return cc;
+}();
+
 struct FanId {
     std::string id;
     std::string name;
@@ -72,14 +80,14 @@ UTEST_F(RedisClusterClientTest, JsonSetGet) {
 
     // JSON.GET root path — returns full document
     {
-        auto reply = client->JsonGet(fan.id, kDefaultCc).Get();
+        auto reply = client->JsonGet(fan.id, kMasterCC).Get();
         ASSERT_TRUE(reply);
         EXPECT_EQ(reply.value(), fan_json);
     }
 
     // JSON.GET single JSONPath - returns array of matches
     {
-        auto reply = client->JsonGet(fan.id, "$.nickname", kDefaultCc).Get();
+        auto reply = client->JsonGet(fan.id, "$.nickname", kMasterCC).Get();
         ASSERT_TRUE(reply);
         formats::json::ValueBuilder expected;
         expected.PushBack(std::string{fan.nickname});
@@ -89,7 +97,7 @@ UTEST_F(RedisClusterClientTest, JsonSetGet) {
     // JSON.GET multiple JSONPaths — returns an object keyed by the path
     // expression itself, with each value being an array of matches
     {
-        auto reply = client->JsonGet(fan.id, std::vector<std::string>{"$.name", "$.fc"}, kDefaultCc).Get();
+        auto reply = client->JsonGet(fan.id, std::vector<std::string>{"$.name", "$.fc"}, kMasterCC).Get();
         ASSERT_TRUE(reply);
 
         formats::json::ValueBuilder expected;
@@ -107,7 +115,7 @@ UTEST_F(RedisClusterClientTest, JsonSetGet) {
 
     // Missing key — std::nullopt empty
     {
-        auto reply = client->JsonGet("{fan_id}:nobody", kDefaultCc).Get();
+        auto reply = client->JsonGet("{fan_id}:nobody", kMasterCC).Get();
         EXPECT_FALSE(reply.has_value());
     }
 }
@@ -137,7 +145,7 @@ UTEST_F(RedisClusterClientTest, JsonSetIfNotExist) {
 
     // The original profile must survive
     {
-        auto reply = client->JsonGet(fan.id, kDefaultCc).Get();
+        auto reply = client->JsonGet(fan.id, kMasterCC).Get();
         ASSERT_TRUE(reply);
         EXPECT_EQ(reply.value(), original_json);
     }
@@ -169,7 +177,7 @@ UTEST_F(RedisClusterClientTest, JsonSetIfExist) {
     }
 
     {
-        auto reply = client->JsonGet(fan.id, kDefaultCc).Get();
+        auto reply = client->JsonGet(fan.id, kMasterCC).Get();
         ASSERT_TRUE(reply);
         EXPECT_EQ(reply.value()["nickname"].As<std::string>(), kNikita.nickname);
         EXPECT_EQ(reply.value()["fc"].As<std::string>(), kNikita.football_club);
@@ -202,7 +210,7 @@ UTEST_F(RedisClusterClientTest, JsonMgetMset) {
             keys.push_back(fan.id);
         }
 
-        auto reply = client->JsonMget(keys, "$.fc", kDefaultCc).Get();
+        auto reply = client->JsonMget(keys, "$.fc", kMasterCC).Get();
         ASSERT_EQ(reply.size(), fans.size());
 
         for (size_t i = 0; i < fans.size(); ++i) {
@@ -216,7 +224,7 @@ UTEST_F(RedisClusterClientTest, JsonMgetMset) {
 
     // JSON.MGET with no keys — sanity check for empty input
     {
-        auto reply = client->JsonMget(std::vector<std::string>{}, "$", kDefaultCc).Get();
+        auto reply = client->JsonMget(std::vector<std::string>{}, "$", kMasterCC).Get();
         EXPECT_TRUE(reply.empty());
     }
 }

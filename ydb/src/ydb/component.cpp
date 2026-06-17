@@ -10,6 +10,7 @@
 #include <userver/components/statistics_storage.hpp>
 #include <userver/dynamic_config/storage/component.hpp>
 #include <userver/engine/async.hpp>
+#include <userver/logging/log.hpp>
 #include <userver/storages/secdist/component.hpp>
 #include <userver/utils/algo.hpp>
 #include <userver/utils/retry_budget.hpp>
@@ -27,6 +28,7 @@
 #include <ydb/impl/secdist.hpp>
 #include <ydb/impl/stats.hpp>
 
+#include <dynamic_config/variables/YDB_DATABASE_ROUTING.hpp>
 #include <dynamic_config/variables/YDB_RETRY_BUDGET.hpp>
 
 // YDB headers leak `ARCADIA_ROOT` macro, so we use __has_include()
@@ -142,7 +144,13 @@ YdbComponent::YdbComponent(const components::ComponentConfig& config, const comp
         WriteStatistics(writer);
     });
 
-    config_subscription_ = config_.UpdateAndListen(this, "ydb", &YdbComponent::OnConfigUpdate);
+    config_subscription_ = config_.UpdateAndListen(
+        this,
+        "ydb",
+        &YdbComponent::OnConfigUpdate,
+        ::dynamic_config::YDB_RETRY_BUDGET,
+        ::dynamic_config::YDB_DATABASE_ROUTING
+    );
 }
 
 YdbComponent::~YdbComponent() = default;
@@ -190,6 +198,26 @@ void YdbComponent::OnConfigUpdate(const dynamic_config::Snapshot& cfg) {
             static_cast<float>(settings.token_ratio),
             settings.enabled,
         });
+    }
+
+    // Runtime database routing (YDB_DATABASE_ROUTING): redirect a logical
+    // database name to another configured database. Applied to every database
+    // on each update, so removing a route reverts to its own connection.
+    const auto& routing = cfg[::dynamic_config::YDB_DATABASE_ROUTING].extra;
+    for (auto& [dbname, database] : databases_) {
+        const auto route_it = routing.find(dbname);
+        const std::string& target = route_it != routing.end() ? route_it->second : dbname;
+
+        const auto target_it = databases_.find(target);
+        if (target_it == databases_.end()) {
+            LOG_WARNING()
+                << "ydb database routing: target '" << target << "' for database '" << dbname
+                << "' is not configured; keeping its own connection";
+            database.table_client->SwitchConnection(database.table_client->GetOwnConnection());
+            continue;
+        }
+
+        database.table_client->SwitchConnection(target_it->second.table_client->GetOwnConnection());
     }
 }
 

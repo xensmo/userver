@@ -38,8 +38,7 @@ FutureStatus MultiConsumerEvent::WaitUntil(Deadline deadline) {
         return FutureStatus::kReady;
     }
     impl::TaskContext& current = current_task::GetCurrentTaskContext();
-    impl::FutureWaitStrategy wait_strategy{*this, current};
-    const auto wakeup_source = current.Sleep(wait_strategy, deadline);
+    const auto wakeup_source = current.Sleep(*this, deadline);
 
     // There are no spurious wakeups, because the event is single-use: if a task
     // has ever been notified by this MultiConsumerEvent, then the task will find
@@ -75,9 +74,10 @@ void MultiConsumerEvent::TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& a
     awaiters_->Append(lock, std::move(awaiter), context);
 }
 
-void MultiConsumerEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept {
+boost::intrusive_ptr<impl::Awaiter> MultiConsumerEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context)
+    noexcept {
     impl::WaitList::Lock lock(*awaiters_);
-    awaiters_->Remove(lock, awaiter, context);
+    return awaiters_->Remove(lock, awaiter, context);
 }
 
 }  // namespace engine

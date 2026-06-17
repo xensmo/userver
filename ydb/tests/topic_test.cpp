@@ -1,7 +1,9 @@
 #include <userver/utest/utest.hpp>
 
 #include <userver/engine/async.hpp>
+#include <userver/engine/deadline.hpp>
 #include <userver/utils/overloaded.hpp>
+#include <userver/ydb/exceptions.hpp>
 #include <userver/ydb/impl/cast.hpp>
 
 #include "test_utils.hpp"
@@ -18,6 +20,10 @@ constexpr std::string_view kConsumerName = "test_consumer";
 constexpr std::string_view kWriteTopic = "write_test_topic";
 constexpr std::string_view kWriteProducerId = "test-producer";
 constexpr std::string_view kWriteConsumerName = "write_test_consumer";
+
+constexpr std::string_view kProducerTopic = "producer_test_topic";
+constexpr std::string_view kProducerIdPrefix = "test-producer-prefix";
+constexpr std::string_view kProducerConsumerName = "producer_test_consumer";
 
 class YdbTopicFixture : public ydb::ClientFixtureBase {
 protected:
@@ -138,6 +144,31 @@ protected:
 
     ydb::TopicReadSession CreateReadSession() {
         return YdbTopicFixture::CreateReadSession(kWriteTopic, kWriteConsumerName);
+    }
+};
+
+class YdbTopicProducerFixture : public YdbTopicFixture {
+protected:
+    YdbTopicProducerFixture() {
+        NYdb::NTopic::TCreateTopicSettings topic_settings;
+        topic_settings
+            .AppendConsumers(NYdb::NTopic::TConsumerSettings(topic_settings, ydb::impl::ToString(kProducerConsumerName))
+            );
+        const auto status =
+            GetNativeTopicClient().CreateTopic(ydb::impl::ToString(kProducerTopic), topic_settings).GetValueSync();
+        EXPECT_TRUE(status.IsSuccess()) << status.GetIssues().ToString();
+    }
+
+    ~YdbTopicProducerFixture() override {
+        const auto status = GetNativeTopicClient().DropTopic(ydb::impl::ToString(kProducerTopic)).GetValueSync();
+        EXPECT_TRUE(status.IsSuccess()) << status.GetIssues().ToString();
+    }
+
+    ydb::TopicProducer CreateProducer() {
+        NYdb::NTopic::TProducerSettings producer_settings;
+        producer_settings.Path(ydb::impl::ToString(kProducerTopic));
+        producer_settings.ProducerIdPrefix(ydb::impl::ToString(kProducerIdPrefix));
+        return GetTopicClient().CreateProducer(producer_settings);
     }
 };
 
@@ -381,6 +412,71 @@ UTEST_F(YdbTopicWriteSessionFixture, TopicWriteSessionTryGetEventEmpty) {
     ASSERT_TRUE(task.IsFinished());
 
     session.Close(std::chrono::milliseconds{1000});
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerCreateClose) {
+    auto producer = CreateProducer();
+    UASSERT_NO_THROW(producer.Close(std::chrono::milliseconds{1000}));
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerGetNative) {
+    auto producer = CreateProducer();
+    EXPECT_NO_THROW(producer.GetNativeTopicProducer());
+    producer.Close(std::chrono::milliseconds{1000});
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerWriteSingle) {
+    auto producer = CreateProducer();
+
+    auto task = engine::AsyncNoTracing([&] {
+        EXPECT_TRUE(producer.Write(NYdb::NTopic::TWriteMessage{std::string{"hello"}}).IsQueued());
+        EXPECT_TRUE(producer.Flush().IsSuccess());
+    });
+    task.WaitFor(utest::kMaxTestWaitTime);
+    ASSERT_TRUE(task.IsFinished());
+
+    producer.Close(std::chrono::milliseconds{1000});
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerWriteMultiple) {
+    auto producer = CreateProducer();
+
+    auto task = engine::AsyncNoTracing([&] {
+        for (const std::string_view msg : {"msg-1", "msg-2", "msg-3"}) {
+            EXPECT_TRUE(producer.Write(NYdb::NTopic::TWriteMessage{std::string{msg}}).IsQueued());
+        }
+        EXPECT_TRUE(producer.Flush().IsSuccess());
+    });
+    task.WaitFor(utest::kMaxTestWaitTime);
+    ASSERT_TRUE(task.IsFinished());
+
+    producer.Close(std::chrono::milliseconds{1000});
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerFlushWithDeadline) {
+    auto producer = CreateProducer();
+
+    auto task = engine::AsyncNoTracing([&] {
+        EXPECT_TRUE(producer.Write(NYdb::NTopic::TWriteMessage{std::string{"hello"}}).IsQueued());
+        EXPECT_TRUE(producer.Flush(engine::Deadline::FromDuration(utest::kMaxTestWaitTime)).IsSuccess());
+    });
+    task.WaitFor(utest::kMaxTestWaitTime);
+    ASSERT_TRUE(task.IsFinished());
+
+    producer.Close(std::chrono::milliseconds{1000});
+}
+
+UTEST_F(YdbTopicProducerFixture, TopicProducerFlushDeadlinePassed) {
+    auto producer = CreateProducer();
+
+    auto task = engine::AsyncNoTracing([&] {
+        EXPECT_TRUE(producer.Write(NYdb::NTopic::TWriteMessage{std::string{"hello"}}).IsQueued());
+        UEXPECT_THROW(producer.Flush(engine::Deadline::Passed()), ydb::DeadlineExceededError);
+    });
+    task.WaitFor(utest::kMaxTestWaitTime);
+    ASSERT_TRUE(task.IsFinished());
+
+    producer.Close(std::chrono::milliseconds{1000});
 }
 
 USERVER_NAMESPACE_END

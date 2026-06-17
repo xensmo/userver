@@ -34,8 +34,7 @@ void SingleUseEvent::Wait() {
 
 FutureStatus SingleUseEvent::WaitUntil(Deadline deadline) {
     impl::TaskContext& current = current_task::GetCurrentTaskContext();
-    impl::FutureWaitStrategy wait_strategy{*this, current};
-    const auto wakeup_source = current.Sleep(wait_strategy, deadline);
+    const auto wakeup_source = current.Sleep(*this, deadline);
 
     // There are no spurious wakeups, because the event is single-use: if a task
     // has ever been notified by this SingleUseEvent, then the task will find
@@ -80,8 +79,9 @@ void SingleUseEvent::TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& await
     awaiters_->GetSignalOrAppend(awaiter, context);
 }
 
-void SingleUseEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context) noexcept {
-    awaiters_->Remove(awaiter, context);
+boost::intrusive_ptr<impl::Awaiter> SingleUseEvent::RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context)
+    noexcept {
+    return awaiters_->Remove(awaiter, context);
 }
 
 }  // namespace engine

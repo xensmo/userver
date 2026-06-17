@@ -20,7 +20,7 @@ ServerComponent::ServerComponent(const components::ComponentConfig& config, cons
     : ComponentBase(config, context),
       server_(
           context.Scopes(),
-          impl::ParseServerConfig(config),
+          impl::ParseServerConfig(config, context),
           context.FindComponent<components::StatisticsStorage>().GetStorage(),
           context.FindComponent<components::DynamicConfig>().GetSource()
       ),

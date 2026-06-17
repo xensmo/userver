@@ -502,6 +502,111 @@ public:
 
     RequestZscore Zscore(std::string key, std::string member, const CommandControl& command_control) override;
 
+    // Hash field expiration commands:
+
+    RequestHexpire Hexpire(
+        std::string key,
+        std::chrono::seconds ttl,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpire Hexpire(
+        std::string key,
+        std::chrono::seconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpire Hpexpire(
+        std::string key,
+        std::chrono::milliseconds ttl,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpire Hpexpire(
+        std::string key,
+        std::chrono::milliseconds ttl,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpire Hexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpire Hpexpireat(
+        std::string key,
+        std::chrono::system_clock::time_point deadline,
+        ExpireOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHexpiretime Hexpiretime(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHpexpiretime Hpexpiretime(
+        std::string key,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHttl Httl(std::string key, std::vector<std::string> fields, const CommandControl& command_control) override;
+
+    RequestHpttl Hpttl(std::string key, std::vector<std::string> fields, const CommandControl& command_control)
+        override;
+
+    RequestHpersist Hpersist(std::string key, std::vector<std::string> fields, const CommandControl& command_control)
+        override;
+
+    RequestHgetex Hgetex(std::string key, std::vector<std::string> fields, const CommandControl& command_control)
+        override;
+
+    RequestHgetex Hgetex(
+        std::string key,
+        HgetexOptions options,
+        std::vector<std::string> fields,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHsetex Hsetex(
+        std::string key,
+        std::vector<HsetexFieldValue> field_values,
+        const CommandControl& command_control
+    ) override;
+
+    RequestHsetex Hsetex(
+        std::string key,
+        HsetexOptions options,
+        std::vector<HsetexFieldValue> field_values,
+        const CommandControl& command_control
+    ) override;
+
     // JSON module commands:
 
     RequestJsonSet JsonSet(
