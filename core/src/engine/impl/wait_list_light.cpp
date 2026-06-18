@@ -140,7 +140,7 @@ boost::intrusive_ptr<Awaiter> WaitListLight::Remove(Awaiter& awaiter, std::uintp
 bool WaitListLight::GetAndResetSignal() noexcept {
     AwaiterWithContext expected{kSignaled, {}};
     const bool success = state_.compare_exchange_strong<
-        std::memory_order_relaxed,
+        std::memory_order_acq_rel,
         std::memory_order_relaxed>(expected, AwaiterWithContext{});
 
     if (!success && expected.awaiter != nullptr) {

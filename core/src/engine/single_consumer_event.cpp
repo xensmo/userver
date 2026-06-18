@@ -2,6 +2,7 @@
 
 #include <engine/impl/wait_list_light.hpp>
 #include <engine/task/task_context.hpp>
+#include <userver/engine/awaitable.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utils/assert.hpp>
 
@@ -9,73 +10,86 @@ USERVER_NAMESPACE_BEGIN
 
 namespace engine {
 
-class SingleConsumerEvent::EventAwaitable final : public impl::AwaitableBase {
-public:
-    explicit EventAwaitable(SingleConsumerEvent& event)
-        : event_(event)
-    {}
+struct SingleConsumerEvent::Impl final : public impl::AwaitableBase {
+    enum class IsAutoReset : bool {
+        kNo = false,
+        kYes = true,
+    };
 
-    bool IsReady() const noexcept override { return event_.IsReady(); }
+    explicit Impl(IsAutoReset is_auto_reset) noexcept : is_auto_reset(static_cast<bool>(is_auto_reset)) {}
+
+    bool IsReady() const noexcept override { return awaiters.IsSignaled(); }
 
     void TryAppendAwaiter(boost::intrusive_ptr<impl::Awaiter>& awaiter, std::uintptr_t context) override {
-        event_.waiters_->GetSignalOrAppend(awaiter, context);
+        awaiters.GetSignalOrAppend(awaiter, context);
     }
 
     boost::intrusive_ptr<impl::Awaiter> RemoveAwaiter(impl::Awaiter& awaiter, std::uintptr_t context)
         noexcept override {
-        return event_.waiters_->Remove(awaiter, context);
+        return awaiters.Remove(awaiter, context);
     }
 
-private:
-    SingleConsumerEvent& event_;
+    const bool is_auto_reset;
+    impl::WaitListLight awaiters;
 };
 
-SingleConsumerEvent::SingleConsumerEvent() noexcept = default;
+SingleConsumerEvent::SingleConsumerEvent() noexcept : impl_(Impl::IsAutoReset::kYes) {}
 
-SingleConsumerEvent::SingleConsumerEvent(NoAutoReset) noexcept : is_auto_reset_(false) {}
+SingleConsumerEvent::SingleConsumerEvent(NoAutoReset) noexcept : impl_(Impl::IsAutoReset::kNo) {}
 
 SingleConsumerEvent::~SingleConsumerEvent() = default;
 
-bool SingleConsumerEvent::IsAutoReset() const noexcept { return is_auto_reset_; }
+bool SingleConsumerEvent::IsAutoReset() const noexcept { return impl_->is_auto_reset; }
 
 bool SingleConsumerEvent::WaitForEvent() { return WaitForEventUntil(Deadline{}); }
 
 bool SingleConsumerEvent::WaitForEventUntil(Deadline deadline) {
     // optimistic path
-    if (waiters_->IsSignaled()) {
-        if (is_auto_reset_) {
-            waiters_->GetAndResetSignal();
+    if (IsReady()) {
+        if (IsAutoReset()) {
+            Reset();
         }
         return true;
     }
 
-    impl::TaskContext& current = current_task::GetCurrentTaskContext();
-    EventAwaitable awaitable{*this};
-
-    const auto wakeup_source = current.Sleep(awaitable, deadline);
+    auto& awaiter = current_task::GetCurrentTaskContext();
+    const auto wakeup_source = awaiter.Sleep(*impl_, deadline);
     if (!impl::HasWaitSucceeded(wakeup_source)) {
         return false;
     }
 
-    return GetIsSignaled();
+    UASSERT(IsReady());
+    if (IsAutoReset()) {
+        Reset();
+    }
+    return true;
 }
 
-void SingleConsumerEvent::Reset() noexcept { waiters_->GetAndResetSignal(); }
+void SingleConsumerEvent::Reset() noexcept {
+    // `GetAndResetSignal` should guarantee at least `std::memory_order_acquire` so that the consumer receives data
+    // updates from any additional signals which it resets.
+    impl_->awaiters.GetAndResetSignal();
+}
 
-void SingleConsumerEvent::Send() { waiters_->SetSignalAndNotifyOne(); }
+void SingleConsumerEvent::Send() { impl_->awaiters.SetSignalAndNotifyOne(); }
 
-bool SingleConsumerEvent::IsReady() const noexcept { return waiters_->IsSignaled(); }
+bool SingleConsumerEvent::IsReady() const noexcept { return impl_->awaiters.IsSignaled(); }
+
+AwaitableToken SingleConsumerEvent::GetAwaitableToken() {
+    // This is a fundamental limitation. Notifications can sometimes get lost
+    // (e.g. task woke up due to a deadline or cancellation), so there should be an artifact left behind
+    // that signals readiness.
+    UINVARIANT(!IsAutoReset(), "SingleConsumerEvent with auto-reset is not supported in WaitAny");
+
+    return AwaitableToken{utils::impl::InternalTag{}, &*impl_};
+}
 
 bool SingleConsumerEvent::GetIsSignaled() noexcept {
-    if (is_auto_reset_) {
-        return waiters_->GetAndResetSignal();
+    if (impl_->is_auto_reset) {
+        return impl_->awaiters.GetAndResetSignal();
     } else {
-        return waiters_->IsSignaled();
+        return impl_->awaiters.IsSignaled();
     }
-}
-
-void SingleConsumerEvent::CheckIsAutoResetForWaitPredicate() const {
-    UINVARIANT(IsAutoReset(), "Wait with predicate requires auto-reset functionality");
 }
 
 }  // namespace engine
