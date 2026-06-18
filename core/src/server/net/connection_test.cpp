@@ -73,9 +73,19 @@ enum class ConnectionHeader {
     kClose,
 };
 
+// Short timeout for the tests that deliberately expect a `TimeoutException`
+// (the server never reads the request in those cases).
+constexpr auto kFailureRequestTimeout = std::chrono::milliseconds(100);
+// Generous timeout for the tests that expect the request to actually succeed.
+// A tight timeout here flaps under sanitizers (MSAN/TSAN), where instrumentation
+// slows down the accept -> spawn connection task -> parse -> respond chain (the
+// HTTP/2 SETTINGS handshake adds an extra round-trip) well past 100ms.
+constexpr auto kSuccessRequestTimeout = utest::kMaxTestWaitTime;
+
 clients::http::ResponseFuture CreateRequest(
     clients::http::Client& http_client,
     engine::io::Socket& request_socket,
+    std::chrono::milliseconds timeout,
     USERVER_NAMESPACE::http::HttpVersion http_ver = USERVER_NAMESPACE::http::HttpVersion::k11,
     ConnectionHeader header = ConnectionHeader::kKeepAlive
 ) {
@@ -84,7 +94,7 @@ clients::http::ResponseFuture CreateRequest(
             .http_version(http_ver)
             .get(HttpConnectionUriFromSocket(request_socket))
             .retry(1)
-            .timeout(std::chrono::milliseconds(100));
+            .timeout(timeout);
     if (header == ConnectionHeader::kClose) {
         ret.headers({{"Connection", "close"}});
     }
@@ -129,7 +139,8 @@ TYPED_UTEST(ServerNetConnection, EarlyCancel) {
     auto request_socket = net::CreateSocket(config, config.ports[0]);
 
     auto http_client_ptr = utest::CreateHttpClient();
-    auto request = CreateRequest(*http_client_ptr, request_socket, http_ver, ConnectionHeader::kKeepAlive);
+    auto request =
+        CreateRequest(*http_client_ptr, request_socket, kFailureRequestTimeout, http_ver, ConnectionHeader::kKeepAlive);
 
     auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
@@ -169,7 +180,8 @@ TYPED_UTEST(ServerNetConnection, EarlyTimeout) {
     auto request_socket = net::CreateSocket(config, config.ports[0]);
 
     auto http_client_ptr = utest::CreateHttpClient();
-    auto res = CreateRequest(*http_client_ptr, request_socket, http_ver, ConnectionHeader::kKeepAlive);
+    auto res =
+        CreateRequest(*http_client_ptr, request_socket, kFailureRequestTimeout, http_ver, ConnectionHeader::kKeepAlive);
 
     engine::io::Socket peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
@@ -203,7 +215,8 @@ TYPED_UTEST(ServerNetConnection, TimeoutWithTaskCancellation) {
     auto request_socket = net::CreateSocket(config, config.ports[0]);
 
     auto http_client_ptr = utest::CreateHttpClient();
-    auto res = CreateRequest(*http_client_ptr, request_socket, http_ver, ConnectionHeader::kKeepAlive);
+    auto res =
+        CreateRequest(*http_client_ptr, request_socket, kFailureRequestTimeout, http_ver, ConnectionHeader::kKeepAlive);
 
     engine::io::Socket peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
@@ -238,7 +251,8 @@ TYPED_UTEST(ServerNetConnection, EarlyTeardown) {
     auto request_socket = net::CreateSocket(config, config.ports[0]);
 
     auto http_client_ptr = utest::CreateHttpClient();
-    auto res = CreateRequest(*http_client_ptr, request_socket, http_ver, ConnectionHeader::kClose);
+    auto res =
+        CreateRequest(*http_client_ptr, request_socket, kFailureRequestTimeout, http_ver, ConnectionHeader::kClose);
 
     engine::io::Socket peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
@@ -257,7 +271,8 @@ TYPED_UTEST(ServerNetConnection, RemoteClosed) {
     auto request_socket = net::CreateSocket(config, config.ports[0]);
 
     auto http_client_ptr = utest::CreateHttpClient();
-    auto request = CreateRequest(*http_client_ptr, request_socket, http_ver, ConnectionHeader::kClose);
+    auto request =
+        CreateRequest(*http_client_ptr, request_socket, kSuccessRequestTimeout, http_ver, ConnectionHeader::kClose);
 
     auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
@@ -294,7 +309,8 @@ TYPED_UTEST(ServerNetConnection, KeepAlive) {
     auto http_client_ptr = utest::impl::CreateHttpClientCore();
     http_client_ptr->SetMaxHostConnections(1);
 
-    auto request = CreateRequest(*http_client_ptr, request_socket, http_ver, ConnectionHeader::kKeepAlive);
+    auto request =
+        CreateRequest(*http_client_ptr, request_socket, kSuccessRequestTimeout, http_ver, ConnectionHeader::kKeepAlive);
 
     auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
     ASSERT_TRUE(peer.IsValid());
@@ -318,7 +334,8 @@ TYPED_UTEST(ServerNetConnection, KeepAlive) {
     EXPECT_EQ(request.Get()->status_code(), 404);
 
     EXPECT_EQ(handler.asyncs_finished, 1);
-    request = CreateRequest(*http_client_ptr, request_socket, http_ver, ConnectionHeader::kKeepAlive);
+    request =
+        CreateRequest(*http_client_ptr, request_socket, kSuccessRequestTimeout, http_ver, ConnectionHeader::kKeepAlive);
     EXPECT_EQ(request.Get()->status_code(), 404);
     EXPECT_EQ(handler.asyncs_finished, 2);
 }
@@ -335,7 +352,13 @@ TYPED_UTEST(ServerNetConnection, CancelMultipleInFlight) {
     http_client_ptr->SetMaxHostConnections(1);
 
     for (unsigned ii = 0; ii < kMaxAttempts; ++ii) {
-        auto res = CreateRequest(*http_client_ptr, request_socket, http_ver);
+        auto res = CreateRequest(
+            *http_client_ptr,
+            request_socket,
+            kSuccessRequestTimeout,
+            http_ver,
+            ConnectionHeader::kKeepAlive
+        );
 
         auto peer = request_socket.Accept(Deadline::FromDuration(kAcceptTimeout));
         ASSERT_TRUE(peer.IsValid());
@@ -364,7 +387,7 @@ TYPED_UTEST(ServerNetConnection, CancelMultipleInFlight) {
         ASSERT_TRUE(!task.IsFinished());  // keep-alive should work
 
         for (unsigned i = 0; i < kInFlightRequests; ++i) {
-            CreateRequest(*http_client_ptr, request_socket, http_ver).Detach();
+            CreateRequest(*http_client_ptr, request_socket, kFailureRequestTimeout, http_ver).Detach();
         }
 
         task.RequestCancel();
@@ -391,6 +414,7 @@ UTEST(HTTP2Connection, ThrowHttp1IsNotSupported) {
     [[maybe_unused]] auto request = CreateRequest(
         *http_client_ptr,
         request_socket,
+        kFailureRequestTimeout,
         USERVER_NAMESPACE::http::HttpVersion::k11,
         ConnectionHeader::kKeepAlive
     );

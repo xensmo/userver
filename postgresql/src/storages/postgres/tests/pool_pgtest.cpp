@@ -838,12 +838,26 @@ UTEST_P(PostgrePool, ConnectionRateLimitSkipsHealthyPool) {
 UTEST_P(PostgrePool, ConnectionRateLimitThrottlesAfterFailedCleanup) {
     constexpr std::size_t kHugeConnectingIntervalMs = 60'000;
 
+    // A short per-statement network timeout is what turns the statements below
+    // into dirty connections (they abort with ConnectionTimeoutError while
+    // `pg_sleep` is still running server-side).
+    //
+    // It must NOT be used as the pool's default command control: the same
+    // `network_timeout_ms` also governs connection acquisition/establishment in
+    // Begin()/Acquire() (via GetExecuteTimeout()). With min_size == 0 the first
+    // Begin() has to establish a real connection, and under slow CI that easily
+    // takes longer than 100ms, making Begin() spuriously throw PoolError and
+    // cascading into the rest of the test failing. So we keep a generous default
+    // network timeout for acquisition and pass the short timeout only to the
+    // statements that must time out.
+    constexpr pg::CommandControl kDirtyStatementCc{std::chrono::milliseconds{100}, std::chrono::seconds{30}};
+
     auto pool = CreateCleanupPool(
         GetDsnFromEnv(),
         GetTaskProcessor(),
         GetParam(),
         pg::PoolSettings{0, 3, 10, 0, kHugeConnectingIntervalMs},
-        pg::CommandControl{std::chrono::milliseconds{100}, std::chrono::seconds{30}}
+        pg::CommandControl{std::chrono::seconds{5}, std::chrono::seconds{30}}
     );
 
     const auto errors_before = pool->GetStatistics().connection.error_total;
@@ -853,8 +867,8 @@ UTEST_P(PostgrePool, ConnectionRateLimitThrottlesAfterFailedCleanup) {
         UEXPECT_NO_THROW(dirty_transaction1 = pool->Begin({}));
         UEXPECT_NO_THROW(dirty_transaction2 = pool->Begin({}));
 
-        UEXPECT_THROW(dirty_transaction1.Execute("select pg_sleep(10)"), pg::ConnectionTimeoutError);
-        UEXPECT_THROW(dirty_transaction2.Execute("select pg_sleep(10)"), pg::ConnectionTimeoutError);
+        UEXPECT_THROW(dirty_transaction1.Execute(kDirtyStatementCc, "select pg_sleep(10)"), pg::ConnectionTimeoutError);
+        UEXPECT_THROW(dirty_transaction2.Execute(kDirtyStatementCc, "select pg_sleep(10)"), pg::ConnectionTimeoutError);
 
         EXPECT_ANY_THROW(dirty_transaction1.Commit());
         EXPECT_ANY_THROW(dirty_transaction2.Commit());
