@@ -40,7 +40,7 @@ public:
 
     void UpdateSyncDebug(UpdateType update_type);
 
-    const std::string& Name() const;
+    const std::string& Name() const noexcept;
 
     AllowedUpdateTypes GetAllowedUpdateTypes() const;
 
@@ -48,17 +48,17 @@ public:
 
     void StopPeriodicUpdates();
 
-    void OnCacheModified();
+    void OnCacheModified() noexcept;
 
-    bool HasPreAssignCheck() const;
+    bool HasPreAssignCheck() const noexcept;
 
-    bool IsSafeDataLifetime() const;
+    bool IsSafeDataLifetime() const noexcept;
 
     void SetDataSizeStatistic(std::size_t size) noexcept;
 
     rcu::ReadablePtr<Config> GetConfig() const;
 
-    engine::TaskProcessor& GetCacheTaskProcessor() const;
+    engine::TaskProcessor& GetCacheTaskProcessor() const noexcept;
 
 private:
     class DumpableEntityProxy final : public dump::DumpableEntity {

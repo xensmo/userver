@@ -69,7 +69,7 @@ public:
     explicit Impl(SecdistConfig::Settings settings);
     ~Impl();
 
-    const storages::secdist::SecdistConfig& Get() const;
+    const storages::secdist::SecdistConfig& Get() const noexcept;
 
     rcu::ReadablePtr<storages::secdist::SecdistConfig> GetSnapshot() const;
 
@@ -117,7 +117,7 @@ Secdist::Impl::~Impl() {
     }
 }
 
-const SecdistConfig& Secdist::Impl::Get() const { return secdist_config_; }
+const SecdistConfig& Secdist::Impl::Get() const noexcept { return secdist_config_; }
 
 rcu::ReadablePtr<SecdistConfig> Secdist::Impl::GetSnapshot() const { return dynamic_secdist_config_.Read(); }
 
@@ -161,7 +161,7 @@ const SecdistConfig& Secdist::Get() const { return impl_->Get(); }
 
 rcu::ReadablePtr<SecdistConfig> Secdist::GetSnapshot() const { return impl_->GetSnapshot(); }
 
-bool Secdist::IsPeriodicUpdateEnabled() const { return impl_->IsPeriodicUpdateEnabled(); }
+bool Secdist::IsPeriodicUpdateEnabled() const noexcept { return impl_->IsPeriodicUpdateEnabled(); }
 
 concurrent::AsyncEventSubscriberScope Secdist::DoUpdateAndListen(
     concurrent::FunctionId id,

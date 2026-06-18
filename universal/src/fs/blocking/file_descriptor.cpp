@@ -125,14 +125,14 @@ FileDescriptor::~FileDescriptor() {
     }
 }
 
-bool FileDescriptor::IsOpen() const { return fd_ != kNoFd; }
+bool FileDescriptor::IsOpen() const noexcept { return fd_ != kNoFd; }
 
 void FileDescriptor::Close() && {
     const auto fd = std::exchange(fd_, kNoFd);
     utils::CheckSyscall(::close(fd), "calling ::close");
 }
 
-int FileDescriptor::GetNative() const { return fd_; }
+int FileDescriptor::GetNative() const noexcept { return fd_; }
 
 int FileDescriptor::Release() && { return std::exchange(fd_, kNoFd); }
 

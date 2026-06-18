@@ -43,7 +43,7 @@ public:
     explicit CFile(std::FILE* file) noexcept;
 
     /// Checks if the file is open
-    bool IsOpen() const;
+    bool IsOpen() const noexcept;
 
     /// Returns the underlying file handle
     std::FILE* GetNative() &;

@@ -199,29 +199,29 @@ public:
     CookieData(const CookieData&) = default;
     ~CookieData() = default;
 
-    [[nodiscard]] const std::string& Name() const;
-    [[nodiscard]] const std::string& Value() const;
+    [[nodiscard]] const std::string& Name() const noexcept;
+    [[nodiscard]] const std::string& Value() const noexcept;
 
-    [[nodiscard]] bool IsSecure() const;
-    void SetSecure();
+    [[nodiscard]] bool IsSecure() const noexcept;
+    void SetSecure() noexcept;
 
     [[nodiscard]] std::chrono::system_clock::time_point Expires() const;
-    void SetExpires(std::chrono::system_clock::time_point value);
+    void SetExpires(std::chrono::system_clock::time_point value) noexcept;
 
     [[nodiscard]] bool IsPermanent() const;
     void SetPermanent();
 
-    [[nodiscard]] bool IsHttpOnly() const;
-    void SetHttpOnly();
+    [[nodiscard]] bool IsHttpOnly() const noexcept;
+    void SetHttpOnly() noexcept;
 
-    [[nodiscard]] const std::string& Path() const;
+    [[nodiscard]] const std::string& Path() const noexcept;
     void SetPath(std::string&& value);
 
-    [[nodiscard]] const std::string& Domain() const;
+    [[nodiscard]] const std::string& Domain() const noexcept;
     void SetDomain(std::string&& value);
 
-    [[nodiscard]] std::chrono::seconds MaxAge() const;
-    void SetMaxAge(std::chrono::seconds value);
+    [[nodiscard]] std::chrono::seconds MaxAge() const noexcept;
+    void SetMaxAge(std::chrono::seconds value) noexcept;
 
     [[nodiscard]] std::string SameSite() const;
     void SetSameSite(std::string value);
@@ -252,45 +252,45 @@ Cookie::CookieData::CookieData(std::string&& name, std::string&& value)
     ValidateValue();
 }
 
-const std::string& Cookie::CookieData::Name() const { return name_; }
+const std::string& Cookie::CookieData::Name() const noexcept { return name_; }
 
-const std::string& Cookie::CookieData::Value() const { return value_; }
+const std::string& Cookie::CookieData::Value() const noexcept { return value_; }
 
-bool Cookie::CookieData::IsSecure() const { return secure_; }
+bool Cookie::CookieData::IsSecure() const noexcept { return secure_; }
 
-void Cookie::CookieData::SetSecure() { secure_ = true; }
+void Cookie::CookieData::SetSecure() noexcept { secure_ = true; }
 
 std::chrono::system_clock::time_point Cookie::CookieData::Expires() const {
     return expires_.value_or(std::chrono::system_clock::time_point{});
 }
 
-void Cookie::CookieData::SetExpires(std::chrono::system_clock::time_point value) { expires_ = value; }
+void Cookie::CookieData::SetExpires(std::chrono::system_clock::time_point value) noexcept { expires_ = value; }
 
 bool Cookie::CookieData::IsPermanent() const { return expires_ == std::chrono::system_clock::time_point::max(); }
 
 void Cookie::CookieData::SetPermanent() { expires_ = std::chrono::system_clock::time_point::max(); }
 
-bool Cookie::CookieData::IsHttpOnly() const { return http_only_; }
+bool Cookie::CookieData::IsHttpOnly() const noexcept { return http_only_; }
 
-void Cookie::CookieData::SetHttpOnly() { http_only_ = true; }
+void Cookie::CookieData::SetHttpOnly() noexcept { http_only_ = true; }
 
-const std::string& Cookie::CookieData::Path() const { return path_; }
+const std::string& Cookie::CookieData::Path() const noexcept { return path_; }
 
 void Cookie::CookieData::SetPath(std::string&& value) {
     ValidateCookieAttribute(value, "path");
     path_ = std::move(value);
 }
 
-const std::string& Cookie::CookieData::Domain() const { return domain_; }
+const std::string& Cookie::CookieData::Domain() const noexcept { return domain_; }
 
 void Cookie::CookieData::SetDomain(std::string&& value) {
     ValidateCookieAttribute(value, "domain");
     domain_ = std::move(value);
 }
 
-std::chrono::seconds Cookie::CookieData::MaxAge() const { return max_age_.value_or(std::chrono::seconds{0}); }
+std::chrono::seconds Cookie::CookieData::MaxAge() const noexcept { return max_age_.value_or(std::chrono::seconds{0}); }
 
-void Cookie::CookieData::SetMaxAge(std::chrono::seconds value) { max_age_ = value; }
+void Cookie::CookieData::SetMaxAge(std::chrono::seconds value) noexcept { max_age_ = value; }
 
 std::string Cookie::CookieData::SameSite() const { return same_site_; }
 
@@ -446,55 +446,55 @@ Cookie& Cookie::operator=(const Cookie& cookie) {
     return *this;
 }
 
-const std::string& Cookie::Name() const { return data_->Name(); }
+const std::string& Cookie::Name() const noexcept { return data_->Name(); }
 
-const std::string& Cookie::Value() const { return data_->Value(); }
+const std::string& Cookie::Value() const noexcept { return data_->Value(); }
 
-bool Cookie::IsSecure() const { return data_->IsSecure(); }
+bool Cookie::IsSecure() const noexcept { return data_->IsSecure(); }
 
-Cookie& Cookie::SetSecure() {
+Cookie& Cookie::SetSecure() noexcept {
     data_->SetSecure();
     return *this;
 }
 
-std::chrono::system_clock::time_point Cookie::Expires() const { return data_->Expires(); }
+std::chrono::system_clock::time_point Cookie::Expires() const noexcept { return data_->Expires(); }
 
-Cookie& Cookie::SetExpires(std::chrono::system_clock::time_point value) {
+Cookie& Cookie::SetExpires(std::chrono::system_clock::time_point value) noexcept {
     data_->SetExpires(value);
     return *this;
 }
 
-bool Cookie::IsPermanent() const { return data_->IsPermanent(); }
+bool Cookie::IsPermanent() const noexcept { return data_->IsPermanent(); }
 
 Cookie& Cookie::SetPermanent() {
     data_->SetPermanent();
     return *this;
 }
 
-bool Cookie::IsHttpOnly() const { return data_->IsHttpOnly(); }
+bool Cookie::IsHttpOnly() const noexcept { return data_->IsHttpOnly(); }
 
-Cookie& Cookie::SetHttpOnly() {
+Cookie& Cookie::SetHttpOnly() noexcept {
     data_->SetHttpOnly();
     return *this;
 }
 
-const std::string& Cookie::Path() const { return data_->Path(); }
+const std::string& Cookie::Path() const noexcept { return data_->Path(); }
 
 Cookie& Cookie::SetPath(std::string value) {
     data_->SetPath(std::move(value));
     return *this;
 }
 
-const std::string& Cookie::Domain() const { return data_->Domain(); }
+const std::string& Cookie::Domain() const noexcept { return data_->Domain(); }
 
 Cookie& Cookie::SetDomain(std::string value) {
     data_->SetDomain(std::move(value));
     return *this;
 }
 
-std::chrono::seconds Cookie::MaxAge() const { return data_->MaxAge(); }
+std::chrono::seconds Cookie::MaxAge() const noexcept { return data_->MaxAge(); }
 
-Cookie& Cookie::SetMaxAge(std::chrono::seconds value) {
+Cookie& Cookie::SetMaxAge(std::chrono::seconds value) noexcept {
     data_->SetMaxAge(value);
     return *this;
 }

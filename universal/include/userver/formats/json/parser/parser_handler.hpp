@@ -32,7 +32,7 @@ public:
 
     bool Key(const char* c, size_t size, bool);
     bool String(const char* c, size_t size, bool);
-    bool RawNumber(const char*, size_t, bool);
+    bool RawNumber(const char*, size_t, bool) noexcept;
 
 private:
     BaseParser& parser_;

@@ -76,7 +76,7 @@ CFile::CFile(utils::zstring_view path, OpenMode flags, boost::filesystem::perms 
 #endif
 }
 
-bool CFile::IsOpen() const { return static_cast<bool>(impl_->handle); }
+bool CFile::IsOpen() const noexcept { return static_cast<bool>(impl_->handle); }
 
 std::FILE* CFile::GetNative() & {
     UASSERT(IsOpen());

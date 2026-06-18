@@ -64,10 +64,10 @@ public:
 
     ReferenceType GetReferenceType() const noexcept { return reference_type_; }
 
-    void DetachFromCoroStack();
+    void DetachFromCoroStack() noexcept;
     void AttachToCoroStack();
 
-    std::optional<std::string_view> GetSpanIdForChildLogs() const;
+    std::optional<std::string_view> GetSpanIdForChildLogs() const noexcept;
 
 private:
     static std::string_view GetParentIdForLogging(const Span::Impl* parent);

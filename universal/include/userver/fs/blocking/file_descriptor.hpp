@@ -50,14 +50,14 @@ public:
 
     /// @brief Checks if the file is open
     /// @note Operations can only be performed on an open `FileDescriptor`.
-    bool IsOpen() const;
+    bool IsOpen() const noexcept;
 
     /// @brief Closes the file manually
     /// @throws std::runtime_error
     void Close() &&;
 
     /// Returns the native file handle
-    int GetNative() const;
+    int GetNative() const noexcept;
 
     /// Passes the ownership of the file descriptor to the caller
     int Release() &&;

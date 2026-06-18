@@ -41,7 +41,7 @@ public:
     void UpdateSyncDebug(UpdateType update_type);
 
     /// @return name of the component
-    const std::string& Name() const;
+    const std::string& Name() const noexcept;
 
 protected:
     /// @cond
@@ -68,7 +68,7 @@ protected:
 
     /// Called in `CachingComponentBase::Set` during update to indicate
     /// that the cached data has been modified
-    void OnCacheModified();
+    void OnCacheModified() noexcept;
 
     /// @cond
     // For internal use only
@@ -76,18 +76,18 @@ protected:
 
     // Checks for the presence of the flag for pre-assign check.
     // For internal use only.
-    bool HasPreAssignCheck() const;
+    bool HasPreAssignCheck() const noexcept;
 
     // Returns value of the flag safe-data-lifetime.
     // For internal use only.
-    bool IsSafeDataLifetime() const;
+    bool IsSafeDataLifetime() const noexcept;
 
     // For internal use only.
     void SetDataSizeStatistic(std::size_t size) noexcept;
 
     // For internal use only
     // TODO remove after TAXICOMMON-3959
-    engine::TaskProcessor& GetCacheTaskProcessor() const;
+    engine::TaskProcessor& GetCacheTaskProcessor() const noexcept;
     /// @endcond
 
     /// @brief Should be overridden in a derived class to align the stored data
