@@ -9,7 +9,6 @@
 
 #include <engine/coro/pool.hpp>
 #include <engine/coro/stack_usage_monitor.hpp>
-#include <logging/log_extra_stacktrace.hpp>
 #include <userver/compiler/impl/tls.hpp>
 #include <userver/compiler/impl/tsan.hpp>
 #include <userver/compiler/thread_local.hpp>
@@ -116,8 +115,7 @@ TaskContext::TaskContext(
       is_critical_(importance == Task::Importance::kCritical),
       payload_(&payload),
       finish_awaiters_(wait_type),
-      cancel_deadline_(deadline),
-      trace_csw_left_(task_processor_.GetTaskTraceMaxCswForNewTask())
+      cancel_deadline_(deadline)
 {
     UASSERT(payload_);
 
@@ -650,7 +648,6 @@ void TaskContext::Schedule(boost::intrusive_ptr<TaskContext>&& self) noexcept {
     UASSERT(self);
     UASSERT(self->state_ != Task::State::kQueued);
     self->SetState(Task::State::kQueued);
-    self->TraceStateTransition(Task::State::kQueued);
     auto& task_processor = self->task_processor_;
     try {
         task_processor.Schedule(std::move(self));
@@ -661,67 +658,6 @@ void TaskContext::Schedule(boost::intrusive_ptr<TaskContext>&& self) noexcept {
         );
     }
     // NOTE: may be executed at this point
-}
-
-void TaskContext::ProfilerStartExecution() noexcept {
-    auto threshold_us = task_processor_.GetProfilerThreshold();
-    if (threshold_us.count() > 0) {
-        execute_started_ = std::chrono::steady_clock::now();
-    } else {
-        execute_started_ = {};
-    }
-}
-
-void TaskContext::ProfilerStopExecution() noexcept {
-    auto threshold_us = task_processor_.GetProfilerThreshold();
-    if (threshold_us.count() <= 0) {
-        return;
-    }
-
-    if (execute_started_ == std::chrono::steady_clock::time_point{}) {
-        // the task was started w/o profiling, skip it
-        return;
-    }
-
-    auto now = std::chrono::steady_clock::now();
-    auto duration = now - execute_started_;
-    auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
-
-    if (duration_us >= threshold_us) {
-        logging::LogExtra extra_stacktrace;
-        if (task_processor_.ShouldProfilerForceStacktrace()) {
-            logging::impl::ExtendLogExtraWithStacktrace(extra_stacktrace);
-        }
-        LOG_ERROR()
-            << "Profiler threshold reached, task was executing "
-               "for too long without context switch ("
-            << duration_us.count() << "us >= " << threshold_us.count() << "us)" << extra_stacktrace;
-    }
-}
-
-void TaskContext::TraceStateTransition(Task::State state) noexcept {
-    if (trace_csw_left_ == 0) {
-        return;
-    }
-    --trace_csw_left_;
-
-    auto now = std::chrono::steady_clock::now();
-    auto diff = now - last_state_change_timepoint_;
-    if (last_state_change_timepoint_ == std::chrono::steady_clock::time_point()) {
-        diff = {};
-    }
-    auto diff_us = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
-    last_state_change_timepoint_ = now;
-
-    auto logger = task_processor_.GetTaskTraceLogger();
-    if (!logger) {
-        return;
-    }
-
-    LOG_INFO_TO(*logger
-    ) << "Task "
-      << logging::HexShort(GetTaskId()) << " changed state to " << Task::GetStateName(state) << ", delay = " << diff_us
-      << "us" << logging::LogExtra::Stacktrace(*logger);
 }
 
 void TaskContext::ResetPayload() noexcept {

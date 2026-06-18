@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <optional>
 
@@ -34,6 +35,21 @@ namespace impl {
 class TaskContextHolder;
 
 [[noreturn]] void ReportDeadlock();
+
+// Data owned by TaskContext but driven by ProfilerExecutionPlugin. Tracks when
+// the current execution slice started so the plugin can warn about tasks that
+// run for too long without a context switch.
+struct ProfilerExecutionData final {
+    std::chrono::steady_clock::time_point execute_started{};
+};
+
+// Data owned by TaskContext but driven by TraceStateTransitionPlugin. Tracks the
+// remaining number of context switches to trace and the timepoint of the last
+// traced state change.
+struct TraceStateTransitionData final {
+    std::size_t trace_csw_left{};
+    std::chrono::steady_clock::time_point last_state_change_timepoint{};
+};
 
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
 class TaskContext final : public AwaitableBase, public Awaiter, public deadlock_detector::Actor {
@@ -167,11 +183,9 @@ public:
 
     utils::StringLiteral GetActorType() const override;
 
-    // Trace/profiler hooks. Public so the trace/profiler plugins can drive them
-    // at task hook points; also used internally.
-    void TraceStateTransition(Task::State state) noexcept;
-    void ProfilerStartExecution() noexcept;
-    void ProfilerStopExecution() noexcept;
+    // Accessors for the data driven by plugins.
+    ProfilerExecutionData& GetProfilerExecutionData() noexcept { return profiler_execution_data_; }
+    TraceStateTransitionData& GetTraceStateTransitionData() noexcept { return trace_state_transition_data_; }
 
 private:
     class YieldReasonGuard;
@@ -220,10 +234,10 @@ private:
 
     // {} if not defined
     std::chrono::steady_clock::time_point task_queue_wait_timepoint_;
-    std::chrono::steady_clock::time_point execute_started_;
-    std::chrono::steady_clock::time_point last_state_change_timepoint_;
 
-    std::size_t trace_csw_left_;
+    // Storage driven by the trace/profiler plugins.
+    ProfilerExecutionData profiler_execution_data_;
+    TraceStateTransitionData trace_state_transition_data_;
 
     AtomicSleepState sleep_state_{SleepState{SleepFlags::kSleeping, Epoch{0}}};
 
