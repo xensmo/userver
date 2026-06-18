@@ -1,7 +1,5 @@
 #include <storages/postgres/tests/util_pgtest.hpp>
 
-#include <userver/concurrent/background_task_storage.hpp>
-
 #include <storages/postgres/detail/connection.hpp>
 #include <userver/storages/postgres/dsn.hpp>
 #include <userver/storages/postgres/exceptions.hpp>
@@ -439,6 +437,14 @@ UTEST_F(PostgreCustomConnection, NoUserTypes) {
     UEXPECT_NO_THROW(conn->Execute("create type user_type as enum ('test')"));
     UEXPECT_THROW(conn->Execute("select 'test'::user_type"), pg::UnknownBufferCategory);
     UEXPECT_NO_THROW(conn->Execute("drop type user_type"));
+}
+
+UTEST_F(PostgreCustomConnection, SessionModeSetsStatementTimeoutOnConnect) {
+    pg::detail::ConnectionPtr conn{nullptr};
+    UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), kCachePreparedStatements));
+    ASSERT_TRUE(conn);
+
+    EXPECT_EQ(kTestCmdCtl.statement_timeout_ms, conn->GetStatementTimeout());
 }
 
 USERVER_NAMESPACE_END

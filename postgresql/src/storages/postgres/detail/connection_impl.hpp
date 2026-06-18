@@ -70,6 +70,8 @@ public:
     bool ArePreparedStatementsEnabled() const;
     bool IsBroken() const;
     bool IsExpired() const;
+    bool IsSessionPooler() const noexcept;
+    bool IsTransactionPooler() const noexcept;
     const ConnectionSettings& GetSettings() const;
 
     CommandControl GetDefaultCommandControl() const;

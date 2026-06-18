@@ -274,9 +274,13 @@ struct ConnectionImpl::ResetTransactionCommandControl {
 
     ~ResetTransactionCommandControl() {
         connection.transaction_cmd_ctl_.reset();
-        connection.current_statement_timeout_ =
-            connection.testsuite_pg_ctl_.MakeStatementTimeout(connection.GetDefaultCommandControl().statement_timeout_ms
-            );
+        if (connection.IsTransactionPooler()) {
+            connection.current_statement_timeout_ = TimeoutDuration{0};
+        } else {
+            connection.current_statement_timeout_ =
+                connection.testsuite_pg_ctl_
+                    .MakeStatementTimeout(connection.GetDefaultCommandControl().statement_timeout_ms);
+        }
     }
 };
 
@@ -343,7 +347,7 @@ void ConnectionImpl::AsyncConnect(const Dsn& dsn, engine::Deadline deadline) {
 
     scope.Reset(scopes::kGetConnectData);
     // We cannot handle exceptions here, so we let them got to the caller
-    if (settings_.discard_on_connect == ConnectionSettings::kDiscardAll) {
+    if (settings_.discard_on_connect == ConnectionSettings::kDiscardAll && IsSessionPooler()) {
         ExecuteCommandNoPrepare("DISCARD ALL", deadline);
         SetParameter("client_encoding", client_encoding, Connection::ParameterScope::kSession, deadline);
         if (start_params.application_name) {
@@ -426,6 +430,10 @@ bool ConnectionImpl::IsBroken() const { return conn_wrapper_.IsBroken(); }
 
 bool ConnectionImpl::IsExpired() const { return expires_at_.has_value() && SteadyNow() > *expires_at_; }
 
+bool ConnectionImpl::IsTransactionPooler() const noexcept { return settings_.pooler_mode == PoolerMode::kTransaction; }
+
+bool ConnectionImpl::IsSessionPooler() const noexcept { return settings_.pooler_mode == PoolerMode::kSession; }
+
 const ConnectionSettings& ConnectionImpl::GetSettings() const { return settings_; }
 
 CommandControl ConnectionImpl::GetDefaultCommandControl() const { return default_cmd_ctls_.GetDefaultCmdCtl(); }
@@ -474,17 +482,25 @@ void ConnectionImpl::Begin(
     if (std::exchange(in_transaction_, true)) {
         throw AlreadyInTransaction();
     }
-    DiscardOldPreparedStatements(MakeCurrentDeadline());
+
+    const auto deadline = MakeCurrentDeadline();
+    DiscardOldPreparedStatements(deadline);
+
     stats_.trx_start_time = trx_start_time;
     stats_.work_start_time = SteadyClock::now();
     ++stats_.trx_total;
+
+    const Query begin_query{BeginStatement(options), Query::NameLiteral{"begin"}};
     if (IsPipelineActive()) {
-        SendCommandNoPrepare(Query{std::string{BeginStatement(options)}}, MakeCurrentDeadline());
+        SendCommandNoPrepare(begin_query, deadline);
     } else {
-        ExecuteCommandNoPrepare(Query{std::string{BeginStatement(options)}}, MakeCurrentDeadline());
+        ExecuteCommandNoPrepare(begin_query, deadline);
     }
+
     if (trx_cmd_ctl) {
         SetTransactionCommandControl(*trx_cmd_ctl);
+    } else if (IsTransactionPooler()) {
+        SetStatementTimeout(GetDefaultCommandControl().statement_timeout_ms, deadline);
     }
 }
 
@@ -824,7 +840,18 @@ void ConnectionImpl::SetConnectionStatementTimeout(TimeoutDuration timeout, engi
     if (IsPipelineActive() && settings_.deadline_propagation_enabled) {
         timeout = AdjustTimeout(timeout, deadline_propagation_is_active_);
     }
-    if (current_statement_timeout_ != timeout) {
+
+    if (IsTransactionPooler()) {
+        if (IsInTransaction()) {
+            SetParameter(
+                kStatementTimeoutParameter,
+                std::to_string(timeout.count()),
+                Connection::ParameterScope::kTransaction,
+                deadline
+            );
+            current_statement_timeout_ = timeout;
+        }
+    } else if (current_statement_timeout_ != timeout) {
         SetParameter(
             kStatementTimeoutParameter,
             std::to_string(timeout.count()),
@@ -840,6 +867,7 @@ void ConnectionImpl::SetStatementTimeout(TimeoutDuration timeout, engine::Deadli
     if (IsPipelineActive() && settings_.deadline_propagation_enabled) {
         timeout = AdjustTimeout(timeout, deadline_propagation_is_active_);
     }
+
     if (current_statement_timeout_ != timeout) {
         SetParameter(
             kStatementTimeoutParameter,
