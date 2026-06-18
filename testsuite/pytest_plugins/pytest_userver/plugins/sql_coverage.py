@@ -5,11 +5,17 @@ Plugin that imports the required fixtures for checking SQL/YQL coverage. See
 @ingroup userver_testsuite_fixtures
 """
 
+from collections.abc import Iterable
+from collections.abc import Sequence
+
 import pytest
 
-from . import coverage
+# TODO move 'coverage' module to 'pytest_userver.utils'.
+import pytest_userver.plugins.coverage
 
 _SQL_COVERAGE_TEST_NAME = 'test_sql_coverage'
+
+pytest_plugins = ['pytest_userver.plugins.generated_tests']
 
 
 @pytest.fixture
@@ -27,7 +33,7 @@ def on_uncovered():
 
     def _on_uncovered(uncovered_statements: set[str]):
         msg = f'Uncovered SQL/YQL statements: {uncovered_statements}'
-        raise coverage.UncoveredError(msg)
+        raise pytest_userver.plugins.coverage.UncoveredError(msg)
 
     return _on_uncovered
 
@@ -100,10 +106,27 @@ async def yql_statement_hook(testpoint, sql_coverage):
     return _hook
 
 
+def test_sql_coverage(sql_coverage, on_uncovered):
+    sql_coverage.validate(on_uncovered)
+
+
+def pytest_generate_virtual_tests(
+    parent: pytest.File,
+    config: pytest.Config,
+    existing_items: Sequence[pytest.Item],
+) -> Iterable[pytest.Item]:
+    if config.pluginmanager.hasplugin('sql_files'):
+        yield pytest.Function.from_parent(
+            parent=parent,
+            name=_SQL_COVERAGE_TEST_NAME,
+            callobj=test_sql_coverage,
+        )
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_collection_modifyitems(config, items):
     yield
     if not items:
         return
 
-    coverage.collection_modifyitems(_SQL_COVERAGE_TEST_NAME, config, items)
+    pytest_userver.plugins.coverage.collection_modifyitems(_SQL_COVERAGE_TEST_NAME, config, items)
