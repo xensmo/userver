@@ -119,7 +119,7 @@ public:
           service_method_(service_method)
     {}
 
-    void DoCall() {
+    void ProcessCall() {
         auto scope_time = state_.GetSpan().CreateScopeTime("finish");
 
         DeserializeInitialRequest();
