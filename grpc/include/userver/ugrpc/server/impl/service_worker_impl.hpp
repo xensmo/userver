@@ -11,6 +11,7 @@
 #include <boost/smart_ptr/intrusive_ref_counter.hpp>
 
 #include <userver/engine/async.hpp>
+#include <userver/engine/impl/detach.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/engine/task/task_processor_fwd.hpp>
 #include <userver/utils/assert.hpp>
@@ -148,7 +149,7 @@ public:
             intrusive_ptr_release(&call);
         });
 
-        engine::DetachUnscopedUnsafe(engine::AsyncNoTracing(
+        auto process_call_task = engine::AsyncNoTracing(
             method_data_.service_data.internals.task_processor,
             [this, &call, overloaded_guard = std::move(overloaded_guard)]() mutable {
                 overloaded_guard.Release();
@@ -159,7 +160,12 @@ public:
 
                 intrusive_ptr_release(&call);
             }
-        ));
+        );
+
+        engine::impl::DetachUnscopedUnsafeNoCancellationOnShutdown(
+            utils::impl::InternalTag{},
+            std::move(process_call_task)
+        );
     }
 
     void RequestCancel() {
