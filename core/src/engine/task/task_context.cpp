@@ -196,7 +196,9 @@ void TaskContext::DoStep(boost::intrusive_ptr<TaskContext>&& self) {
             coro_ = task_processor_.GetCoroutine();
         } catch (...) {
             // Seems we're out of memory
+            ResetPayload();
             cancellation_reason_ = TaskCancellationReason::kOOM;
+            GetTaskProcessor().GetTaskCounter().AccountTaskCancel();
             SetState(TaskBase::State::kCancelled);
             finish_awaiters_->SetSignalAndNotifyAll();
             throw;
@@ -223,18 +225,15 @@ void TaskContext::DoStep(boost::intrusive_ptr<TaskContext>&& self) {
     }
 
     switch (yield_reason_) {
-        case YieldReason::kTaskCancelled:
         case YieldReason::kTaskComplete: {
             std::move(coro_).ReturnToPool();
-            auto new_state =
-                (yield_reason_ == YieldReason::kTaskComplete) ? Task::State::kCompleted : Task::State::kCancelled;
+            const auto new_state = pending_final_state_;
             if (cancellation_reason_.load(std::memory_order_relaxed) != TaskCancellationReason::kNone) {
                 GetTaskProcessor().GetTaskCounter().AccountTaskCancel();
             }
             SetState(new_state);
             deadline_timer_.Finalize();
             finish_awaiters_->SetSignalAndNotifyAll();
-            TraceStateTransition(new_state);
         } break;
 
         case YieldReason::kTaskWaiting:
@@ -339,16 +338,12 @@ TaskContext::WakeupSource TaskContext::Sleep(WeakAwaitable& awaitable, Deadline 
     yield_reason_ = YieldReason::kTaskWaiting;
     UASSERT(task_pipe_);
 
-    TraceStateTransition(Task::State::kSuspended);
-    ProfilerStopExecution();  // TODO: move to hook
     GetTaskProcessor().HookBeforeSleep(*this);
 
     auto& task_pipe_ref = *task_pipe_;
     [[maybe_unused]] TaskContext* context = task_pipe_ref().get();
 
     GetTaskProcessor().HookAfterWakeup(*this);
-    ProfilerStartExecution();  // TODO: move to hook
-    TraceStateTransition(Task::State::kRunning);
 
     UASSERT(context == this);
     UASSERT(state_ == Task::State::kRunning);
@@ -498,13 +493,11 @@ class TaskContext::YieldReasonGuard {
 public:
     explicit YieldReasonGuard(TaskContext& context) noexcept : context_(context) {}
 
-    ~YieldReasonGuard() noexcept { context_.yield_reason_ = yield_reason_; }
-
-    void SetYieldReason(YieldReason reason) noexcept { yield_reason_ = reason; }
+    // The terminal state (completed vs cancelled) is conveyed via pending_final_state_.
+    ~YieldReasonGuard() noexcept { context_.yield_reason_ = YieldReason::kTaskComplete; }
 
 private:
     TaskContext& context_;
-    YieldReason yield_reason_{YieldReason::kNone};
 };
 
 class TaskContext::LocalStorageGuard {
@@ -521,16 +514,16 @@ private:
     TaskContext& context_;
 };
 
-class TaskContext::ProfilerExecutionGuard {
+class TaskContext::TaskStartStopHookGuard {
 public:
-    explicit ProfilerExecutionGuard(TaskContext& context) noexcept : context_(context) {
-        static_assert(noexcept(context_.ProfilerStartExecution()));
-        context_.ProfilerStartExecution();
+    explicit TaskStartStopHookGuard(TaskContext& context) noexcept : context_(context) {
+        static_assert(noexcept(context_.GetTaskProcessor().HookTaskStart(context_)));
+        context_.GetTaskProcessor().HookTaskStart(context_);
     }
 
-    ~ProfilerExecutionGuard() {
-        static_assert(noexcept(context_.ProfilerStopExecution()));
-        context_.ProfilerStopExecution();
+    ~TaskStartStopHookGuard() {
+        static_assert(noexcept(context_.GetTaskProcessor().HookTaskStop(context_)));
+        context_.GetTaskProcessor().HookTaskStop(context_);
     }
 
 private:
@@ -545,11 +538,11 @@ void TaskContext::CoroFunc(TaskPipe& task_pipe) {
 
         {
             // Set yield_reason_ outside ~LocalStorageGuard as Sleep in dtors would otherwise clobber it.
-            YieldReasonGuard yield_reason_guard(*context);
+            const YieldReasonGuard yield_reason_guard(*context);
             // Destroy contents of LocalStorage in the coroutine as dtors may want to schedule.
             const LocalStorageGuard local_storage_guard(*context);
-            // Uses task-local storage for logging.
-            const ProfilerExecutionGuard profiler_execution_guard(*context);
+            // Drives the task start/stop hooks (trace/profiler plugins) with task-local storage alive.
+            const TaskStartStopHookGuard task_start_stop_hook_guard(*context);
 
             // We only let tasks ran with CriticalAsync enter function body, others
             // get terminated ASAP.
@@ -558,18 +551,17 @@ void TaskContext::CoroFunc(TaskPipe& task_pipe) {
                 // It is important to destroy payload here as someone may want
                 // to synchronize in its dtor (e.g. lambda closure).
                 context->ResetPayload();
-                yield_reason_guard.SetYieldReason(YieldReason::kTaskCancelled);
+                context->pending_final_state_ = Task::State::kCancelled;
             } else {
                 try {
-                    context->TraceStateTransition(Task::State::kRunning);
                     context->payload_->Perform();
                     // We store an exception in the context to be able to handle
                     // Awaitable::GetErrorResult() even when the owning
                     // task is destroyed (and payload_ is reset to nullptr).
                     context->exception_ = context->payload_->GetException();
-                    yield_reason_guard.SetYieldReason(YieldReason::kTaskComplete);
+                    UASSERT(context->pending_final_state_ == Task::State::kCompleted);
                 } catch (const CoroUnwinder&) {
-                    yield_reason_guard.SetYieldReason(YieldReason::kTaskCancelled);
+                    context->pending_final_state_ = Task::State::kCancelled;
                 } catch (...) {
                     utils::AbortWithStacktrace(
                         "An exception that is not derived from std::exception has been "

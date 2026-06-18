@@ -41,7 +41,7 @@ public:
     using TaskPipe = coro::Pool::TaskPipe;
     using TaskId = uint64_t;
 
-    enum class YieldReason { kNone, kTaskWaiting, kTaskCancelled, kTaskComplete };
+    enum class YieldReason { kNone, kTaskWaiting, kTaskComplete };
 
     /// Wakeup sources in descending priority order
     enum class WakeupSource : uint32_t {
@@ -66,6 +66,10 @@ public:
 
     Task::State GetState() const { return state_; }
 
+    // The terminal state the task is finishing with (kCompleted or kCancelled).
+    // Only meaningful once the task body has finished, e.g. from HookTaskStop.
+    Task::State GetPendingFinalState() const noexcept { return pending_final_state_; }
+
     // whether this task is the one currently executing on the calling thread
     bool IsCurrent() const noexcept;
 
@@ -84,7 +88,7 @@ public:
     // should only be called from other context
     [[nodiscard]] FutureStatus WaitUntil(Deadline) const noexcept;
 
-    TaskProcessor& GetTaskProcessor() { return task_processor_; }
+    TaskProcessor& GetTaskProcessor() noexcept { return task_processor_; }
     void DoStep(boost::intrusive_ptr<TaskContext>&& self);
 
     // normally non-blocking, causes wakeup
@@ -163,10 +167,16 @@ public:
 
     utils::StringLiteral GetActorType() const override;
 
+    // Trace/profiler hooks. Public so the trace/profiler plugins can drive them
+    // at task hook points; also used internally.
+    void TraceStateTransition(Task::State state) noexcept;
+    void ProfilerStartExecution() noexcept;
+    void ProfilerStopExecution() noexcept;
+
 private:
     class YieldReasonGuard;
     class LocalStorageGuard;
-    class ProfilerExecutionGuard;
+    class TaskStartStopHookGuard;
 
     static constexpr uint64_t kMagic = 0x6b73615453755459ULL;  // "YTuSTask"
 
@@ -183,11 +193,6 @@ private:
 
     static void Schedule(boost::intrusive_ptr<TaskContext>&& self) noexcept;
     static bool ShouldSchedule(SleepState::Flags flags, WakeupSource source) noexcept;
-
-    void ProfilerStartExecution() noexcept;
-    void ProfilerStopExecution() noexcept;
-
-    void TraceStateTransition(Task::State state) noexcept;
 
     friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
 
@@ -225,6 +230,7 @@ private:
     CountedCoroutinePtr coro_;
     TaskPipe* task_pipe_{nullptr};
     YieldReason yield_reason_{YieldReason::kNone};
+    Task::State pending_final_state_{Task::State::kCompleted};
 
     std::optional<task_local::Storage> local_storage_{};
 

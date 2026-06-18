@@ -19,16 +19,25 @@ class PluginBase {
 public:
     virtual ~PluginBase() = default;
 
-    virtual void HookTaskCreate(const impl::TaskContext& task) noexcept = 0;
+    virtual void HookTaskCreate(impl::TaskContext& /*task*/) noexcept {}
 
-    virtual void HookTaskDestroy(const impl::TaskContext& task) noexcept = 0;
+    virtual void HookTaskDestroy(impl::TaskContext& /*task*/) noexcept {}
 
     /// Callback that is called in coroutine just before falling asleep
     /// and switching execution to another coroutine.
-    virtual void HookBeforeSleep(const impl::TaskContext& task) noexcept = 0;
+    virtual void HookBeforeSleep(impl::TaskContext& /*task*/) noexcept {}
 
     /// Callback that is called in coroutine just after wakeup.
-    virtual void HookAfterWakeup(const impl::TaskContext& task) noexcept = 0;
+    virtual void HookAfterWakeup(impl::TaskContext& /*task*/) noexcept {}
+
+    /// Callback that is called in coroutine when the task starts executing its
+    /// payload (once per task, before the first user code runs).
+    virtual void HookTaskStart(impl::TaskContext& /*task*/) noexcept {}
+
+    /// Callback that is called in coroutine when the task finishes executing its
+    /// payload (once per task, after completion or cancellation). The terminal
+    /// state is available via task.GetPendingFinalState().
+    virtual void HookTaskStop(impl::TaskContext& /*task*/) noexcept {}
 };
 
 }  // namespace engine
