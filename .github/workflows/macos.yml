@@ -74,6 +74,10 @@ jobs:
 
           - name: Install test dependencies
             run: |
+                brew trust --formula azure/bicep/bicep
+                brew trust --formula hashicorp/tap/packer
+                brew trust mongodb/brew
+                brew trust aws/tap
                 brew tap mongodb/brew
                 brew install clickhouse redis kafka mongodb-community rabbitmq
                 mkdir -p "$(brew --prefix)/etc/rabbitmq/conf.d"
