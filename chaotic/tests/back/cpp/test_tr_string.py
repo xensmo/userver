@@ -96,6 +96,20 @@ def test_byte(simple_gen):
     }
 
 
+def test_uuid(simple_gen):
+    types = simple_gen({'type': 'string', 'format': 'uuid'})
+    assert types == {
+        '::type': cpp_types.CppStringWithFormat(
+            raw_cpp_type=type_name.TypeName('std::string'),
+            format_cpp_type='boost::uuids::uuid',
+            user_cpp_type=None,
+            json_schema=front_types.Schema(),
+            nullable=False,
+            default=None,
+        ),
+    }
+
+
 def test_datetime_isobasic(simple_gen):
     types = simple_gen({'type': 'string', 'format': 'date-time-iso-basic'})
     assert types == {
