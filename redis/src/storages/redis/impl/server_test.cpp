@@ -21,8 +21,12 @@ USERVER_NAMESPACE_BEGIN
 
 namespace {
 
-// 100ms should be enough, but valgrind is too slow
-constexpr std::chrono::milliseconds kSmallPeriod{500};
+// kSuccessTimeout is used only for waits that are expected to succeed
+// (EXPECT_TRUE(...WaitForFirstReply...)). WaitForFirstReply returns as soon as
+// the awaited reply arrives, so a generous timeout does not slow down the happy
+// path while preventing flaps under CI/sanitizer load (the redis ping interval
+// alone is 2000ms). Checks that something must NOT happen use kWaitPeriod.
+constexpr auto kSuccessTimeout = utest::kMaxTestWaitTime;
 constexpr std::chrono::milliseconds kWaitPeriod{10};
 constexpr auto kWaitRetries = 100;
 constexpr auto kCheckCount = 10;
@@ -175,7 +179,7 @@ TEST(Redis, NoPassword) {
         kDatabaseIndex
     );
 
-    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
 }
 
 TEST(Redis, Auth) {
@@ -195,8 +199,8 @@ TEST(Redis, Auth) {
         kDatabaseIndex
     );
 
-    EXPECT_TRUE(auth_handler->WaitForFirstReply(kSmallPeriod));
-    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(auth_handler->WaitForFirstReply(kSuccessTimeout));
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
 }
 
 TEST(Redis, AuthWithUsername) {
@@ -216,8 +220,8 @@ TEST(Redis, AuthWithUsername) {
         kDatabaseIndex
     );
 
-    EXPECT_TRUE(auth_handler->WaitForFirstReply(kSmallPeriod));
-    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(auth_handler->WaitForFirstReply(kSuccessTimeout));
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
 }
 
 TEST(Redis, AuthFail) {
@@ -237,7 +241,7 @@ TEST(Redis, AuthFail) {
         kDatabaseIndex
     );
 
-    EXPECT_TRUE(auth_error_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(auth_error_handler->WaitForFirstReply(kSuccessTimeout));
     PeriodicCheck([&] { return !IsConnected(*redis); });
 }
 
@@ -259,7 +263,7 @@ TEST(Redis, AuthTimeout) {
         kDatabaseIndex
     );
 
-    EXPECT_TRUE(auth_error_handler->WaitForFirstReply(sleep_period + kSmallPeriod));
+    EXPECT_TRUE(auth_error_handler->WaitForFirstReply(sleep_period + kSuccessTimeout));
     PeriodicCheck([&] { return !IsConnected(*redis); });
 }
 
@@ -294,7 +298,7 @@ UTEST(Redis, SentinelAuth) {
     mock.CreateSentinelClientAndWait(settings);
 
     for (auto& handler : auth_handlers) {
-        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+        EXPECT_TRUE(handler->WaitForFirstReply(kSuccessTimeout));
     }
 
     for (auto& handler : no_auth_handlers) {
@@ -302,7 +306,7 @@ UTEST(Redis, SentinelAuth) {
     }
 
     for (const auto& sentinel : sentinels) {
-        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSuccessTimeout));
     }
 }
 
@@ -339,7 +343,7 @@ UTEST(Redis, SentinelAuthWithUsername) {
     mock.CreateSentinelClientAndWait(settings);
 
     for (auto& handler : auth_handlers) {
-        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+        EXPECT_TRUE(handler->WaitForFirstReply(kSuccessTimeout));
     }
 
     for (auto& handler : no_auth_handlers) {
@@ -347,7 +351,7 @@ UTEST(Redis, SentinelAuthWithUsername) {
     }
 
     for (const auto& sentinel : sentinels) {
-        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSuccessTimeout));
     }
 }
 
@@ -386,7 +390,7 @@ UTEST(Redis, SentinelAuthWithUsernameAndPassword) {
     mock.CreateSentinelClientAndWait(settings);
 
     for (auto& handler : auth_handlers) {
-        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+        EXPECT_TRUE(handler->WaitForFirstReply(kSuccessTimeout));
     }
 
     for (auto& handler : data_auth_handlers) {
@@ -394,7 +398,7 @@ UTEST(Redis, SentinelAuthWithUsernameAndPassword) {
     }
 
     for (const auto& sentinel : sentinels) {
-        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSuccessTimeout));
     }
 }
 
@@ -429,7 +433,7 @@ UTEST(Redis, SentinelNoAuthButPassword) {
     mock.CreateSentinelClientAndWait(settings);
 
     for (auto& handler : auth_handlers) {
-        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+        EXPECT_TRUE(handler->WaitForFirstReply(kSuccessTimeout));
     }
 
     for (auto& handler : no_auth_handlers) {
@@ -437,7 +441,7 @@ UTEST(Redis, SentinelNoAuthButPassword) {
     }
 
     for (const auto& sentinel : sentinels) {
-        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSuccessTimeout));
     }
 }
 
@@ -467,7 +471,7 @@ UTEST(Redis, SentinelNoAuth) {
     }
 
     for (const auto& sentinel : sentinels) {
-        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(sentinel.WaitForFirstPingReply(kSuccessTimeout));
     }
 }
 
@@ -502,7 +506,7 @@ UTEST(Redis, SentinelAuthSubscribe) {
     mock.CreateSubscribeSentinelClientAndWait(settings);
 
     for (auto& handler : auth_handlers) {
-        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+        EXPECT_TRUE(handler->WaitForFirstReply(kSuccessTimeout));
     }
 
     for (auto& handler : no_auth_handlers) {
@@ -543,7 +547,7 @@ UTEST(Redis, SentinelAuthSubscribeWithUsername) {
     mock.CreateSubscribeSentinelClientAndWait(settings);
 
     for (auto& handler : auth_handlers) {
-        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+        EXPECT_TRUE(handler->WaitForFirstReply(kSuccessTimeout));
     }
 
     for (auto& handler : no_auth_handlers) {
@@ -582,7 +586,7 @@ UTEST(Redis, SentinelNoAuthSubscribeButPassword) {
     mock.CreateSubscribeSentinelClientAndWait(settings);
 
     for (auto& handler : auth_handlers) {
-        EXPECT_TRUE(handler->WaitForFirstReply(kSmallPeriod));
+        EXPECT_TRUE(handler->WaitForFirstReply(kSuccessTimeout));
     }
 
     for (auto& handler : no_auth_handlers) {
@@ -628,8 +632,8 @@ TEST(Redis, Select) {
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
     redis->Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
 
-    EXPECT_TRUE(select_handler->WaitForFirstReply(kSmallPeriod));
-    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(select_handler->WaitForFirstReply(kSuccessTimeout));
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
 }
 
 TEST(Redis, SelectFail) {
@@ -644,7 +648,7 @@ TEST(Redis, SelectFail) {
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
     redis->Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
 
-    EXPECT_TRUE(select_error_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(select_error_handler->WaitForFirstReply(kSuccessTimeout));
     PeriodicCheck([&] { return !IsConnected(*redis); });
 }
 
@@ -661,7 +665,7 @@ TEST(Redis, SelectTimeout) {
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
     redis->Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
 
-    EXPECT_TRUE(select_error_handler->WaitForFirstReply(sleep_period + kSmallPeriod));
+    EXPECT_TRUE(select_error_handler->WaitForFirstReply(sleep_period + kSuccessTimeout));
     PeriodicCheck([&] { return !IsConnected(*redis); });
 }
 
@@ -678,7 +682,7 @@ TEST(Redis, SlaveREADONLY) {
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
     redis->Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
 
-    EXPECT_TRUE(readonly_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(readonly_handler->WaitForFirstReply(kSuccessTimeout));
     PeriodicWait([&] { return IsConnected(*redis); });
 }
 
@@ -695,7 +699,7 @@ TEST(Redis, SlaveREADONLYFail) {
         storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
     redis->Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
 
-    EXPECT_TRUE(readonly_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(readonly_handler->WaitForFirstReply(kSuccessTimeout));
     PeriodicWait([&] { return !IsConnected(*redis); });
 }
 
@@ -715,7 +719,7 @@ TEST(Redis, PingFail) {
         kDatabaseIndex
     );
 
-    EXPECT_TRUE(ping_error_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(ping_error_handler->WaitForFirstReply(kSuccessTimeout));
     PeriodicWait([&] { return !IsConnected(*redis); });
 }
 
@@ -749,7 +753,7 @@ TEST_P(RedisDisconnectingReplies, X) {
         kDatabaseIndex
     );
 
-    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
     PeriodicWait([&] { return IsConnected(*redis); });
 
     auto cmd = storages::redis::impl::PrepareCommand(
@@ -758,7 +762,7 @@ TEST_P(RedisDisconnectingReplies, X) {
     );
     redis->AsyncCommand(cmd);
 
-    EXPECT_TRUE(get_handler->WaitForFirstReply(kSmallPeriod));
+    EXPECT_TRUE(get_handler->WaitForFirstReply(kSuccessTimeout));
     PeriodicWait([&] { return !IsConnected(*redis); });
 }
 

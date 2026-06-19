@@ -87,10 +87,10 @@ void ClusterTest::CreateSentinelClient(storages::redis::impl::KeyShardFactory ke
     sentinel_client_->WaitConnectedDebug(slaves_.empty());
 
     for (const auto& server : masters_) {
-        EXPECT_TRUE(server->WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(server->WaitForFirstPingReply(kSuccessTimeout));
     }
     for (const auto& server : slaves_) {
-        EXPECT_TRUE(server->WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(server->WaitForFirstPingReply(kSuccessTimeout));
     }
 }
 
@@ -142,7 +142,7 @@ void SentinelTest::CreateSentinelClient(storages::redis::impl::KeyShardFactory k
     sentinel_client_->WaitConnectedDebug(slaves_.empty());
 
     for (const auto& sentinel : sentinels_) {
-        EXPECT_TRUE(sentinel->WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(sentinel->WaitForFirstPingReply(kSuccessTimeout));
     }
     sentinel_client_->WaitConnectedDebug(slaves_.empty());
 }
@@ -209,7 +209,7 @@ void SentinelShardTest::CreateSentinelClient(storages::redis::impl::KeyShardFact
     sentinel_client_->WaitConnectedDebug(slaves_.empty());
 
     for (const auto& sentinel : sentinels_) {
-        EXPECT_TRUE(sentinel->WaitForFirstPingReply(kSmallPeriod));
+        EXPECT_TRUE(sentinel->WaitForFirstPingReply(kSuccessTimeout));
     }
 }
 
