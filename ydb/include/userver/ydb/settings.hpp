@@ -45,7 +45,7 @@ struct OperationSettings final {
 /// @brief Settings for a single query execution.
 struct QuerySettings final {
     /// Whether to keep the query in a server-side query cache.
-    /// @deprecated Query Client doesn't have KeepInQueryCache, it caches automatically.
+    /// @deprecated Ignored. Execute uses Query API, which caches queries automatically.
     std::optional<bool> keep_in_query_cache{std::nullopt};
 
     /// Stats collection mode for query execution.

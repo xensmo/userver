@@ -300,7 +300,6 @@ private:
     void Select1();
 
     NYdb::NQuery::TExecuteQuerySettings ToExecuteQuerySettings(const QuerySettings& query_settings) const;
-    NYdb::NTable::TExecDataQuerySettings ToExecDataQuerySettings(const QuerySettings& query_settings) const;
 
     template <typename... Args>
     PreparedArgsBuilder MakeBuilder(Args&&... args);
@@ -322,8 +321,6 @@ private:
 
     dynamic_config::Source config_source_;
     const OperationSettings default_settings_;
-    const bool keep_in_query_cache_;
-    const bool use_query_client_;
     std::unique_ptr<impl::Stats> stats_;
 
     // Connections are permanent: none is destroyed while the component lives

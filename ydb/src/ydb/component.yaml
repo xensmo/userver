@@ -63,7 +63,8 @@ properties:
                 keep-in-query-cache:
                     type: boolean
                     default: true
-                    description: whether to use query cache
+                    description: |
+                        Deprecated, ignored. Execute always uses Query API, which caches queries automatically.
                 network-threads-num:
                     type: integer
                     minimum: 1
@@ -121,7 +122,8 @@ properties:
                 use-query-client:
                     type: boolean
                     default: true
-                    description: whether to use query client for table client methods (ExecuteDataQuery, Transaction methods)
+                    description: |
+                        Deprecated, ignored. ExecuteDataQuery, Begin, and Transaction::Execute always use Query API.
                 aliases:
                     description: list of aliases for this database
                     type: array
