@@ -10,10 +10,7 @@ from collections.abc import Sequence
 
 import pytest
 
-# TODO move 'coverage' module to 'pytest_userver.utils'.
-import pytest_userver.plugins.coverage
-
-_SQL_COVERAGE_TEST_NAME = 'test_sql_coverage'
+import pytest_userver.utils.coverage
 
 pytest_plugins = ['pytest_userver.plugins.generated_tests']
 
@@ -33,7 +30,7 @@ def on_uncovered():
 
     def _on_uncovered(uncovered_statements: set[str]):
         msg = f'Uncovered SQL/YQL statements: {uncovered_statements}'
-        raise pytest_userver.plugins.coverage.UncoveredError(msg)
+        raise pytest_userver.utils.coverage.UncoveredError(msg)
 
     return _on_uncovered
 
@@ -118,15 +115,13 @@ def pytest_generate_virtual_tests(
     if config.pluginmanager.hasplugin('sql_files'):
         yield pytest.Function.from_parent(
             parent=parent,
-            name=_SQL_COVERAGE_TEST_NAME,
+            name=test_sql_coverage.__name__,
             callobj=test_sql_coverage,
         )
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_collection_modifyitems(config, items):
+@pytest.hookimpl(wrapper=True)
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     yield
-    if not items:
-        return
-
-    pytest_userver.plugins.coverage.collection_modifyitems(_SQL_COVERAGE_TEST_NAME, config, items)
+    if items:
+        pytest_userver.utils.coverage.collection_modifyitems(test_sql_coverage.__name__, config, items)
