@@ -159,6 +159,21 @@ private:
     size_t value_;
 };
 
+/// @brief Specifies the number of documents per wire-protocol batch.
+/// Controls both the initial find batch and subsequent getMore batches.
+/// @note The value of `0` means "use server default".
+class BatchSize {
+public:
+    explicit BatchSize(size_t value)
+        : value_(value)
+    {}
+
+    size_t Value() const { return value_; }
+
+private:
+    size_t value_;
+};
+
 /// @brief Selects fields to be returned
 /// @note `_id` field is always included by default, order might be significant
 /// @see

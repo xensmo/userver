@@ -132,6 +132,15 @@ void AppendLimit(formats::bson::impl::BsonBuilder& builder, options::Limit limit
     AppendUint64Option(builder, kOptionName, limit.Value());
 }
 
+void AppendBatchSize(formats::bson::impl::BsonBuilder& builder, options::BatchSize batch_size) {
+    if (!batch_size.Value()) {
+        return;
+    }
+
+    static constexpr utils::StringLiteral kOptionName = "batchSize";
+    AppendUint64Option(builder, kOptionName, batch_size.Value());
+}
+
 void AppendHint(formats::bson::impl::BsonBuilder& builder, const options::Hint& hint) {
     static constexpr utils::StringLiteral kOptionName = "hint";
     builder.Append(kOptionName, hint.Value());
@@ -231,6 +240,10 @@ void Find::SetOption(options::ReadConcern level) { AppendReadConcern(impl::Ensur
 void Find::SetOption(options::Skip skip) { AppendSkip(impl::EnsureBuilder(impl_->options), skip); }
 
 void Find::SetOption(options::Limit limit) { AppendLimit(impl::EnsureBuilder(impl_->options), limit); }
+
+void Find::SetOption(options::BatchSize batch_size) {
+    AppendBatchSize(impl::EnsureBuilder(impl_->options), batch_size);
+}
 
 ATTRIBUTE_NO_SANITIZE_UNDEFINED
 void Find::SetOption(options::Projection projection) {
