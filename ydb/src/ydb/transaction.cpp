@@ -33,14 +33,13 @@ TxActor::TxActor(
 {}
 
 NYdb::NQuery::TTransaction TxActor::BeginTx(NYdb::NQuery::TSession& session, NYdb::NQuery::TTxSettings&& tx_settings) {
-    impl::RequestContext<RequestSettings> context{
-        table_client_,
+    auto context = table_client_.MakeRequestContext(
         Query{"", Query::Name{"Begin"}},
         RequestSettings{},
         impl::IsStreaming{false},
         nullptr,
         deadline_
-    };
+    );
     context.span.AddTag("attempt", attempt_);
 
     const auto ydb_settings = impl::PrepareRequestSettings<
@@ -50,8 +49,8 @@ NYdb::NQuery::TTransaction TxActor::BeginTx(NYdb::NQuery::TSession& session, NYd
 }
 
 ExecuteResponse TxActor::Execute(ExecuteSettings settings, const Query& query, PreparedArgsBuilder&& builder) {
-    impl::RequestContext<ExecuteSettings>
-        context{table_client_, query, std::move(settings), impl::IsStreaming{false}, nullptr, deadline_};
+    auto context =
+        table_client_.MakeRequestContext(query, std::move(settings), impl::IsStreaming{false}, nullptr, deadline_);
     context.span.AddTag("attempt", attempt_);
 
     auto internal_params = std::move(builder).Build();
@@ -74,14 +73,13 @@ template <TxAction Action>
 void TxActor::FinishTx(const RequestSettings& settings) {
     constexpr std::string_view action_name = Action == TxAction::kCommit ? "Commit" : "Rollback";
 
-    impl::RequestContext<RequestSettings> context{
-        table_client_,
+    auto context = table_client_.MakeRequestContext(
         Query{"", Query::Name{action_name}},
         RequestSettings{settings},
         impl::IsStreaming{false},
         nullptr,
         deadline_
-    };
+    );
     context.span.AddTag("attempt", attempt_);
 
     using SettingsType = std::conditional_t<
@@ -156,7 +154,7 @@ void Transaction::Commit(OperationSettings settings) {
     EnsureActive();
 
     static const Query kQuery{"", Query::Name{"Commit"}};
-    impl::RequestContext context{table_client_, kQuery, std::move(settings), impl::IsStreaming{false}, &span_};
+    auto context = table_client_.MakeRequestContext(kQuery, std::move(settings), impl::IsStreaming{false}, &span_);
 
     if (!name_.empty()) {
         TESTPOINT_CALLBACK(
@@ -200,7 +198,7 @@ void Transaction::Rollback() {
 
     static const Query kQuery{"", Query::Name{"Rollback"}};
     auto settings = rollback_settings_;
-    impl::RequestContext context{table_client_, kQuery, std::move(settings), impl::IsStreaming{false}, &span_};
+    auto context = table_client_.MakeRequestContext(kQuery, std::move(settings), impl::IsStreaming{false}, &span_);
 
     std::visit(
         [this, &context](auto&& tx) {
@@ -249,7 +247,7 @@ ExecuteResponse Transaction::Execute(
 ) {
     EnsureActive();
 
-    impl::RequestContext context{table_client_, query, std::move(settings), impl::IsStreaming{false}, &span_};
+    auto context = table_client_.MakeRequestContext(query, std::move(settings), impl::IsStreaming{false}, &span_);
     auto internal_params = std::move(builder).Build();
 
     auto exec_query_settings = table_client_.ToExecuteQuerySettings(query_settings);

@@ -6369,6 +6369,8 @@
   "ydb/src/ydb/impl/build_info.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/build_info.hpp",
   "ydb/src/ydb/impl/config.cpp":"taxi/uservices/userver/ydb/src/ydb/impl/config.cpp",
   "ydb/src/ydb/impl/config.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/config.hpp",
+  "ydb/src/ydb/impl/connection.cpp":"taxi/uservices/userver/ydb/src/ydb/impl/connection.cpp",
+  "ydb/src/ydb/impl/connection.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/connection.hpp",
   "ydb/src/ydb/impl/dist_lock/semaphore_settings.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/dist_lock/semaphore_settings.hpp",
   "ydb/src/ydb/impl/dist_lock/statistics.hpp":"taxi/uservices/userver/ydb/src/ydb/impl/dist_lock/statistics.hpp",
   "ydb/src/ydb/impl/driver.cpp":"taxi/uservices/userver/ydb/src/ydb/impl/driver.cpp",

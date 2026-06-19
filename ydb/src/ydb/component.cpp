@@ -213,11 +213,11 @@ void YdbComponent::OnConfigUpdate(const dynamic_config::Snapshot& cfg) {
             LOG_WARNING()
                 << "ydb database routing: target '" << target << "' for database '" << dbname
                 << "' is not configured; keeping its own connection";
-            database.table_client->SwitchConnection(database.table_client->GetOwnConnection());
+            database.table_client->SwitchConnectionTo(*database.table_client);
             continue;
         }
 
-        database.table_client->SwitchConnection(target_it->second.table_client->GetOwnConnection());
+        database.table_client->SwitchConnectionTo(*target_it->second.table_client);
     }
 }
 
