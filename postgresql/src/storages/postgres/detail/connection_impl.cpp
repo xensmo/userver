@@ -1003,7 +1003,7 @@ void ConnectionImpl::DiscardOldPreparedStatements(engine::Deadline deadline) {
 
 void ConnectionImpl::DiscardPreparedStatement(const PreparedStatementInfo& info, engine::Deadline deadline) {
     LOG_DEBUG() << "Discarding prepared statement " << info.meta_statement_name;
-    ExecuteCommandNoPrepare("DEALLOCATE " + info.meta_statement_name, deadline);
+    ExecuteCommandNoPrepare("DEALLOCATE " + conn_wrapper_.EscapeIdentifier(info.meta_statement_name), deadline);
 }
 
 ResultSet ConnectionImpl::ExecuteCommand(const Query& query, engine::Deadline deadline, logging::Level span_log_level) {

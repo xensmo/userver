@@ -428,6 +428,50 @@ UTEST_F(PostgreCustomConnection, PreparedStatementsOverrideDisabled) {
     EXPECT_EQ(stats.prepared_statements_current, old_stats.prepared_statements_current);
 }
 
+UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithSpecialChars) {
+    storages::postgres::ConnectionSettings settings = kCachePreparedStatements;
+    settings.max_prepared_cache_size = 2;
+
+    pg::detail::ConnectionPtr conn{nullptr};
+    UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), settings));
+    CheckConnection(conn);
+
+    if (!conn->ArePreparedStatementsEnabled()) {
+        return;
+    }
+
+    for (const auto& query : {
+             pg::Query{"SELECT 0", pg::Query::Name{"query-name-0"}},
+             pg::Query{"SELECT 1", pg::Query::Name{"query-name-1"}},
+             pg::Query{"SELECT 2", pg::Query::Name{"query-name-2"}},
+         })
+    {
+        UEXPECT_NO_THROW(conn->Execute(query));
+    }
+}
+
+UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithMixedCase) {
+    storages::postgres::ConnectionSettings settings = kCachePreparedStatements;
+    settings.max_prepared_cache_size = 2;
+
+    pg::detail::ConnectionPtr conn{nullptr};
+    UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), settings));
+    CheckConnection(conn);
+
+    if (!conn->ArePreparedStatementsEnabled()) {
+        return;
+    }
+
+    for (const auto& query : {
+             pg::Query{"SELECT 0", pg::Query::Name{"SelectValueV0"}},
+             pg::Query{"SELECT 1", pg::Query::Name{"SelectValueV1"}},
+             pg::Query{"SELECT 2", pg::Query::Name{"SelectValueV2"}},
+         })
+    {
+        UEXPECT_NO_THROW(conn->Execute(query));
+    }
+}
+
 UTEST_F(PostgreCustomConnection, NoUserTypes) {
     pg::detail::ConnectionPtr conn{nullptr};
     UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), kNoUserTypes));
