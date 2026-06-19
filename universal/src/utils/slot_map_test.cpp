@@ -126,40 +126,40 @@ TYPED_TEST(SlotMapByUnderlyingContainer, IteratorConstructor) {
     EXPECT_EQ(m[2], 7);
 }
 
-TYPED_TEST(SlotMapByUnderlyingContainer, EraseAtReducesSize) {
+TYPED_TEST(SlotMapByUnderlyingContainer, EraseReducesSize) {
     SlotMapFor<TypeParam, int> m;
     const auto idx0 = m.insert(1).index;
     const auto idx1 = m.insert(2).index;
     const auto idx2 = m.insert(3).index;
 
-    m.EraseAt(idx1);
+    EXPECT_EQ(m.erase(idx1), 1);
     EXPECT_EQ(m.size(), 2);
     EXPECT_EQ(m[idx0], 1);
     EXPECT_EQ(m[idx2], 3);
 }
 
-TYPED_TEST(SlotMapByUnderlyingContainer, EraseAtAlreadyErasedIsNoop) {
+TYPED_TEST(SlotMapByUnderlyingContainer, EraseAlreadyErasedIsNoop) {
     SlotMapFor<TypeParam, int> m;
     const auto idx0 = m.insert(1).index;
     m.insert(2);
 
-    m.EraseAt(idx0);
+    EXPECT_EQ(m.erase(idx0), 1);
     EXPECT_EQ(m.size(), 1);
 
-    // Erasing the same slot again must be a no-op.
-    m.EraseAt(idx0);
+    // Erasing the same slot again must be a no-op and report 0 erased elements.
+    EXPECT_EQ(m.erase(idx0), 0);
     EXPECT_EQ(m.size(), 1);
 
     // The remaining live element must still be accessible.
     EXPECT_EQ(m[1], 2);
 }
 
-TYPED_TEST(SlotMapByUnderlyingContainer, EraseAtAndReuseSlot) {
+TYPED_TEST(SlotMapByUnderlyingContainer, EraseAndReuseSlot) {
     SlotMapFor<TypeParam, int> m;
     const auto idx0 = m.insert(10).index;
     m.insert(20);
 
-    m.EraseAt(idx0);
+    EXPECT_EQ(m.erase(idx0), 1);
     EXPECT_EQ(m.size(), 1);
 
     // The freed slot (idx0) should be reused.
@@ -175,7 +175,7 @@ TYPED_TEST(SlotMapByUnderlyingContainer, IndexesAreStableAfterErase) {
     const auto idx1 = m.insert(2).index;
     const auto idx2 = m.insert(3).index;
 
-    m.EraseAt(idx1);
+    m.erase(idx1);
 
     // idx0 and idx2 must still be valid and unchanged.
     EXPECT_EQ(m[idx0], 1);
@@ -203,7 +203,7 @@ TYPED_TEST(SlotMapByUnderlyingContainer, AliveItemsIteratesLiveElements) {
     const auto idx1 = m.insert(2).index;
     m.insert(3);
 
-    m.EraseAt(idx1);
+    m.erase(idx1);
 
     std::vector<int> alive;
     for (int& v : m.AliveItems()) {
@@ -238,8 +238,8 @@ TYPED_TEST(SlotMapByUnderlyingContainer, AliveItemsAfterAllErased) {
     SlotMapFor<TypeParam, int> m;
     const auto idx0 = m.insert(1).index;
     const auto idx1 = m.insert(2).index;
-    m.EraseAt(idx0);
-    m.EraseAt(idx1);
+    m.erase(idx0);
+    m.erase(idx1);
 
     EXPECT_TRUE(m.empty());
     std::size_t count = 0;
@@ -304,7 +304,7 @@ TYPED_TEST(SlotMapByUnderlyingContainer, EraseAllThenRefill) {
     // Repeat erase-all + refill 5 times; capacity must never grow.
     for (int round = 0; round < 5; ++round) {
         for (std::size_t idx = 0; idx < kItemCount; ++idx) {
-            m.EraseAt(idx);
+            m.erase(idx);
         }
         EXPECT_TRUE(m.empty()) << "round " << round;
         EXPECT_EQ(m.capacity(), cap) << "round " << round;
@@ -329,11 +329,11 @@ TYPED_TEST(SlotMapByUnderlyingContainer, SizeAndEmptyConsistency) {
     m.insert(2);
     EXPECT_EQ(m.size(), 2);
 
-    m.EraseAt(0);
+    m.erase(0);
     EXPECT_EQ(m.size(), 1);
     EXPECT_FALSE(m.empty());
 
-    m.EraseAt(1);
+    m.erase(1);
     EXPECT_EQ(m.size(), 0);
     EXPECT_TRUE(m.empty());
 }
@@ -343,7 +343,7 @@ TYPED_TEST(SlotMapByUnderlyingContainer, EmplaceThrowingConstructorDoesNotLeakFr
 
     // Establish a free slot: insert then erase.
     const auto idx = m.insert(1).index;
-    m.EraseAt(idx);
+    m.erase(idx);
 
     // capacity() == 1: one allocated slot, currently free.
     const std::size_t cap = m.capacity();
@@ -382,8 +382,8 @@ TYPED_TEST(SlotMapByUnderlyingContainer, Reserve) {
         EXPECT_EQ(m.size(), 8);
         EXPECT_GE(m.capacity(), reserved_capacity);
 
-        m.EraseAt(3);
-        m.EraseAt(6);
+        m.erase(3);
+        m.erase(6);
         EXPECT_EQ(m.size(), 6);
         EXPECT_GE(m.capacity(), reserved_capacity);
 
@@ -431,8 +431,8 @@ TYPED_TEST(SlotMapByUnderlyingContainer, ReusesSlotsAfterGrowth) {
     const std::size_t grown_capacity = m.capacity();
     EXPECT_GE(grown_capacity, 6);
 
-    m.EraseAt(1);
-    m.EraseAt(4);
+    m.erase(1);
+    m.erase(4);
 
     EXPECT_EQ(m.insert(100).index, 4);
     EXPECT_EQ(m.insert(101).index, 1);
@@ -456,7 +456,7 @@ SlotMapFor<Storage, int> MakeMapWithFreeList() {
     }
 
     for (const std::size_t index : kErasedIndices) {
-        m.EraseAt(index);
+        m.erase(index);
     }
     EXPECT_EQ(m.size(), kInitialCount - std::size(kErasedIndices));
 

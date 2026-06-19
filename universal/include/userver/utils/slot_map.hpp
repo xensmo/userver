@@ -59,10 +59,10 @@ struct FreeNode final {
 ///
 /// - `operator[](std::size_t)` is O(1);
 /// - `emplace` and `insert` are amortized O(1) (assuming that `Container` provides this guarantee);
-/// - `EraseAt` is O(1);
+/// - `erase` is O(1);
 /// - `size()` and `empty()` are O(1);
 /// - iterators returned by `AliveItems()` ARE invalidated by `emplace`, `insert`,
-///   `insert_range`, and `EraseAt`, regardless of the underlying `Container`.
+///   `insert_range`, and `erase`, regardless of the underlying `Container`.
 ///
 /// If `Container` is `std::deque` or another reference-stable container, then inserted elements have reference
 /// stability; otherwise elements may move around on `emplace` and `insert*`, and `T` should be movable.
@@ -209,21 +209,25 @@ public:
     ///
     /// If the slot at @a index is already free (was previously erased), this is a no-op.
     ///
+    /// @returns the number of erased elements: `1` if a live element was erased,
+    /// `0` if the slot was already free.
+    ///
     /// @note Invalidates all iterators returned by `AliveItems()`.
     /// Does NOT invalidate references to other live elements.
-    void EraseAt(std::size_t index) {
+    std::size_t erase(std::size_t index) {
         UASSERT(index < std::ranges::size(slots_));
         auto& slot = slots_[index];
         if (std::get_if<T>(&slot) == nullptr) {
-            return;
+            return 0;
         }
         EraseAndPushToFreeList({.slot = &slot, .index = index});
+        return 1;
     }
 
     /// @brief Returns a view over live (non-erased) elements, yielding `T&` references.
     ///
     /// @warning Iterators of the returned view are invalidated by `emplace`, `insert`,
-    /// `insert_range`, and `EraseAt`. References to elements remain valid.
+    /// `insert_range`, and `erase`. References to elements remain valid.
     [[nodiscard]] std::ranges::forward_range auto AliveItems() noexcept USERVER_IMPL_LIFETIME_BOUND {
         return std::ranges::ref_view(slots_) | std::views::filter(IsLive{}) | std::views::transform(ToValue{});
     }

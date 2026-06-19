@@ -747,7 +747,7 @@ UTEST(WaitAnyContext, AppendWithExplicitIndexSlotMap) {
 
         const std::size_t index = *index_opt;
         sum += tasks[index].Get();
-        tasks.EraseAt(index);
+        tasks.erase(index);
     }
 
     EXPECT_EQ(sum, 1 + 2 + 3 + 4);
