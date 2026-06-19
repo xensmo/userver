@@ -1,5 +1,6 @@
+#include <gmock/gmock.h>
+
 #include <userver/formats/json/inline.hpp>
-#include <userver/utest/assert_macros.hpp>
 
 #include <boost/uuid/string_generator.hpp>
 
@@ -45,10 +46,12 @@ TEST(Simple, UuidSax) {
 
 TEST(Simple, UuidInvalid) {
     auto json = formats::json::MakeObject("uuid", "not-a-valid-uuid");
-    UEXPECT_THROW_MSG(
-        json.As<ns::ObjectUuid>(),
-        chaotic::Error<formats::json::Value>,
-        "Error at path 'uuid': invalid uuid string"
+    EXPECT_THAT(
+        [&] { json.As<ns::ObjectUuid>(); },
+        testing::ThrowsMessage<chaotic::Error<formats::json::Value>>(testing::AnyOf(
+            testing::HasSubstr("Error at path 'uuid': Invalid UUID string at position 0: hex digit expected"),
+            testing::HasSubstr("Error at path 'uuid': invalid uuid string")
+        ))
     );
 }
 
