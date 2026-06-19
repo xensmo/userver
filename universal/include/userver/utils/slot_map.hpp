@@ -119,12 +119,12 @@ public:
     /// Does not invalidate references to existing elements if the underlying container supports it, e.g. `std::deque`.
     template <typename... Args>
     InsertionResult emplace(Args&&... args) USERVER_IMPL_LIFETIME_BOUND {
-        if (const auto pop_result = TryPopFromFreeList(); pop_result.slot != nullptr) {
+        if (const auto entry = TryPopFromFreeList(); entry.slot != nullptr) {
             try {
-                T& element = pop_result.slot->template emplace<T>(std::forward<Args>(args)...);
-                return {element, pop_result.index};
+                T& element = entry.slot->template emplace<T>(std::forward<Args>(args)...);
+                return {element, entry.index};
             } catch (...) {
-                EraseAndPushToFreeList(*pop_result.slot, pop_result.index);
+                EraseAndPushToFreeList(entry);
                 throw;
             }
         }
@@ -217,7 +217,7 @@ public:
         if (std::get_if<T>(&slot) == nullptr) {
             return;
         }
-        EraseAndPushToFreeList(slot, index);
+        EraseAndPushToFreeList({.slot = &slot, .index = index});
     }
 
     /// @brief Returns a view over live (non-erased) elements, yielding `T&` references.
@@ -254,12 +254,12 @@ private:
         }
     };
 
-    struct FreeListPopResult final {
+    struct FreeListEntry final {
         Slot* slot;
         std::size_t index;
     };
 
-    FreeListPopResult TryPopFromFreeList() noexcept {
+    FreeListEntry TryPopFromFreeList() noexcept {
         const auto index = free_list_head_;
 
         if (index == impl::slot_map::kFreeListEnd) {
@@ -274,10 +274,11 @@ private:
         return {.slot = &slot, .index = index};
     }
 
-    void EraseAndPushToFreeList(Slot& slot, std::size_t index) noexcept {
-        UASSERT(&slot == &slots_[index]);
-        slot.template emplace<impl::slot_map::FreeNode>(free_list_head_);
-        free_list_head_ = index;
+    void EraseAndPushToFreeList(FreeListEntry entry) noexcept {
+        UASSERT(entry.slot != nullptr);
+        UASSERT(entry.slot == &slots_[entry.index]);
+        entry.slot->template emplace<impl::slot_map::FreeNode>(free_list_head_);
+        free_list_head_ = entry.index;
         ++free_list_size_;
     }
 
