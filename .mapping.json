@@ -4100,6 +4100,7 @@
   "redis/functional_tests/cluster_auto_topology_pubsub/tests/conftest.py":"taxi/uservices/userver/redis/functional_tests/cluster_auto_topology_pubsub/tests/conftest.py",
   "redis/functional_tests/cluster_auto_topology_pubsub/tests/test_redis_pubsub.py":"taxi/uservices/userver/redis/functional_tests/cluster_auto_topology_pubsub/tests/test_redis_pubsub.py",
   "redis/functional_tests/cluster_shards_auto_topology/CMakeLists.txt":"taxi/uservices/userver/redis/functional_tests/cluster_shards_auto_topology/CMakeLists.txt",
+  "redis/functional_tests/cluster_shards_auto_topology/a.yaml":"taxi/uservices/userver/redis/functional_tests/cluster_shards_auto_topology/a.yaml",
   "redis/functional_tests/cluster_shards_auto_topology/redis_service.cpp":"taxi/uservices/userver/redis/functional_tests/cluster_shards_auto_topology/redis_service.cpp",
   "redis/functional_tests/cluster_shards_auto_topology/static_config.yaml":"taxi/uservices/userver/redis/functional_tests/cluster_shards_auto_topology/static_config.yaml",
   "redis/functional_tests/cluster_shards_auto_topology/tests/conftest.py":"taxi/uservices/userver/redis/functional_tests/cluster_shards_auto_topology/tests/conftest.py",
