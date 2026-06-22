@@ -39,7 +39,7 @@ concept Indexable = requires(Range range, std::size_t index) {
 inline constexpr std::size_t kFreeListEnd = std::numeric_limits<std::size_t>::max();
 
 struct FreeNode final {
-    explicit FreeNode(std::size_t next_index) noexcept
+    constexpr explicit FreeNode(std::size_t next_index) noexcept
         : next_index(next_index)
     {}
 

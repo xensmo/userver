@@ -58,7 +58,7 @@ public:
     }
 
 private:
-    explicit constexpr StringLiteral(const char* str, std::size_t len) noexcept
+    constexpr explicit StringLiteral(const char* str, std::size_t len) noexcept
         : zstring_view{zstring_view::UnsafeMake(str, len)} {}
 };
 

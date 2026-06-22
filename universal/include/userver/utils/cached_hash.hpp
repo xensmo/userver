@@ -29,7 +29,7 @@ constexpr bool operator==(const CachedHash<T>& x, const CachedHash<T>& y) {
 template <class Equal>
 class CachedHashKeyEqual {
 public:
-    explicit constexpr CachedHashKeyEqual(const Equal& eq)
+    constexpr explicit CachedHashKeyEqual(const Equal& eq)
         : equality_(eq)
     {}
 
@@ -47,7 +47,7 @@ template <class Equal>
 requires(!std::is_final_v<Equal>)
 class CachedHashKeyEqual<Equal> : private Equal {
 public:
-    explicit constexpr CachedHashKeyEqual(const Equal& eq)
+    constexpr explicit CachedHashKeyEqual(const Equal& eq)
         : Equal(eq)
     {}
 

@@ -172,7 +172,7 @@ class Map;
 /// doesn't own its data, so don't do that until really needed.
 class PredefinedHeader final {
 public:
-    explicit constexpr PredefinedHeader(utils::StringLiteral name)
+    constexpr explicit PredefinedHeader(utils::StringLiteral name)
         : name_{name},
           hash_{impl::UnsafeConstexprHasher{}(name)},
           header_index_{impl::GetHeaderIndexForLookup(name)}

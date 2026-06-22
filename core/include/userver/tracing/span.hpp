@@ -305,7 +305,7 @@ private:
         static OptionalDeleter DoNotDelete() noexcept;
 
     private:
-        explicit OptionalDeleter(bool do_delete)
+        constexpr explicit OptionalDeleter(bool do_delete) noexcept
             : do_delete_(do_delete)
         {}
 

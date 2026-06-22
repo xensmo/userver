@@ -52,7 +52,7 @@ public:
     class SingleUserGuard final {
     public:
 #ifdef NDEBUG
-        explicit constexpr SingleUserGuard(Direction&) noexcept {}
+        constexpr explicit SingleUserGuard(Direction&) noexcept {}
 #else
         explicit SingleUserGuard(Direction& dir);
         ~SingleUserGuard();

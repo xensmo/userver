@@ -38,7 +38,7 @@ struct HexBase {
 
     template <typename Unsigned>
         requires std::is_unsigned_v<Unsigned>
-    explicit constexpr HexBase(Unsigned value) noexcept : value(value) {
+    constexpr explicit HexBase(Unsigned value) noexcept : value(value) {
         static_assert(sizeof(Unsigned) <= sizeof(value));
     }
 

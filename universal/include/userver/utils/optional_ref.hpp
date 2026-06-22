@@ -39,27 +39,27 @@ public:
     constexpr OptionalRef(T& other) noexcept : data_(std::addressof(other)) {}
 
     // Forming a reference to a temporary is forbidden
-    explicit constexpr OptionalRef(const T&&) = delete;
+    constexpr explicit OptionalRef(const T&&) = delete;
 
     template <typename U>
-    explicit constexpr OptionalRef(const std::optional<U>& other) noexcept : data_(GetPointer(other)) {}
+    constexpr explicit OptionalRef(const std::optional<U>& other) noexcept : data_(GetPointer(other)) {}
 
     template <typename U>
-    explicit constexpr OptionalRef(std::optional<U>& other) noexcept : data_(GetPointer(other)) {}
+    constexpr explicit OptionalRef(std::optional<U>& other) noexcept : data_(GetPointer(other)) {}
 
     template <typename U>
-    explicit constexpr OptionalRef(const std::optional<U>&&) noexcept {
+    constexpr explicit OptionalRef(const std::optional<U>&&) noexcept {
         static_assert(!sizeof(U), "Forming a reference to a temporary");
     }
 
     template <typename U>
-    explicit constexpr OptionalRef(const boost::optional<U>& other) noexcept : data_(GetPointer(other)) {}
+    constexpr explicit OptionalRef(const boost::optional<U>& other) noexcept : data_(GetPointer(other)) {}
 
     template <typename U>
-    explicit constexpr OptionalRef(boost::optional<U>& other) noexcept : data_(GetPointer(other)) {}
+    constexpr explicit OptionalRef(boost::optional<U>& other) noexcept : data_(GetPointer(other)) {}
 
     template <typename U>
-    explicit constexpr OptionalRef(const boost::optional<U>&&) noexcept {
+    constexpr explicit OptionalRef(const boost::optional<U>&&) noexcept {
         static_assert(!sizeof(U), "Forming a reference to a temporary");
     }
 
