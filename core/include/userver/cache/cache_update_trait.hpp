@@ -36,7 +36,35 @@ public:
     /// @see PeriodicTask::ForceStepAsync for behavior details
     void InvalidateAsync(UpdateType update_type);
 
-    /// @brief Forces a cache update of specified type
+    /// @brief Forces a synchronous cache update of specified type
+    ///
+    /// @warning This method is intended for tests and debugging only. In
+    /// production code use `InvalidateAsync` instead. The reasons are:
+    ///
+    /// 1. `InvalidateAsync` shifts the time of the next update as if a periodic
+    ///    update has just happened. `UpdateSyncDebug` does not do that: it locks
+    ///    the mutex and performs an additional update on the side, which puts
+    ///    extra load on the CPU and on the data source.
+    /// 2. The cache we subscribe to sends events *as part of its own update*. If
+    ///    the callback does something lengthy, e.g. updating another cache, this
+    ///    affects the cache we subscribe to: it may disrupt its updates and
+    ///    cause a traffic jam in the whole chain of caches. `InvalidateAsync` is
+    ///    not subject to this. On top of that, `UpdateSyncDebug` will block the
+    ///    cache we subscribe to for the time we wait for the previous update of
+    ///    the dependent cache to finish (if one was in progress).
+    /// 3. `InvalidateAsync` robustly handles situations with repeated update
+    ///    requests, see the docs of `PeriodicTask::ForceStepAsync`, on top of
+    ///    which it is implemented. `UpdateSyncDebug` tries to lock the mutex over
+    ///    and over and performs as many updates as were requested, even if they
+    ///    were requested many times in a row.
+    /// 4. If `UpdateSyncDebug` is called before the periodic updates of the
+    ///    current cache have started (they start after the constructor of the
+    ///    derived cache finishes), the behavior is undefined, because the state
+    ///    of the periodic updates is not set up yet, while an update was already
+    ///    requested. `InvalidateAsync` handles this case: in that situation
+    ///    nothing happens.
+    ///
+    /// @see InvalidateAsync
     /// @throws If `Update` throws
     void UpdateSyncDebug(UpdateType update_type);
 
