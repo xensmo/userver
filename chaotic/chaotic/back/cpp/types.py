@@ -781,17 +781,17 @@ class CppStructField:
 class CppStruct(CppType):
     fields: dict[str, CppStructField]
     # 'None' means 'do not generate extra member'
-    extra_type: CppType | bool | None = False
+    extra_type: CppType | bool | None = None
     autodiscover_default_dict: bool = False
     strict_parsing: bool = True
 
     KNOWN_X_PROPERTIES = [
         'x-usrv-cpp-type',
         'x-usrv-cpp-extra-type',
-        'x-usrv-cpp-extra-member',
+        'x-usrv-extra-member',
         'x-taxi-cpp-type',
         'x-taxi-cpp-extra-type',
-        'x-taxi-cpp-extra-member',
+        'x-taxi-extra-member',
     ]
 
     __hash__ = CppType.__hash__
@@ -833,7 +833,10 @@ class CppStruct(CppType):
 
         match self.extra_type:
             case None:
-                unknown_fields = f'{ch}::UnknownFields::Ignore'
+                if self.strict_parsing:
+                    unknown_fields = f'{ch}::UnknownFields::Forbid'
+                else:
+                    unknown_fields = f'{ch}::UnknownFields::Ignore'
             case True:
                 unknown_fields = f'{ch}::UnknownFields::StoreJson'
             case False:

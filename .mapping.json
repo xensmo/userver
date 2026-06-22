@@ -404,6 +404,7 @@
   "chaotic/integration_tests/schemas/int_minmax.yaml":"taxi/uservices/userver/chaotic/integration_tests/schemas/int_minmax.yaml",
   "chaotic/integration_tests/schemas/invalid_names.yaml":"taxi/uservices/userver/chaotic/integration_tests/schemas/invalid_names.yaml",
   "chaotic/integration_tests/schemas/no_sax.yaml":"taxi/uservices/userver/chaotic/integration_tests/schemas/no_sax.yaml",
+  "chaotic/integration_tests/schemas/object_default_additional_properties.yaml":"taxi/uservices/userver/chaotic/integration_tests/schemas/object_default_additional_properties.yaml",
   "chaotic/integration_tests/schemas/object_empty.yaml":"taxi/uservices/userver/chaotic/integration_tests/schemas/object_empty.yaml",
   "chaotic/integration_tests/schemas/object_extra.yaml":"taxi/uservices/userver/chaotic/integration_tests/schemas/object_extra.yaml",
   "chaotic/integration_tests/schemas/object_keywords.yaml":"taxi/uservices/userver/chaotic/integration_tests/schemas/object_keywords.yaml",

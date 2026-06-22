@@ -77,7 +77,7 @@ def enrich_jinja_env(env: jinja2.Environment) -> None:
 
 
 class CompilerBase:
-    def __init__(self) -> None:
+    def __init__(self, *, strict_parsing_default: bool) -> None:
         self._variables_types: dict[str, dict[str, cpp_types.CppType]] = {}
         self._definitions: dict[
             str,
@@ -85,6 +85,7 @@ class CompilerBase:
         ] = {}
         self._defaults: dict[str, Any] = {}
         self.seen_includes: dict[str, set[str]] = {}
+        self._strict_parsing_default = strict_parsing_default
 
     def extract_definition_names(self, filepath: str) -> list[str]:
         with open(filepath, 'r') as ifile:
@@ -229,7 +230,7 @@ class CompilerBase:
                 namespaces={fname: namespace},
                 infile_to_name_func=cpp_name_func,
                 autodiscover_default_dict=True,
-                strict_parsing_default=False,
+                strict_parsing_default=self._strict_parsing_default,
             ),
         )
         types = gen.generate_types(

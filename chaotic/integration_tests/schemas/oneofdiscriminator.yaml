@@ -22,6 +22,7 @@ definitions:
                 type: integer
                 minimum: 1
                 maximum: 100
+        x-taxi-extra-member: true
     B:
         type: object
         additionalProperties: true
@@ -32,6 +33,8 @@ definitions:
                 type: integer
                 minimum: 1
                 maximum: 100
+
+        x-taxi-extra-member: true
 
     IntegerOneOfDiscriminator:
         type: object

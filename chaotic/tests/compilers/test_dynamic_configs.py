@@ -12,7 +12,7 @@ def parse_variable_content(
     content: Any,
     varname: str = 'var',
 ) -> types.CppType:
-    compiler = dynamic_config.CompilerBase()
+    compiler = dynamic_config.CompilerBase(strict_parsing_default=False)
     with tempfile.NamedTemporaryFile(mode='w+', encoding='utf-8') as ofile:
         json.dump(content, ofile)
         ofile.flush()
@@ -47,7 +47,7 @@ def test_sort():
         },
     }
 
-    compiler = dynamic_config.CompilerBase()
+    compiler = dynamic_config.CompilerBase(strict_parsing_default=False)
     with tempfile.NamedTemporaryFile(mode='w+', encoding='utf-8') as ofile:
         json.dump(content, ofile)
         ofile.flush()

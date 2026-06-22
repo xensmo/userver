@@ -153,7 +153,7 @@ def test_additional_properties_mix_3(simple_parse):
                     properties={},
                     additionalProperties=front_types.SchemaObject(
                         properties={'foo': front_types.String()},
-                        additionalProperties=False,
+                        additionalProperties=None,
                     ),
                 ),
             ],

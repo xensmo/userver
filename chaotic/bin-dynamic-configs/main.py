@@ -49,7 +49,7 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
     for file in args.file:
-        compiler = dynamic_config.Compiler()
+        compiler = dynamic_config.Compiler(strict_parsing_default=False)
         name = pathlib.Path(file).stem
         compiler.parse_variable(
             file,

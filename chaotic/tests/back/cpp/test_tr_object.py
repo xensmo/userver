@@ -37,6 +37,42 @@ def test_very_empty(simple_gen):
     }, f'Generated schema is: {schemas}'
 
 
+def test_default_additional_properties(simple_gen):
+    schemas = simple_gen({
+        'type': 'object',
+        'properties': {},
+    })
+    assert schemas == {
+        '::type': cpp_types.CppStruct(
+            raw_cpp_type=type_name.TypeName('::type'),
+            json_schema=front_types.Schema(),
+            nullable=False,
+            user_cpp_type=None,
+            strict_parsing=False,
+            fields={},
+        ),
+    }, f'Generated schema is: {schemas}'
+
+
+def test_additional_properties_true(simple_gen):
+    schemas = simple_gen({
+        'type': 'object',
+        'properties': {},
+        'additionalProperties': True,
+    })
+    assert schemas == {
+        '::type': cpp_types.CppStruct(
+            raw_cpp_type=type_name.TypeName('::type'),
+            json_schema=front_types.Schema(),
+            nullable=False,
+            user_cpp_type=None,
+            extra_type=True,
+            strict_parsing=True,
+            fields={},
+        ),
+    }, f'Generated schema is: {schemas}'
+
+
 def test_property_and_additional(simple_gen, cpp_primitive_type):
     schemas = simple_gen({
         'type': 'object',
@@ -339,9 +375,9 @@ def test_extra_member_nonboolean(simple_gen):
         simple_gen({
             'type': 'object',
             'properties': {},
-            'x-taxi-cpp-extra-member': False,
+            'x-taxi-extra-member': False,
             'additionalProperties': {'type': 'integer'},
         })
         assert False
     except error.BaseError as exc:
-        assert exc.msg == ('"x-usrv-cpp-extra-member: false" is not allowed for non-boolean "additionalProperties"')
+        assert exc.msg == ('"x-usrv-extra-member: false" is not allowed for non-boolean "additionalProperties"')

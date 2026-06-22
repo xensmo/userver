@@ -131,7 +131,7 @@ def extra_cpp_parser_type(extra_type: cpp_types.CppType) -> str:
 
 def cpp_struct_is_strict_parsing(struct: cpp_types.CppStruct) -> bool:
     assert isinstance(struct, cpp_types.CppStruct)
-    return struct.strict_parsing and struct.extra_type is False
+    return struct.strict_parsing and not struct.extra_type
 
 
 def make_env() -> jinja2.Environment:
