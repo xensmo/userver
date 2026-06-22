@@ -4,6 +4,8 @@
 
 #include <ydb/impl/future.hpp>
 
+USERVER_NAMESPACE_BEGIN
+
 namespace ydb::impl {
 
 namespace {
@@ -51,3 +53,5 @@ Connection::~Connection() {
 }
 
 }  // namespace ydb::impl
+
+USERVER_NAMESPACE_END

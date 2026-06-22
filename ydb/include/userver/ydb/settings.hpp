@@ -80,13 +80,13 @@ struct RetryTxSettings final {
     bool is_idempotent{false};
 
     /// Settings for a get session request.
-    GetSessionSettings get_session_settings;
+    GetSessionSettings get_session_settings{};
 
     /// Settings for a commit transaction.
-    CommitSettings commit_settings;
+    CommitSettings commit_settings{};
 
     /// Settings for a rollback transaction.
-    RollbackSettings rollback_settings;
+    RollbackSettings rollback_settings{};
 };
 
 }  // namespace ydb
