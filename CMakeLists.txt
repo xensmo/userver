@@ -414,9 +414,11 @@ if(USERVER_BUILD_TESTS)
         REQUIREMENTS "${USERVER_ROOT_DIR}/scripts/pylint/requirements.txt"
         UNIQUE
     )
-    add_test(NAME sleep-in-tests
-        COMMAND
-	    env PYTHON_BINARY=${PYTHON_BINARY} PYTHONPATH="${USERVER_ROOT_DIR}" "${USERVER_ROOT_DIR}/scripts/pylint/pylint_all.sh"
+    add_test(
+        NAME sleep-in-tests
+        COMMAND ${CMAKE_COMMAND} -E env
+        PYTHON_BINARY=${PYTHON_BINARY} PYTHONPATH="${USERVER_ROOT_DIR}"
+        "${USERVER_ROOT_DIR}/scripts/pylint/pylint_all.sh"
     )
 endif()
 

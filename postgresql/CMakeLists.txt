@@ -69,6 +69,9 @@ _userver_directory_install(
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/userver/scripts"
 )
 
+set(USERVER_DIR "${USERVER_ROOT_DIR}")
+include(UserverSql)
+
 if(USERVER_FEATURE_UTEST)
     add_subdirectory(utest)
 endif()
@@ -76,6 +79,3 @@ endif()
 if(USERVER_BUILD_TESTS)
     add_subdirectory(functional_tests)
 endif()
-
-set(USERVER_DIR "${USERVER_ROOT_DIR}")
-include(UserverSql)
