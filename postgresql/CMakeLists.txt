@@ -42,6 +42,7 @@ userver_module(
     LINK_LIBRARIES_PRIVATE userver-libpq INCLUDE_DIRS_PRIVATE "${LIBPQ_VERSION_DIR}"
     UTEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*_test.cpp"
     DBTEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*_pgtest.cpp"
+    DBTEST_LINK_LIBRARIES userver-postgresql-utest
     DBTEST_DATABASES postgresql
     DBTEST_ENV POSTGRES_TEST_DSN=postgresql://testsuite@localhost:15433/postgres
     UBENCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*_benchmark.cpp"
@@ -67,6 +68,10 @@ _userver_directory_install(
     DIRECTORY "${USERVER_ROOT_DIR}/scripts/sql"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/userver/scripts"
 )
+
+if(USERVER_FEATURE_UTEST)
+    add_subdirectory(utest)
+endif()
 
 if(USERVER_BUILD_TESTS)
     add_subdirectory(functional_tests)

@@ -10,6 +10,7 @@
 #include <userver/storages/postgres/cluster.hpp>
 #include <userver/storages/postgres/dsn.hpp>
 #include <userver/storages/postgres/exceptions.hpp>
+#include <userver/storages/postgres/utest/cluster_local.hpp>
 #include <userver/utils/statistics/metrics_storage.hpp>
 #include <userver/utils/trx_tracker.hpp>
 
@@ -53,18 +54,14 @@ pg::Cluster CreateCluster(
     pg::ConnectionSettings conn_settings = kCachePreparedStatements
 ) {
     auto source = dynamic_config::GetDefaultSource();
+    auto settings = pg::utest::MakeDefaultClusterSettings();
+    settings.pool_settings = {0, max_size, max_size};
+    settings.conn_settings = conn_settings;
     return pg::Cluster(
         dsns,
         nullptr,
         bg_task_processor,
-        {{},
-         {utest::kMaxTestWaitTime},
-         {0, max_size, max_size},
-         conn_settings,
-         storages::postgres::InitMode::kAsync,
-         "",
-         {},
-         {}},
+        settings,
         {kTestCmdCtl, {}, {}},
         {},
         {},
