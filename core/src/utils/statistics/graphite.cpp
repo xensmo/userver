@@ -1,6 +1,8 @@
 #include <userver/utils/statistics/graphite.hpp>
 
 #include <algorithm>
+#include <cctype>
+#include <cstring>
 #include <iterator>
 
 #include <fmt/compile.h>
