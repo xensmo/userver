@@ -338,12 +338,14 @@ UTEST_F(ConsumerTest, HeadersProcessing) {
         consumer,
         /*expected_messages_count=*/messages.size(),
         /*commit_after_receive=*/true,
-        [](kafka::MessageBatchView batch) {
-            ASSERT_EQ(batch.size(), 1);
+        [](kafka::MessageBatchView messages_batch) {
+            ASSERT_EQ(messages_batch.size(), 1);
 
-            for (auto header : batch[0].GetHeaders()) {
+            /// [Message iterate headers]
+            for (auto header : messages_batch[0].GetHeaders()) {
                 EXPECT_TRUE(std::ranges::find(kExpectedHeaders, header) != kExpectedHeaders.end());
             }
+            /// [Message iterate headers]
         }
     );
 }
@@ -628,8 +630,10 @@ UTEST_F(ConsumerTest, HeadersSaveAfterMessageDestroy) {
             EXPECT_EQ(header, "value-1");
             EXPECT_FALSE(batch[0].GetHeader("header-2").has_value());
 
+            /// [Message copy headers]
             auto reader = batch[0].GetHeaders();
             auto headers = std::vector<kafka::OwningHeader>{reader.begin(), reader.end()};
+            /// [Message copy headers]
             saved_headers.insert(saved_headers.end(), headers.begin(), headers.end());
         }
     );

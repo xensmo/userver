@@ -47,14 +47,9 @@ public:
     /// Usage example:
     ///
     /// - All headers:
-    /// @code
-    /// for (auto header : message.GetHeaders()) { /* use ...header... */}
-    /// @endcode
+    /// @snippet kafka/tests/consumer_kafkatest.cpp  Message iterate headers
     /// - Start own headers
-    /// @code
-    /// auto reader = message.GetHeaders();
-    /// auto headers = std::vector<kafka::OwningHeader>{reader.begin(), reader.end()};
-    /// @endcode
+    /// @snippet kafka/tests/consumer_kafkatest.cpp  Message copy headers
     HeadersReader GetHeaders() const&;
     HeadersReader GetHeaders() && = delete;
 

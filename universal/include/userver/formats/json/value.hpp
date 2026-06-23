@@ -434,9 +434,7 @@ std::chrono::hours Parse(const Value& value, parse::To<std::chrono::hours>);
 
 /// @brief Wrapper for handy python-like iteration over a map
 ///
-/// @code
-///   for (const auto& [name, value]: Items(map)) ...
-/// @endcode
+/// @snippet universal/src/formats/common/items_test.cpp  Items const iteration
 using formats::common::Items;
 
 /// gtest formatter for formats::json::Value
