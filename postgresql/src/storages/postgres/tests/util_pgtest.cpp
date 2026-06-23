@@ -206,7 +206,12 @@ INSTANTIATE_UTEST_SUITE_P(
     ConnectionSettings,
     PostgreConnection,
     ::testing::Combine(
-        ::testing::Values(kCachePreparedStatements, kPipelineEnabled, kOmitDescribeAndPipelineEnabled),
+        ::testing::Values(
+            kCachePreparedStatements,
+            kPipelineEnabled,
+            kOmitDescribeAndPipelineEnabled,
+            kMaxPreparedCacheSize3
+        ),
         ::testing::Values(ConnectionMode::kDirect, ConnectionMode::kChaosProxy)
     ),
     [](const testing::TestParamInfo<PostgreConnection::ParamType>& info) {
@@ -219,6 +224,10 @@ INSTANTIATE_UTEST_SUITE_P(
             name = "PipelineEnabled";
         } else {
             name = "PipelineDisabled";
+        }
+
+        if (connection_params.max_prepared_cache_size == 3) {
+            name.append("_MaxPreparedCacheSize3");
         }
 
         if (connection_params.omit_describe_mode == pg::OmitDescribeInExecuteMode::kEnabled) {

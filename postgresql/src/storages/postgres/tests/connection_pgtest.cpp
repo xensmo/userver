@@ -472,6 +472,17 @@ UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithMixedCase) {
     }
 }
 
+UTEST_F(PostgreCustomConnection, MaxPreparedCacheSize3) {
+    pg::detail::ConnectionPtr conn{nullptr};
+    UEXPECT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), kMaxPreparedCacheSize3));
+    ASSERT_TRUE(conn);
+
+    UEXPECT_NO_THROW(conn->Execute("select 1"));
+    UEXPECT_NO_THROW(conn->Execute("create type user_type as enum ('test')"));
+    UEXPECT_THROW(conn->Execute("select 'test'::user_type"), pg::NoBinaryParser);
+    UEXPECT_NO_THROW(conn->Execute("drop type user_type"));
+}
+
 UTEST_F(PostgreCustomConnection, NoUserTypes) {
     pg::detail::ConnectionPtr conn{nullptr};
     UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), kNoUserTypes));
