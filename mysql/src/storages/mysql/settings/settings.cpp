@@ -1,5 +1,6 @@
 #include <storages/mysql/settings/settings.hpp>
 
+#include <cstring>
 #include <ranges>
 #include <stdexcept>
 #include <unordered_set>
