@@ -127,6 +127,43 @@ async def test_concurrent_requests(
     assert differ.value_at('streams-parse-error') == 0
 
 
+async def test_slow_request_does_not_block_fast_request(
+    http2_client,
+    service_client,
+    monitor_client,
+):
+    await service_client.update_server_state()
+
+    async with monitor_client.metrics_diff(prefix='server.requests.http2') as differ:
+        slow_task = asyncio.create_task(
+            http2_client.get(
+                DEFAULT_PATH,
+                params={'type': 'sleep'},
+                timeout=5,
+            ),
+        )
+        fast_task = asyncio.create_task(http2_client.get('/ping', timeout=2))
+
+        done, pending = await asyncio.wait(
+            {slow_task, fast_task},
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        assert fast_task in done
+        assert slow_task in pending
+
+        fast_response = fast_task.result()
+        assert 200 == fast_response.status_code
+
+        slow_response = await slow_task
+        assert 200 == slow_response.status_code
+
+    assert differ.value_at('streams-count') == 2
+    assert differ.value_at('streams-close') == 2
+    assert differ.value_at('reset-streams') == 0
+    assert differ.value_at('goaway') == 0
+    assert differ.value_at('streams-parse-error') == 0
+
+
 async def test_concurrent_requests_with_big_body(
     http2_client,
     service_client,

@@ -26,6 +26,17 @@ constexpr std::size_t kMinLenPrefaceToDetect = 3;
 constexpr std::string_view kHttp2Preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
 constexpr std::string_view kPrefaceBegin = kHttp2Preface.substr(0, kMinLenPrefaceToDetect);
 
+constexpr std::uint64_t kSocketId = std::numeric_limits<std::uint64_t>::max();
+
+enum class WakeupKind { kSocketReadable, kTaskComputedResponse };
+
+WakeupKind GetWakeupKind(std::uint64_t id) {
+    if (id == kSocketId) {
+        return WakeupKind::kSocketReadable;
+    }
+    return WakeupKind::kTaskComputedResponse;
+}
+
 }  // namespace
 
 Http2Connection::Http2Connection(
@@ -77,23 +88,60 @@ void Http2Connection::ListenForRequests() {
     EnsureHttp2();
     UASSERT(!parser_);
     parser_ = MakeParser();
-    while (TryParseRequests(*parser_)) {
-        for (auto&& request : pending_requests_) {
-            ProcessRequest(std::move(request));
+    handler_tasks_.reserve(config_.http2_session_config.max_concurrent_streams + 1);
+
+    engine::WaitAnyContext wait_any{};
+    wait_any.Append(kSocketId, GetSocket().GetReadableBase());
+
+    while (!engine::current_task::ShouldCancel()) {
+        StartAllRequestTasks(wait_any);
+
+        const auto ready_id = wait_any.Wait();
+        if (!ready_id) {
+            UASSERT(engine::current_task::ShouldCancel());
+            return;
         }
-        pending_requests_.clear();
+
+        switch (GetWakeupKind(*ready_id)) {
+            case WakeupKind::kSocketReadable:
+                // `WaitReadable` in `TryParseRequests` doesn't block and just resets the "ready" flag
+                // in the `Socket` read side so that the next `wait_any` usage doesn't return immediately.
+                if (!TryParseRequests(*parser_)) {
+                    return;
+                }
+                wait_any.Append(kSocketId, GetSocket().GetReadableBase());
+                break;
+            case WakeupKind::kTaskComputedResponse:
+                OnRequestTaskFinished(*ready_id);
+                break;
+        }
+
+        UASSERT(wait_any.GetSize() <= config_.http2_session_config.max_concurrent_streams + 1);
     }
 }
 
-void Http2Connection::ProcessRequest(std::shared_ptr<http::HttpRequest>&& request_ptr) noexcept {
+void Http2Connection::StartAllRequestTasks(engine::WaitAnyContext& wait_any) {
+    for (auto& request : pending_requests_) {
+        const auto& [handler, slot_id] = handler_tasks_.emplace(StartRequestTask(std::move(request)));
+        wait_any.Append(slot_id, handler.task);
+    }
+    pending_requests_.clear();
+}
+
+Http2Connection::RequestTaskContext Http2Connection::StartRequestTask(std::shared_ptr<http::HttpRequest>&& request_ptr
+) noexcept {
     if (request_ptr->IsFinal()) {
         StopAcceptingRequests();
     }
 
     stats_.active_request_count.Add(1);
 
-    auto task = HandleQueueItem(request_ptr);
-    SendResponse(*request_ptr);
+    return {.task = ConnectionBase::StartRequestTask(request_ptr), .request = std::move(request_ptr)};
+}
+
+void Http2Connection::OnRequestTaskFinished(std::uint64_t event_id) noexcept {
+    SendResponse(*handler_tasks_[event_id].request);
+    handler_tasks_.erase(event_id);
 }
 
 void Http2Connection::SendResponse(http::HttpRequest& request) noexcept {
