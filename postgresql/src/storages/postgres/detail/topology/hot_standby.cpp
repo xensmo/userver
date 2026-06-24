@@ -115,7 +115,12 @@ struct HotStandby::HostState {
     ~HostState() {
         // close connections synchronously
         if (connection) {
-            connection->Close();
+            try {
+                connection->Close();
+            } catch (const std::exception& e) {
+                // `PGConnectionWrapper::Close()` task can be cancelled by user request
+                LOG_ERROR() << "In ~HostState(): " << e;
+            }
         }
     }
 
