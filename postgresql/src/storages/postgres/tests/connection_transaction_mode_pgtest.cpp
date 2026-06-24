@@ -121,28 +121,29 @@ UTEST_F(PostgreTransactionModeConnection, TransactionPoolerStatementCommandContr
     EXPECT_FALSE(conn->IsBroken());
 }
 
-// TODO TAXICOMMON-11994: keep until autocommit command-control behavior is finalized for transaction pooler mode
-UTEST_F(PostgreTransactionModeConnection, TransactionPoolerAutocommitDoesNotReapplyTimeout) {
+UTEST_F(PostgreTransactionModeConnection, TransactionPoolerAutocommitAppliesDefaultTimeout) {
     const auto conn = MakeConn();
 
     const DefaultCommandControlScope scope{kTransactionPoolerCmdCtl};
 
     UEXPECT_NO_THROW(ZeroBackendStatementTimeout(conn));
 
-    UEXPECT_NO_THROW(conn->Execute("SELECT pg_sleep(0.5)"));
-    EXPECT_EQ(pg::ConnectionState::kIdle, conn->GetState());
+    UEXPECT_THROW(conn->Execute("SELECT pg_sleep(1.5)"), pg::QueryCancelled);
+    UEXPECT_NO_THROW(conn->CancelAndCleanup(utest::kMaxTestWaitTime));
     EXPECT_FALSE(conn->IsBroken());
 }
 
-// TODO TAXICOMMON-11994: keep until autocommit command-control behavior is finalized for transaction pooler mode
-UTEST_F(PostgreTransactionModeConnection, TransactionPoolerAutocommitWithCommandControl) {
+UTEST_F(PostgreTransactionModeConnection, TransactionPoolerStatementCommandControlCancelsInAutocommit) {
     const auto conn = MakeConn();
 
     const DefaultCommandControlScope scope{kTransactionPoolerDefaultCmdCtl};
 
     UEXPECT_NO_THROW(ZeroBackendStatementTimeout(conn));
 
-    UEXPECT_NO_THROW(conn->Execute(kTransactionPoolerCmdCtl, pg::Query{"SELECT pg_sleep(1.5)"}, pg::ParameterStore{}));
+    UEXPECT_THROW(
+        conn->Execute(kTransactionPoolerCmdCtl, pg::Query{"SELECT pg_sleep(1.5)"}, pg::ParameterStore{}),
+        pg::QueryCancelled
+    );
     UEXPECT_NO_THROW(conn->CancelAndCleanup(utest::kMaxTestWaitTime));
     EXPECT_FALSE(conn->IsBroken());
 }

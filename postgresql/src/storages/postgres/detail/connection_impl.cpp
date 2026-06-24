@@ -453,6 +453,48 @@ Connection::Statistics ConnectionImpl::GetStatsAndReset() {
     return std::exchange(stats_, Connection::Statistics{});
 }
 
+bool ConnectionImpl::ShouldWrapInAutoTransaction(const std::string_view statement) const noexcept {
+    return IsTransactionPooler() && !IsInTransaction() && !ICaseStartsWith(statement, kStatementVacuum);
+}
+
+ResultSet ConnectionImpl::ExecuteCommandInAutoTransaction(
+    const Query& query,
+    const QueryParameters& params,
+    const OptionalCommandControl statement_cmd_ctl,
+    const engine::Deadline deadline
+) {
+    const auto effective_timeout =
+        statement_cmd_ctl ? statement_cmd_ctl->statement_timeout_ms : GetDefaultCommandControl().statement_timeout_ms;
+
+    if (IsPipelineActive()) {
+        SendCommandNoPrepare("BEGIN", deadline);
+    } else {
+        ExecuteCommandNoPrepare("BEGIN", deadline);
+    }
+
+    try {
+        SetStatementTimeout(effective_timeout, deadline);
+        const ResetTransactionCommandControl transaction_guard{*this};
+
+        auto result =
+            PreparedStatementsEnabled(statement_cmd_ctl)
+                ? ExecuteCommand(query, params, deadline, logging::Level::kInfo, true)
+                : ExecuteCommandNoPrepare(query, params, deadline);
+        ExecuteCommandNoPrepare("COMMIT", deadline);
+        return result;
+    } catch (const std::exception& ex) {
+        LOG_LIMITED_WARNING() << "Auto-transaction query failed: " << ex.what();
+
+        try {
+            ExecuteCommandNoPrepare("ROLLBACK", deadline);
+        } catch (const std::exception& rollback_ex) {
+            LOG_LIMITED_WARNING() << "Failed to rollback auto-transaction: " << rollback_ex.what();
+        }
+
+        throw;
+    }
+}
+
 ResultSet ConnectionImpl::ExecuteCommand(
     const Query& query,
     const QueryParameters& params,
@@ -466,7 +508,12 @@ ResultSet ConnectionImpl::ExecuteCommand(
         pipeline_guard.emplace([this]() { conn_wrapper_.EnterPipelineMode(); });
     }
 
-    auto deadline = testsuite_pg_ctl_.MakeExecuteDeadline(NetworkTimeout(statement_cmd_ctl));
+    const auto deadline = testsuite_pg_ctl_.MakeExecuteDeadline(NetworkTimeout(statement_cmd_ctl));
+
+    if (ShouldWrapInAutoTransaction(query.GetStatementView())) {
+        return ExecuteCommandInAutoTransaction(query, params, statement_cmd_ctl, deadline);
+    }
+
     SetStatementTimeout(statement_cmd_ctl);
 
     return PreparedStatementsEnabled(statement_cmd_ctl)

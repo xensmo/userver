@@ -229,6 +229,15 @@ private:
 
     void ReportStatement(std::string_view name);
 
+    bool ShouldWrapInAutoTransaction(std::string_view statement) const noexcept;
+
+    ResultSet ExecuteCommandInAutoTransaction(
+        const Query& query,
+        const QueryParameters& params,
+        OptionalCommandControl statement_cmd_ctl,
+        engine::Deadline deadline
+    );
+
     bool IsOmitDescribeInExecuteEnabled() const;
 
     const std::string uuid_;
