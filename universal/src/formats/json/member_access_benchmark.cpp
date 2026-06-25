@@ -56,7 +56,7 @@ void JsonPathShort(benchmark::State& state) {
     auto json = formats::json::FromString(bench_json_data);
 
     for ([[maybe_unused]] auto _ : state) {
-        const auto res = (json["short"].As<std::string>() == "1");
+        auto res = (json["short"].As<std::string>() == "1");
         benchmark::DoNotOptimize(res);
         if (!res) {
             throw std::runtime_error("unexpected");
@@ -69,7 +69,7 @@ void JsonPathLong(benchmark::State& state) {
     auto json = formats::json::FromString(bench_json_data);
 
     for ([[maybe_unused]] auto _ : state) {
-        const auto res = (json["long_long_long_long_path"].As<std::string>() == "2");
+        auto res = (json["long_long_long_long_path"].As<std::string>() == "2");
         benchmark::DoNotOptimize(res);
         if (!res) {
             throw std::runtime_error("unexpected");
@@ -82,7 +82,7 @@ void JsonPathDeeplyNested(benchmark::State& state) {
     auto json = formats::json::FromString(bench_json_data);
 
     for ([[maybe_unused]] auto _ : state) {
-        const auto res =
+        auto res =
             (json["long"]["deeply"]["deeply"]["nested"]["json"]["value"]["with"]["some"]["data"].As<std::string>() ==
              "3");
         benchmark::DoNotOptimize(res);
@@ -97,7 +97,7 @@ void JsonPathLongAndDeeplyNested(benchmark::State& state) {
     auto json = formats::json::FromString(bench_json_data);
 
     for ([[maybe_unused]] auto _ : state) {
-        const auto res =
+        auto res =
             (json["nested_long_long_long_long_path"]["deeply"]["deeply"]["nested"]["json"]["value"]["with"]["some"]
                  ["da"
                   "t"

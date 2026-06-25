@@ -36,7 +36,7 @@ void AtomicSharedPtrRead(benchmark::State& state) {
 
         for ([[maybe_unused]] auto _ : state) {
             auto snapshot_ptr = ptr.Load();
-            benchmark::DoNotOptimize(*snapshot_ptr);
+            benchmark::DoNotOptimize(snapshot_ptr);
         }
     });
 }
@@ -53,7 +53,7 @@ void AtomicSharedPtrContention(benchmark::State& state) {
             tasks.push_back(engine::AsyncNoTracing([&]() {
                 while (run) {
                     auto snapshot_ptr = ptr.Load();
-                    benchmark::DoNotOptimize(*snapshot_ptr);
+                    benchmark::DoNotOptimize(snapshot_ptr);
                 }
             }));
         }
@@ -72,7 +72,7 @@ void AtomicSharedPtrContention(benchmark::State& state) {
 
         for ([[maybe_unused]] auto _ : state) {
             auto snapshot_ptr = ptr.Load();
-            benchmark::DoNotOptimize(*snapshot_ptr);
+            benchmark::DoNotOptimize(snapshot_ptr);
         }
 
         run = false;
