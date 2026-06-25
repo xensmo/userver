@@ -225,6 +225,9 @@ struct PoolSettingsDynamic final {
     std::optional<std::size_t> connecting_interval_ms;
 };
 
+/// Minimal size for prepared statements cache. Matches the @ref POSTGRES_CONNECTION_SETTINGS minimum
+inline constexpr std::size_t kMinPreparedStatementsCacheSize = 3;
+
 /// Default size limit for prepared statements cache
 inline constexpr std::size_t kDefaultMaxPreparedCacheSize = 200;
 

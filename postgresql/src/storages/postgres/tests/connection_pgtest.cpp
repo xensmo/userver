@@ -430,7 +430,7 @@ UTEST_F(PostgreCustomConnection, PreparedStatementsOverrideDisabled) {
 
 UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithSpecialChars) {
     storages::postgres::ConnectionSettings settings = kCachePreparedStatements;
-    settings.max_prepared_cache_size = 2;
+    settings.max_prepared_cache_size = storages::postgres::kMinPreparedStatementsCacheSize;
 
     pg::detail::ConnectionPtr conn{nullptr};
     UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), settings));
@@ -440,19 +440,22 @@ UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithSpecialChars)
         return;
     }
 
-    for (const auto& query : {
-             pg::Query{"SELECT 0", pg::Query::Name{"query-name-0"}},
-             pg::Query{"SELECT 1", pg::Query::Name{"query-name-1"}},
-             pg::Query{"SELECT 2", pg::Query::Name{"query-name-2"}},
-         })
-    {
+    const pg::Query queries_list[] = {
+        pg::Query{"SELECT 0", pg::Query::Name{"query-name-0"}},
+        pg::Query{"SELECT 1", pg::Query::Name{"query-name-1"}},
+        pg::Query{"SELECT 2", pg::Query::Name{"query-name-2"}},
+        pg::Query{"SELECT 3", pg::Query::Name{"query-name-3"}},
+        pg::Query{"SELECT 4", pg::Query::Name{"query-name-4"}},
+    };
+    static_assert(std::size(queries_list) > storages::postgres::kMinPreparedStatementsCacheSize);
+    for (const auto& query : queries_list) {
         UEXPECT_NO_THROW(conn->Execute(query));
     }
 }
 
-UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithMixedCase) {
+UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithSpecialCharsAndSameName) {
     storages::postgres::ConnectionSettings settings = kCachePreparedStatements;
-    settings.max_prepared_cache_size = 2;
+    settings.max_prepared_cache_size = storages::postgres::kMinPreparedStatementsCacheSize;
 
     pg::detail::ConnectionPtr conn{nullptr};
     UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), settings));
@@ -462,12 +465,81 @@ UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithMixedCase) {
         return;
     }
 
-    for (const auto& query : {
-             pg::Query{"SELECT 0", pg::Query::Name{"SelectValueV0"}},
-             pg::Query{"SELECT 1", pg::Query::Name{"SelectValueV1"}},
-             pg::Query{"SELECT 2", pg::Query::Name{"SelectValueV2"}},
-         })
-    {
+    const pg::Query::Name query_name{"query/name-;\"0\n!!!!"};
+
+    // Same `query_name` is intentional!
+    const std::pair<int, pg::Query> queries_list[] = {
+        {0, pg::Query{"SELECT 0", query_name}},
+        {1, pg::Query{"SELECT 1", query_name}},
+        {2, pg::Query{"SELECT 2", query_name}},
+        {3, pg::Query{"SELECT 3", query_name}},
+        {4, pg::Query{"SELECT 4", query_name}},
+    };
+    static_assert(std::size(queries_list) > storages::postgres::kMinPreparedStatementsCacheSize);
+
+    auto check_loop = [&](std::string_view test_description) {
+        for (const auto& [index, query] : queries_list) {
+            auto result = conn->Execute(query);
+            EXPECT_EQ(result[0][0].As<int>(), index)
+                << "Same Query::Name must still produce different IDs for prepared statements. Noted at: "
+                << test_description;
+
+            result = conn->Execute(
+                // Takes up 1 place in prepared statements cache before actual execution
+                "SELECT COUNT(name) FROM pg_prepared_statements "
+                "WHERE name LIKE 'q_%query/name-;\"0\n!!!!'"
+            );
+            EXPECT_GE(result[0][0].As<int>(), 1) << test_description;
+            EXPECT_LT(result[0][0].As<int>(), storages::postgres::kMinPreparedStatementsCacheSize) << test_description;
+        }
+
+        for (std::size_t i = 0; i < storages::postgres::kMinPreparedStatementsCacheSize; ++i) {
+            UEXPECT_NO_THROW(conn->Execute("SELECT 999" + std::to_string(i)));
+        }
+        auto result = conn->Execute("SELECT COUNT(name) FROM pg_prepared_statements WHERE name LIKE 'q_%query/name-%'");
+        EXPECT_EQ(result[0][0].As<int>(), 0) << "Not deallocated the prepared statement at: " << test_description;
+    };
+
+    check_loop("checking prepared statements not in transaction");
+
+    conn->Begin({}, {});
+    check_loop("checking prepared statements in transaction");
+    conn->Rollback();
+
+    conn->Begin({}, {});
+    check_loop("checking prepared in transaction after rollback");
+    conn->Rollback();
+
+    check_loop("checking prepared statements not in transaction after rollback");
+
+    conn->Begin({}, {});
+    check_loop("checking prepared statements in transaction again");
+    conn->Commit();
+
+    check_loop("checking prepared statements not in transaction after commit");
+}
+
+UTEST_F(PostgreCustomConnection, NamedPreparedStatementEvictionWithMixedCase) {
+    storages::postgres::ConnectionSettings settings = kCachePreparedStatements;
+    settings.max_prepared_cache_size = storages::postgres::kMinPreparedStatementsCacheSize;
+
+    pg::detail::ConnectionPtr conn{nullptr};
+    UASSERT_NO_THROW(conn = MakeConnection(GetDsnFromEnv(), GetTaskProcessor(), settings));
+    CheckConnection(conn);
+
+    if (!conn->ArePreparedStatementsEnabled()) {
+        return;
+    }
+
+    const pg::Query queries_list[] = {
+        pg::Query{"SELECT 0", pg::Query::Name{"SelectValueV0"}},
+        pg::Query{"SELECT 1", pg::Query::Name{"SelectValueV1"}},
+        pg::Query{"SELECT 2", pg::Query::Name{"SelectValueV2"}},
+        pg::Query{"SELECT 3", pg::Query::Name{"SelectValueV3"}},
+        pg::Query{"SELECT 4", pg::Query::Name{"SelectValueV4"}},
+    };
+    static_assert(std::size(queries_list) > storages::postgres::kMinPreparedStatementsCacheSize);
+    for (const auto& query : queries_list) {
         UEXPECT_NO_THROW(conn->Execute(query));
     }
 }

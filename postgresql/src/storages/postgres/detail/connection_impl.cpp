@@ -304,8 +304,13 @@ ConnectionImpl::ConnectionImpl(
       ei_settings_(ei_settings),
       metrics_(std::move(metrics))
 {
-    if (settings_.max_prepared_cache_size == 0) {
-        throw InvalidConfig("max_prepared_cache_size is 0");
+    if (settings_.max_prepared_cache_size < kMinPreparedStatementsCacheSize &&
+        settings_.prepared_statements == ConnectionSettings::kCachePreparedStatements)
+    {
+        throw InvalidConfig(
+            "If prepared statements chache is enabled, it should have at least size " +
+            std::to_string(kMinPreparedStatementsCacheSize)
+        );
     }
     if (settings_.max_ttl.has_value()) {
         // Actual ttl is randomized to avoid closing too many connections at the

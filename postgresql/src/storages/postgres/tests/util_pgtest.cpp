@@ -226,8 +226,8 @@ INSTANTIATE_UTEST_SUITE_P(
             name = "PipelineDisabled";
         }
 
-        if (connection_params.max_prepared_cache_size == 3) {
-            name.append("_MaxPreparedCacheSize3");
+        if (connection_params.max_prepared_cache_size == storages::postgres::kMinPreparedStatementsCacheSize) {
+            name.append("_MinPreparedCacheSize");
         }
 
         if (connection_params.omit_describe_mode == pg::OmitDescribeInExecuteMode::kEnabled) {

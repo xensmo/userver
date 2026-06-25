@@ -48,7 +48,7 @@ inline const storages::postgres::ConnectionSettings kCachePreparedStatements{
 };
 inline const storages::postgres::ConnectionSettings kMaxPreparedCacheSize3{
     .prepared_statements = storages::postgres::ConnectionSettings::kCachePreparedStatements,
-    .max_prepared_cache_size = 3,
+    .max_prepared_cache_size = storages::postgres::kMinPreparedStatementsCacheSize,
 };
 inline const storages::postgres::ConnectionSettings kNoPreparedStatements{
     .prepared_statements = storages::postgres::ConnectionSettings::kNoPreparedStatements,
