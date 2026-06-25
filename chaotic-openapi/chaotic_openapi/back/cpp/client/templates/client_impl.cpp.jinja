@@ -6,11 +6,16 @@
 
 namespace {{ namespace }} {
 
-ClientImpl::ClientImpl(const USERVER_NAMESPACE::chaotic::openapi::client::Config& config,
-             USERVER_NAMESPACE::clients::http::Client& http_client)
+{% filter indent(width=8, first=True) %}
+
+ClientImpl::ClientImpl(
+    const USERVER_NAMESPACE::chaotic::openapi::client::Config& config,
+    USERVER_NAMESPACE::clients::http::Client& http_client
+)
     : config_(config), http_client_(http_client)
-{
-}
+{}
+
+{% endfilter %}
 
 {% for op in operations %}
   {% if op.client_generate %}
@@ -53,4 +58,5 @@ ClientImpl::ClientImpl(const USERVER_NAMESPACE::chaotic::openapi::client::Config
   {% endif %}
 {% endfor %}
 
-}
+}  // namespace {{ namespace }}
+

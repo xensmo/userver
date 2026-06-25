@@ -1043,14 +1043,20 @@ class CppStructAllOf(CppType):
         return super().sax_parser_includes() + flatten([item.sax_parser_includes() for item in self.parents])
 
     def has_nested_additional_properties(self) -> bool:
-        for parent in self.parents:
-            if isinstance(parent, CppRef) and parent.orig_cpp_type:
-                parent = parent.orig_cpp_type
-
+        for parent in self.parents_dereferenced():
             if isinstance(parent, CppStruct) and parent.extra_type:
                 return True
 
         return False
+
+    def parents_dereferenced(self) -> list[CppType]:
+        result: list[CppType] = list()
+        for parent in self.parents:
+            if isinstance(parent, CppRef) and parent.orig_cpp_type:
+                result.append(parent.orig_cpp_type)
+            else:
+                result.append(parent)
+        return result
 
     def parser_type(self, ns: str, name: str) -> str:
         return self._primitive_parser_type()

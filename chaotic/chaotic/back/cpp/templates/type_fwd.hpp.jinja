@@ -2,7 +2,7 @@
 
 {% macro generate_type_fwd(name, type) %}
     {% if not type.needs_new_type() %}
-        {# nothing #}
+        {#- nothing -#}
     {% elif type.get_py_type() == 'CppStruct' %}
         struct {{ type.cpp_local_name() }};
     {% elif type.get_py_type() == 'CppIntEnum' %}
@@ -19,9 +19,9 @@
 {% import 'templates/common.jinja' as common %}
 
 {% for name, type in types.items() %}
-    {{ common.switch_namespace(cpp_namespace(name)) }}
+    {{- common.switch_namespace(cpp_namespace(name)) -}}
 
-    {{ generate_type_fwd(name, type) }}
+    {{- generate_type_fwd(name, type) -}}
 {% endfor %}
 
 {{ common.switch_namespace('') }}

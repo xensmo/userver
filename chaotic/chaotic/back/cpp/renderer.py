@@ -39,7 +39,7 @@ def close_namespace() -> str:
         data = ''
         for name in reversed(current_namespace.split('::')):
             if name:
-                data += '} //' + name + '\n'
+                data += '}  // namespace ' + name + '\n'
         return data
     else:
         return ''

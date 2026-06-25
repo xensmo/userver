@@ -19,18 +19,24 @@
 
 namespace {{ namespace }} {
 
-Component::Component(const USERVER_NAMESPACE::components::ComponentConfig& config, const USERVER_NAMESPACE::components::ComponentContext& context)
-        : USERVER_NAMESPACE::components::LoggableComponentBase(config, context),
-          client_(
-              USERVER_NAMESPACE::chaotic::openapi::client::ParseConfig(config, ClientImpl::kDefaultBaseUrl),
-              context.FindComponent<USERVER_NAMESPACE::components::HttpClient>().GetHttpClient()
-          ) 
+{% filter indent(width=8, first=True) %}
+
+Component::Component(
+    const USERVER_NAMESPACE::components::ComponentConfig& config,
+    const USERVER_NAMESPACE::components::ComponentContext& context
+)
+    : USERVER_NAMESPACE::components::LoggableComponentBase(config, context),
+      client_(
+          USERVER_NAMESPACE::chaotic::openapi::client::ParseConfig(config, ClientImpl::kDefaultBaseUrl),
+          context.FindComponent<USERVER_NAMESPACE::components::HttpClient>().GetHttpClient()
+      ) 
 {
     if (config.HasMember("middlewares")) {
         const auto& mw_config = config["middlewares"];
         
         for (const auto& [name, config] : USERVER_NAMESPACE::formats::common::Items(mw_config)) {
-            auto &factory = context.FindComponent<USERVER_NAMESPACE::chaotic::openapi::client::MiddlewareFactory>("chaotic-client-middleware-" + name);
+            auto& factory = context.FindComponent<
+                USERVER_NAMESPACE::chaotic::openapi::client::MiddlewareFactory>("chaotic-client-middleware-" + name);
             auto middleware = factory.Create(config);
             client_.RegisterMiddleware(middleware);
         }
@@ -40,8 +46,8 @@ Component::Component(const USERVER_NAMESPACE::components::ComponentConfig& confi
         if (names) {
             core_middlewares.emplace();
             for (const auto& name : *names) {
-                auto& component =
-                    context.FindComponent<USERVER_NAMESPACE::clients::http::middlewares::ComponentBase>(name);
+                auto& component = context.FindComponent<
+                    USERVER_NAMESPACE::clients::http::middlewares::ComponentBase>(name);
                 core_middlewares->emplace_back(&component.GetMiddleware());
             }
         }
@@ -49,10 +55,7 @@ Component::Component(const USERVER_NAMESPACE::components::ComponentConfig& confi
     }
 }
 
-Client& Component::GetClient()
-{
-  return client_;
-}
+Client& Component::GetClient() { return client_; }
 
 USERVER_NAMESPACE::yaml_config::Schema Component::GetStaticConfigSchema() {
     std::string base_schema = R"(
@@ -80,5 +83,7 @@ properties:
 
     return USERVER_NAMESPACE::yaml_config::MergeSchemas<USERVER_NAMESPACE::components::ComponentBase>(base_schema);
 }
+
+{% endfilter %}
 
 }

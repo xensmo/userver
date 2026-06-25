@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docs.hpp"
+
 #include <userver/chaotic/additional_properties.hpp>
 #include <userver/chaotic/array.hpp>
 #include <userver/chaotic/exception.hpp>
@@ -14,129 +16,188 @@
 #include <userver/formats/serialize/common_containers.hpp>
 #include <userver/utils/trivial_map.hpp>
 
-#include "docs.hpp"
-
 namespace ns {
 
-static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__Circle_PropertiesNames = [](auto selector) {
-  return selector().template Type<std::string_view>().Case("kind").Case("radius");
+constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__Circle_PropertiesNames = [](auto selector) {
+    return selector().template Type<std::string_view>()
+        .Case("kind")
+        .Case("radius")
+    ;
 };
 
 template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
-Circle Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Circle>) {
-  value.CheckNotMissing();
-  value.CheckObjectOrNull();
+Circle Parse(
+    Value value,
+    USERVER_NAMESPACE::formats::parse::To<Circle>)
+{
+    value.CheckNotMissing();
+    value.CheckObjectOrNull();
 
-  auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__Circle_PropertiesNames);
+    auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
+        value, k__ns__Circle_PropertiesNames
+    );
 
-  Circle res{
-      .kind = value["kind"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
-      .radius = value["radius"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>(),
-      .extra = std::move(extra),
-  };
+    Circle res{
+        .kind = value["kind"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>
+        >(),
+        .radius = value["radius"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>
+        >(),
+        .extra=std::move(extra),
+    };
 
-  return res;
+    return res;
 }
 
-static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__Object_PropertiesNames = [](auto selector) {
-  return selector().template Type<std::string_view>().Case("foo").Case("bar");
+constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__Object_PropertiesNames = [](auto selector) {
+    return selector().template Type<std::string_view>()
+        .Case("foo")
+        .Case("bar")
+    ;
 };
 
 template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
-Object Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Object>) {
-  value.CheckNotMissing();
-  value.CheckObjectOrNull();
+Object Parse(
+    Value value,
+    USERVER_NAMESPACE::formats::parse::To<Object>)
+{
+    value.CheckNotMissing();
+    value.CheckObjectOrNull();
 
-  Object res{
-      .foo = value["foo"].template As<USERVER_NAMESPACE::chaotic::Primitive<int>>(),
-      .bar = value["bar"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
-  };
+    Object res{
+        .foo = value["foo"].template As<
+            USERVER_NAMESPACE::chaotic::Primitive<int>
+        >(),
+        .bar = value["bar"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>
+        >(),
+    };
 
-  USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__Object_PropertiesNames);
+    USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(
+        value, k__ns__Object_PropertiesNames
+    );
 
-  return res;
+    return res;
 }
 
-static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__ObjectCpp_PropertiesNames = [](auto selector) {
-  return selector().template Type<std::string_view>().Case("some-hyphenated-key");
+constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__ObjectCpp_PropertiesNames = [](auto selector) {
+    return selector().template Type<std::string_view>()
+        .Case("some-hyphenated-key")
+    ;
 };
 
 template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
-ObjectCpp Parse(Value value, USERVER_NAMESPACE::formats::parse::To<ObjectCpp>) {
-  value.CheckNotMissing();
-  value.CheckObjectOrNull();
+ObjectCpp Parse(
+    Value value,
+    USERVER_NAMESPACE::formats::parse::To<ObjectCpp>)
+{
+    value.CheckNotMissing();
+    value.CheckObjectOrNull();
 
-  ObjectCpp res{
-      .some_hyphenated_key =
-          value["some-hyphenated-key"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
-  };
+    ObjectCpp res{
+        .some_hyphenated_key = value["some-hyphenated-key"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>
+        >(),
+    };
 
-  USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__ObjectCpp_PropertiesNames);
+    USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(
+        value, k__ns__ObjectCpp_PropertiesNames
+    );
 
-  return res;
+    return res;
 }
 
-static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__Rectangle_PropertiesNames = [](auto selector) {
-  return selector().template Type<std::string_view>().Case("kind").Case("width").Case("height");
+constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__Rectangle_PropertiesNames = [](auto selector) {
+    return selector().template Type<std::string_view>()
+        .Case("kind")
+        .Case("width")
+        .Case("height")
+    ;
 };
 
 template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
-Rectangle Parse(Value value, USERVER_NAMESPACE::formats::parse::To<Rectangle>) {
-  value.CheckNotMissing();
-  value.CheckObjectOrNull();
+Rectangle Parse(
+    Value value,
+    USERVER_NAMESPACE::formats::parse::To<Rectangle>)
+{
+    value.CheckNotMissing();
+    value.CheckObjectOrNull();
 
-  auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(value, k__ns__Rectangle_PropertiesNames);
+    auto extra = USERVER_NAMESPACE::chaotic::ExtractAdditionalPropertiesTrue(
+        value, k__ns__Rectangle_PropertiesNames
+    );
 
-  Rectangle res{
-      .kind = value["kind"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
-      .width = value["width"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>(),
-      .height = value["height"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>>(),
-      .extra = std::move(extra),
-  };
+    Rectangle res{
+        .kind = value["kind"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>
+        >(),
+        .width = value["width"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>
+        >(),
+        .height = value["height"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<double>>
+        >(),
+        .extra=std::move(extra),
+    };
 
-  return res;
+    return res;
 }
 
-static constexpr USERVER_NAMESPACE::utils::TrivialBiMap k__ns__Status_Mapping = [](auto selector) {
-  return selector()
-      .template Type<Status, std::string_view>()
-      .Case(Status::kPending, "pending")
-      .Case(Status::kRunning, "running")
-      .Case(Status::kDone, "done");
+constexpr USERVER_NAMESPACE::utils::TrivialBiMap k__ns__Status_Mapping = [](auto selector) {
+    return selector().template Type<Status, std::string_view>()
+        .Case(Status::kPending, "pending")
+        .Case(Status::kRunning, "running")
+        .Case(Status::kDone, "done")
+    ;
 };
 
 template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
-Status Parse(Value val, USERVER_NAMESPACE::formats::parse::To<Status>) {
-  const auto value = val.template As<std::string>();
-  const auto result = k__ns__Status_Mapping.TryFindBySecond(value);
-  if (result.has_value()) {
-    return *result;
-  }
-  USERVER_NAMESPACE::chaotic::ThrowForValue(fmt::format("Invalid enum value ({}) for type ::ns::Status", value), val);
+Status Parse(
+    Value val,
+    USERVER_NAMESPACE::formats::parse::To<Status>)
+{
+    const auto value = val.template As<std::string>();
+    const auto result = k__ns__Status_Mapping.TryFindBySecond(value);
+    if (result.has_value()) {
+        return *result;
+    }
+    USERVER_NAMESPACE::chaotic::ThrowForValue(fmt::format("Invalid enum value ({}) for type ::ns::Status", value), val);
 }
 
-static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__TreeNode_PropertiesNames = [](auto selector) {
-  return selector().template Type<std::string_view>().Case("data").Case("left").Case("right");
+constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__TreeNode_PropertiesNames = [](auto selector) {
+    return selector().template Type<std::string_view>()
+        .Case("data")
+        .Case("left")
+        .Case("right")
+    ;
 };
 
 template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
-TreeNode Parse(Value value, USERVER_NAMESPACE::formats::parse::To<TreeNode>) {
-  value.CheckNotMissing();
-  value.CheckObjectOrNull();
+TreeNode Parse(
+    Value value,
+    USERVER_NAMESPACE::formats::parse::To<TreeNode>)
+{
+    value.CheckNotMissing();
+    value.CheckObjectOrNull();
 
-  TreeNode res{
-      .data = value["data"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
-      .left = value["left"]
-                  .template As<std::optional<
-                      USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>>(),
-      .right = value["right"]
-                   .template As<std::optional<
-                       USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>>(),
-  };
+    TreeNode res{
+        .data = value["data"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>
+        >(),
+        .left = value["left"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>
+        >(),
+        .right = value["right"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Ref<USERVER_NAMESPACE::chaotic::Primitive<::ns::TreeNode>>>
+        >(),
+    };
 
-  USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__TreeNode_PropertiesNames);
+    USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(
+        value, k__ns__TreeNode_PropertiesNames
+    );
 
-  return res;
+    return res;
 }
 
 }  // namespace ns

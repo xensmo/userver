@@ -5,6 +5,8 @@
 
 #include <clients/{{ name }}/client_impl.hpp>
 
+{% filter indent(width=8, first=True) %}
+
 namespace {{ namespace }} {
 
 class Component final : public USERVER_NAMESPACE::components::LoggableComponentBase {
@@ -21,8 +23,11 @@ private:
     ClientImpl client_;
 };
 
-}
+}  // namespace {{ namespace }}
 
 template<>
-inline constexpr auto USERVER_NAMESPACE::components::kConfigFileMode<::{{ namespace }}::Component> =
-    USERVER_NAMESPACE::components::ConfigFileMode::kNotRequired;
+inline constexpr auto USERVER_NAMESPACE::components::kConfigFileMode<::{{ namespace }}::Component>
+    = USERVER_NAMESPACE::components::ConfigFileMode::kNotRequired;
+
+{% endfilter %}
+

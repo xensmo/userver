@@ -38,7 +38,7 @@ def make_env(prefix: str, full_path: str) -> jinja2.Environment:
         loader = _make_arcadia_loader(prefix)
     except ImportError:
         loader = jinja2.FileSystemLoader(os.path.join(full_path))
-    env = jinja2.Environment(loader=loader)
+    env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
 
     # common symbols used by everyone
     env.globals['NOT_IMPLEMENTED'] = not_implemented

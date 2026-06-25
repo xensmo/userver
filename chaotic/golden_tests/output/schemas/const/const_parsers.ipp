@@ -1,8 +1,10 @@
 #pragma once
 
-#include <userver/chaotic/const_value.hpp>
-
 #include "const.hpp"
 
-namespace ns {}  // namespace ns
+#include <userver/chaotic/const_value.hpp>
+
+namespace ns {
+
+}  // namespace ns
 

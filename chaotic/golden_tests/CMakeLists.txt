@@ -13,7 +13,7 @@ userver_target_generate_chaotic(
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     LAYOUT
     "/components/schemas/([^/]*)/=ns::{0}"
-    FORMAT ON
+    FORMAT OFF
     OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/src"
     SCHEMAS ${SCHEMAS}
     RELATIVE_TO "${CMAKE_CURRENT_SOURCE_DIR}"

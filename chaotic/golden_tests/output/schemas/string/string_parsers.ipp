@@ -1,5 +1,7 @@
 #pragma once
 
+#include "string.hpp"
+
 #include <userver/chaotic/additional_properties.hpp>
 #include <userver/chaotic/primitive.hpp>
 #include <userver/chaotic/validators.hpp>
@@ -8,26 +10,33 @@
 #include <userver/formats/serialize/common_containers.hpp>
 #include <userver/utils/trivial_map.hpp>
 
-#include "string.hpp"
-
 namespace ns {
 
-static constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__String_PropertiesNames = [](auto selector) {
-  return selector().template Type<std::string_view>().Case("foo");
+constexpr USERVER_NAMESPACE::utils::TrivialSet k__ns__String_PropertiesNames = [](auto selector) {
+    return selector().template Type<std::string_view>()
+        .Case("foo")
+    ;
 };
 
 template <USERVER_NAMESPACE::formats::common::IsFormatValue Value>
-String Parse(Value value, USERVER_NAMESPACE::formats::parse::To<String>) {
-  value.CheckNotMissing();
-  value.CheckObjectOrNull();
+String Parse(
+    Value value,
+    USERVER_NAMESPACE::formats::parse::To<String>)
+{
+    value.CheckNotMissing();
+    value.CheckObjectOrNull();
 
-  String res{
-      .foo = value["foo"].template As<std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>>(),
-  };
+    String res{
+        .foo = value["foo"].template As<
+            std::optional<USERVER_NAMESPACE::chaotic::Primitive<std::string>>
+        >(),
+    };
 
-  USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(value, k__ns__String_PropertiesNames);
+    USERVER_NAMESPACE::chaotic::ValidateNoAdditionalProperties(
+        value, k__ns__String_PropertiesNames
+    );
 
-  return res;
+    return res;
 }
 
 }  // namespace ns
