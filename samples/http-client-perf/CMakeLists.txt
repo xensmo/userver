@@ -1,4 +1,11 @@
+cmake_minimum_required(VERSION 3.14)
 project(userver-samples-http-client-perf CXX)
+
+find_package(
+    userver
+    COMPONENTS core
+    REQUIRED
+)
 
 find_package(Boost REQUIRED CONFIG COMPONENTS program_options)
 
