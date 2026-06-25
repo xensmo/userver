@@ -23,23 +23,13 @@ constexpr std::string_view kNewLine = "\n";
 
 class [[maybe_unused]] LimitingOutputStream final : public google::protobuf::io::ZeroCopyOutputStream {
 public:
-    class LimitReachedException final : public std::exception {};
-
     explicit LimitingOutputStream(google::protobuf::io::ArrayOutputStream& output_stream)
         : output_stream_{output_stream}
     {}
 
-    /*
-      Might throw `LimitReachedException` on limit reached
-    */
     bool Next(void** data, int* size) override {
         if (!output_stream_.Next(data, size)) {
             limit_reached_ = true;
-#if defined(ARCADIA_ROOT) || GOOGLE_PROTOBUF_VERSION >= 6031002
-            // This requires TextFormat internals to be exception-safe, see
-            // https://github.com/protocolbuffers/protobuf/commit/be875d0aaf37dbe6948717ea621278e75e89c9c7
-            throw LimitReachedException{};
-#endif
             return false;
         }
         return true;
@@ -87,13 +77,7 @@ std::string ToLimitedDebugString(const google::protobuf::Message& message, std::
     google::protobuf::io::ArrayOutputStream output_stream{output_buffer.data(), utils::numeric_cast<int>(limit)};
 
     LimitingOutputStream limiting_output_stream{output_stream};
-    try {
-        ugrpc::Print(message, limiting_output_stream);
-    } catch (const LimitingOutputStream::LimitReachedException& /*ex*/) {
-        // When using a protobuf version with exception-safe TextFormat, LimitingOutputStream throws
-        // `LimitReachedException` if limit is reached to stop printing immediately, otherwise TextFormat will continue
-        // to walk the whole message and apply noop printing.
-    }
+    ugrpc::Print(message, limiting_output_stream);
 
     std::string_view
         truncated_str = std::string_view{output_buffer.data(), static_cast<std::size_t>(output_stream.ByteCount())};
