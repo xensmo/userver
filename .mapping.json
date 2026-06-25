@@ -3232,6 +3232,7 @@
   "libraries/proto-structs/tests/structs.hpp":"taxi/uservices/userver/libraries/proto-structs/tests/structs.hpp",
   "libraries/proto-structs/tests/time_of_day_test.cpp":"taxi/uservices/userver/libraries/proto-structs/tests/time_of_day_test.cpp",
   "libraries/proto-structs/tests/timestamp_test.cpp":"taxi/uservices/userver/libraries/proto-structs/tests/timestamp_test.cpp",
+  "libraries/protobuf/CMakeLists.txt":"taxi/uservices/userver/libraries/protobuf/CMakeLists.txt",
   "libraries/protobuf/include/userver/protobuf/datetime.hpp":"taxi/uservices/userver/libraries/protobuf/include/userver/protobuf/datetime.hpp",
   "libraries/protobuf/include/userver/protobuf/exceptions.hpp":"taxi/uservices/userver/libraries/protobuf/include/userver/protobuf/exceptions.hpp",
   "libraries/protobuf/include/userver/protobuf/json/convert.hpp":"taxi/uservices/userver/libraries/protobuf/include/userver/protobuf/json/convert.hpp",

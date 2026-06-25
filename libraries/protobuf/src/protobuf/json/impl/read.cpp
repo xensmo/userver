@@ -250,7 +250,9 @@ public:
 
 [[nodiscard]] const ::google::protobuf::FieldDescriptor* FindFieldByJsonName(
     const ::google::protobuf::Descriptor& desc,
-    const std::string_view json_field_name,
+    // Older protobuf lookup APIs take `ConstStringParam` (`const TString&`),
+    // newer ones take `string_view`. Use `std::string` here to support both.
+    const std::string& json_field_name,
     FindHint& hint
 ) {
     // according to ProtoJSON, conformant parser should accept both lowerCamelCase'-encoded

@@ -21,6 +21,13 @@
 
 #include "proto_json/messages.pb.h"
 
+// True if tests are built with protobuf library with version newer than
+// the one used as a reference for ProtoJSON implementation.
+// We use non-constexpr variable to avoid stripping checks from compilation
+// when building for older protobuf versions (checks must still compile).
+inline const /*deliberately non-constexpr*/ bool
+    kIsModernProtoJson = (GOOGLE_PROTOBUF_VERSION >= 4022005);  // NOLINT(misc-redundant-expression)
+
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define EXPECT_PRINT_ERROR(EXPR, CODE, PATH)                             \
     try {                                                                \

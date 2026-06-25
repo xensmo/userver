@@ -287,6 +287,7 @@ endif()
 
 if(USERVER_FEATURE_GRPC)
     _require_userver_core("USERVER_FEATURE_GRPC")
+    add_subdirectory(libraries/protobuf)
     add_subdirectory(grpc)
     list(APPEND USERVER_AVAILABLE_COMPONENTS grpc)
 endif()

@@ -2,12 +2,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <stdexcept>
 
 #include <fmt/format.h>
 #include <google/protobuf/util/json_util.h>
 
 #include <userver/formats/json/serialize.hpp>
+#include <userver/protobuf/string.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -64,18 +66,30 @@ formats::json::Value CreateSampleJson(const ::google::protobuf::Message& message
     if (status.ok()) {
         return formats::json::FromString(result);
     } else {
-        throw SampleError(fmt::format("Failed to create sample JSON from protobuf message: {}", status.message()));
+        throw SampleError(fmt::format(
+            "Failed to create sample JSON from protobuf message: {}",
+            protobuf::impl::ToStringView(status.message())
+        ));
     }
 }
 
 void InitSampleMessage(const std::string& json, ::google::protobuf::Message& message, const ParseOptions& options) {
-    ::google::protobuf::util::ParseOptions native_options;
+    ::google::protobuf::util::JsonParseOptions native_options;
     native_options.ignore_unknown_fields = options.ignore_unknown_fields;
 
-    auto status = ::google::protobuf::util::JsonStringToMessage(json, &message, native_options);
+    try {
+        auto status = ::google::protobuf::util::JsonStringToMessage(json, &message, native_options);
 
-    if (!status.ok()) {
-        throw SampleError(fmt::format("Failed to initialize sample message from JSON: {}", status.message()));
+        if (!status.ok()) {
+            throw SampleError(fmt::format(
+                "Failed to initialize sample message from JSON: {}",
+                protobuf::impl::ToStringView(status.message())
+            ));
+        }
+    } catch (const SampleError&) {
+        throw;
+    } catch (const std::exception& e) {
+        throw SampleError(fmt::format("Failed to initialize sample message from JSON: {}", e.what()));
     }
 }
 
