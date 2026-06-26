@@ -3994,6 +3994,7 @@
   "postgresql/src/storages/postgres/tests/geometry_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/geometry_pgtest.cpp",
   "postgresql/src/storages/postgres/tests/integral_test.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/integral_test.cpp",
   "postgresql/src/storages/postgres/tests/interval_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/interval_pgtest.cpp",
+  "postgresql/src/storages/postgres/tests/ip_address_buffer_test.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/ip_address_buffer_test.cpp",
   "postgresql/src/storages/postgres/tests/ip_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/ip_pgtest.cpp",
   "postgresql/src/storages/postgres/tests/json_types_pgtest.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/json_types_pgtest.cpp",
   "postgresql/src/storages/postgres/tests/landing_test.cpp":"taxi/uservices/userver/postgresql/src/storages/postgres/tests/landing_test.cpp",
