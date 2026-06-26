@@ -887,48 +887,45 @@ bool ConnectionImpl::PreparedStatementsEnabled(OptionalCommandControl cmd_ctl) c
     return ArePreparedStatementsEnabled();
 }
 
-void ConnectionImpl::SetConnectionStatementTimeout(TimeoutDuration timeout, engine::Deadline deadline) {
+TimeoutDuration ConnectionImpl::NormalizeStatementTimeout(TimeoutDuration timeout) {
     timeout = testsuite_pg_ctl_.MakeStatementTimeout(timeout);
     if (IsPipelineActive() && settings_.deadline_propagation_enabled) {
         timeout = AdjustTimeout(timeout, deadline_propagation_is_active_);
     }
+    return timeout;
+}
+
+void ConnectionImpl::ApplyStatementTimeoutIfItChanged(
+    TimeoutDuration timeout,
+    Connection::ParameterScope scope,
+    engine::Deadline deadline
+) {
+    if (current_statement_timeout_ == timeout) {
+        return;
+    }
+
+    SetParameter(kStatementTimeoutParameter, std::to_string(timeout.count()), scope, deadline);
+    current_statement_timeout_ = timeout;
+}
+
+void ConnectionImpl::SetConnectionStatementTimeout(TimeoutDuration timeout, engine::Deadline deadline) {
+    timeout = NormalizeStatementTimeout(timeout);
 
     if (IsTransactionPooler()) {
         if (IsInTransaction()) {
-            SetParameter(
-                kStatementTimeoutParameter,
-                std::to_string(timeout.count()),
-                Connection::ParameterScope::kTransaction,
-                deadline
-            );
-            current_statement_timeout_ = timeout;
+            ApplyStatementTimeoutIfItChanged(timeout, Connection::ParameterScope::kTransaction, deadline);
         }
-    } else if (current_statement_timeout_ != timeout) {
-        SetParameter(
-            kStatementTimeoutParameter,
-            std::to_string(timeout.count()),
-            Connection::ParameterScope::kSession,
-            deadline
-        );
-        current_statement_timeout_ = timeout;
+    } else {
+        ApplyStatementTimeoutIfItChanged(timeout, Connection::ParameterScope::kSession, deadline);
     }
 }
 
 void ConnectionImpl::SetStatementTimeout(TimeoutDuration timeout, engine::Deadline deadline) {
-    timeout = testsuite_pg_ctl_.MakeStatementTimeout(timeout);
-    if (IsPipelineActive() && settings_.deadline_propagation_enabled) {
-        timeout = AdjustTimeout(timeout, deadline_propagation_is_active_);
-    }
-
-    if (current_statement_timeout_ != timeout) {
-        SetParameter(
-            kStatementTimeoutParameter,
-            std::to_string(timeout.count()),
-            Connection::ParameterScope::kTransaction,
-            deadline
-        );
-        current_statement_timeout_ = timeout;
-    }
+    ApplyStatementTimeoutIfItChanged(
+        NormalizeStatementTimeout(timeout),
+        Connection::ParameterScope::kTransaction,
+        deadline
+    );
 }
 
 void ConnectionImpl::SetStatementTimeout(OptionalCommandControl cmd_ctl) {

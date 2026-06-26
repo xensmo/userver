@@ -167,6 +167,14 @@ private:
 
     void SetStatementTimeout(OptionalCommandControl cmd_ctl);
 
+    TimeoutDuration NormalizeStatementTimeout(TimeoutDuration timeout);
+
+    void ApplyStatementTimeoutIfItChanged(
+        TimeoutDuration timeout,
+        Connection::ParameterScope scope,
+        engine::Deadline deadline
+    );
+
     const PreparedStatementInfo& DoPrepareStatement(
         const Query& query,
         const detail::QueryParameters& params,
