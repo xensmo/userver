@@ -65,7 +65,7 @@ void ParameterSinkHttpClient::Flush() {
     if (hidden_query_arg_names_func_) {
         auto logged_query_args = MaskQueryMultiArgs(query_args_, hidden_query_arg_names_func_);
         auto url = http::MakeUrl(fmt::vformat(url_pattern_, path_vars_), logged_query_args);
-        request_.SetLoggedUrl(url);
+        request_.SetLoggedUrl(std::move(url));
     }
     request_.headers(std::move(headers_));
     request_.cookies(std::move(cookies_));

@@ -56,7 +56,7 @@ Client::JsonReply Client::FetchJson(
     auto configs_json = json_value["configs"];
 
     JsonReply reply;
-    reply.configs = configs_json;
+    reply.configs = std::move(configs_json);
 
     reply.timestamp = json_value["updated_at"].As<std::string>();
     reply.kill_switches_disabled = json_value["kill_switches_disabled"].As<std::vector<std::string>>({});
