@@ -60,12 +60,6 @@ if(USERVER_BUILD_TESTS AND NOT USERVER_FEATURE_UTEST)
     message(FATAL_ERROR "Running unit tests for userver requires utest, disabling it is meaningless")
 endif()
 
-if(USERVER_INSTALL AND USERVER_BUILD_TESTS)
-    message(FATAL_ERROR "For USERVER_INSTALL, please turn off USERVER_BUILD_TESTS "
-                        "to avoid accidentally installing them"
-    )
-endif()
-
 # @ingroup everything
 option(USERVER_BUILD_ALL_COMPONENTS "\
 Build all libraries except for those explicitly turned off by 'USERVER_FEATURE_*'\
