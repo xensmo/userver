@@ -3326,6 +3326,7 @@
   "libraries/protobuf/tests/json/value_to_json_test.cpp":"taxi/uservices/userver/libraries/protobuf/tests/json/value_to_json_test.cpp",
   "libraries/protobuf/tests/json/wrapper_from_json_test.cpp":"taxi/uservices/userver/libraries/protobuf/tests/json/wrapper_from_json_test.cpp",
   "libraries/protobuf/tests/json/wrapper_to_json_test.cpp":"taxi/uservices/userver/libraries/protobuf/tests/json/wrapper_to_json_test.cpp",
+  "libraries/protobuf/tests/proto/CMakeLists.txt":"taxi/uservices/userver/libraries/protobuf/tests/proto/CMakeLists.txt",
   "libraries/protobuf/tests/proto/proto_json/messages.proto":"taxi/uservices/userver/libraries/protobuf/tests/proto/proto_json/messages.proto",
   "libraries/s3api/CMakeLists.txt":"taxi/uservices/userver/libraries/s3api/CMakeLists.txt",
   "libraries/s3api/include/userver/s3api/authenticators/access_key.hpp":"taxi/uservices/userver/libraries/s3api/include/userver/s3api/authenticators/access_key.hpp",
