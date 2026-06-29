@@ -30,6 +30,8 @@ MockClientBase::~MockClientBase() = default;
 
 void MockClientBase::WaitConnectedOnce(RedisWaitConnected) {}
 
+bool MockClientBase::IsReady(const HealthCheckParams&) const { return true; }
+
 size_t MockClientBase::ShardsCount() const { return 1; }
 
 bool MockClientBase::IsInClusterMode() const { return false; }

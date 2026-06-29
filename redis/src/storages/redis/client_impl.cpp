@@ -49,6 +49,8 @@ void ClientImpl::WaitConnectedOnce(RedisWaitConnected wait_connected) {
     redis_client_->WaitConnectedOnce(wait_connected);
 }
 
+bool ClientImpl::IsReady(const HealthCheckParams& params) const { return redis_client_->IsReady(params); }
+
 size_t ClientImpl::ShardsCount() const { return redis_client_->ShardsCount(); }
 bool ClientImpl::IsInClusterMode() const { return redis_client_->IsInClusterMode(); }
 
