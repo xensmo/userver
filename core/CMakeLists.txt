@@ -315,6 +315,7 @@ _userver_directory_install(
 _userver_directory_install(
     COMPONENT core
     FILES "${USERVER_ROOT_DIR}/cmake/UserverTestsuite.cmake"
+          "${USERVER_ROOT_DIR}/cmake/TargetIteration.cmake"
           "${USERVER_ROOT_DIR}/cmake/install/userver-core-config.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/userver
 )
