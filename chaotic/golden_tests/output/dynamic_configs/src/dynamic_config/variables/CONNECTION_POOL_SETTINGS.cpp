@@ -40,7 +40,9 @@ auto DoParse(const USERVER_NAMESPACE::formats::json::Value& value) {
 
 }  // anonymous namespace
 
-const USERVER_NAMESPACE::dynamic_config::Key<USERVER_NAMESPACE::utils::DefaultDict<::dynamic_config::connection_pool_settings::PoolSettings>> CONNECTION_POOL_SETTINGS{
+const USERVER_NAMESPACE::dynamic_config::Key<
+    USERVER_NAMESPACE::utils::DefaultDict<::dynamic_config::connection_pool_settings::PoolSettings>
+> CONNECTION_POOL_SETTINGS{
     "CONNECTION_POOL_SETTINGS",
     DoParse,
     USERVER_NAMESPACE::dynamic_config::DefaultAsJsonString{R"~(

@@ -21,7 +21,9 @@ auto DoParse(const USERVER_NAMESPACE::formats::json::Value& value) {
 
 }  // anonymous namespace
 
-const USERVER_NAMESPACE::dynamic_config::Key<::dynamic_config::feature_flags::VariableTypeRaw> FEATURE_FLAGS{
+const USERVER_NAMESPACE::dynamic_config::Key<
+    ::dynamic_config::feature_flags::VariableTypeRaw
+> FEATURE_FLAGS{
     "FEATURE_FLAGS",
     DoParse,
     USERVER_NAMESPACE::dynamic_config::DefaultAsJsonString{R"~(
