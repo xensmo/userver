@@ -98,7 +98,7 @@ The exact format of setting cmake options varies depending on the method of buil
 |--------------------------------|------------------------------------------------------------------------------------------------------|---------|
 | `USERVER_BUILD_ALL_COMPONENTS` | Build all userver libraries compatible with the host except for ones disabled by `USERVER_FEATURE_*` | `OFF`   |
 | `USERVER_BUILD_TESTS`          | Build unit tests, functional tests and benchmarks for userver itself                                 | `OFF`   |
-| `USERVER_BUILD_SAMPLES`        | Build userver samples                                                                                | `OFF`   |
+| `USERVER_BUILD_SAMPLES`        | Install userver samples; also build them when `USERVER_BUILD_TESTS` is `ON`                          | `OFF`   |
 
 ### CMake options for features that are unavailable for some platforms
 
