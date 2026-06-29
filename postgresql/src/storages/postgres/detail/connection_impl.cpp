@@ -763,6 +763,9 @@ bool ConnectionImpl::Cleanup(TimeoutDuration timeout) {
     if (state == ConnectionState::kTranActive) {
         return false;
     }
+    if (state > ConnectionState::kIdle) {
+        Rollback(deadline);
+    }
     // We might need more timeout here
     // We are no more bound with SLA, user has his exception.
     // We need to try and save the connection without canceling current query
@@ -780,9 +783,6 @@ bool ConnectionImpl::Cleanup(TimeoutDuration timeout) {
     } else if (settings_.pipeline_mode == PipelineMode::kEnabled) {
         // Reenter pipeline mode if necessary
         conn_wrapper_.EnterPipelineMode();
-    }
-    if (state > ConnectionState::kIdle) {
-        Rollback(deadline);
     }
     return GetConnectionState() == ConnectionState::kIdle;
 }

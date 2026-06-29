@@ -24,6 +24,11 @@ constexpr pg::CommandControl kTransactionPoolerDefaultCmdCtl{
     std::chrono::seconds{10},
     std::chrono::seconds{10},
 };
+constexpr pg::CommandControl kTransactionPoolerNoPrepareCmdCtl{
+    kTransactionPoolerNetworkTimeout,
+    kTransactionPoolerStatementTimeout,
+    pg::CommandControl::PreparedStatementsOptionOverride::kDisabled,
+};
 
 pg::ConnectionSettings MakeTransactionPoolerSettings(const pg::ConnectionSettings& base = kCachePreparedStatements) {
     auto settings = base;
@@ -212,6 +217,39 @@ UTEST_F(PostgreTransactionModeConnection, TransactionPoolerResendsSetConfigWhenC
     UEXPECT_NO_THROW(conn->Rollback());
     UEXPECT_NO_THROW(conn->CancelAndCleanup(utest::kMaxTestWaitTime));
     EXPECT_TRUE(conn->IsIdle());
+}
+
+UTEST_F(PostgreTransactionModeConnection, DuplicatePreparedStatementDirtyConnectionIsCleanedUp) {
+    const pg::Query query{"SELECT 42"};
+
+    std::string statement_name;
+    {
+        const auto conn = MakeConn();
+        UEXPECT_NO_THROW(
+            statement_name = conn->PrepareStatement(query, {}, utest::kMaxTestWaitTime).meta_statement_name
+        );
+    }
+    ASSERT_FALSE(statement_name.empty());
+
+    const DefaultCommandControlScope begin_scope{kTransactionPoolerCmdCtl};
+
+    const auto conn = MakeConn();
+
+    UEXPECT_NO_THROW(conn->Execute("PREPARE " + statement_name + " AS SELECT 42", {}, kTransactionPoolerNoPrepareCmdCtl)
+    );
+
+    UEXPECT_NO_THROW(conn->Begin({}, {}));
+    UEXPECT_THROW(conn->Execute(query), pg::DuplicatePreparedStatement);
+    ASSERT_EQ(pg::ConnectionState::kTranError, conn->GetState());
+
+    const DefaultCommandControlScope cleanup_scope{kTransactionPoolerDefaultCmdCtl};
+
+    UEXPECT_NO_THROW(conn->Cleanup(utest::kMaxTestWaitTime));
+    EXPECT_EQ(pg::ConnectionState::kIdle, conn->GetState());
+    EXPECT_FALSE(conn->IsBroken());
+
+    UEXPECT_NO_THROW(conn->Execute("SELECT 1"));
+    EXPECT_FALSE(conn->IsBroken());
 }
 
 }  // namespace
