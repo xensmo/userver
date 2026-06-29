@@ -27,8 +27,26 @@ function(_userver_prepare_venv_variables)
         CACHE STRING "Options for all pip calls"
     )
 
+    # If not set explicitly during the first configure, default to ON when 'uv' is available.
+    if(DEFINED CACHE{USERVER_PIP_USE_UV})
+        set(_userver_pip_use_uv_default "$CACHE{USERVER_PIP_USE_UV}")
+    else()
+        execute_process(
+            COMMAND uv --version
+            RESULT_VARIABLE _userver_uv_probe_status
+            OUTPUT_QUIET ERROR_QUIET
+        )
+        if(_userver_uv_probe_status EQUAL 0)
+            set(_userver_pip_use_uv_default ON)
+            message(STATUS "Found 'uv', using it for Python virtual environments by default")
+        else()
+            set(_userver_pip_use_uv_default OFF)
+        endif()
+    endif()
     # @ingroup dependencies
-    option(USERVER_PIP_USE_UV "Use uv instead of venv for managing Python virtual environments" OFF)
+    option(USERVER_PIP_USE_UV "Use uv instead of venv for managing Python virtual environments"
+           "${_userver_pip_use_uv_default}"
+    )
 endfunction()
 
 _userver_prepare_venv_variables()
