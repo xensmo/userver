@@ -69,11 +69,11 @@ bool TokenBucket::IsUnbounded() const {
            token_refill_interval_.load() == kInstantRefillPolicy.interval;
 }
 
-size_t TokenBucket::GetMaxSizeApprox() const { return max_size_.load(); }
+size_t TokenBucket::GetMaxSizeApprox() const noexcept { return max_size_.load(); }
 
-TokenBucket::Duration TokenBucket::GetRefillIntervalApprox() const { return token_refill_interval_.load(); }
+TokenBucket::Duration TokenBucket::GetRefillIntervalApprox() const noexcept { return token_refill_interval_.load(); }
 
-size_t TokenBucket::GetRefillAmountApprox() const { return token_refill_amount_.load(); }
+size_t TokenBucket::GetRefillAmountApprox() const noexcept { return token_refill_amount_.load(); }
 
 double TokenBucket::GetRatePs() const { return GetRatePs(GetRefillIntervalApprox()) * GetRefillAmountApprox(); }
 

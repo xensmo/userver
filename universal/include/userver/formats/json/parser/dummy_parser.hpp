@@ -30,7 +30,7 @@ public:
 
     std::string Expected() const override;
 
-    void Reset();
+    void Reset() noexcept;
 
     DummyParser& GetParser();
 

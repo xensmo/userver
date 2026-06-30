@@ -102,8 +102,8 @@ private:
 
     const std::string name_;
     const LruCacheConfigStatic static_config_;
-    std::shared_ptr<dump::Dumper> dumper_;
     const std::shared_ptr<Cache> cache_;
+    std::shared_ptr<dump::Dumper> dumper_;
 
     // Subscriptions must be the last fields.
     concurrent::AsyncEventSubscriberScope config_subscription_;

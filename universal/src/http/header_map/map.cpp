@@ -180,7 +180,7 @@ MaybeOwnedKey::MaybeOwnedKey(std::string_view key)
       key_str_if_exists_{nullptr}
 {}
 
-std::string_view MaybeOwnedKey::GetValue() const { return key_; }
+std::string_view MaybeOwnedKey::GetValue() const noexcept { return key_; }
 
 std::string MaybeOwnedKey::ExtractValue() && {
     if (key_str_if_exists_) {

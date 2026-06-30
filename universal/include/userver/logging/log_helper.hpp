@@ -38,7 +38,7 @@ struct HexBase {
 
     template <typename Unsigned>
         requires std::is_unsigned_v<Unsigned>
-    explicit constexpr HexBase(Unsigned value) noexcept : value(value) {
+    constexpr explicit HexBase(Unsigned value) noexcept : value(value) {
         static_assert(sizeof(Unsigned) <= sizeof(value));
     }
 
@@ -115,7 +115,13 @@ public:
     /// @cond
     template <typename... Args>
     USERVER_IMPL_NODEBUG_INLINE_FUNC LogHelper& AsLvalue(fmt::format_string<Args...> fmt, Args&&... args) noexcept {
-        VFormat(fmt::string_view(fmt), fmt::make_format_args(args...));
+        const fmt::string_view fmt_string =
+#if FMT_VERSION >= 120200
+            fmt.get();
+#else
+            static_cast<fmt::string_view>(fmt);
+#endif
+        VFormat(fmt_string, fmt::make_format_args(args...));
         return *this;
     }
     /// @endcond
@@ -180,7 +186,13 @@ public:
     /// @return A reference to the LogHelper object for chaining.
     template <typename... Args>
     USERVER_IMPL_NODEBUG_INLINE_FUNC LogHelper& Format(fmt::format_string<Args...> fmt, Args&&... args) noexcept {
-        VFormat(fmt::string_view(fmt), fmt::make_format_args(args...));
+        const fmt::string_view fmt_string =
+#if FMT_VERSION >= 120200
+            fmt.get();
+#else
+            static_cast<fmt::string_view>(fmt);
+#endif
+        VFormat(fmt_string, fmt::make_format_args(args...));
         return *this;
     }
 

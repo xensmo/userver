@@ -177,8 +177,7 @@ private:
 class ExecuteResponse final {
 public:
     /// @cond
-    explicit ExecuteResponse(std::variant<NYdb::NQuery::TExecuteQueryResult, NYdb::NTable::TDataQueryResult>&&
-                                 query_result);
+    explicit ExecuteResponse(NYdb::NQuery::TExecuteQueryResult&& query_result);
     /// @endcond
 
     ExecuteResponse(const ExecuteResponse&) = delete;

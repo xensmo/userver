@@ -462,7 +462,7 @@ public:
 
     /// @brief Convert from an integer
     template <meta::kIsInteger Int>
-    explicit constexpr Decimal(Int value)
+    constexpr explicit Decimal(Int value)
         : Decimal(FromDecimal(Decimal<0>::FromUnbiased(impl::ToInt64(value))))
     {}
 
@@ -480,7 +480,7 @@ public:
     ///
     /// @throw decimal64::ParseError on invalid input
     /// @see FromStringPermissive
-    explicit constexpr Decimal(std::string_view value);
+    constexpr explicit Decimal(std::string_view value);
 
     /// @brief Lossy conversion from a floating-point number
     ///
@@ -969,7 +969,7 @@ constexpr bool IsSpace(CharT c) {
 template <typename CharT, typename Traits>
 class StringCharSequence {
 public:
-    explicit constexpr StringCharSequence(std::basic_string_view<CharT, Traits> sv)
+    constexpr explicit StringCharSequence(std::basic_string_view<CharT, Traits> sv)
         : current_(sv.begin()),
           end_(sv.end())
     {}

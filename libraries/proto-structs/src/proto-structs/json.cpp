@@ -1,7 +1,8 @@
-#include <userver/proto-structs/json.hpp>
-
 #include <google/protobuf/json/json.h>
 #include <google/protobuf/message.h>
+
+#include <userver/proto-structs/json.hpp>
+#include <userver/protobuf/string.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -12,7 +13,7 @@ logging::LogHelper& LogMessage(logging::LogHelper& h, const google::protobuf::Me
     options.always_print_primitive_fields = true;
     options.preserve_proto_field_names = true;
 
-    TProtoStringType out;
+    protobuf::ProtoStringType out;
     const auto status = google::protobuf::json::MessageToJsonString(message, &out, options);
     if (status.ok()) {
         return h << out;

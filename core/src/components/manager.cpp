@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <thread>
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 
 #include <components/component_context_impl.hpp>
@@ -18,6 +18,7 @@
 #include <userver/components/component_list.hpp>
 #include <userver/engine/async.hpp>
 #include <userver/engine/task/current_task.hpp>
+#include <userver/engine/wait_any.hpp>
 #include <userver/hostinfo/cpu_limit.hpp>
 #include <userver/logging/component.hpp>
 #include <userver/logging/log.hpp>
@@ -397,9 +398,15 @@ void Manager::AddComponents(const ComponentList& component_list) {
             }));
         }
 
-        for (auto& task : tasks) {
+        // Wait for tasks in completion order and rethrow exceptions as soon as possible.
+        auto wait_any = engine::MakeWaitAny(tasks);
+        for (std::size_t completed = 0; completed < tasks.size(); ++completed) {
+            const auto idx = wait_any.Wait();
+            if (!idx.has_value()) {
+                throw engine::WaitInterruptedException(engine::current_task::CancellationReason());
+            }
             try {
-                task.Get();
+                tasks[*idx].Get();
             } catch (const ComponentsLoadCancelledException&) {
                 is_load_cancelled = true;
             }
@@ -407,8 +414,13 @@ void Manager::AddComponents(const ComponentList& component_list) {
     } catch (const std::exception& ex) {
         component_context_->CancelComponentsLoad();
 
-        /* Wait for all tasks to exit, but don't .Get() them - we've already caught
-         * an exception, ignore the rest */
+        // Cancel and wait for all tasks to exit, but don't .Get() them - we've
+        // already caught an exception, ignore the rest
+        for (auto& task : tasks) {
+            if (task.IsValid()) {
+                task.RequestCancel();
+            }
+        }
         for (auto& task : tasks) {
             if (task.IsValid()) {
                 task.Wait();

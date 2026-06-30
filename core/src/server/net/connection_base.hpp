@@ -46,6 +46,7 @@ protected:
     const std::string& GetPeerName() const noexcept;
     bool ReadSome() noexcept;
 
+    engine::TaskWithResult<void> StartRequestTask(const std::shared_ptr<http::HttpRequest>& request) noexcept;
     engine::TaskWithResult<void> HandleQueueItem(const std::shared_ptr<http::HttpRequest>& request) noexcept;
 
 private:

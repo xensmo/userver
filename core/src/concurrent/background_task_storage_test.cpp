@@ -106,6 +106,32 @@ struct Bar {};
 template <typename T>
 void Use(T&) {}
 
+/// [Bts field ordering]
+class WellOrderedComponent {
+public:
+    // ...
+
+    void Launch() {
+        bts_.AsyncDetach("task", [this] {
+            // OK, because foo_ will be destroyed after bts_.
+            Use(foo_);
+
+            // OK, because bar_ will be destroyed before bts_.
+            Use(bar_);
+        });
+    }
+
+private:
+    Foo foo_;
+    Bar bar_;
+
+    // bts_ must be the last field for lifetime reasons.
+    concurrent::BackgroundTaskStorage bts_;
+};
+/// [Bts field ordering]
+
+[[maybe_unused]] void UseFrobnicator(WellOrderedComponent& weel_ordered) { weel_ordered.Launch(); }
+
 /// [BtsLifetimeCapturesPitfalls]
 class Frobnicator {
 public:

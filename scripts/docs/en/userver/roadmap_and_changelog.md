@@ -81,11 +81,17 @@ Features:
   * Added support for `uniqueItems` validation in chaotic array schemas for `integer`, `string`, and `boolean` types
   * Added support for emoji characters in enum and field names by escaping them as Unicode code points. Many thanks to [Halfdarkangel](https://github.com/Halfdarkangel) for the PR!
 
+* universal
+  * Added @ref utils::SlotMap - a minimalistic slot-map container with stable indexes and O(1) operations
+
 * engine
   * Added @ref engine::AwaitableToken and the @ref engine::Awaitable concept for integration with @ref engine::WaitAny, @ref engine::WaitAnyContext and @ref engine::WaitAllChecked.
   * Replaced `TryGetContextAccessor()` hooks with `GetAwaitableToken()`. This API is now stable, you can create your own awaitables by implementing `GetAwaitableToken()`.
   * Added @ref clients::http::ResponseFuture::IsReady.
   * Added @ref utils::AsyncHideSpan for spawning tasks without extra tracing spans while keeping logs linked; use @ref engine::AsyncNoTracing only to detach tracing or for log-free tasks.
+  * Added @ref WaitAnyContext::Append overload with explicit id support for better task management with @ref utils::SlotMap
+  * Made @ref engine::SingleConsumerEvent awaitable via @ref engine::WaitAny (NoAutoReset mode only)
+
 
 * grpc
   * Added validation for proto2 required fields before sending responses, providing better error messages
@@ -93,6 +99,9 @@ Features:
   * gRPC server now processes calls in subtasks, enabling Congestion Control to properly handle service overload
   * Added graceful shutdown headers to trailing metadata for streaming calls when shutdown starts after initial metadata has been sent
   * grpc.Mockserver now properly manages mock lifecycle with scope-based ownership, enabling nested and overlapping mock scopes for complex testing scenarios
+
+* protobuf
+  * Added CMake support for protobuf libraries and exposed ProtoJSON conversion utilities
 
 * kafka
   * Kafka consumer now automatically recreates itself after fatal librdkafka errors (configurable via `restart_after_failure_delay`)
@@ -106,6 +115,13 @@ Features:
 * PostgreSQL
   * Added `connecting_interval_ms` option to @ref components::Postgres connection pool for throttling connection attempts
   * Added PostgreSQL support for `std::span` types as array formatters
+  * Added DTO codegen to `userver_add_sql_library`: passing the `DTO_DIALECT postgresql`
+    argument now generates a typed C++ client from your migrations and queries. You get `struct`s / `enum class`es, an
+    abstract `PgClient` interface, a `ClusterPgClient` running over a @ref storages::postgres::Cluster,
+    and a gmock-based `MockPgClient` for unit tests. Added the `samples/postgres_dto_service` example service demonstrating the generated client end to end. See @ref scripts/docs/en/userver/sql_files.md for more info.
+  * Added the `userver::postgresql-utest` testing library for writing `UTEST`-based PostgreSQL tests
+    against a real database.
+
 
 * redis
   * Added support for Redis hash field expiration commands (`HEXPIRE`, `HPEXPIRE`, ...)
@@ -122,6 +138,10 @@ Features:
 
 * http2
   * Added full HTTP/2 over TLS support with ALPN negotiation. Many thanks to [SSE4](https://github.com/SSE4) for the PR!
+  * Added concurrent HTTP/2.0 stream execution
+
+* cookie
+  * Added validation Path/Domain/SameSite to block header injection. Many thanks to [netliomax25-code](https://github.com/netliomax25-code) for the PR!
 
 * OpenTelemetry
   * Added support for OpenTelemetry trace sampling flags. When `otel-trace-sampling-enabled` is true, spans will respect the W3C trace-context sampled flag (unsampled spans are not written to tracing systems). Added @ref Span::IsSampled() and @ref Span::SetSampled() methods for manual control.
@@ -133,6 +153,8 @@ Features:
   * Added @ref ydb::TopicProducer wrapper for YDB topic message publishing
   * Added TCP and gRPC keepalive configuration options to YDB driver
   * Added YDB database routing via dynamic config for blue-green deployments and live migrations
+  * Added @ref ydb::TopicWriter and @ref ydb::TopicWriterComponent that implement writing data to YDB topics with round-robin balancing between topic partitions. Many thanks to Leonid Lazarev for the PR!
+  * Added cmake target userver::ydb-utest with gtest mocks for @ref ydb::TopicWriter. Many thanks to Leonid Lazarev for the PR!
 
 Optimizations:
   * Reduced binary size across universal and related libraries by moving some definitions out of headers, reducing template/codegen bloat, and tuning debug-info generation, saving approximately 0.3–1% in tested binaries.
@@ -141,6 +163,11 @@ Optimizations:
   * Improved compilation times for @ref utils::TaskBuilder by reducing unnecessary lambda-call code generation and template instantiation overhead, without changing the public API.
   * Optimized chaotic generated headers by reducing heavy transitive includes, improving compilation time for small dynamic-config users by up to ~5% and reducing preprocessed file size.
   * Performed mass code cleanup for C++20, using concepts, ranges, comparisons and other features. This slightly improved build times and made the code more readable.
+  * Shaved ~15 ns off each coroutine sleep operation by removing a cmpxchg16b in `WaitListLight::Remove` on hot path and removing extra `intrusive_ptr` increments in `TaskContext::Schedule` and `Wakeup`
+  * Optimized @ref SingleConsumerEvent::WaitForEventUntil by ~20 ns by removing extra attempts at resetting the signal
+  * Shaved another ~3 ns (without LTO) or ~4-5 ns (with LTO) off each coroutine sleep operation by removing diagnostic checks from hot paths in `Sleep`
+  * Shaved about 10 ns off each coroutine sleep operation by removing 2 extra locked operations
+  * PostgreSQL: Connection rate limiting now only activates when there are recent connection errors, improving connection pool performance under normal conditions
 
 Fixes:
 
@@ -161,9 +188,13 @@ Fixes:
   * Fixed address-taking utilities to use `std::addressof` in `FindTransparentOrNullptr`, `FindOrNullptr`, `utils::Required`, and `utils::OptionalRef`, improving correctness for types with overloaded `operator&`. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
   * Fixed `GenerateFixedArray` support for generators returning `const&`. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
   * Made comparison operators of `utils::CachedHash` consistent. Many thanks to [Artyom Kolpakov](https://github.com/ddvamp) for the PR!
+  * Fixed random generator initialization in C++23 and @ref utils::ForwardLike to behave same as std::forward_like. Many thanks to [Emil Goncharov](https://github.com/emikg777) for the PR!
 
 * WebSocket
   * Fixed potential `size_t` overflow in WebSocket frame length checks. Many thanks to [netliomax25-code](https://github.com/netliomax25-code) for the PR!
+
+* http
+  * Fixed out-of-bounds read in upgrade detection. Many thanks to [netliomax25-code](https://github.com/netliomax25-code) for the PR!
 
 Build:
 
@@ -174,6 +205,8 @@ Build:
   * Upgraded llhttp to 9.4.1. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
   * Added CMake support for mongo-c-driver 2.x.x. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
   * Upgraded `get_cpm.cmake` to 0.42.1. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+  * Update fmtlib include directives. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
+  * Added chaotioc integration tests with boost >=1.91. Many thanks to [Konstantin Goncharik](https://github.com/botanegg) for the PR!
 
 Documentation:
 

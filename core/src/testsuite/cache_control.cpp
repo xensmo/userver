@@ -26,7 +26,13 @@ USERVER_NAMESPACE_BEGIN
 
 namespace testsuite {
 
-constexpr std::string_view kKnownReverseDependency = components::DynamicConfigClientUpdater::kName;
+namespace impl {
+
+CacheReverseDependencies GetDefaultCacheReverseDependencies() {
+    return {std::string{components::DynamicConfigClientUpdater::kName}};
+}
+
+}  // namespace impl
 
 struct CacheControl::CacheInfoNode final {
     CacheInfoNode() = default;
@@ -72,9 +78,15 @@ public:
 };
 
 struct CacheControl::Impl final {
-    Impl(impl::PeriodicUpdatesMode mode, ExecPolicy policy, std::optional<components::State> components_state)
+    Impl(
+        impl::PeriodicUpdatesMode mode,
+        ExecPolicy policy,
+        std::optional<components::State> components_state,
+        impl::CacheReverseDependencies reverse_dependencies
+    )
         : periodic_updates_mode(mode),
           execution_policy(policy),
+          reverse_dependencies(std::move(reverse_dependencies)),
           state(components_state)
     {
         UASSERT(execution_policy == ExecPolicy::kSequential || components_state);
@@ -91,16 +103,23 @@ struct CacheControl::Impl final {
 
     const impl::PeriodicUpdatesMode periodic_updates_mode;
     const ExecPolicy execution_policy;
+    const impl::CacheReverseDependencies reverse_dependencies;
     std::optional<components::State> state;
     concurrent::Variable<List> caches{};
 };
 
 CacheControl::CacheControl(impl::PeriodicUpdatesMode mode, UnitTests)
-    : impl_(std::make_unique<Impl>(mode, ExecPolicy::kSequential, std::nullopt))
+    : impl_(std::make_unique<
+            Impl>(mode, ExecPolicy::kSequential, std::nullopt, impl::GetDefaultCacheReverseDependencies()))
 {}
 
-CacheControl::CacheControl(impl::PeriodicUpdatesMode mode, ExecPolicy execution_policy, components::State state)
-    : impl_(std::make_unique<Impl>(mode, execution_policy, state))
+CacheControl::CacheControl(
+    impl::PeriodicUpdatesMode mode,
+    ExecPolicy execution_policy,
+    components::State state,
+    impl::CacheReverseDependencies reverse_dependencies
+)
+    : impl_(std::make_unique<Impl>(mode, execution_policy, std::move(state), std::move(reverse_dependencies)))
 {}
 
 CacheControl::~CacheControl() = default;
@@ -232,7 +251,7 @@ void CacheControl::DoResetCachesConcurrently(
             continue;
         }
 
-        if (node.info.name == kKnownReverseDependency) {
+        if (impl_->reverse_dependencies.contains(node.info.name)) {
             DoResetSingleCache(node.info, update_type, force_incremental_names);
         } else {
             async_jobs.emplace_back(node);

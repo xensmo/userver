@@ -8,6 +8,7 @@ definitions:
                 minimum: 1
                 maximum: 100
 
+        x-taxi-extra-member: true
     AllOf:
         allOf:
           - $ref: '#/definitions/Object1'
@@ -16,6 +17,7 @@ definitions:
             properties:
                 bar:
                     type: integer
+            x-taxi-extra-member: true
 
     OneOfA:
         type: object

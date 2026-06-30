@@ -130,16 +130,7 @@ constexpr bool IsStrongToStrongConversion() noexcept {
 /// @brief Strong typedef for a type T.
 ///
 /// Typical usage:
-/// @code
-///   using MyString = utils::StrongTypedef<class MyStringTag, std::string>;
-/// @endcode
-///
-/// Or:
-/// @code
-///   struct MyString final : utils::StrongTypedef<MyString, std::string> {
-///     using StrongTypedef::StrongTypedef;
-///   };
-/// @endcode
+/// @snippet utils/strong_typedef_test.cpp  StrongTypedef typical usage
 ///
 /// Has all the:
 /// * comparison (see "Operators" below)
@@ -185,7 +176,7 @@ public:
 
     template <typename... Args>
     requires std::is_constructible_v<T, Args...>
-    explicit constexpr StrongTypedef(Args&&... args) noexcept(noexcept(T(std::forward<Args>(args)...)))
+    constexpr explicit StrongTypedef(Args&&... args) noexcept(noexcept(T(std::forward<Args>(args)...)))
         : data_(std::forward<Args>(args)...)
     {
         using impl::strong_typedef::IsStrongToStrongConversion;
@@ -196,9 +187,9 @@ public:
         );
     }
 
-    explicit constexpr operator const T&() const& noexcept USERVER_IMPL_LIFETIME_BOUND { return data_; }
-    explicit constexpr operator T() && noexcept { return std::move(data_); }
-    explicit constexpr operator T&() & noexcept USERVER_IMPL_LIFETIME_BOUND { return data_; }
+    constexpr explicit operator const T&() const& noexcept USERVER_IMPL_LIFETIME_BOUND { return data_; }
+    constexpr explicit operator T() && noexcept { return std::move(data_); }
+    constexpr explicit operator T&() & noexcept USERVER_IMPL_LIFETIME_BOUND { return data_; }
 
     constexpr const T& GetUnderlying() const& noexcept USERVER_IMPL_LIFETIME_BOUND { return data_; }
     constexpr T GetUnderlying() && noexcept { return std::move(data_); }

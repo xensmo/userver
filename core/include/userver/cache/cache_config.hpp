@@ -54,7 +54,7 @@ struct ConfigPatch final {
     std::chrono::milliseconds full_update_jitter{};
     std::optional<std::chrono::milliseconds> exception_interval{};
     bool updates_enabled{true};
-    std::uint64_t alert_on_failing_to_update_times{0};
+    std::optional<std::uint64_t> alert_on_failing_to_update_times{0};
 };
 
 ConfigPatch Parse(const formats::json::Value& value, formats::parse::To<ConfigPatch>);

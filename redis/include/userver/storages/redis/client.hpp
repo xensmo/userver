@@ -8,7 +8,7 @@
 #include <string>
 
 #include <userver/storages/redis/base.hpp>
-#include <userver/storages/redis/wait_connected_mode.hpp>
+#include <userver/storages/redis/health_check_param.hpp>
 
 #include <userver/storages/redis/bit_operation.hpp>
 #include <userver/storages/redis/client_fwd.hpp>
@@ -49,6 +49,9 @@ public:
     void CheckShardIdx(size_t shard_idx) const;
 
     virtual void WaitConnectedOnce(RedisWaitConnected wait_connected) = 0;
+    virtual bool IsReady(const HealthCheckParams& params) const = 0;
+
+    bool IsReady(WaitConnectedMode mode) const { return IsReady(HealthCheckParams{mode, 0, 0}); }
 
     // redis commands:
 

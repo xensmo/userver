@@ -726,30 +726,52 @@ class Generator:
                 )
                 extra_type = type_
             else:
-                assert schema.additionalProperties is True
+                # schema.additionalProperties is True (explicit `additionalProperties: true`)
                 extra_type = True
         else:
             extra_type = False
 
+        strict_parsing = schema.get_x_property_bool(
+            'x-taxi-strict-parsing',
+            schema.get_x_property_bool(
+                'x-usrv-strict-parsing',
+                self._config.strict_parsing_default,
+            ),
+        )
+        assert strict_parsing is not None
+
         user_cpp_type = self._extract_user_cpp_type(schema)
 
+        # Default for need_extra_member:
+        # - non-bool extra_type (a Schema) -> True: we must store typed extras
+        # - explicit `additionalProperties: true` -> True: generate extra member by default
+        # - None (key absent) -> False: keep old "ignore unknown" behavior
+        # - `additionalProperties: false` -> False
+        need_extra_member_default = (
+            not isinstance(extra_type, bool)  # typed schema case
+            or schema.additionalProperties is True  # explicit `true`
+        )
         need_extra_member = schema.get_x_property_bool(
-            'x-usrv-cpp-extra-member',
-            schema.get_x_property_bool('x-taxi-cpp-extra-member', True),
+            'x-usrv-extra-member',
+            schema.get_x_property_bool(
+                'x-taxi-extra-member',
+                need_extra_member_default,
+            ),
         )
         if not need_extra_member and not isinstance(extra_type, bool):
             self._raise(
                 schema,
-                msg=('"x-usrv-cpp-extra-member: false" is not allowed for non-boolean "additionalProperties"'),
+                msg=('"x-usrv-extra-member: false" is not allowed for non-boolean "additionalProperties"'),
             )
         if not need_extra_member:
+            if extra_type or schema.additionalProperties is None:
+                # extra_type=True  → explicit `additionalProperties: true`: user opted out
+                #                    of storing extras, so disable strict parsing to
+                #                    preserve "ignore unknown fields" behavior.
+                # additionalProperties is None → key was absent: same "ignore unknowns"
+                #                    semantics as before this field existed.
+                strict_parsing = False
             extra_type = None
-
-        strict_parsing = schema.get_x_property_bool(
-            'x-taxi-strict-parsing',
-            self._config.strict_parsing_default,
-        )
-        assert strict_parsing is not None
 
         return cpp_types.CppStruct(
             raw_cpp_type=name.parent().joinns(self._normalize_name(name.in_local_scope())),

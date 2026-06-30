@@ -3,11 +3,11 @@
 /// @file userver/engine/single_consumer_event.hpp
 /// @brief @copybrief engine::SingleConsumerEvent
 
-#include <atomic>
 #include <chrono>
 
+#include <userver/engine/awaitable.hpp>
 #include <userver/engine/deadline.hpp>
-#include <userver/engine/impl/wait_list_fwd.hpp>
+#include <userver/utils/fast_pimpl.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -100,15 +100,21 @@ public:
     /// Returns `true` iff already signaled. Never resets the signal.
     [[nodiscard]] bool IsReady() const noexcept;
 
+    /// @brief Satisfies @ref engine::Awaitable, for use with @ref engine::WaitAnyContext and friends.
+    ///
+    /// @note When using `SingleConsumerEvent` as a condition variable, beware of spurious wakeups.
+    /// The awaitable signals completion as soon as @ref Send is called regardless of possible semantic restrictions
+    /// of the predicate in @ref WaitUntil.
+    ///
+    /// @warning Only available for @ref NoAutoReset case.
+    AwaitableToken GetAwaitableToken();
+
 private:
-    class EventAwaitable;
+    struct Impl;
 
     bool GetIsSignaled() noexcept;
 
-    void CheckIsAutoResetForWaitPredicate() const;
-
-    impl::FastPimplWaitListLight waiters_;
-    const bool is_auto_reset_{true};
+    utils::FastPimpl<Impl, 32, 16> impl_;
 };
 
 template <typename Clock, typename Duration>
@@ -123,8 +129,6 @@ bool SingleConsumerEvent::WaitForEventUntil(std::chrono::time_point<Clock, Durat
 
 template <typename Predicate>
 bool SingleConsumerEvent::WaitUntil(Deadline deadline, Predicate stop_waiting) {
-    CheckIsAutoResetForWaitPredicate();
-
     // If the state, according to what we've been previously notified of via
     // 'Send', is OK, then return right away. Fresh state updates can also
     // leak to us here, but we should not rely on it.
@@ -138,6 +142,13 @@ bool SingleConsumerEvent::WaitUntil(Deadline deadline, Predicate stop_waiting) {
         // thinks that we might be happy with the state, but we aren't.
         if (!WaitForEventUntil(deadline)) {
             return false;
+        }
+
+        if (!IsAutoReset()) {
+            // Reset guarantees `std::memory_order_acquire` on the signal, so
+            // if we reset any additional signals here, then the predicate will
+            // see the associated data updates.
+            Reset();
         }
     }
 

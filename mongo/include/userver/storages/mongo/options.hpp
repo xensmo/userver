@@ -135,7 +135,7 @@ class ReturnNew {};
 /// Specifies the number of documents to skip
 class Skip {
 public:
-    explicit Skip(size_t value)
+    constexpr explicit Skip(size_t value)
         : value_(value)
     {}
 
@@ -149,7 +149,22 @@ private:
 /// @note The value of `0` means "no limit".
 class Limit {
 public:
-    explicit Limit(size_t value)
+    constexpr explicit Limit(size_t value)
+        : value_(value)
+    {}
+
+    size_t Value() const { return value_; }
+
+private:
+    size_t value_;
+};
+
+/// @brief Specifies the number of documents per wire-protocol batch.
+/// Controls both the initial find batch and subsequent getMore batches.
+/// @note The value of `0` means "use server default".
+class BatchSize {
+public:
+    explicit BatchSize(size_t value)
         : value_(value)
     {}
 
@@ -308,7 +323,7 @@ private:
 /// @warning This does not set any client-side timeouts.
 class MaxServerTime {
 public:
-    explicit MaxServerTime(const std::chrono::milliseconds& value)
+    constexpr explicit MaxServerTime(const std::chrono::milliseconds& value)
         : value_(value)
     {}
 

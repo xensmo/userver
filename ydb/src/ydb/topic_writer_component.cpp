@@ -12,6 +12,11 @@
 
 #include <ydb/impl/topic_writer_config.hpp>
 
+// YDB headers leak `ARCADIA_ROOT` macro, so we use __has_include()
+#if __has_include("generated/src/ydb/topic_writer_component.yaml.hpp")
+#include "generated/src/ydb/topic_writer_component.yaml.hpp"  // Y_IGNORE
+#endif
+
 USERVER_NAMESPACE_BEGIN
 
 namespace ydb {

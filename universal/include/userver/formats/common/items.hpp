@@ -101,17 +101,10 @@ private:
 
 /// @brief Wrapper for handy python-like iteration over a map
 ///
-/// @code
-/// for (const auto& [name, value]: Items(map)) ...
-/// @endcode
+/// @snippet universal/src/formats/common/items_test.cpp  Items const iteration
 ///
 /// To move out values:
-/// @code
-/// for (auto [name, value]: Items(map)) {
-///   vector.push_back(std::move(name));
-///   // value is a const reference and can not be moved
-/// }
-/// @endcode
+/// @snippet universal/src/formats/common/items_test.cpp  Items move values
 ///
 /// ## Example usage:
 ///

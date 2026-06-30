@@ -43,9 +43,9 @@ void SpanBuilder::AddNonInheritableTag(std::string key, logging::LogExtra::Value
     pimpl_->log_extra_local_->Extend(std::move(key), std::move(value));
 }
 
-void SpanBuilder::SetLocalLogLevel(logging::Level log_level) { pimpl_->local_log_level_ = log_level; }
+void SpanBuilder::SetLocalLogLevel(logging::Level log_level) noexcept { pimpl_->local_log_level_ = log_level; }
 
-void SpanBuilder::SetSampled(const bool sampled) { pimpl_->is_sampled_ = sampled; }
+void SpanBuilder::SetSampled(const bool sampled) noexcept { pimpl_->is_sampled_ = sampled; }
 
 Span SpanBuilder::Build() && {
     pimpl_->AttachToCoroStack();

@@ -105,12 +105,16 @@ private:
 
         while (!engine::current_task::ShouldCancel()) {
             ++attempt;
+            auto scope_time = state_.GetSpan().CreateScopeTime(fmt::format("attempt.{}.finish", attempt));
+
             state_.GetSpan().AddTag(tracing::kAttempts, attempt);
             impl::SetupClientContext(state_, call_options_, attempt);
 
             RunStartCallHooks();
 
             auto completion_status = PerformAttempt();
+
+            scope_time.Reset(fmt::format("attempt.{}.post_finish", attempt));
 
             RunFinishHooks(completion_status);
 
@@ -128,6 +132,8 @@ private:
                 }
                 return completion_status;
             }
+
+            scope_time.Reset();
 
             engine::InterruptibleSleepFor(delay);
         }

@@ -61,10 +61,7 @@ T ReadAggregate(Reader& reader, std::index_sequence<Indices...>) {
 ///
 /// To enable dumps and loads for an aggregate, add in the global namespace:
 ///
-/// @code
-/// template <>
-/// struct dump::IsDumpedAggregate<MyStruct>;
-/// @endcode
+/// @snippet core/src/dump/aggregates_test.cpp  IsDumpedAggregate declaration
 ///
 /// @warning Don't forget to increment format-version if data layout changes
 template <typename T>
@@ -77,10 +74,7 @@ void Write(Writer& writer, const T& value) {
 ///
 /// To enable dumps and loads for an aggregate, add in the global namespace:
 ///
-/// @code
-/// template <>
-/// struct dump::IsDumpedAggregate<MyStruct>;
-/// @endcode
+/// @snippet core/src/dump/aggregates_test.cpp  IsDumpedAggregate declaration
 ///
 /// @warning Don't forget to increment format-version if data layout changes
 template <typename T>

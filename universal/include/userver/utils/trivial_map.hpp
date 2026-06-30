@@ -539,7 +539,7 @@ private:
 template <typename First, typename Second>
 class CaseGetValuesByIndex final {
 public:
-    USERVER_IMPL_NODEBUG_INLINE_FUNC explicit constexpr CaseGetValuesByIndex(std::size_t search_index)
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit CaseGetValuesByIndex(std::size_t search_index)
         : index_(search_index + 1)
     {}
 
@@ -586,7 +586,7 @@ private:
 template <typename First>
 class CaseGetValuesByIndex<First, void> final {
 public:
-    USERVER_IMPL_NODEBUG_INLINE_FUNC explicit constexpr CaseGetValuesByIndex(std::size_t search_index)
+    USERVER_IMPL_NODEBUG_INLINE_FUNC constexpr explicit CaseGetValuesByIndex(std::size_t search_index)
         : index_(search_index + 1)
     {}
 
@@ -848,7 +848,7 @@ public:
         using iterator_category = std::input_iterator_tag;
         using difference_type = std::ptrdiff_t;
 
-        explicit constexpr Iterator(const TrivialBiMap& map, std::size_t position)
+        constexpr explicit Iterator(const TrivialBiMap& map, std::size_t position)
             : map_{map},
               position_{position}
         {}

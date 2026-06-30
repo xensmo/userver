@@ -43,7 +43,7 @@ ConnectionBase::ConnectionBase(
 
 bool ConnectionBase::TryParseRequests(request::RequestParser& parser) noexcept {
     try {
-        while (is_accepting_requests_) {
+        if (is_accepting_requests_) {
             if (reader_.IsEmpty() && !reader_.TryRead(GetSocket(), GetFd())) {
                 // RFC7230 does not specify rules for connections half-closed from
                 // client side. However, section 6 tells us that in most cases
@@ -131,9 +131,14 @@ bool ConnectionBase::ReadSome() noexcept {
     return true;
 }
 
+engine::TaskWithResult<void> ConnectionBase::StartRequestTask(const std::shared_ptr<http::HttpRequest>& request
+) noexcept {
+    return request_handler_.StartRequestTask(request);
+}
+
 engine::TaskWithResult<void> ConnectionBase::HandleQueueItem(const std::shared_ptr<http::HttpRequest>& request
 ) noexcept {
-    auto request_task = request_handler_.StartRequestTask(request);
+    auto request_task = StartRequestTask(request);
 
     if (engine::current_task::IsCancelRequested()) {
         // We could've packed all remaining requests into a vector and cancel them

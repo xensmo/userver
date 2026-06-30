@@ -130,13 +130,26 @@ public:
     WaitAnyContext(const WaitAnyContext&) = delete;
     WaitAnyContext& operator=(const WaitAnyContext&) = delete;
 
-    /// @brief Append the given awaitables and sequences of awaitables to the context.
+    /// @brief Appends a single awaitable to the context.
     ///
-    /// Each passed awaitable could be either a single awaitable or a container of awaitables.
-    /// In the latter case all awaitables from the container are appended to the context.
-    /// The appended awaitables will have indexes [GetNextIndex() before the call, GetNextIndex() after the call - 1].
-    template <typename... Awaitables>
-    void Append(Awaitables&... awaitables);
+    /// The appended awaitable will be assigned the next id from the auto-incrementing counter;
+    /// see also @ref GetNextId.
+    void Append(engine::Awaitable auto& awaitable);
+
+    /// @brief Appends the given awaitable to the context with an explicit id.
+    ///
+    /// The id is an arbitrary number that will be returned by @ref Wait.
+    /// It does not have to be sequential or starting from 0. Duplicate ids are allowed.
+    ///
+    /// @ref GetNextId will be unaffected by this call. When mixing the id-less @ref Append
+    /// and this overload, the id-less `Append` maintains a sequence only within its own calls.
+    ///
+    /// Works well together with @ref utils::SlotMap to process and erase tasks in completion order:
+    /// @snippet src/engine/wait_any_test.cpp sample WaitAnyContext SlotMap
+    ///
+    /// @param id the id that will be returned by @ref Wait.
+    /// @param awaitable the awaitable to append.
+    void Append(std::uint64_t id, engine::Awaitable auto& awaitable);
 
     /// @brief Waits either for the completion of any of the awaitables stored in the context
     /// or for the cancellation of the caller.
@@ -174,46 +187,25 @@ public:
     /// Already notified awaitables are dropped out.
     std::size_t GetSize() const noexcept;
 
-    /// @brief Returns the next awaitable index.
+    /// @brief Returns the next id that will be assigned by the next @ref Append call.
     ///
-    /// It could be used to calculate indexes of awaitables appended via Append call.
-    std::uint64_t GetNextIndex() const noexcept;
+    /// It could be used to calculate ids of awaitables appended via @ref Append call.
+    std::uint64_t GetNextId() const noexcept;
 
 private:
     class Impl;
 
-    template <typename Container>
-    void AppendFromContainer(Container& awaitables);
-
-    template <typename Awaitable>
-    void AppendSingle(Awaitable& awaitable);
-
     void AppendToken(engine::AwaitableToken awaitable);
+
+    void AppendToken(std::uint64_t id, engine::AwaitableToken awaitable);
 
     boost::intrusive_ptr<Impl> impl_;
 };
 
-template <typename Container>
-void WaitAnyContext::AppendFromContainer(Container& awaitables) {
-    for (auto& awaitable : awaitables) {
-        static_assert(engine::Awaitable<decltype(awaitable)>, "Awaitable must be a range or a single awaitable");
-        AppendToken(awaitable.GetAwaitableToken());
-    }
-}
+void WaitAnyContext::Append(engine::Awaitable auto& awaitable) { AppendToken(awaitable.GetAwaitableToken()); }
 
-template <typename Awaitable>
-void WaitAnyContext::AppendSingle(Awaitable& awaitable) {
-    if constexpr (meta::IsRange<Awaitable>) {
-        AppendFromContainer(awaitable);
-    } else {
-        static_assert(engine::Awaitable<Awaitable>, "Awaitable must be a range or a single awaitable");
-        AppendToken(awaitable.GetAwaitableToken());
-    }
-}
-
-template <typename... Awaitables>
-void WaitAnyContext::Append(Awaitables&... awaitables) {
-    (AppendSingle(awaitables), ...);
+void WaitAnyContext::Append(std::uint64_t id, engine::Awaitable auto& awaitable) {
+    AppendToken(id, awaitable.GetAwaitableToken());
 }
 
 /// @ingroup userver_concurrency
@@ -222,13 +214,20 @@ void WaitAnyContext::Append(Awaitables&... awaitables) {
 ///
 /// Each passed awaitable could be either a single awaitable or a container of awaitables.
 /// In the latter case all awaitables from the container are appended to the context.
-/// The stored awaitables will have indexes [0, GetNextIndex() - 1].
+/// The stored awaitables will have ids [0, GetNextId() - 1].
 template <typename... Awaitables>
 WaitAnyContext MakeWaitAny(Awaitables&... awaitables) {
     auto context = WaitAnyContext();
-    if constexpr (sizeof...(Awaitables) > 0) {
-        context.Append(awaitables...);
-    }
+    [[maybe_unused]] const auto append_one = [&context](auto& arg) {
+        if constexpr (meta::IsRange<decltype(arg)>) {
+            for (auto& awaitable : arg) {
+                context.Append(awaitable);
+            }
+        } else {
+            context.Append(arg);
+        }
+    };
+    (append_one(awaitables), ...);
     return context;
 }
 

@@ -1,5 +1,6 @@
+#include <gmock/gmock.h>
+
 #include <userver/formats/json/inline.hpp>
-#include <userver/utest/assert_macros.hpp>
 
 #include <userver/chaotic/exception.hpp>
 
@@ -26,10 +27,12 @@ TEST(ContainerFormat, UuidValidSax) {
 
 TEST(ContainerFormat, UuidInvalid) {
     auto json = formats::json::MakeObject("my_field", formats::json::MakeArray("not-a-uuid"));
-    UEXPECT_THROW_MSG(
-        json.As<ns::ContainerWithFormatItem>(),
-        chaotic::Error<formats::json::Value>,
-        "Error at path 'my_field[0]': invalid uuid string"
+    EXPECT_THAT(
+        [&] { json.As<ns::ContainerWithFormatItem>(); },
+        testing::ThrowsMessage<chaotic::Error<formats::json::Value>>(testing::AnyOf(
+            testing::HasSubstr("Error at path 'my_field[0]': Invalid UUID string at position 0: hex digit expected"),
+            testing::HasSubstr("Error at path 'my_field[0]': invalid uuid string")
+        ))
     );
 }
 

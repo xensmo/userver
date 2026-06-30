@@ -45,7 +45,7 @@ schema:
                     description: Check on startup that all user types have been loaded.
                 max-prepared-cache-size:
                     type: integer
-                    minimum: 1
+                    minimum: 3
                     default: 5000
                     x-usrv-cpp-type: std::size_t
                     description: Prepared statements cache size limit.

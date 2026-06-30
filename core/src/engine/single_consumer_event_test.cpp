@@ -6,6 +6,7 @@
 #include <userver/engine/async.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/engine/task/cancel.hpp>
+#include <userver/engine/wait_any.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utest/utest.hpp>
 #include <userver/utils/fixed_array.hpp>
@@ -179,6 +180,64 @@ UTEST(SingleConsumerEvent, NoAutoReset) {
     event.Send();
     EXPECT_TRUE(event.WaitForEventFor(kNoWait));
     EXPECT_TRUE(event.WaitForEventFor(kNoWait));
+}
+
+UTEST(SingleConsumerEvent, WaitAny) {
+    engine::SingleConsumerEvent events[]{
+        engine::SingleConsumerEvent{engine::SingleConsumerEvent::NoAutoReset{}},
+        engine::SingleConsumerEvent{engine::SingleConsumerEvent::NoAutoReset{}},
+    };
+
+    // Check that notifying events[1] works.
+    events[1].Send();
+
+    EXPECT_EQ(engine::WaitAnyFor(utest::kMaxTestWaitTime, events), 1);
+    EXPECT_TRUE(events[1].IsReady());
+    events[1].Reset();
+
+    // Check that notifying events[0] works.
+    events[0].Send();
+
+    EXPECT_EQ(engine::WaitAnyFor(utest::kMaxTestWaitTime, events), 0);
+    EXPECT_TRUE(events[0].IsReady());
+    // No Reset here.
+
+    // Check that the existing signal holds and keeps notifying WaitAny until reset.
+    EXPECT_EQ(engine::WaitAnyFor(utest::kMaxTestWaitTime, events), 0);
+    EXPECT_TRUE(events[0].IsReady());
+}
+
+UTEST(SingleConsumerEvent, AwaitableTokenHasSpuriousWakeups) {
+    // When waiting on SingleConsumerEvent with a predicate, spurious wakeups need to be handled manually.
+    // (For normal waiting there is SingleConsumerEvent::WaitUntil; for WaitAny, there is no equivalent.)
+    //
+    // In this example, we actually want to wait on the predicate `count >= 3`, using SCE like a condition variable.
+    // This test shows how it can be done without race conditions.
+
+    ASSERT_EQ(GetThreadCount(), 1) << "This test relies on Yield passing execution to the other task";
+
+    std::atomic<int> count{0};
+    int wait_iterations{0};
+    engine::SingleConsumerEvent event{engine::SingleConsumerEvent::NoAutoReset{}};
+
+    auto producer = engine::CriticalAsyncNoTracing([&] {
+        for (int i = 0; i < 10; ++i) {
+            count.fetch_add(1, std::memory_order_relaxed);
+            event.Send();
+            engine::Yield();
+        }
+    });
+
+    const auto deadline = engine::Deadline::FromDuration(utest::kMaxTestWaitTime);
+    // A manual loop similar to SingleConsumerEvent::WaitUntil.
+    while (count.load(std::memory_order_relaxed) < 3) {
+        ++wait_iterations;
+        ASSERT_EQ(engine::WaitAnyUntil(deadline, event), 0);
+        event.Reset();
+    }
+
+    EXPECT_EQ(wait_iterations, 3);
+    UEXPECT_NO_THROW(producer.Get());
 }
 
 UTEST_MT(SingleConsumerEvent, NoSignalDuplication, 2) {

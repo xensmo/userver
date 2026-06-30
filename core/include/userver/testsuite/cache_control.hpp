@@ -29,6 +29,11 @@ namespace testsuite {
 
 namespace impl {
 enum class PeriodicUpdatesMode { kDefault, kEnabled, kDisabled };
+
+using CacheReverseDependencies = std::unordered_set<std::string>;
+
+CacheReverseDependencies GetDefaultCacheReverseDependencies();
+
 }  // namespace impl
 
 class CacheResetRegistration;
@@ -88,7 +93,12 @@ public:
     };
 
     CacheControl(impl::PeriodicUpdatesMode, UnitTests);
-    CacheControl(impl::PeriodicUpdatesMode, ExecPolicy, components::State);
+    CacheControl(
+        impl::PeriodicUpdatesMode,
+        ExecPolicy,
+        components::State,
+        impl::CacheReverseDependencies reverse_dependencies
+    );
     ~CacheControl();
 
     // For internal use only.

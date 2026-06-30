@@ -90,7 +90,7 @@ HttpClientCore::HttpClientCore(const ComponentConfig& component_config, const Co
     if (testsuite_enabled) {
         const auto& timeout = component_config["testsuite-timeout"].As<std::optional<std::chrono::milliseconds>>();
         auto prefixes = component_config["testsuite-allowed-url-prefixes"].As<std::vector<std::string>>({});
-        http_client_->SetTestsuiteConfig({prefixes, timeout});
+        http_client_->SetTestsuiteConfig({std::move(prefixes), timeout});
 
         auto& testsuite = context.FindComponent<components::TestsuiteSupport>();
         testsuite.GetHttpAllowedUrlsExtra().RegisterHttpClient(*http_client_);

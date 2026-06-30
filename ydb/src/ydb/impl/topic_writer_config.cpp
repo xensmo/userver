@@ -4,10 +4,6 @@
 
 #include <userver/utils/assert.hpp>
 
-#ifndef ARCADIA_ROOT
-#include "generated/src/ydb/topic_writer_component.yaml.hpp"  // Y_IGNORE
-#endif
-
 USERVER_NAMESPACE_BEGIN
 
 namespace ydb::impl {

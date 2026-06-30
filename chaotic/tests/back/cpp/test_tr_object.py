@@ -24,6 +24,88 @@ def test_empty(simple_gen):
     }, f'Generated schema is: {schemas}'
 
 
+def test_very_empty(simple_gen):
+    schemas = simple_gen({'type': 'object', 'additionalProperties': False})
+    assert schemas == {
+        '::type': cpp_types.CppStruct(
+            raw_cpp_type=type_name.TypeName('::type'),
+            json_schema=front_types.Schema(),
+            nullable=False,
+            user_cpp_type=None,
+            fields={},
+        ),
+    }, f'Generated schema is: {schemas}'
+
+
+def test_default_additional_properties(simple_gen):
+    schemas = simple_gen({
+        'type': 'object',
+        'properties': {},
+    })
+    assert schemas == {
+        '::type': cpp_types.CppStruct(
+            raw_cpp_type=type_name.TypeName('::type'),
+            json_schema=front_types.Schema(),
+            nullable=False,
+            user_cpp_type=None,
+            strict_parsing=False,
+            fields={},
+        ),
+    }, f'Generated schema is: {schemas}'
+
+
+def test_additional_properties_true(simple_gen):
+    schemas = simple_gen({
+        'type': 'object',
+        'properties': {},
+        'additionalProperties': True,
+    })
+    assert schemas == {
+        '::type': cpp_types.CppStruct(
+            raw_cpp_type=type_name.TypeName('::type'),
+            json_schema=front_types.Schema(),
+            nullable=False,
+            user_cpp_type=None,
+            extra_type=True,
+            strict_parsing=True,
+            fields={},
+        ),
+    }, f'Generated schema is: {schemas}'
+
+
+def test_property_and_additional(simple_gen, cpp_primitive_type):
+    schemas = simple_gen({
+        'type': 'object',
+        'properties': {'field': {'type': 'integer'}},
+        'additionalProperties': {'type': 'boolean'},
+    })
+    assert schemas == {
+        '::type': cpp_types.CppStruct(
+            raw_cpp_type=type_name.TypeName('::type'),
+            json_schema=front_types.Schema(),
+            nullable=False,
+            user_cpp_type=None,
+            fields={
+                'field': cpp_types.CppStructField(
+                    name='field',
+                    required=False,
+                    schema=cpp_primitive_type(
+                        validators=cpp_types.CppPrimitiveValidator(
+                            namespace='::type',
+                            prefix='Field',
+                        ),
+                        raw_cpp_type_str='int',
+                    ),
+                ),
+            },
+            extra_type=cpp_primitive_type(
+                validators=cpp_types.CppPrimitiveValidator(),
+                raw_cpp_type_str='bool',
+            ),
+        ),
+    }, f'Generated schema is: {schemas}'
+
+
 def test_optional_nullable(simple_gen):
     with pytest.raises(translator.TranslatorError) as exc:
         simple_gen({
@@ -293,9 +375,9 @@ def test_extra_member_nonboolean(simple_gen):
         simple_gen({
             'type': 'object',
             'properties': {},
-            'x-taxi-cpp-extra-member': False,
+            'x-taxi-extra-member': False,
             'additionalProperties': {'type': 'integer'},
         })
         assert False
     except error.BaseError as exc:
-        assert exc.msg == ('"x-usrv-cpp-extra-member: false" is not allowed for non-boolean "additionalProperties"')
+        assert exc.msg == ('"x-usrv-extra-member: false" is not allowed for non-boolean "additionalProperties"')

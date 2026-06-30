@@ -40,7 +40,7 @@ public:
         UserProvider provider
     );
 
-    UserId GetDefaultUserId() const;
+    UserId GetDefaultUserId() const noexcept;
     const UserIds& GetUserIds() const;
     const std::optional<UserScopes>& GetUserScopesOptional() const;
     const std::optional<Ticket>& GetTicketOptional() const;

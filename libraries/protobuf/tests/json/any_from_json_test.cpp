@@ -115,7 +115,8 @@ INSTANTIATE_TEST_SUITE_P(
             })",
             AnyMessageData{DurationMessageData{123, 987}},
             {.ignore_unknown_fields = true},
-            true  // we want 'ignore_unknown_options' to work in all cases
+            // We want 'ignore_unknown_options' to work in all cases.
+            true
         },
         AnyFromJsonSuccessTestParam{
             R"({

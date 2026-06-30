@@ -4,8 +4,6 @@
 #include <ydb-cpp-sdk/client/result/result.h>
 #include <ydb-cpp-sdk/client/table/table.h>
 
-#include <userver/utils/overloaded.hpp>
-
 #include <userver/ydb/builder.hpp>
 #include <userver/ydb/exceptions.hpp>
 
@@ -133,16 +131,9 @@ std::optional<NYdb::NTable::TQueryStats> GetStats(const TQueryResult& query_resu
 }
 }  // namespace
 
-ExecuteResponse::ExecuteResponse(std::variant<NYdb::NQuery::TExecuteQueryResult, NYdb::NTable::TDataQueryResult>&&
-                                     query_result)
-    : query_stats_(std::visit([](const auto& query_result) { return GetStats(query_result); }, query_result)),
-      result_sets_(std::visit(
-          utils::Overloaded{
-              [](NYdb::NQuery::TExecuteQueryResult&& query_result) { return std::move(query_result).GetResultSets(); },
-              [](NYdb::NTable::TDataQueryResult&& query_result) { return std::move(query_result).ExtractResultSets(); }
-          },
-          std::move(query_result)
-      ))
+ExecuteResponse::ExecuteResponse(NYdb::NQuery::TExecuteQueryResult&& query_result)
+    : query_stats_(GetStats(query_result)),
+      result_sets_(std::move(query_result).GetResultSets())
 {}
 
 std::size_t ExecuteResponse::GetCursorCount() const { return result_sets_.size(); }

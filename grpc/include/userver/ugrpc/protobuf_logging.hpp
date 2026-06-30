@@ -17,14 +17,21 @@ inline constexpr std::size_t kDefaultDebugStringLimit = 1024;
 ///
 /// Differences from built-in `DebugString`:
 /// - Fields marked with `[debug_redact]` option are hidden (`DebugString` only does so since Protobuf v30).
-/// - When the character limit is reached, serialization stops immediately (`DebugString` still wastes CPU on
-/// serializing the entire message regardless).
+/// - Since Protobuf v35, when the character limit is reached serialization stops early instead of serializing the
+/// entire message (see the CPU warning below; `DebugString` always wastes CPU on serializing the entire message
+/// regardless).
 /// - When truncated, the string ends with `...(truncated)` marker to indicate that the output was cut off.
 ///
 /// @param message The protobuf message to convert.
 /// @param limit Maximum size of the resulting string.
 /// Avoid setting this to very large values as it may cause OOM (Out of Memory) issues.
 /// @returns String representation of the message, truncated if necessary.
+///
+/// @warning The early-stop on reaching `limit` relies on the Protobuf `TextFormat` fix
+/// (https://github.com/protocolbuffers/protobuf/pull/26237), available since Protobuf v35. Before Protobuf v35 the
+/// @b entire message is serialized regardless of `limit`, and only then the result is truncated. For large messages
+/// this may consume a significant amount of CPU. If this serialization cost becomes a problem in the logging
+/// middleware, disable the middleware, see @ref scripts/docs/en/userver/grpc/middlewares_toggle.md
 ///
 /// @warning This is a debug representation of protobuf that is unstable and should only be used for diagnostics.
 /// The order of keys in maps is unstable; the format itself can change even within a single run.

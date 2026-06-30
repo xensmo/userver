@@ -13,6 +13,7 @@
 #include <userver/storages/postgres/detail/time_types.hpp>
 #include <userver/storages/postgres/exceptions.hpp>
 #include <userver/testsuite/testpoint.hpp>
+#include <userver/utils/algo.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/impl/userver_experiments.hpp>
@@ -92,7 +93,7 @@ ConnectionPool::ConnectionPool(
     Dsn dsn,
     clients::dns::Resolver* resolver,
     engine::TaskProcessor& bg_task_processor,
-    const std::string& db_name,
+    std::string_view db_name,
     const PoolSettings& settings,
     const ConnectionSettings& conn_settings,
     const StatementMetricsSettings& statement_metrics_settings,
@@ -126,7 +127,7 @@ ConnectionPool::ConnectionPool(
       cc_sensor_(*this),
       cc_limiter_(*this),
       cc_controller_(
-          "postgres" + db_name,
+          USERVER_NAMESPACE::utils::StrCat("postgres", db_name),
           cc_sensor_,
           cc_limiter_,
           stats_.congestion_control,
@@ -153,7 +154,7 @@ std::shared_ptr<ConnectionPool> ConnectionPool::Create(
     Dsn dsn,
     clients::dns::Resolver* resolver,
     engine::TaskProcessor& bg_task_processor,
-    const std::string& db_name,
+    std::string_view db_name,
     const InitMode& init_mode,
     const PoolSettings& pool_settings,
     const ConnectionSettings& conn_settings,
@@ -318,7 +319,7 @@ void ConnectionPool::Release(Connection* connection) {
         // Connection cleanup is done asynchronously while returning control to
         // the user
         cleanup_task_storage_.Detach(USERVER_NAMESPACE::utils::CriticalAsyncBackground(
-            "clear_conn_after_cancel",
+            "cancel_and_clear_conn",
             bg_task_processor_,
             [this, connection, dec_cnt = std::move(dg)] {
                 LOG_LIMITED_WARNING() << "Released connection in busy state. Trying to clean up...";
@@ -502,9 +503,11 @@ void ConnectionPool::TryCreateConnectionAsync() {
     // check it only if we can start a new connection.
     const auto recent_errors = recent_conn_errors_.GetStatsForPeriod(kRecentErrorPeriod, true);
     if (recent_errors < conn_settings.recent_errors_threshold) {
-        if (!connecting_rate_limiter_.Obtain()) {
+        if (recent_errors > 0 && !connecting_rate_limiter_.Obtain()) {
             ++stats_.connection.rate_limit_throttled;
-            LOG_LIMITED_WARNING() << "Connection rate limit exceeded, skipping new connection attempt";
+            LOG_LIMITED_WARNING()
+                << "Connection rate limit exceeded, skipping new connection attempt"
+                << " (recent_errors = " << recent_errors << ")";
             return;
         }
         engine::SemaphoreLock size_lock{size_semaphore_, std::try_to_lock};
@@ -665,6 +668,7 @@ void ConnectionPool::CleanupConnection(Connection* connection) {
     }
     LOG_WARNING() << "Failed to cleanup a dirty connection, deleting..." << MakeLogExtraFromConnectionStats(stats_);
     ++stats_.connection.error_total;
+    ++recent_conn_errors_.GetCurrentCounter();
     DeleteConnection(connection);
 }
 
@@ -675,6 +679,8 @@ void ConnectionPool::DeleteConnection(Connection* connection) {
 
 void ConnectionPool::DeleteBrokenConnection(Connection* connection) {
     ++stats_.connection.error_total;
+    ++recent_conn_errors_.GetCurrentCounter();
+    TESTPOINT("pg_recent_conn_error", formats::json::Value{});
     LOG_WARNING() << "Released connection in closed state. Deleting..." << MakeLogExtraFromConnectionStats(stats_);
     DeleteConnection(connection);
 }

@@ -133,7 +133,11 @@ const ::google::protobuf::Descriptor* FindMessageDescByTypeUrl(
         return nullptr;
     }
 
+#if GOOGLE_PROTOBUF_VERSION >= 4022000
     return pool.FindMessageTypeByName(type_url.substr(pos + 1));
+#else
+    return pool.FindMessageTypeByName(std::string(type_url.substr(pos + 1)));
+#endif
 }
 
 }  // namespace protobuf::json::impl

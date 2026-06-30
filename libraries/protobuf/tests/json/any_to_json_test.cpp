@@ -51,7 +51,8 @@ INSTANTIATE_TEST_SUITE_P(
               }
             })",
             {},
-            true  // native implementation prohibits empty payload for some reason if not in legacy mode
+            // Native implementation prohibits empty payload for some reason if not in legacy mode.
+            true
         },
         AnyToJsonSuccessTestParam{
             AnyMessageData{Int32MessageData{}},
@@ -162,25 +163,36 @@ INSTANTIATE_TEST_SUITE_P(
     AnyToJsonFailureTest,
     ::testing::Values(
         AnyToJsonFailureTestParam{AnyMessageData{RawAnyData{"", "\x08\x01"}}, PrintErrorCode::kInvalidValue, "field1"},
-        AnyToJsonFailureTestParam{AnyMessageData{RawAnyData{"oops", ""}}, PrintErrorCode::kInvalidValue, "field1"},
+        AnyToJsonFailureTestParam{
+            AnyMessageData{RawAnyData{"oops", ""}},
+            PrintErrorCode::kInvalidValue,
+            "field1",
+            {},
+            // Only in newer protobuf versions this test will succeed.
+            !kIsModernProtoJson
+        },
         AnyToJsonFailureTestParam{
             AnyMessageData{RawAnyData{"type.googleapis.com/proto_json.messages.NonExistent", "\x08\x01"}},
             PrintErrorCode::kInvalidValue,
             "field1"
         },
-        // '\x80' is incomplete message
+        // '\x80' is incomplete message.
         AnyToJsonFailureTestParam{
             AnyMessageData{RawAnyData{"type.googleapis.com/proto_json.messages.Int32Message", "\x80"}},
             PrintErrorCode::kInvalidValue,
             "field1",
             {},
-            true  // native implementation does not fail on invalid binary data and produces strange JSON
+            // Native implementation does not fail on invalid binary data and produces strange JSON.
+            true
         },
-        AnyToJsonFailureTestParam{AnyMessageData{DurationMessageData{1, -1}}, PrintErrorCode::kInvalidValue, "field1"},
+        AnyToJsonFailureTestParam{AnyMessageData{DurationMessageData{-1, 1}}, PrintErrorCode::kInvalidValue, "field1"},
         AnyToJsonFailureTestParam{
             AnyMessageData{ValueMessageData{std::vector<double>{std::numeric_limits<double>::infinity()}}},
             PrintErrorCode::kInvalidValue,
-            "field1.list_value.values[0].number_value"
+            "field1.list_value.values[0].number_value",
+            {},
+            // Only in newer protobuf versions this test will succeed.
+            !kIsModernProtoJson
         }
     )
 );

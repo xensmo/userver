@@ -128,7 +128,7 @@ template <>
 struct BufferFormatter<char> {
     char value;
 
-    explicit BufferFormatter(char val)
+    constexpr explicit BufferFormatter(char val)
         : value{val}
     {}
     template <typename Buffer>

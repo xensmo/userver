@@ -11,6 +11,7 @@
 #include <boost/smart_ptr/intrusive_ref_counter.hpp>
 
 #include <userver/engine/async.hpp>
+#include <userver/engine/impl/detach.hpp>
 #include <userver/engine/task/cancel.hpp>
 #include <userver/engine/task/task_processor_fwd.hpp>
 #include <userver/utils/assert.hpp>
@@ -41,6 +42,8 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace ugrpc::server::impl {
+
+constexpr grpc::StatusCode kRatelimitedStatusCode{grpc::StatusCode::RESOURCE_EXHAUSTED};
 
 struct GenericMethodParseResults {
     std::string_view call_name;
@@ -119,6 +122,129 @@ struct MethodData final {
 };
 
 template <typename GrpcppService, typename CallTraits>
+class AsyncCallProcessor {
+public:
+    using ServerContext = typename CallTraits::RawContext;
+    using SerializedInitialRequest = typename CallTraits::SerializedInitialRequest;
+    using Responder = typename CallTraits::RawResponder;
+
+    AsyncCallProcessor(
+        MethodData<GrpcppService, CallTraits>& method_data,
+        ServerContext& server_context,
+        SerializedInitialRequest& request,
+        Responder& responder
+    )
+        : method_data_{method_data},
+          server_context_{server_context},
+          request_{request},
+          responder_{responder}
+    {}
+
+    template <typename Call>
+    void ProcessAsync(Call& call) {
+        intrusive_ptr_add_ref(&call);
+
+        utils::FastScopeGuard overloaded_guard([this, &call]() noexcept {
+            ProcessRatelimited(call);
+            intrusive_ptr_release(&call);
+        });
+
+        auto process_call_task = engine::AsyncNoTracing(
+            method_data_.service_data.internals.task_processor,
+            [this, &call, overloaded_guard = std::move(overloaded_guard)]() mutable {
+                overloaded_guard.Release();
+
+                SetCancellationToken(engine::current_task::GetCancellationToken());
+
+                ProcessCall();
+
+                intrusive_ptr_release(&call);
+            }
+        );
+
+        engine::impl::DetachUnscopedUnsafeNoCancellationOnShutdown(
+            utils::impl::InternalTag{},
+            std::move(process_call_task)
+        );
+    }
+
+    void RequestCancel() {
+        const auto token_registered = cancellation_flag_.exchange(true, std::memory_order_acq_rel);
+        if (token_registered) {
+            // cancel task if token is registered
+            cancellation_token_.RequestCancel();
+        }
+    }
+
+private:
+    void ProcessCall() {
+        const auto& metadata = method_data_.service_data.metadata;
+        std::string_view call_name = GetMethodFullName(metadata, method_data_.method_id);
+        std::string_view service_name = metadata.service_full_name;
+        std::string_view method_name = GetMethodName(metadata, method_data_.method_id);
+        if constexpr (std::is_same_v<typename CallTraits::Context, GenericCallContext>) {
+            auto parse_results = ParseGenericMethodName(server_context_.method());
+            call_name = parse_results.call_name;
+            service_name = parse_results.service_name;
+            method_name = parse_results.method_name;
+        }
+
+        CallProcessor<CallTraits> call_processor{
+            CallParams{
+                server_context_,
+                CallTraits::kRpcType,
+                call_name,
+                service_name,
+                method_name,
+                method_data_.method_statistics,
+                method_data_.service_data.internals.statistics_storage,
+                method_data_.service_data.internals.middlewares,
+                method_data_.service_data.internals.config_source,
+                method_data_.service_data.internals.status_codes_log_level,
+                method_data_.service_data.internals.otel_trace_sampling_enabled,
+            },
+            responder_,
+            request_,
+            method_data_.service,
+            method_data_.service_method,
+        };
+
+        call_processor.ProcessCall();
+    }
+
+    template <typename Call>
+    void ProcessRatelimited(Call& call) {
+        impl::AddRatelimitMetadata(server_context_);
+        call.FinishWithError(grpc::Status{kRatelimitedStatusCode, "Congestion control: rate limit exceeded"});
+
+        ugrpc::impl::RpcStatisticsScope stats_scope{method_data_.method_statistics};
+        stats_scope.OnExplicitFinish(kRatelimitedStatusCode);
+    }
+
+    void SetCancellationToken(engine::TaskCancellationToken cancellation_token) {
+        cancellation_token_ = std::move(cancellation_token);
+
+        const auto rpc_cancelled = cancellation_flag_.exchange(true, std::memory_order_acq_rel);
+        if (rpc_cancelled) {
+            // `OnDoneEvent::Notify` already happened and RPC is cancelled, so cancel task manually
+            cancellation_token_.RequestCancel();
+        }
+    }
+
+    MethodData<GrpcppService, CallTraits>& method_data_;
+
+    ServerContext& server_context_;
+    SerializedInitialRequest& request_;
+    Responder& responder_;
+
+    engine::TaskCancellationToken cancellation_token_;
+
+    // True if CancellationToken registered
+    // or RPC IsCancelled.
+    std::atomic<bool> cancellation_flag_{false};
+};
+
+template <typename GrpcppService, typename CallTraits>
 class CallData final : public boost::intrusive_ref_counter<CallData<GrpcppService, CallTraits>> {
 public:
     static void AcceptCall(const MethodData<GrpcppService, CallTraits>& method_data) {
@@ -154,17 +280,17 @@ public:
         CallData::AcceptCall(method_data_);
 
         UASSERT(!engine::current_task::IsTaskProcessorThread());
-        ProcessAsync();
+        async_call_processor_.ProcessAsync(*this);
     }
 
     void OnDone() {
         if (server_context_.IsCancelled()) {
-            const auto token_registered = cancellation_flag_.exchange(true, std::memory_order_acq_rel);
-            if (token_registered) {
-                // cancel task if token is registered
-                cancellation_token_.RequestCancel();
-            }
+            async_call_processor_.RequestCancel();
         }
+    }
+
+    void FinishWithError(grpc::Status status) {
+        impl::FinishWithError<CallTraits>(responder_, status, on_finish_.GetCompletionTag());
     }
 
 private:
@@ -227,83 +353,6 @@ private:
         );
     }
 
-    void ProcessAsync() {
-        intrusive_ptr_add_ref(this);
-
-        utils::FastScopeGuard on_overloaded([this]() noexcept {
-            ProcessRatelimited();
-            intrusive_ptr_release(this);
-        });
-
-        engine::DetachUnscopedUnsafe(engine::AsyncNoTracing(
-            method_data_.service_data.internals.task_processor,
-            [this, on_overloaded = std::move(on_overloaded)]() mutable {
-                on_overloaded.Release();
-
-                cancellation_token_ = engine::current_task::GetCancellationToken();
-
-                const auto rpc_cancelled = cancellation_flag_.exchange(true, std::memory_order_acq_rel);
-                if (rpc_cancelled) {
-                    // `OnDoneEvent::Notify` already happened and RPC is cancelled, so cancel task manually
-                    engine::current_task::RequestCancel();
-                }
-
-                ProcessCall();
-
-                intrusive_ptr_release(this);
-            }
-        ));
-    }
-
-    void ProcessCall() {
-        const auto& metadata = method_data_.service_data.metadata;
-        std::string_view call_name = GetMethodFullName(metadata, method_data_.method_id);
-        std::string_view service_name = metadata.service_full_name;
-        std::string_view method_name = GetMethodName(metadata, method_data_.method_id);
-        if constexpr (std::is_same_v<typename CallTraits::Context, GenericCallContext>) {
-            auto parse_results = ParseGenericMethodName(server_context_.method());
-            call_name = parse_results.call_name;
-            service_name = parse_results.service_name;
-            method_name = parse_results.method_name;
-        }
-
-        CallProcessor<CallTraits> call_processor{
-            CallParams{
-                server_context_,
-                CallTraits::kRpcType,
-                call_name,
-                service_name,
-                method_name,
-                method_data_.method_statistics,
-                method_data_.service_data.internals.statistics_storage,
-                method_data_.service_data.internals.middlewares,
-                method_data_.service_data.internals.config_source,
-                method_data_.service_data.internals.status_codes_log_level,
-                method_data_.service_data.internals.otel_trace_sampling_enabled,
-            },
-            responder_,
-            serialized_initial_request_,
-            method_data_.service,
-            method_data_.service_method,
-        };
-
-        call_processor.DoCall();
-    }
-
-    void ProcessRatelimited() {
-        constexpr grpc::StatusCode kRatelimitedStatusCode{grpc::StatusCode::RESOURCE_EXHAUSTED};
-
-        impl::AddRatelimitMetadata(server_context_);
-
-        const grpc::Status status{kRatelimitedStatusCode, "Congestion control: rate limit exceeded"};
-        impl::FinishWithError<CallTraits>(responder_, status, on_finish_ratelimited_.GetCompletionTag());
-
-        ugrpc::impl::RpcStatisticsScope stats_scope{method_data_.method_statistics};
-        stats_scope.OnExplicitFinish(kRatelimitedStatusCode);
-
-        // Do not construct span
-    }
-
     // 'wait_token_' must be the first field, because its lifetime keeps
     // ServiceData alive during server shutdown.
     const utils::impl::WaitTokenStorageLock wait_token_;
@@ -314,14 +363,11 @@ private:
     SerializedInitialRequest serialized_initial_request_{};
     Responder responder_{&server_context_};
 
-    engine::TaskCancellationToken cancellation_token_;
-
-    // True if CancellationToken registered
-    // or RPC IsCancelled.
-    std::atomic<bool> cancellation_flag_{false};
+    AsyncCallProcessor<GrpcppService, CallTraits>
+        async_call_processor_{method_data_, server_context_, serialized_initial_request_, responder_};
 
     Event on_accept_{*this, Event::EventType::kAccept};
-    Event on_finish_ratelimited_{*this, Event::EventType::kFinish};
+    Event on_finish_{*this, Event::EventType::kFinish};
     Event on_done_{*this, Event::EventType::kDone};
 };
 

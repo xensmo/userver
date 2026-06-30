@@ -94,13 +94,15 @@ public:
     /// Describes the location within the validated JSON which violates
     /// schema. The exact format of value path is unstable and should not
     /// be relied upon.
-    std::string_view GetValuePath() const;
+    std::string_view GetValuePath() const noexcept;
+
     /// Describes the location within the schema which was violated. The exact
     /// format of schema path is unstable and should not be relied upon.
-    std::string_view GetSchemaPath() const;
+    std::string_view GetSchemaPath() const noexcept;
+
     /// Describes the specifics of what condition was violated. The exact
     /// format of details is unstable and should not be relied upon.
-    std::string_view GetDetailsString() const;
+    std::string_view GetDetailsString() const noexcept;
 
 private:
     friend class ValidationResult;

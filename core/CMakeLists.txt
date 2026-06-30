@@ -315,6 +315,7 @@ _userver_directory_install(
 _userver_directory_install(
     COMPONENT core
     FILES "${USERVER_ROOT_DIR}/cmake/UserverTestsuite.cmake"
+          "${USERVER_ROOT_DIR}/cmake/TargetIteration.cmake"
           "${USERVER_ROOT_DIR}/cmake/install/userver-core-config.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/userver
 )
@@ -345,10 +346,4 @@ _userver_directory_install(
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/userver/testsuite/pytest_plugins/
 )
 
-_userver_directory_install(
-    COMPONENT core
-    DIRECTORY "${USERVER_ROOT_DIR}/testsuite/include_tests/"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/userver/testsuite/include_tests/
-)
-
-_userver_install_component(MODULE core DEPENDS chaotic)
+_userver_install_component(COMPONENT core DEPENDS chaotic)

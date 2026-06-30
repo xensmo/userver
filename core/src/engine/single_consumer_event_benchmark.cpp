@@ -1,5 +1,6 @@
 #include <userver/engine/single_consumer_event.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -31,9 +32,10 @@ constexpr Waiter kFailed = [](engine::SingleConsumerEvent& event) { return event
 
 }  // namespace
 
-void SingleConsumerEvent(benchmark::State& state, Waiter waiter) {
+static void SingleConsumerEvent(benchmark::State& state, Waiter waiter) {
     engine::RunStandalone(state.range(0), [&] {
-        const auto producer_count = static_cast<std::size_t>(state.range(0)) - 1;
+        // At least one producer, so the single-threaded variant (1 worker thread) still makes progress.
+        const auto producer_count = std::max(static_cast<std::size_t>(state.range(0)) - 1, std::size_t{1});
 
         concurrent::impl::InterferenceShield<engine::SingleConsumerEvent> event;
         std::atomic<bool> keep_running{true};
@@ -68,7 +70,7 @@ void SingleConsumerEvent(benchmark::State& state, Waiter waiter) {
     });
 }
 
-#define BENCHMARK_THREAD_ARGS ->Arg(2)->Arg(3)->Arg(4)->Arg(6)->Arg(8)->Arg(12)->Arg(16)->Arg(32)
+#define BENCHMARK_THREAD_ARGS ->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Arg(6)->Arg(8)->Arg(12)->Arg(16)->Arg(32)
 
 BENCHMARK_CAPTURE(SingleConsumerEvent, Endless, kEndless) BENCHMARK_THREAD_ARGS;
 BENCHMARK_CAPTURE(SingleConsumerEvent, Successful, kSuccessful) BENCHMARK_THREAD_ARGS;
@@ -77,8 +79,8 @@ BENCHMARK_CAPTURE(SingleConsumerEvent, Failed, kFailed) BENCHMARK_THREAD_ARGS;
 
 #undef BENCHMARK_THREAD_ARGS
 
-void SingleConsumerEventPingPong(benchmark::State& state) {
-    engine::RunStandalone(2, [&] {
+static void SingleConsumerEventPingPong(benchmark::State& state) {
+    engine::RunStandalone(state.range(0), [&] {
         concurrent::impl::InterferenceShield<engine::SingleConsumerEvent> ping;
         concurrent::impl::InterferenceShield<engine::SingleConsumerEvent> pong;
 
@@ -102,6 +104,6 @@ void SingleConsumerEventPingPong(benchmark::State& state) {
     });
 }
 
-BENCHMARK(SingleConsumerEventPingPong);
+BENCHMARK(SingleConsumerEventPingPong)->Arg(1)->Arg(2);
 
 USERVER_NAMESPACE_END

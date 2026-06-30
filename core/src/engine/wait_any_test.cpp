@@ -15,6 +15,7 @@
 #include <userver/engine/wait_any.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/async.hpp>
+#include <userver/utils/slot_map.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -463,8 +464,10 @@ UTEST(WaitAnyContext, WaitAnyContextSingleVector) {
     std::array<bool, kTaskCount> completed{};
     completed.fill(false);
     engine::WaitAnyContext wait_any;
-    wait_any.Append(tasks);
-    ASSERT_EQ(wait_any.GetNextIndex(), kTaskCount);
+    for (auto& task : tasks) {
+        wait_any.Append(task);
+    }
+    ASSERT_EQ(wait_any.GetNextId(), kTaskCount);
 
     for (std::size_t i = 0; i < kTaskCount; i++) {
         ASSERT_EQ(wait_any.GetSize(), kTaskCount - i);
@@ -488,7 +491,7 @@ UTEST(WaitAnyContext, WaitAnyContextPlainAwaitables) {
     std::vector<TestAwaitable> awaitables(3);
 
     auto wait_any = engine::MakeWaitAny(awaitables[0], awaitables[1], awaitables[2]);
-    ASSERT_EQ(wait_any.GetNextIndex(), awaitables.size());
+    ASSERT_EQ(wait_any.GetNextId(), awaitables.size());
 
     EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
@@ -515,7 +518,7 @@ UTEST(WaitAnyContext, WaitAnyContextMixed) {
     std::vector<TestAwaitable*> all = {&awaitable1, &v1[0], &v1[1], &awaitable2, &awaitable3, &v2[0], &v2[1]};
 
     auto wait_any = engine::MakeWaitAny(awaitable1, v1, awaitable2, awaitable3, v2);
-    ASSERT_EQ(wait_any.GetNextIndex(), all.size());
+    ASSERT_EQ(wait_any.GetNextId(), all.size());
 
     EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
@@ -534,13 +537,13 @@ UTEST(WaitAnyContext, WaitAnyContextDynamicAppend) {
     std::vector<TestAwaitable> awaitables(10);
 
     engine::WaitAnyContext wait_any;
-    ASSERT_EQ(wait_any.GetNextIndex(), 0);
+    ASSERT_EQ(wait_any.GetNextId(), 0);
 
     for (std::size_t i = 0; i < awaitables.size() / 2; ++i) {
         wait_any.Append(awaitables[i * 2]);
-        wait_any.Append(awaitables[i * 2 + 1]);
+        wait_any.Append(awaitables[(i * 2) + 1]);
         ASSERT_EQ(wait_any.GetSize(), i + 2);
-        ASSERT_EQ(wait_any.GetNextIndex(), (i + 1) * 2);
+        ASSERT_EQ(wait_any.GetNextId(), (i + 1) * 2);
         EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
         awaitables[i * 2].SetReady();
@@ -550,16 +553,205 @@ UTEST(WaitAnyContext, WaitAnyContextDynamicAppend) {
     }
 
     for (std::size_t i = 0; i < awaitables.size() / 2; ++i) {
-        ASSERT_EQ(wait_any.GetSize(), awaitables.size() / 2 - i);
+        ASSERT_EQ(wait_any.GetSize(), (awaitables.size() / 2) - i);
         EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
 
-        awaitables[i * 2 + 1].SetReady();
+        awaitables[(i * 2) + 1].SetReady();
         auto index = wait_any.Wait();
         ASSERT_TRUE(index.has_value());
-        EXPECT_EQ(*index, i * 2 + 1);
+        EXPECT_EQ(*index, (i * 2) + 1);
     }
     ASSERT_EQ(wait_any.GetSize(), 0);
     EXPECT_EQ(wait_any.Wait(), std::nullopt);
+}
+
+UTEST(WaitAnyContext, AppendWithExplicitIndex) {
+    TestAwaitable awaitable0;
+    TestAwaitable awaitable1;
+    TestAwaitable awaitable2;
+
+    engine::WaitAnyContext wait_any;
+    // Append with explicit non-sequential ids.
+    wait_any.Append(std::uint64_t{100}, awaitable0);
+    wait_any.Append(std::uint64_t{42}, awaitable1);
+    wait_any.Append(std::uint64_t{999}, awaitable2);
+
+    // GetNextId must not be affected by explicit-id appends.
+    EXPECT_EQ(wait_any.GetNextId(), 0);
+    EXPECT_EQ(wait_any.GetSize(), 3);
+
+    // Force subscriptions.
+    EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
+
+    awaitable1.SetReady();
+    auto index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 42);
+
+    awaitable2.SetReady();
+    index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 999);
+
+    awaitable0.SetReady();
+    index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 100);
+
+    EXPECT_EQ(wait_any.GetSize(), 0);
+    EXPECT_EQ(wait_any.Wait(), std::nullopt);
+}
+
+UTEST(WaitAnyContext, AppendWithExplicitIndexMixedWithImplicit) {
+    TestAwaitable awaitable_explicit;
+    TestAwaitable awaitable_implicit0;
+    TestAwaitable awaitable_implicit1;
+
+    engine::WaitAnyContext wait_any;
+
+    // Implicit appends advance GetNextId.
+    wait_any.Append(awaitable_implicit0);
+    EXPECT_EQ(wait_any.GetNextId(), 1);
+
+    // Explicit-id append must NOT advance GetNextId.
+    wait_any.Append(std::uint64_t{77}, awaitable_explicit);
+    EXPECT_EQ(wait_any.GetNextId(), 1);
+
+    // Another implicit append continues the sequence.
+    wait_any.Append(awaitable_implicit1);
+    EXPECT_EQ(wait_any.GetNextId(), 2);
+
+    EXPECT_EQ(wait_any.GetSize(), 3);
+
+    // Force subscriptions.
+    EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
+
+    awaitable_explicit.SetReady();
+    auto index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 77);
+
+    awaitable_implicit0.SetReady();
+    index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 0);
+
+    awaitable_implicit1.SetReady();
+    index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 1);
+
+    EXPECT_EQ(wait_any.GetSize(), 0);
+    EXPECT_EQ(wait_any.Wait(), std::nullopt);
+}
+
+UTEST(WaitAnyContext, AppendWithExplicitIndexEmptyAwaitable) {
+    TestAwaitable awaitable;
+
+    engine::WaitAnyContext wait_any;
+
+    // Appending an already-ready (empty token) awaitable with explicit index is a no-op.
+    awaitable.SetReady();
+    wait_any.Append(std::uint64_t{55}, awaitable);
+
+    // GetNextId must remain 0 (explicit-id append never advances it).
+    EXPECT_EQ(wait_any.GetNextId(), 0);
+    // GetSize must be 0 because the token is empty (awaitable is ready, returns empty token).
+    EXPECT_EQ(wait_any.GetSize(), 0);
+
+    EXPECT_EQ(wait_any.Wait(), std::nullopt);
+}
+
+UTEST(WaitAnyContext, AppendWithExplicitIndexAlreadyReadyAwaitable) {
+    // Use a task that finishes immediately so its token is non-empty but ready.
+    auto task = engine::AsyncNoTracing([] {});
+    engine::Yield();  // Let the task finish.
+
+    engine::WaitAnyContext wait_any;
+    wait_any.Append(std::uint64_t{123}, task);
+
+    EXPECT_EQ(wait_any.GetNextId(), 0);
+
+    auto index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 123);
+}
+
+UTEST(WaitAnyContext, MakeReadyAwaitableTokenWithWaitAnyContext) {
+    // A struct that wraps MakeReadyAwaitableToken so it satisfies engine::Awaitable.
+    struct ReadyAwaitable {
+        engine::AwaitableToken GetAwaitableToken() noexcept { return engine::MakeReadyAwaitableToken(); }
+    };
+
+    ReadyAwaitable ready;
+    engine::WaitAnyContext wait_any;
+    wait_any.Append(ready);
+
+    EXPECT_EQ(wait_any.GetNextId(), 1);
+    EXPECT_EQ(wait_any.GetSize(), 1);
+
+    // A ready awaitable should be returned immediately.
+    auto index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 0);
+
+    EXPECT_EQ(wait_any.GetSize(), 0);
+    EXPECT_EQ(wait_any.Wait(), std::nullopt);
+}
+
+UTEST(WaitAnyContext, AppendWithExplicitIndexDuplicateIndexAllowed) {
+    // The API does not forbid duplicate explicit indexes; both should be returned.
+    TestAwaitable awaitable0;
+    TestAwaitable awaitable1;
+
+    engine::WaitAnyContext wait_any;
+    wait_any.Append(std::uint64_t{7}, awaitable0);
+    wait_any.Append(std::uint64_t{7}, awaitable1);
+
+    EXPECT_EQ(wait_any.GetSize(), 2);
+
+    // Force subscriptions.
+    EXPECT_EQ(wait_any.WaitUntil(engine::Deadline::Passed()), std::nullopt);
+
+    awaitable0.SetReady();
+    auto index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 7);
+
+    awaitable1.SetReady();
+    index = wait_any.Wait();
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(*index, 7);
+
+    EXPECT_EQ(wait_any.GetSize(), 0);
+    EXPECT_EQ(wait_any.Wait(), std::nullopt);
+}
+
+UTEST(WaitAnyContext, AppendWithExplicitIndexSlotMap) {
+    /// [sample WaitAnyContext SlotMap]
+    utils::SlotMap<engine::TaskWithResult<int>> tasks;
+
+    // Spawn several tasks and register each one in the WaitAnyContext using its
+    // SlotMap index as the explicit WaitAnyContext index.
+    engine::WaitAnyContext wait_any;
+    for (int value : {1, 2, 3, 4}) {
+        auto [task, index] = tasks.emplace(engine::AsyncNoTracing([value] { return value; }));
+        wait_any.Append(index, task);
+    }
+
+    // Collect results as tasks finish, in completion order.
+    int sum = 0;
+    while (!tasks.empty()) {
+        const auto index_opt = wait_any.Wait();
+        ASSERT_TRUE(index_opt.has_value());
+
+        const std::size_t index = *index_opt;
+        sum += tasks[index].Get();
+        tasks.erase(index);
+    }
+
+    EXPECT_EQ(sum, 1 + 2 + 3 + 4);
+    /// [sample WaitAnyContext SlotMap]
 }
 
 USERVER_NAMESPACE_END

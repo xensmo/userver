@@ -145,8 +145,7 @@ public:
         }
     }
 
-    /// @brief Marks specified value as frozen, all attempts to overwrite it will
-    /// be silently ignored.
+    /// @brief Marks specified value as frozen, all attempts to overwrite it will be silently ignored.
     void SetFrozen(std::string_view key);
 
     friend class LogHelper;
@@ -168,10 +167,10 @@ private:
         ProtectedValue& operator=(const ProtectedValue& other);
         ProtectedValue& operator=(ProtectedValue&& other) noexcept;
 
-        bool IsFrozen() const;
-        void SetFrozen();
-        Value& GetValue() { return value_; }
-        const Value& GetValue() const { return value_; }
+        bool IsFrozen() const noexcept;
+        void SetFrozen() noexcept;
+        Value& GetValue() noexcept { return value_; }
+        const Value& GetValue() const noexcept { return value_; }
         void AssignIgnoringFrozenness(ProtectedValue other);
 
     private:

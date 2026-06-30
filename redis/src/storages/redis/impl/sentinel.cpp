@@ -34,6 +34,26 @@ void ThrowIfCancelled() {
     }
 }
 
+std::vector<ConnectionInfo> BuildConnectionInfos(const secdist::RedisSettings& settings, bool is_cluster_mode) {
+    std::vector<ConnectionInfo> conns;
+    conns.reserve(settings.sentinels.size());
+    for (const auto& sentinel : settings.sentinels) {
+        LOG_DEBUG() << "sentinel:  host = " << sentinel.host << "  port = " << sentinel.port;
+        // CLUSTER SLOTS works after auth only. Masters and slaves used instead of
+        // sentinels in cluster mode.
+        conns.emplace_back(
+            sentinel.host,
+            sentinel.port,
+            (is_cluster_mode
+                 ? Credentials{settings.username, settings.password}
+                 : Credentials{settings.sentinel_username, settings.sentinel_password}),
+            false,
+            settings.secure_connection
+        );
+    }
+    return conns;
+}
+
 void OnSubscribeImpl(
     std::string_view message_type,
     const Sentinel::MessageCallback& message_callback,
@@ -120,6 +140,8 @@ void Sentinel::WaitConnectedOnce(RedisWaitConnected wait_connected) {
     impl_->WaitConnectedOnce(wait_connected.MergeWith(testsuite_redis_control_));
 }
 
+bool Sentinel::IsReady(const HealthCheckParams& params) const { return impl_->IsReady(params); }
+
 void Sentinel::ForceUpdateHosts() { impl_->ForceUpdateHosts(); }
 
 std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
@@ -130,34 +152,15 @@ std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
     const SentinelStaticConfig& creation_config,
     const testsuite::RedisControl& testsuite_redis_control
 ) {
-    const auto& username = settings.username;
-    const auto& password = settings.password;
-    const auto& sentinel_username = settings.sentinel_username;
-    const auto& sentinel_password = settings.sentinel_password;
-
     const std::vector<std::string>& shards = settings.shards;
     LOG_DEBUG() << "shards.size() = " << shards.size();
     for (const std::string& shard : shards) {
         LOG_DEBUG() << "shard:  name = " << shard;
     }
 
-    std::vector<redis::ConnectionInfo> conns;
-    conns.reserve(settings.sentinels.size());
+    const bool is_cluster_mode = creation_config.key_shard_factory.IsClusterStrategy();
     LOG_DEBUG() << "sentinels.size() = " << settings.sentinels.size();
-    for (const auto& sentinel : settings.sentinels) {
-        LOG_DEBUG() << "sentinel:  host = " << sentinel.host << "  port = " << sentinel.port;
-        // CLUSTER SLOTS works after auth only. Masters and slaves used instead of
-        // sentinels in cluster mode.
-        conns.emplace_back(
-            sentinel.host,
-            sentinel.port,
-            (creation_config.key_shard_factory.IsClusterStrategy()
-                 ? Credentials{username, password}
-                 : Credentials{sentinel_username, sentinel_password}),
-            false,
-            settings.secure_connection
-        );
-    }
+    const auto conns = BuildConnectionInfos(settings, is_cluster_mode);
 
     LOG_DEBUG() << "redis command_control:" << creation_config.command_control.ToString();
     std::shared_ptr<storages::redis::impl::Sentinel> client;
@@ -167,7 +170,7 @@ std::shared_ptr<Sentinel> Sentinel::CreateSentinel(
             shards,
             conns,
             std::move(shard_group_name),
-            Credentials{username, password},
+            Credentials{settings.username, settings.password},
             settings.secure_connection,
             dynamic_config_source,
             creation_config,
@@ -389,16 +392,21 @@ void Sentinel::SetConfigDefaultCommandControl(const std::shared_ptr<CommandContr
 
 const std::string& Sentinel::ShardGroupName() const { return shard_group_name_; }
 
-void Sentinel::UpdateCredentials(const Credentials& credentials) { impl_->UpdateCredentials(credentials); }
+void Sentinel::UpdateSettings(const secdist::RedisSettings& settings) {
+    LOG_INFO()
+        << "UpdateSettings: updating " << settings.sentinels.size() << " sentinels for shard group "
+        << shard_group_name_;
 
-void Sentinel::SetConnectionInfo(std::vector<ConnectionInfo> info_array) {
+    const auto conns = BuildConnectionInfos(settings, is_in_cluster_mode_);
+
     std::vector<ConnectionInfoInt> cii;
-    cii.reserve(info_array.size());
-    for (const auto& ci : info_array) {
-        cii.emplace_back(ci);
+    cii.reserve(conns.size());
+    for (const auto& conn : conns) {
+        cii.emplace_back(conn);
     }
 
     impl_->SetConnectionInfo(cii);
+    impl_->UpdateCredentials(Credentials{settings.username, settings.password});
 }
 
 }  // namespace storages::redis::impl

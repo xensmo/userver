@@ -1,7 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
+#include <optional>
 
 #include <ev.h>
 
@@ -17,7 +19,6 @@
 #include <userver/engine/impl/actor.hpp>
 #include <userver/engine/impl/awaiter.hpp>
 #include <userver/engine/impl/context_accessor.hpp>
-#include <userver/engine/impl/detached_tasks_sync_block.hpp>
 #include <userver/engine/impl/task_local_storage.hpp>
 #include <userver/engine/impl/wait_list_fwd.hpp>
 #include <userver/engine/task/cancel.hpp>
@@ -35,13 +36,28 @@ class TaskContextHolder;
 
 [[noreturn]] void ReportDeadlock();
 
+// Data owned by TaskContext but driven by ProfilerExecutionPlugin. Tracks when
+// the current execution slice started so the plugin can warn about tasks that
+// run for too long without a context switch.
+struct ProfilerExecutionData final {
+    std::chrono::steady_clock::time_point execute_started{};
+};
+
+// Data owned by TaskContext but driven by TraceStateTransitionPlugin. Tracks the
+// remaining number of context switches to trace and the timepoint of the last
+// traced state change.
+struct TraceStateTransitionData final {
+    std::size_t trace_csw_left{};
+    std::chrono::steady_clock::time_point last_state_change_timepoint{};
+};
+
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)
 class TaskContext final : public AwaitableBase, public Awaiter, public deadlock_detector::Actor {
 public:
     using TaskPipe = coro::Pool::TaskPipe;
     using TaskId = uint64_t;
 
-    enum class YieldReason { kNone, kTaskWaiting, kTaskCancelled, kTaskComplete };
+    enum class YieldReason { kNone, kTaskWaiting, kTaskComplete };
 
     /// Wakeup sources in descending priority order
     enum class WakeupSource : uint32_t {
@@ -66,6 +82,10 @@ public:
 
     Task::State GetState() const { return state_; }
 
+    // The terminal state the task is finishing with (kCompleted or kCancelled).
+    // Only meaningful once the task body has finished, e.g. from HookTaskStop.
+    Task::State GetPendingFinalState() const noexcept { return pending_final_state_; }
+
     // whether this task is the one currently executing on the calling thread
     bool IsCurrent() const noexcept;
 
@@ -84,8 +104,8 @@ public:
     // should only be called from other context
     [[nodiscard]] FutureStatus WaitUntil(Deadline) const noexcept;
 
-    TaskProcessor& GetTaskProcessor() { return task_processor_; }
-    void DoStep();
+    TaskProcessor& GetTaskProcessor() noexcept { return task_processor_; }
+    void DoStep(boost::intrusive_ptr<TaskContext>&& self);
 
     // normally non-blocking, causes wakeup
     void RequestCancel(TaskCancellationReason);
@@ -124,12 +144,11 @@ public:
     // Awaiter's context. Effectively returns the same value as GetEpoch()
     std::uintptr_t GetAwaiterContext() const noexcept;
 
-    // causes this to return from the nearest sleep
+    // causes `self` to return from the nearest sleep
     // i.e. wakeup is queued if task is running
     // normally non-blocking, except corner cases in TaskProcessor::Schedule()
-    void Wakeup(WakeupSource, Epoch epoch) noexcept;
-    void Wakeup(WakeupSource, NoEpoch) noexcept;
-    void Wakeup(WakeupSource, std::uintptr_t context) noexcept;
+    static void Wakeup(boost::intrusive_ptr<TaskContext>&& self, WakeupSource, Epoch epoch) noexcept;
+    static void Wakeup(boost::intrusive_ptr<TaskContext>&& self, WakeupSource, NoEpoch) noexcept;
 
     static void CoroFunc(TaskPipe& task_pipe);
 
@@ -164,10 +183,14 @@ public:
 
     utils::StringLiteral GetActorType() const override;
 
+    // Accessors for the data driven by plugins.
+    ProfilerExecutionData& GetProfilerExecutionData() noexcept { return profiler_execution_data_; }
+    TraceStateTransitionData& GetTraceStateTransitionData() noexcept { return trace_state_transition_data_; }
+
 private:
     class YieldReasonGuard;
     class LocalStorageGuard;
-    class ProfilerExecutionGuard;
+    class TaskStartStopHookGuard;
 
     static constexpr uint64_t kMagic = 0x6b73615453755459ULL;  // "YTuSTask"
 
@@ -178,13 +201,12 @@ private:
 
     void SetState(Task::State) noexcept;
 
-    void Schedule() noexcept;
+    // Sets the wakeup `source` flag in sleep_state_ if it still refers to `epoch`.
+    // Returns the previous SleepState, or std::nullopt if the epoch has already changed.
+    std::optional<SleepState> SetSleepStateWakeupSourceForEpoch(WakeupSource source, Epoch epoch) noexcept;
+
+    static void Schedule(boost::intrusive_ptr<TaskContext>&& self) noexcept;
     static bool ShouldSchedule(SleepState::Flags flags, WakeupSource source) noexcept;
-
-    void ProfilerStartExecution() noexcept;
-    void ProfilerStopExecution() noexcept;
-
-    void TraceStateTransition(Task::State state) noexcept;
 
     friend void intrusive_ptr_release(Awaiter* awaiter) noexcept;  // NOLINT(readability-identifier-naming)
 
@@ -204,7 +226,6 @@ private:
     std::exception_ptr exception_;
 
     std::atomic<Task::State> state_{Task::State::kNew};
-    std::atomic<DetachedTasksSyncBlock::Token*> detached_token_{nullptr};
     std::atomic<TaskCancellationReason> cancellation_reason_{TaskCancellationReason::kNone};
     FastPimplGenericWaitList finish_awaiters_;
 
@@ -213,17 +234,17 @@ private:
 
     // {} if not defined
     std::chrono::steady_clock::time_point task_queue_wait_timepoint_;
-    std::chrono::steady_clock::time_point execute_started_;
-    std::chrono::steady_clock::time_point last_state_change_timepoint_;
 
-    std::size_t trace_csw_left_;
+    // Storage driven by the trace/profiler plugins.
+    ProfilerExecutionData profiler_execution_data_;
+    TraceStateTransitionData trace_state_transition_data_;
 
     AtomicSleepState sleep_state_{SleepState{SleepFlags::kSleeping, Epoch{0}}};
-    WakeupSource wakeup_source_{WakeupSource::kNone};
 
     CountedCoroutinePtr coro_;
     TaskPipe* task_pipe_{nullptr};
     YieldReason yield_reason_{YieldReason::kNone};
+    Task::State pending_final_state_{Task::State::kCompleted};
 
     std::optional<task_local::Storage> local_storage_{};
 

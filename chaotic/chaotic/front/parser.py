@@ -344,13 +344,16 @@ class SchemaParser:
                     new_props[prop] = value
         fields.pop('properties', None)
 
-        add_props: bool | types.Schema | types.Ref
+        add_props: bool | types.Schema | types.Ref | None
         with self._path_enter('additionalProperties') as _:
-            additional_properties = fields.get('additionalProperties', False)
-            if isinstance(additional_properties, bool):
-                add_props = additional_properties
+            if 'additionalProperties' not in fields:
+                add_props = None
             else:
-                add_props = self._parse_schema(additional_properties)
+                additional_properties = fields['additionalProperties']
+                if isinstance(additional_properties, bool):
+                    add_props = additional_properties
+                else:
+                    add_props = self._parse_schema(additional_properties)
         fields.pop('additionalProperties', None)
 
         obj = types.SchemaObject(

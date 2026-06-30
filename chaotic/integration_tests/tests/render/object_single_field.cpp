@@ -10,6 +10,7 @@
 #include <userver/formats/yaml/serialize.hpp>
 #include <userver/formats/yaml/value.hpp>
 
+#include <schemas/object_default_additional_properties.hpp>
 #include <schemas/object_single_field.hpp>
 #include <schemas/object_single_field_sax_parsers.hpp>
 
@@ -155,6 +156,17 @@ TEST(Simple, ObjectWithAdditionalPropertiesIntSax) {
     EXPECT_EQ(TestToJsonString(obj), json);
 
     EXPECT_EQ(TestDomSerializer(obj), json);
+}
+
+TEST(Simple, ObjectWithAdditionalPropertiesDefault) {
+    auto json = formats::json::MakeObject("one", 1, "two", 2, "three", 3, "object", formats::json::MakeObject());
+    auto obj = json.As<ns::ObjectDefaultAdditionalProperties>();
+
+    EXPECT_EQ(obj.one, 1);
+
+    ns::ObjectDefaultAdditionalProperties test;
+    test.one = 1;
+    EXPECT_EQ(obj, test);
 }
 
 TEST(Simple, ObjectWithAdditionalPropertiesTrue) {

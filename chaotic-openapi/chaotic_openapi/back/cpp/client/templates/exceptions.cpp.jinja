@@ -4,6 +4,8 @@
 
 namespace {{ namespace }} {
 
+{% filter indent(width=8, first=True) %}
+
 Exception::~Exception() = default;
 
 HttpException::HttpException(USERVER_NAMESPACE::clients::http::ErrorKind error_kind)
@@ -16,28 +18,29 @@ ExceptionWithStatusCode::ExceptionWithStatusCode(int status_code)
 
 TimeoutException::~TimeoutException() = default;
 
+{% endfilter %}
+
 {% for op in operations %}
-  {% if op.client_generate %}
+    {% if op.client_generate %}
+        namespace {{ op.cpp_namespace() }} {
 
-namespace {{ op.cpp_namespace() }} {
+        const char* Exception::what() const noexcept {
+            return kHandlerInfo.c_str();
+        }
 
-const char* Exception::what() const noexcept {
-    return kHandlerInfo.c_str();
-}
+        HttpException::~HttpException() = default;
 
-HttpException::~HttpException() = default;
+        TimeoutException::TimeoutException() 
+          : HttpException(USERVER_NAMESPACE::clients::http::ErrorKind::kTimeout) 
+        {}
 
-TimeoutException::TimeoutException() 
-  : HttpException(USERVER_NAMESPACE::clients::http::ErrorKind::kTimeout) 
-{}
+        TimeoutException::~TimeoutException() = default;
 
-TimeoutException::~TimeoutException() = default;
+        ExceptionWithStatusCode::~ExceptionWithStatusCode() = default;
 
-ExceptionWithStatusCode::~ExceptionWithStatusCode() = default;
-
-} // namespace
-
+        }  // namespace {{ op.cpp_namespace() }}
   {% endif %}
 {% endfor %}
 
-}
+}  // namespace {{ namespace }}
+

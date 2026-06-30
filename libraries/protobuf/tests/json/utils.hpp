@@ -21,6 +21,13 @@
 
 #include "proto_json/messages.pb.h"
 
+// True if tests are built with protobuf library with version newer than
+// the one used as a reference for ProtoJSON implementation.
+// We use non-constexpr variable to avoid stripping checks from compilation
+// when building for older protobuf versions (checks must still compile).
+inline const /*deliberately non-constexpr*/ bool
+    kIsModernProtoJson = (GOOGLE_PROTOBUF_VERSION >= 4022005);  // NOLINT(misc-redundant-expression)
+
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define EXPECT_PRINT_ERROR(EXPR, CODE, PATH)                             \
     try {                                                                \
@@ -47,7 +54,7 @@
 
 template <>
 struct fmt::formatter<USERVER_NAMESPACE::protobuf::json::PrintOptions> {
-    auto parse(fmt::format_parse_context& ctx) {
+    constexpr auto parse(fmt::format_parse_context& ctx) {
         auto it = ctx.begin();
         if (it != ctx.end() && *it != '}') {
             throw fmt::format_error("invalid format");
@@ -70,7 +77,7 @@ struct fmt::formatter<USERVER_NAMESPACE::protobuf::json::PrintOptions> {
 
 template <>
 struct fmt::formatter<USERVER_NAMESPACE::protobuf::json::ParseOptions> {
-    auto parse(fmt::format_parse_context& ctx) {
+    constexpr auto parse(fmt::format_parse_context& ctx) {
         auto it = ctx.begin();
         if (it != ctx.end() && *it != '}') {
             throw fmt::format_error("invalid format");
@@ -87,7 +94,7 @@ struct fmt::formatter<USERVER_NAMESPACE::protobuf::json::ParseOptions> {
 
 template <>
 struct fmt::formatter<USERVER_NAMESPACE::protobuf::json::PrintErrorCode> {
-    auto parse(fmt::format_parse_context& ctx) {
+    constexpr auto parse(fmt::format_parse_context& ctx) {
         auto it = ctx.begin();
         if (it != ctx.end() && *it != '}') {
             throw fmt::format_error("invalid format");
@@ -109,7 +116,7 @@ struct fmt::formatter<USERVER_NAMESPACE::protobuf::json::PrintErrorCode> {
 
 template <>
 struct fmt::formatter<USERVER_NAMESPACE::protobuf::json::ParseErrorCode> {
-    auto parse(fmt::format_parse_context& ctx) {
+    constexpr auto parse(fmt::format_parse_context& ctx) {
         auto it = ctx.begin();
         if (it != ctx.end() && *it != '}') {
             throw fmt::format_error("invalid format");

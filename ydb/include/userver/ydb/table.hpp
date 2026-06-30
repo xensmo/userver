@@ -26,6 +26,10 @@ class TMetricRegistry;
 
 USERVER_NAMESPACE_BEGIN
 
+namespace engine {
+class Deadline;
+}  // namespace engine
+
 namespace tracing {
 class Span;
 }  // namespace tracing
@@ -39,6 +43,7 @@ namespace ydb {
 namespace impl {
 struct Stats;
 struct TableSettings;
+struct Connection;
 class Driver;
 template <typename Settings>
 class RequestContext;
@@ -268,13 +273,19 @@ public:
 
     /// @cond
     // For internal use only: runtime database routing (YDB_DATABASE_ROUTING).
-    struct Connection;
-    // Returns this client's own connection. Used to wire routing targets in
-    // YdbComponent.
-    utils::SharedRef<Connection> GetOwnConnection() const noexcept;
-    // Atomically redirects this client to use `connection` for subsequent
-    // operations and keeps it alive while it stays routed here.
-    void SwitchConnection(utils::SharedRef<Connection> connection) noexcept;
+    // Redirects this client to use `target`'s connection for subsequent
+    // operations (pass *this to revert to its own), keeping `target` alive while
+    // it stays routed here.
+    void SwitchConnectionTo(const TableClient& target) noexcept;
+
+    template <typename Settings>
+    impl::RequestContext<Settings> MakeRequestContext(
+        const Query& query,
+        Settings&& settings,
+        impl::IsStreaming is_streaming = impl::IsStreaming{false},
+        tracing::Span* custom_parent_span = nullptr,
+        engine::Deadline parent_deadline = {}
+    );
     /// @endcond
 
 private:
@@ -283,15 +294,12 @@ private:
     template <typename Settings>
     friend class impl::RequestContext;
 
-    std::string JoinDbPath(std::string_view path) const;
-
     // Currently active connection (never null after construction).
-    Connection& CurrentConnection() const noexcept;
+    impl::Connection& CurrentConnection() const noexcept;
 
     void Select1();
 
     NYdb::NQuery::TExecuteQuerySettings ToExecuteQuerySettings(const QuerySettings& query_settings) const;
-    NYdb::NTable::TExecDataQuerySettings ToExecDataQuerySettings(const QuerySettings& query_settings) const;
 
     template <typename... Args>
     PreparedArgsBuilder MakeBuilder(Args&&... args);
@@ -313,18 +321,16 @@ private:
 
     dynamic_config::Source config_source_;
     const OperationSettings default_settings_;
-    const bool keep_in_query_cache_;
-    const bool use_query_client_;
     std::unique_ptr<impl::Stats> stats_;
 
     // Connections are permanent: none is destroyed while the component lives
     // (each is held by its home `own_connection_`), so the raw selector below is
     // always valid. `routed_connection_` additionally keeps the routing target
     // alive. If we ever start freeing detached connections, switch to rcu.
-    utils::SharedRef<Connection> own_connection_;
-    utils::SharedRef<Connection> routed_connection_;
-    // Lock-free selector read by every operation; swapped by SwitchConnection().
-    std::atomic<utils::NotNull<Connection*>> current_connection_;
+    utils::SharedRef<impl::Connection> own_connection_;
+    utils::SharedRef<impl::Connection> routed_connection_;
+    // Lock-free selector read by every operation; swapped by SwitchConnectionTo().
+    std::atomic<utils::NotNull<impl::Connection*>> current_connection_;
 };
 
 template <typename... Args>

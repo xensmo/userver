@@ -46,6 +46,7 @@ public:
     ~MockClientBase() override;
 
     void WaitConnectedOnce(RedisWaitConnected wait_connected) override;
+    bool IsReady(const HealthCheckParams& params) const override;
 
     size_t ShardsCount() const override;
     bool IsInClusterMode() const override;

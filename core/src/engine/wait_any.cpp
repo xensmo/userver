@@ -68,11 +68,13 @@ public:
 
     void Append(AwaitableToken awaitable);
 
+    void Append(std::uint64_t id, engine::AwaitableToken awaitable);
+
     std::optional<std::uint64_t> WaitUntil(Deadline deadline);
 
     std::size_t GetSize() const noexcept { return subscribed_count_ + pending_subscription_.size(); }
 
-    std::uint64_t GetNextIndex() const noexcept { return next_index_; }
+    std::uint64_t GetNextId() const noexcept { return next_id_; }
 
     void Unsubscribe() noexcept;
 
@@ -81,13 +83,13 @@ private:
     struct QueueItem
         : public concurrent::impl::SinglyLinkedBaseHook,
           public boost::intrusive::slist_base_hook<utils::impl::IntrusiveLinkMode> {
-        explicit QueueItem(AwaitableToken awaitable, std::uint64_t index)
+        explicit QueueItem(AwaitableToken awaitable, std::uint64_t id)
             : awaitable(awaitable),
-              index(index)
+              id(id)
         {}
 
         AwaitableToken awaitable;
-        std::uint64_t index;
+        std::uint64_t id;
         bool subscribed{false};
     };
 
@@ -103,7 +105,7 @@ private:
 
     bool ProcessNotified(QueueItem& item) noexcept;
 
-    std::uint64_t next_index_{0};
+    std::uint64_t next_id_{0};
     std::size_t subscribed_count_{0};
     boost::intrusive::slist<QueueItem, boost::intrusive::constant_time_size<true>> pending_subscription_;
     boost::intrusive::slist<QueueItem, boost::intrusive::constant_time_size<false>> unused_;
@@ -117,19 +119,23 @@ WaitAnyContext::Impl::Impl()
 {}
 
 void WaitAnyContext::Impl::Append(AwaitableToken awaitable) {
+    Append(next_id_, awaitable);
+    ++next_id_;
+}
+
+void WaitAnyContext::Impl::Append(std::uint64_t id, engine::AwaitableToken awaitable) {
     if (awaitable.IsEmpty()) {
-        ++next_index_;
         return;
     }
     if (unused_.empty()) {
-        auto& item = queue_items_.emplace_back(awaitable, next_index_++);
+        auto& item = queue_items_.emplace_back(awaitable, id);
         pending_subscription_.push_front(item);
         return;
     }
     auto& item = unused_.front();
     unused_.pop_front();
     item.awaitable = awaitable;
-    item.index = next_index_++;
+    item.id = id;
     pending_subscription_.push_front(item);
 }
 
@@ -191,7 +197,7 @@ std::optional<std::uint64_t> WaitAnyContext::Impl::TryProcessQueue() noexcept {
         }
 
         if (ProcessNotified(*item)) {
-            return item->index;
+            return item->id;
         }
     }
 }
@@ -207,7 +213,7 @@ std::optional<std::uint64_t> WaitAnyContext::Impl::TrySubscribe() {
         awaitable.TryAppendAwaiter(awaiter_ptr, reinterpret_cast<std::uintptr_t>(&item));
         if (awaiter_ptr != nullptr) {  // awaitable is already ready.
             unused_.push_front(item);
-            return item.index;
+            return item.id;
         }
 
         item.subscribed = true;
@@ -217,7 +223,6 @@ std::optional<std::uint64_t> WaitAnyContext::Impl::TrySubscribe() {
 }
 
 bool WaitAnyContext::Impl::ProcessNotified(QueueItem& item) noexcept {
-    UASSERT(item.index < next_index_);
     auto& awaitable = item.awaitable.GetAwaitable(utils::impl::InternalTag{});
     UASSERT(item.subscribed);
 
@@ -264,14 +269,19 @@ std::size_t WaitAnyContext::GetSize() const noexcept {
     return impl_->GetSize();
 }
 
-std::uint64_t WaitAnyContext::GetNextIndex() const noexcept {
+std::uint64_t WaitAnyContext::GetNextId() const noexcept {
     UASSERT(impl_ != nullptr);
-    return impl_->GetNextIndex();
+    return impl_->GetNextId();
 }
 
 void WaitAnyContext::AppendToken(engine::AwaitableToken awaitable) {
     UASSERT(impl_ != nullptr);
     impl_->Append(awaitable);
+}
+
+void WaitAnyContext::AppendToken(std::uint64_t id, engine::AwaitableToken awaitable) {
+    UASSERT(impl_ != nullptr);
+    impl_->Append(id, awaitable);
 }
 
 }  // namespace engine

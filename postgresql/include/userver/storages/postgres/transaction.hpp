@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include <userver/storages/postgres/detail/connection_ptr.hpp>
 #include <userver/storages/postgres/detail/query_parameters.hpp>
@@ -296,7 +297,7 @@ public:
     /// Set a connection parameter
     /// https://www.postgresql.org/docs/current/sql-set.html
     /// The parameter is set for this transaction only
-    void SetParameter(const std::string& param_name, const std::string& value);
+    void SetParameter(std::string_view param_name, std::string_view value);
     //@}
 
     /// Commit the transaction

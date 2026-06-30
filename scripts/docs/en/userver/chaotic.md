@@ -275,7 +275,7 @@ struct X {
 It adds a member `extra` which holds all non-enumerated fields.
 In case of `true` it holds raw `formats::json::Value`.
 In case of more specific types it holds a map of this type.
-If you don't need `extra` member, you may disable its generation via `x-usrv-cpp-extra-member: false`.
+If you don't need `extra` member, you may disable its generation via `x-usrv-extra-member: false`.
 
 You may change the container type of `extra` field with `x-usrv-cpp-extra-type`:
 

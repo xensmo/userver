@@ -142,7 +142,7 @@ private:
             }
             fmt::format_to(std::back_inserter(buf_), FMT_COMPILE("{}=\""), impl::ToPrometheusLabel(label.Name()));
             const auto& value = label.Value();
-            std::replace_copy(value.cbegin(), value.cend(), std::back_inserter(buf_), '"', '\'');
+            std::ranges::replace_copy(value, std::back_inserter(buf_), '"', '\'');
             buf_.push_back('"');
             sep = true;
         }

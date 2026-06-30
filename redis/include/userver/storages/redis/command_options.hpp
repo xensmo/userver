@@ -145,7 +145,7 @@ private:
 /// @brief A hint for Scan, Hscan, Scan and Zscan commands.
 class Count final {
 public:
-    explicit constexpr Count(std::size_t value) noexcept : value_(value) {}
+    constexpr explicit Count(std::size_t value) noexcept : value_(value) {}
 
     constexpr std::size_t Get() const noexcept { return value_; }
 

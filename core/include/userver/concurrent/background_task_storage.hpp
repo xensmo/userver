@@ -84,15 +84,7 @@ private:
 /// Generally, it's a good idea to declare `bts_` after most other fields
 /// to avoid lifetime bugs. An example of fool-proof code:
 ///
-/// @code
-/// private:
-///     Foo foo_;
-///     Bar bar_;
-///
-///     // bts_ must be the last field for lifetime reasons.
-///     concurrent::BackgroundTaskStorage bts_;
-/// };
-/// @endcode
+/// @snippet concurrent/background_task_storage_test.cpp  Bts field ordering
 ///
 /// Components and their clients can always be safely captured by reference:
 ///

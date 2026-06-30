@@ -131,7 +131,7 @@ public:
         void (Class::*func)(const storages::secdist::SecdistConfig& secdist)
     );
 
-    bool IsPeriodicUpdateEnabled() const;
+    bool IsPeriodicUpdateEnabled() const noexcept;
 
 private:
     using EventSource = concurrent::AsyncEventSource<const SecdistConfig&>;

@@ -1,6 +1,4 @@
 #include <protobuf/json/impl/write.hpp>
-#include "google/protobuf/message.h"
-#include "taxi/uservices/userver/universal/include/userver/utils/assert.hpp"
 
 #include <cmath>
 #include <string>
@@ -10,6 +8,7 @@
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/reflection.h>
+#include "google/protobuf/message.h"
 
 #include <protobuf/json/impl/convert_utils.hpp>
 #include <protobuf/json/impl/field_error.hpp>

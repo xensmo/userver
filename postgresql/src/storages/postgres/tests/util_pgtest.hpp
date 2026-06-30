@@ -44,10 +44,14 @@ private:
 enum class ConnectionMode : std::uint8_t { kChaosProxy, kDirect };
 
 inline const storages::postgres::ConnectionSettings kCachePreparedStatements{
-    storages::postgres::ConnectionSettings::kCachePreparedStatements
+    .prepared_statements = storages::postgres::ConnectionSettings::kCachePreparedStatements,
+};
+inline const storages::postgres::ConnectionSettings kMaxPreparedCacheSize3{
+    .prepared_statements = storages::postgres::ConnectionSettings::kCachePreparedStatements,
+    .max_prepared_cache_size = storages::postgres::kMinPreparedStatementsCacheSize,
 };
 inline const storages::postgres::ConnectionSettings kNoPreparedStatements{
-    storages::postgres::ConnectionSettings::kNoPreparedStatements
+    .prepared_statements = storages::postgres::ConnectionSettings::kNoPreparedStatements,
 };
 inline const storages::postgres::ConnectionSettings kNoUserTypes{
     storages::postgres::ConnectionSettings::kCachePreparedStatements,

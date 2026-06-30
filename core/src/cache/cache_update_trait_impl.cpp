@@ -103,7 +103,7 @@ void CacheUpdateTrait::Impl::UpdateSyncDebug(UpdateType update_type) {
     }).Get();
 }
 
-const std::string& CacheUpdateTrait::Impl::Name() const { return name_; }
+const std::string& CacheUpdateTrait::Impl::Name() const noexcept { return name_; }
 
 CacheUpdateTrait::Impl::Impl(CacheDependencies&& dependencies, CacheUpdateTrait& self)
     : customized_trait_(self),
@@ -374,17 +374,17 @@ void CacheUpdateTrait::Impl::OnUpdateSkipped() {
     }
 }
 
-void CacheUpdateTrait::Impl::OnCacheModified() { cache_modified_ = true; }
+void CacheUpdateTrait::Impl::OnCacheModified() noexcept { cache_modified_ = true; }
 
-bool CacheUpdateTrait::Impl::HasPreAssignCheck() const { return static_config_.has_pre_assign_check; }
+bool CacheUpdateTrait::Impl::HasPreAssignCheck() const noexcept { return static_config_.has_pre_assign_check; }
 
-bool CacheUpdateTrait::Impl::IsSafeDataLifetime() const { return static_config_.is_safe_data_lifetime; }
+bool CacheUpdateTrait::Impl::IsSafeDataLifetime() const noexcept { return static_config_.is_safe_data_lifetime; }
 
 void CacheUpdateTrait::Impl::SetDataSizeStatistic(std::size_t size) noexcept {
     statistics_.documents_current_count = size;
 }
 
-engine::TaskProcessor& CacheUpdateTrait::Impl::GetCacheTaskProcessor() const { return task_processor_; }
+engine::TaskProcessor& CacheUpdateTrait::Impl::GetCacheTaskProcessor() const noexcept { return task_processor_; }
 
 void CacheUpdateTrait::Impl::DoUpdate(UpdateType update_type, const Config& config) {
     const auto steady_now = utils::datetime::SteadyNow();

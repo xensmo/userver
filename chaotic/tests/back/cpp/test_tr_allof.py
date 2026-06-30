@@ -89,7 +89,7 @@ def test_two_element_allof_schema(clean, schema_parser, additional_property1, ad
                         ),
                     )
                 },
-                extra_type=additional_property1,
+                extra_type=True if additional_property1 else None,
                 autodiscover_default_dict=False,
                 strict_parsing=True,
             ),
@@ -124,7 +124,7 @@ def test_two_element_allof_schema(clean, schema_parser, additional_property1, ad
                         ),
                     )
                 },
-                extra_type=additional_property2,
+                extra_type=True if additional_property2 else None,
                 autodiscover_default_dict=False,
                 strict_parsing=True,
             ),

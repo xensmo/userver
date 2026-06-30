@@ -163,7 +163,7 @@ public:
     // For internal use only.
     Transaction(
         TableClient& table_client,
-        std::variant<NYdb::NQuery::TTransaction, NYdb::NTable::TTransaction> ydb_tx,
+        NYdb::NQuery::TTransaction ydb_tx,
         std::string name,
         OperationSettings&& rollback_settings
     ) noexcept;
@@ -185,7 +185,7 @@ private:
     std::string name_;
     impl::StatsScope stats_scope_;
     tracing::Span span_;
-    std::variant<NYdb::NQuery::TTransaction, NYdb::NTable::TTransaction> ydb_tx_;
+    NYdb::NQuery::TTransaction ydb_tx_;
     OperationSettings rollback_settings_;
     bool is_active_{true};
     utils::trx_tracker::TransactionLock trx_lock_;

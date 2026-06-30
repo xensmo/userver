@@ -221,11 +221,7 @@ UTEST(Poller, ReadWriteMultipleTorture) {
 }
 
 // Disabled for mac, see https://st.yandex-team.ru/TAXICOMMON-4196
-#ifdef BSD
-UTEST(Poller, DISABLED_AwaitedEventsChange) {
-#else
-UTEST(Poller, AwaitedEventsChange) {
-#endif
+UTEST(Poller, DISABLED_IN_MAC_OS_TEST_NAME(AwaitedEventsChange)) {
     TcpListener listener;
     auto socket_pair = listener.MakeSocketPair(engine::Deadline::FromDuration(utest::kMaxTestWaitTime));
 

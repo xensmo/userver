@@ -24,6 +24,29 @@ def test_array_int(simple_gen, cpp_primitive_type):
     }
 
 
+def test_array_minmax_items(simple_gen, cpp_primitive_type):
+    types = simple_gen({
+        'type': 'array',
+        'minItems': 1,
+        'maxItems': 3,
+        'items': {'type': 'integer'},
+    })
+    assert types == {
+        '::type': cpp_types.CppArray(
+            raw_cpp_type=type_name.TypeName('::type'),
+            user_cpp_type=None,
+            json_schema=front_types.Schema(),
+            nullable=False,
+            items=cpp_primitive_type(
+                validators=cpp_types.CppPrimitiveValidator(prefix='typeA'),
+                raw_cpp_type_str='int',
+            ),
+            container='std::vector',
+            validators=cpp_types.CppArrayValidator(minItems=1, maxItems=3),
+        ),
+    }
+
+
 @pytest.mark.parametrize(
     'item_schema,expected_cpp_type,expected_validators',
     [

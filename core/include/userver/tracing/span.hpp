@@ -194,7 +194,7 @@ public:
     void SetLogLevel(logging::Level log_level);
 
     /// See @ref tracing::Span::SetLogLevel.
-    logging::Level GetLogLevel() const;
+    logging::Level GetLogLevel() const noexcept;
 
     /// @brief Sets the log level for the scope of this `Span` and nested scopes recursively.
     ///
@@ -208,10 +208,10 @@ public:
     /// is less than the local log level, then the span is not written to the tracing system.
     ///
     /// Local log level of child spans can override local log level of parent spans in both directions.
-    void SetLocalLogLevel(std::optional<logging::Level> log_level);
+    void SetLocalLogLevel(std::optional<logging::Level> log_level) noexcept;
 
     /// See @ref tracing::Span::SetLocalLogLevel.
-    std::optional<logging::Level> GetLocalLogLevel() const;
+    std::optional<logging::Level> GetLocalLogLevel() const noexcept;
 
     /// Set link - a request ID within a service. Can be called only once.
     ///
@@ -228,31 +228,31 @@ public:
     ///
     /// Propagates within a single service, but not from client to server. A new
     /// link is generated for the "root" request handling task.
-    std::string_view GetLink() const;
+    std::string_view GetLink() const noexcept;
 
     /// Set parent link - request ID of the upstream service. Can only be called once.
     ///
     /// Propagates within a single service.
-    std::string_view GetParentLink() const;
+    std::string_view GetParentLink() const noexcept;
 
     /// An ID of the request that does not change from service to service.
     ///
     /// Propagates both to sub-spans within a single service, and from client
     /// to server
-    std::string_view GetTraceId() const;
+    std::string_view GetTraceId() const noexcept;
 
     /// Identifies a specific span. It does not propagate.
-    std::string_view GetSpanId() const;
+    std::string_view GetSpanId() const noexcept;
 
     /// Span ID of the nearest loggable parent span, or empty string if none exists.
-    std::string_view GetParentId() const;
+    std::string_view GetParentId() const noexcept;
 
     /// Span ID of the nearest loggable span within the span chain, including the current span.
     /// If the current span and all parent spans will not be logged, returns `std::nullopt`.
-    std::optional<std::string_view> GetSpanIdForChildLogs() const;
+    std::optional<std::string_view> GetSpanIdForChildLogs() const noexcept;
 
     /// Get name the Span was created with
-    std::string_view GetName() const;
+    std::string_view GetName() const noexcept;
 
     /// @returns true if this span would be logged with the current local and
     /// global log levels to the default logger.
@@ -275,22 +275,22 @@ public:
 
     /// Detach the Span from current engine::Task so it is not
     /// returned by CurrentSpan() any more.
-    void DetachFromCoroStack();
+    void DetachFromCoroStack() noexcept;
 
     /// Attach the Span to current engine::Task so it is returned
     /// by CurrentSpan().
     void AttachToCoroStack();
 
-    std::chrono::system_clock::time_point GetStartSystemTime() const;
+    std::chrono::system_clock::time_point GetStartSystemTime() const noexcept;
 
-    std::chrono::steady_clock::time_point GetStartSteadyTime() const;
+    std::chrono::steady_clock::time_point GetStartSteadyTime() const noexcept;
 
     /// @cond
     // For internal use only.
     void AddTags(const logging::LogExtra&, utils::impl::InternalTag);
 
     // For internal use only.
-    impl::TimeStorage& GetTimeStorage(utils::impl::InternalTag);
+    impl::TimeStorage& GetTimeStorage(utils::impl::InternalTag) noexcept;
 
     // For internal use only.
     void LogTo(utils::impl::InternalTag, logging::impl::TagWriter writer) const;
@@ -305,7 +305,7 @@ private:
         static OptionalDeleter DoNotDelete() noexcept;
 
     private:
-        explicit OptionalDeleter(bool do_delete)
+        constexpr explicit OptionalDeleter(bool do_delete) noexcept
             : do_delete_(do_delete)
         {}
 

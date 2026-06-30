@@ -6,6 +6,8 @@
 #include <userver/dynamic_config/test_helpers.hpp>
 #include <userver/engine/subprocess/environment_variables.hpp>
 #include <userver/formats/json/serialize.hpp>
+#include <userver/logging/log.hpp>
+#include <userver/storages/redis/exception.hpp>
 #include <userver/utils/text.hpp>
 
 #include <storages/redis/impl/keyshard_impl.hpp>
@@ -139,6 +141,29 @@ dynamic_config::Source GetRedisDynamicConfigSource() {
     return storage.GetSource();
 }
 
+// Establishing the connection to the testsuite Redis/Valkey can transiently time
+// out when many test subprocesses run in parallel and starve the CPU. A single
+// timeout should not fail the whole test, so retry the wait a few times before
+// giving up. WaitConnectedDebug returns as soon as the topology is ready, so the
+// retries do not slow down the common (already-connected) path.
+template <typename Sentinel>
+void WaitConnectedWithRetries(Sentinel& sentinel) {
+    constexpr int kMaxAttempts = 3;
+    for (int attempt = 1; attempt <= kMaxAttempts; ++attempt) {
+        try {
+            sentinel->WaitConnectedDebug();
+            return;
+        } catch (const storages::redis::ClientNotConnectedException& ex) {
+            if (attempt == kMaxAttempts) {
+                throw;
+            }
+            LOG_WARNING()
+                << "Redis test fixture failed to connect on attempt " << attempt << '/' << kMaxAttempts
+                << ", retrying: " << ex.what();
+        }
+    }
+}
+
 }  // namespace
 
 RedisConnectionState::RedisConnectionState() {
@@ -157,7 +182,7 @@ RedisConnectionState::RedisConnectionState() {
         configs_source,
         storages::redis::impl::SentinelStaticConfig{"pub", KeyShardFactory{sharding_strategy}, {}, {}}
     );
-    sentinel_->WaitConnectedDebug();
+    WaitConnectedWithRetries(sentinel_);
     client_ = std::make_shared<ClientImpl>(sentinel_);
 
     subscribe_sentinel_ = SubscribeSentinel::Create(
@@ -167,7 +192,7 @@ RedisConnectionState::RedisConnectionState() {
         configs_source,
         storages::redis::impl::SubscribeSentinelStaticConfig{"pub", KeyShardFactory{sharding_strategy}, {}, {}}
     );
-    subscribe_sentinel_->WaitConnectedDebug();
+    WaitConnectedWithRetries(subscribe_sentinel_);
     subscribe_client_ = std::make_shared<SubscribeClientImpl>(subscribe_sentinel_);
 }
 
@@ -191,7 +216,7 @@ RedisConnectionState::RedisConnectionState(InClusterMode) {
             {},
         }
     );
-    sentinel_->WaitConnectedDebug();
+    WaitConnectedWithRetries(sentinel_);
     UASSERT(sentinel_->ShardsCount() != 0);
 
     client_ = std::make_shared<ClientImpl>(sentinel_);
@@ -208,7 +233,7 @@ RedisConnectionState::RedisConnectionState(InClusterMode) {
             {},
         }
     );
-    subscribe_sentinel_->WaitConnectedDebug();
+    WaitConnectedWithRetries(subscribe_sentinel_);
     subscribe_client_ = std::make_shared<storages::redis::SubscribeClientImpl>(subscribe_sentinel_);
 }
 

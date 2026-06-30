@@ -93,6 +93,7 @@ public:
     void SetOption(options::ReadConcern);
     void SetOption(options::Skip);
     void SetOption(options::Limit);
+    void SetOption(options::BatchSize);
     void SetOption(options::Projection);
     void SetOption(const options::Sort&);
     void SetOption(const options::Hint&);

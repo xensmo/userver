@@ -1,9 +1,10 @@
 #pragma once
 
-#include <userver/chaotic/const_value.hpp>
-#include <userver/chaotic/type_bundle_hpp.hpp>
-
 #include "const_fwd.hpp"
+
+#include <userver/chaotic/const_value.hpp>
+
+#include <userver/chaotic/type_bundle_hpp.hpp>
 
 namespace ns {
 

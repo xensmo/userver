@@ -91,7 +91,7 @@ struct IntegralBinaryFormatter {
 
     T value;
 
-    explicit IntegralBinaryFormatter(T val)
+    constexpr explicit IntegralBinaryFormatter(T val)
         : value{val}
     {}
     template <typename Buffer>
@@ -136,7 +136,7 @@ struct BufferParser<Smallint> : detail::IntegralBinaryParser<Smallint> {
 
 template <>
 struct BufferFormatter<Smallint> : detail::IntegralBinaryFormatter<Smallint> {
-    explicit BufferFormatter(Smallint val)
+    constexpr explicit BufferFormatter(Smallint val)
         : IntegralBinaryFormatter(val)
     {}
 };
@@ -153,7 +153,7 @@ struct BufferParser<Integer> : detail::IntegralBinaryParser<Integer> {
 
 template <>
 struct BufferFormatter<Integer> : detail::IntegralBinaryFormatter<Integer> {
-    explicit BufferFormatter(Integer val)
+    constexpr explicit BufferFormatter(Integer val)
         : IntegralBinaryFormatter(val)
     {}
 };
@@ -170,7 +170,7 @@ struct BufferParser<Bigint> : detail::IntegralBinaryParser<Bigint> {
 
 template <>
 struct BufferFormatter<Bigint> : detail::IntegralBinaryFormatter<Bigint> {
-    explicit BufferFormatter(Bigint val)
+    constexpr explicit BufferFormatter(Bigint val)
         : IntegralBinaryFormatter(val)
     {}
 };
@@ -185,7 +185,7 @@ struct BufferParser<detail::AltInteger> : detail::IntegralBinaryParser<detail::A
 
 template <>
 struct BufferFormatter<detail::AltInteger> : detail::IntegralBinaryFormatter<detail::AltInteger> {
-    explicit BufferFormatter(detail::AltInteger val)
+    constexpr explicit BufferFormatter(detail::AltInteger val)
         : IntegralBinaryFormatter(val)
     {}
 };
@@ -207,7 +207,7 @@ struct BufferParser<bool> {
 template <>
 struct BufferFormatter<bool> {
     bool value;
-    explicit BufferFormatter(bool val)
+    constexpr explicit BufferFormatter(bool val)
         : value(val)
     {}
     template <typename Buffer>
