@@ -183,7 +183,7 @@ private:
         tracing::ScopeTime& scope
     );
     void DiscardOldPreparedStatements(engine::Deadline deadline);
-    void DiscardPreparedStatement(const PreparedStatementInfo& info, engine::Deadline deadline);
+    void DiscardPreparedStatement(std::string_view meta_statement_name, engine::Deadline deadline);
 
     ResultSet ExecuteCommand(
         const Query& query,
@@ -238,6 +238,8 @@ private:
     void ReportStatement(std::string_view name);
 
     bool ShouldWrapInAutoTransaction(std::string_view statement) const noexcept;
+
+    void TryRollbackAutoTransaction(engine::Deadline deadline);
 
     ResultSet ExecuteCommandInAutoTransaction(
         const Query& query,

@@ -31,7 +31,9 @@ USERVER_NAMESPACE_BEGIN
 namespace ugrpc::client::impl {
 
 inline bool IsRetryable(const CompletionStatus& completion_status) noexcept {
-    return completion_status.has_value() && ugrpc::IsRetryable(completion_status.value().error_code());
+    return completion_status.has_value()
+               ? ugrpc::IsRetryable(completion_status.value().error_code())
+               : ugrpc::client::SpecialCaseCompletionType::kNetworkError == completion_status.error();
 }
 
 // Returns true if it's okay to send a retry
@@ -105,12 +107,14 @@ private:
 
         while (!engine::current_task::ShouldCancel()) {
             ++attempt;
-            auto scope_time = state_.GetSpan().CreateScopeTime(fmt::format("attempt.{}.finish", attempt));
+            auto scope_time = state_.GetSpan().CreateScopeTime(fmt::format("attempt.{}.pre_call", attempt));
 
             state_.GetSpan().AddTag(tracing::kAttempts, attempt);
             impl::SetupClientContext(state_, call_options_, attempt);
 
             RunStartCallHooks();
+
+            scope_time.Reset(fmt::format("attempt.{}.call", attempt));
 
             auto completion_status = PerformAttempt();
 
@@ -177,8 +181,21 @@ private:
                 return std::move(status_);
 
             case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kError:
-                // CompletionQueue returned ok=false. For Client-side Finish ok should always be true.
-                // RPC has finished in abnormal manner.
+                // CompletionQueue returned ok=false on the client-side Finish. grpcpp still fills
+                // `status_` from the received trailers (a real server status), or from a status that
+                // grpc-core synthesized when the call failed/was cancelled (e.g. UNAVAILABLE or
+                // CANCELLED, see grpc/grpc#4972). Do not discard that grpc-core status: surface it so
+                // it is mapped to the proper exception and retried like any other gRPC status.
+                if (impl::IsRequestCancelledByDeadlinePropagation(status_, state_)) {
+                    return utils::unexpected{SpecialCaseCompletionType::kTimeoutDeadlinePropagated};
+                }
+                if (!status_.ok()) {
+                    ugrpc::impl::ClampStatusCodeToValidRange(status_);
+                    return std::move(status_);
+                }
+                // ok==false while the trailing status is OK means the response was not received or
+                // could not be deserialized: there is no valid response and no meaningful status to
+                // surface, so report a (retryable) network error.
                 return utils::unexpected{SpecialCaseCompletionType::kNetworkError};
 
             case ugrpc::impl::AsyncMethodInvocation::WaitStatus::kCancelled:
