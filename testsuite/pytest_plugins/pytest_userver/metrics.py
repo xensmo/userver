@@ -17,7 +17,9 @@ import json
 import math
 import random
 from typing import Any
+from typing import overload
 from typing import TypeAlias
+from typing import TypeVar
 
 
 # @cond
@@ -69,6 +71,9 @@ class Histogram:
 
 
 MetricValue: TypeAlias = float | Histogram
+
+T = TypeVar('T')
+_MISSING: Any = object()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -135,11 +140,40 @@ class MetricsSnapshot:
     Example with @ref pytest_userver.client.ClientMonitor.metrics "await monitor_client.metrics(path_prefix, labels)":
     @snippet samples/testsuite-support/tests/test_metrics.py metrics metrics
 
+    There are 3 ways to construct a `MetricsSnapshot`:
+
+    1. The constructor itself, taking a ready `dict[str(path), Set[Metric]]`.
+       Useful when dealing with just a few simple metrics, or when generating metrics programmatically,
+       or when combining or transforming snapshots. This format is also well-suited for individual metrics
+       with a large number of labels.
+    2. `from_dict` / `from_json`, taking the flat `json` userver metrics format
+       (a list of `{"labels": ..., "value": ...}` per path).
+       This is an alternative to the constructor for loading from a JSON file.
+       Note that `from_layered_dict` is often more terse and more readable.
+    3. `from_layered_dict`, taking a layered dict format that avoids repeating labels for every metric.
+       Recommended in tests that have many metrics sharing a label structure.
+       Can be written out in code or loaded from a JSON file using `load_json` fixture.
+
     @ingroup userver_testsuite
     """
 
-    def __init__(self, values: Mapping[str, Set[Metric]]):
-        self._values = values
+    def __init__(
+        self,
+        values: Mapping[str, Set[Metric]],
+        *,
+        common_prefix: str = '',
+        common_labels: Mapping[str, str] | None = None,
+    ):
+        """
+        @param values Metrics keyed by path, as a `dict[str(path), Set[Metric]]`
+            (the same format `MetricsSnapshot` itself exposes via `items()`).
+        @param common_prefix If provided, prepended to each path (separated by a dot).
+        @param common_labels If provided, these labels are added to every metric,
+            merged with (and overridden by) that metric's own labels.
+        """
+        self._values = _apply_common_prefix_labels(values, common_prefix, common_labels)
+        self._sliced_prefix: str = ''
+        self._sliced_labels: Mapping[str, str] = {}
 
     def __getitem__(self, path: str) -> Set[Metric]:
         """Returns a list of metrics by specified path"""
@@ -197,39 +231,130 @@ class MetricsSnapshot:
         """Returns an iterable over lists of metrics"""
         return self._values.values()
 
+    def sliced(
+        self,
+        prefix: str,
+        labels: dict[str, str] | None = None,
+        /,
+    ) -> MetricsSnapshot:
+        """
+        Returns a new MetricsSnapshot restricted to the metrics whose path starts with `prefix` as a whole
+        '.'-separated segment (`prefix='a.b'` matches paths `'a.b'` and `'a.b.c'`, but not `'a.bc'`), and, if
+        `labels` is given, whose labels are a superset of `labels` (same subset-match semantics as
+        `require_labels` in `metrics_at`).
+
+        The matched `prefix` (and the following '.', if any) is stripped from the start of every surviving
+        metric's path, so e.g. slicing `'a.b.c'` by `prefix='a.b'` makes it accessible as `'c'`, and slicing
+        `'a.b'` by `prefix='a.b'` makes it accessible as `''`. Calling `sliced()` several times in a row
+        composes: each `prefix` is matched against the already-stripped paths of the previous `sliced()` call,
+        and `labels` requirements accumulate.
+
+        Slicing only ever affects *filtering* (which metrics are visible, and under which path): it never
+        touches the `Metric` objects themselves. `metrics_at()`, `value_at()` and iteration over a sliced
+        snapshot all keep returning the exact same, untouched `Metric` objects (same labels, value, identity),
+        just possibly under a shorter path and/or a smaller surrounding set.
+
+        Intended use: carve out a small, closed slice of a snapshot (e.g. one metric path with a handful of
+        varying labels) to compare it with `==` against a compact expected snapshot, or to look up several
+        label combinations with `value_at`/`metrics_at` without repeating the common prefix and labels in every call.
+
+        @throws AssertionError if a metric path has an empty '.'-segment right after `prefix`, which would
+            make prefix stripping ambiguous (e.g. path 'a.b.' or 'a.b..c' sliced by prefix='a.b').
+
+        @snippet testsuite/tests/metrics/test_sliced.py sliced snippet
+        """
+        result: dict[str, set[Metric]] = {}
+        for path, metric_set in self._values.items():
+            remainder = _strip_prefix_segment(path, prefix)
+            if remainder is None:
+                continue
+
+            if labels:
+                metric_set = {metric for metric in metric_set if labels.items() <= metric.labels.items()}
+                if not metric_set:
+                    continue
+
+            result.setdefault(remainder, set())
+            result[remainder] |= metric_set
+
+        sliced_snapshot = MetricsSnapshot(result)
+        sliced_snapshot._sliced_prefix = f'{self._sliced_prefix}.{prefix}' if self._sliced_prefix else prefix
+        sliced_snapshot._sliced_labels = {**self._sliced_labels, **labels} if labels else self._sliced_labels
+        return sliced_snapshot
+
+    def unsliced(self) -> MetricsSnapshot:
+        """
+        Returns a new MetricsSnapshot with the `prefix` accumulated from the preceding (possibly chained)
+        `sliced()` call(s) prepended back to every surviving metric's path. Does not mutate `self`.
+
+        Metrics that were filtered out by `sliced()` (because their path did not match `prefix`, or their
+        labels did not match `labels`) do NOT come back: `unsliced()` only restores the *path* of what
+        remains in the snapshot, it does not undo the filtering itself.
+
+        If this snapshot was never `sliced()` (i.e. `self` is the original snapshot, or the result of
+        operations other than `sliced()`), returns an equivalent snapshot unchanged.
+        """
+        if not self._sliced_prefix:
+            return MetricsSnapshot(self._values)
+        prefix = self._sliced_prefix
+        result = {(f'{prefix}.{path}' if path else prefix): metric_set for path, metric_set in self._values.items()}
+        return MetricsSnapshot(result)
+
+    @overload
+    def value_at(
+        self,
+        path: str,
+        labels: dict[str, str] | None = None,
+    ) -> MetricValue: ...
+
+    @overload
+    def value_at(
+        self,
+        path: str,
+        labels: dict[str, str] | None,
+        *,
+        default: T,
+    ) -> MetricValue | T: ...
+
     def value_at(
         self,
         path: str,
         labels: dict[str, str] | None = None,
         *,
-        default: MetricValue | None = None,
-    ) -> MetricValue:
+        default: Any = _MISSING,
+    ) -> MetricValue | Any:
         """
         Returns a single metric value at specified path. If a dict of labels
         is provided, does en exact match of labels (i.e. {} stands for no
         labels; {'a': 'b', 'c': 'd'} matches only {'a': 'b', 'c': 'd'} or
         {'c': 'd', 'a': 'b'} but neither match {'a': 'b'} nor {'a': 'b', 'c': 'd', 'e': 'f'}).
 
-        @throws AssertionError if not one metric by path
+        If `default` is provided, it is returned instead of asserting when
+        the metric is not found.
+
+        @throws AssertionError if not one metric by path and no `default` is given
 
         @snippet samples/testsuite-support/tests/test_metrics.py metrics metrics
         """
         entry = self.get(path, set())
-        assert entry or default is not None, f'No metrics found by path "{path}"'
+        assert entry or default is not _MISSING, f'No metrics found by path "{path}"' + (
+            f' after slicing "{self._sliced_prefix}"' if self._sliced_prefix else ''
+        )
 
         if labels is not None:
-            filtered_entries = {x for x in entry if x.labels == labels}
-            assert filtered_entries or default is not None, (
-                f'No metrics found by path "{path}" and labels {labels}. Possible values: {entry}'
+            full_labels = {**self._sliced_labels, **labels} if self._sliced_labels else labels
+            filtered_entries = {x for x in entry if x.labels == full_labels}
+            assert filtered_entries or default is not _MISSING, (
+                f'No metrics found by path "{path}" and labels {full_labels}. Possible values: {entry}'
             )
             assert len(filtered_entries) <= 1, (
-                f'Multiple metrics found by path "{path}" and labels {labels}: {filtered_entries}'
+                f'Multiple metrics found by path "{path}" and labels {full_labels}: {filtered_entries}'
             )
             entry = filtered_entries
         else:
             assert len(entry) <= 1, f'Multiple metrics found by path "{path}": {entry}'
 
-        if default is not None and not entry:
+        if default is not _MISSING and not entry:
             return default
         return next(iter(entry)).value
 
@@ -251,24 +376,12 @@ class MetricsSnapshot:
         @snippet samples/testsuite-support/tests/test_metrics.py metrics metrics
         """
         entry = self.get(path, set())
+        full_require_labels = (
+            {**self._sliced_labels, **require_labels} if require_labels is not None else self._sliced_labels or None
+        )
 
-        def _is_labels_subset(require_labels, target_labels) -> bool:
-            for req_key, req_val in require_labels.items():
-                if target_labels.get(req_key, None) != req_val:
-                    # required label is missing or its value is different
-                    return False
-            return True
-
-        if require_labels is not None:
-            return list(
-                filter(
-                    lambda x: _is_labels_subset(
-                        require_labels=require_labels,
-                        target_labels=x.labels,
-                    ),
-                    entry,
-                ),
-            )
+        if full_require_labels is not None:
+            return [metric for metric in entry if full_require_labels.items() <= metric.labels.items()]
         else:
             return list(entry)
 
@@ -288,8 +401,9 @@ class MetricsSnapshot:
         ignore_zeros: bool = False,
     ) -> None:
         """
-        Compares the snapshot with a dict of metrics or with
-        another snapshot, displaying a nice diff on mismatch
+        @deprecated Use `==` operator instead, which produces a nice diff
+        automatically via `pytest_assertrepr_compare`. To ignore zero-rate
+        metrics, use `without_zero_rates()` on the snapshots before comparing.
         """
         lhs = _flatten_snapshot(self, ignore_zeros=ignore_zeros)
         rhs = _flatten_snapshot(other, ignore_zeros=ignore_zeros)
@@ -337,7 +451,7 @@ class MetricsSnapshot:
         return '\n'.join(itertools.chain(*data_for_every_path))
 
     @staticmethod
-    def from_dict(data: dict) -> MetricsSnapshot:
+    def from_dict(data: Mapping[str, Any]) -> MetricsSnapshot:
         """
         Construct MetricsSnapshot from a JSON dict in the `json` userver metrics format.
         """
@@ -361,6 +475,44 @@ class MetricsSnapshot:
         """
         return MetricsSnapshot.from_dict(json.loads(json_str))
 
+    @staticmethod
+    def from_layered_dict(
+        data: Mapping[str, Any],
+        *,
+        common_prefix: str = '',
+        common_labels: Mapping[str, str] | None = None,
+    ) -> MetricsSnapshot:
+        """
+        Construct MetricsSnapshot from a layered dict format that avoids
+        repeating a label's name for every metric that only differs by
+        that label's value.
+
+        Top-level keys of `data` are metric paths, used as-is. Within a
+        path's value, each dict key names a label as `'name = value'`
+        (with exactly one space on each side of `=`: everything before is
+        the label name, everything after is its value); the corresponding
+        child value is interpreted the same way recursively, so several
+        labels can be layered one inside another. A dict with `bounds` and
+        `buckets` keys is a leaf value instead of being recursed into,
+        parsed as a `Histogram`; any other non-dict value is a plain leaf
+        metric value.
+
+        If `common_prefix` is provided, it is prepended to each path
+        (separated by a dot) so that paths in `data` can omit a shared prefix.
+
+        If `common_labels` is provided, these labels are added to every
+        metric in the snapshot, merged with any labels from the layered dict
+        structure.
+
+        Example: `{'a': {'x = foo': 1, 'x = bar': 2}}` is equivalent to
+        `MetricsSnapshot({'a': {Metric({'x': 'foo'}, 1), Metric({'x': 'bar'}, 2)}})`.
+        """
+        return MetricsSnapshot(
+            {path: _collect_layered_metrics(node, {}) for path, node in data.items()},
+            common_prefix=common_prefix,
+            common_labels=common_labels,
+        )
+
     def to_json(self) -> str:
         """
         Serialize to a JSON string
@@ -372,8 +524,41 @@ class MetricsSnapshot:
         )
 
 
+def _apply_common_prefix_labels(
+    values: Mapping[str, Set[Metric]],
+    common_prefix: str,
+    common_labels: Mapping[str, str] | None,
+) -> Mapping[str, Set[Metric]]:
+    if common_labels:
+        prefix = f'{common_prefix}.' if common_prefix else ''
+        return {
+            f'{prefix}{path}': {
+                dataclasses.replace(metric, labels={**common_labels, **metric.labels}) for metric in metric_set
+            }
+            for path, metric_set in values.items()
+        }
+    if common_prefix:
+        return {f'{common_prefix}.{path}': metric_set for path, metric_set in values.items()}
+    return values
+
+
 def _drop_empty_paths(values: Mapping[str, Set[Metric]]) -> dict[str, Set[Metric]]:
     return {path: metric_set for path, metric_set in values.items() if metric_set}
+
+
+def _strip_prefix_segment(path: str, prefix: str) -> str | None:
+    assert not prefix.endswith('.'), f'prefix "{prefix}" must not end with "."'
+    if path == prefix:
+        return ''
+    dotted_prefix = f'{prefix}.'
+    if path.startswith(dotted_prefix):
+        remainder = path.removeprefix(dotted_prefix)
+        assert remainder and not remainder.startswith('.'), (
+            f'Metric path "{path}" has an empty segment right after prefix "{prefix}", '
+            f'which would make prefix matching ambiguous. This looks like a malformed metric path.'
+        )
+        return remainder
+    return None
 
 
 def _is_zero_rate_or_histogram(metric: Metric) -> bool:
@@ -453,6 +638,27 @@ def _do_compute_percentile(hist: Histogram, percent: float) -> float:
     part1 = values[int(floor)] * (ceil - pivot)
     part2 = values[int(ceil)] * (pivot - floor)
     return part1 + part2
+
+
+def _is_histogram_dict(node: Any) -> bool:
+    return isinstance(node, dict) and 'bounds' in node and 'buckets' in node
+
+
+_LABEL_SEPARATOR = ' = '
+
+
+def _collect_layered_metrics(node: Any, labels: dict[str, str]) -> set[Metric]:
+    if isinstance(node, dict) and not _is_histogram_dict(node):
+        result = set()
+        for key, child in node.items():
+            assert _LABEL_SEPARATOR in key, f"Expected a label key like 'name = value', got '{key}'"
+            label_name, label_value = key.split(_LABEL_SEPARATOR, 1)
+            assert not label_name.endswith(' ') and not label_value.startswith(' '), (
+                f"Expected exactly one space on each side of '=' in a label key, got '{key}'"
+            )
+            result |= _collect_layered_metrics(child, {**labels, label_name: label_value})
+        return result
+    return {Metric(dict(labels), _parse_metric_value(node))}
 
 
 def _parse_metric_value(value: Any) -> MetricValue:
