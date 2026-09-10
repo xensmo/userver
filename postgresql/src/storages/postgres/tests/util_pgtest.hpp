@@ -14,7 +14,6 @@
 
 #include <storages/postgres/default_command_controls.hpp>
 #include <storages/postgres/detail/connection.hpp>
-#include <storages/postgres/experiments.hpp>
 #include <storages/postgres/tests/postgres_chaos_proxy.hpp>
 #include <userver/storages/postgres/detail/connection_ptr.hpp>
 #include <userver/storages/postgres/dsn.hpp>
@@ -57,22 +56,6 @@ inline const storages::postgres::ConnectionSettings kNoUserTypes{
     storages::postgres::ConnectionSettings::kCachePreparedStatements,
     storages::postgres::ConnectionSettings::kPredefinedTypesOnly,
 };
-inline const storages::postgres::ConnectionSettings kPipelineEnabled{
-    storages::postgres::ConnectionSettings::kCachePreparedStatements,
-    storages::postgres::ConnectionSettings::kUserTypesEnabled,
-    storages::postgres::ConnectionSettings::kCheckUnused,
-    storages::postgres::kDefaultMaxPreparedCacheSize,
-    storages::postgres::PipelineMode::kEnabled,
-};
-inline const storages::postgres::ConnectionSettings kOmitDescribeAndPipelineEnabled{
-    storages::postgres::ConnectionSettings::kCachePreparedStatements,
-    storages::postgres::ConnectionSettings::kUserTypesEnabled,
-    storages::postgres::ConnectionSettings::kCheckUnused,
-    storages::postgres::kDefaultMaxPreparedCacheSize,
-    storages::postgres::PipelineMode::kEnabled,
-    storages::postgres::OmitDescribeInExecuteMode::kEnabled,
-};
-
 engine::Deadline MakeDeadline();
 
 void PrintBuffer(std::ostream&, const std::uint8_t* buffer, std::size_t size);

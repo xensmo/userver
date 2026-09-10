@@ -1,41 +1,41 @@
 #include <storages/mongo/cdriver/collection_impl.hpp>
 
+#include <string>
+#include <string_view>
 #include <type_traits>
 
 #include <bson/bson.h>
 #include <mongoc/mongoc.h>
 
+#include <userver/formats/bson/bson_builder.hpp>
 #include <userver/formats/bson/document.hpp>
 #include <userver/formats/bson/inline.hpp>
-#include <userver/server/request/task_inherited_data.hpp>
+#include <userver/logging/log.hpp>
 #include <userver/storages/mongo/exception.hpp>
 #include <userver/storages/mongo/mongo_error.hpp>
 #include <userver/tracing/span.hpp>
-#include <userver/tracing/tags.hpp>
 #include <userver/utils/algo.hpp>
 #include <userver/utils/assert.hpp>
 #include <userver/utils/impl/userver_experiments.hpp>
-#include <userver/utils/text.hpp>
+#include <userver/utils/string_literal.hpp>
+#include <userver/utils/zstring_view.hpp>
 
 #include <formats/bson/wrappers.hpp>
 #include <storages/mongo/cdriver/cursor_impl.hpp>
 #include <storages/mongo/cdriver/find_and_modify.hpp>
 #include <storages/mongo/cdriver/pool_impl.hpp>
+#include <storages/mongo/cdriver/request_helpers.hpp>
 #include <storages/mongo/cdriver/wrappers.hpp>
 #include <storages/mongo/operations_common.hpp>
 #include <storages/mongo/operations_impl.hpp>
-
-#include <dynamic_config/variables/MONGO_DEFAULT_MAX_TIME_MS.hpp>
-#include <dynamic_config/variables/USERVER_DEADLINE_PROPAGATION_ENABLED.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace storages::mongo::impl::cdriver {
 namespace {
 
-const std::string kCancelledByDeadlineTag = "cancelled_by_deadline";
-const std::string kCancelledTag = "cancelled";
-const std::string kMaxTimeMsTag = "max_time_ms";
+constexpr utils::StringLiteral kReplaceErrorMessage = "Error replacing document";
+constexpr utils::StringLiteral kUpdateErrorMessage = "Error updating documents";
 
 class WriteResultHelper {
 public:
@@ -49,84 +49,24 @@ private:
     MongoError error_{};
 };
 
-std::optional<std::string_view> GetCurrentSpanLink() {
-    auto* span = tracing::Span::CurrentSpanUnchecked();
-    if (span) {
-        return span->GetLink();
-    }
-    return std::nullopt;
-}
-
-void SetLinkComment(formats::bson::impl::BsonBuilder& builder, bool& has_comment_option) {
-    auto link = GetCurrentSpanLink();
-    if (link) {
-        operations::AppendComment(builder, has_comment_option, options::Comment(utils::StrCat("link=", *link)));
-    }
-}
-
-std::optional<std::chrono::milliseconds> GetDeadlineTimeLeft(const dynamic_config::Snapshot& config) {
-    if (!config[::dynamic_config::USERVER_DEADLINE_PROPAGATION_ENABLED]) {
-        return std::nullopt;
-    }
-
-    const auto inherited_deadline = server::request::GetTaskInheritedDeadline();
-    if (!inherited_deadline.IsReachable()) {
-        return std::nullopt;
-    }
-
-    const auto
-        inherited_timeout = std::chrono::duration_cast<std::chrono::milliseconds>(inherited_deadline.TimeLeftApprox());
-    return inherited_timeout;
-}
-
-std::chrono::milliseconds ComputeAdjustedMaxServerTime(
-    std::chrono::milliseconds user_max_server_time,
-    const RequestContext& context
+void WarnIfBulkWriteMaxServerTimeUnsupported(
+    std::string_view operation_name,
+    std::chrono::milliseconds user_max_server_time
 ) {
-    auto max_server_time = user_max_server_time;
-    try {
-        operations::VerifyMaxServerTime(max_server_time);
-    } catch (const InvalidQueryArgumentException& /*ex*/) {
-        context.stats->Account(stats::ErrorType::kBadQueryArgument);
-        throw;
-    }
-
-    if (max_server_time == operations::kNoMaxServerTime) {
-        max_server_time = context.dynamic_config[::dynamic_config::MONGO_DEFAULT_MAX_TIME_MS];
-    }
-
-    if (auto inherited_deadline = context.inherited_deadline) {
-        operations::VerifyMaxServerTime(*inherited_deadline);
-        if (max_server_time == operations::kNoMaxServerTime || *inherited_deadline < max_server_time) {
-            max_server_time = *inherited_deadline;
-        }
-    }
-
-    if (max_server_time != operations::kNoMaxServerTime) {
-        tracing::Span::CurrentSpan().AddTag(kMaxTimeMsTag, max_server_time.count());
-    }
-
-    return max_server_time;
-}
-
-void SetMaxServerTime(
-    std::optional<formats::bson::impl::BsonBuilder>& builder,
-    std::chrono::milliseconds max_server_time,
-    const RequestContext& context
-) {
-    max_server_time = ComputeAdjustedMaxServerTime(max_server_time, context);
-    if (max_server_time == operations::kNoMaxServerTime) {
+    if (user_max_server_time == operations::kNoMaxServerTime) {
         return;
     }
 
-    constexpr std::string_view kOptionName = "maxTimeMS";
-    impl::EnsureBuilder(builder).Append(kOptionName, max_server_time.count());
+    LOG_LIMITED_WARNING()
+        << "max_server_time for " << operation_name
+        << " is ignored because 'bulkWrite' is unavailable; MongoDB 8.0 or newer and a Mongo C driver with "
+           "client-level 'bulkWrite' support are required";
 }
 
 void SetMaxServerTime(
     mongoc_find_and_modify_opts_t& options,
     std::chrono::milliseconds max_server_time,
-    const RequestContext& context
+    const RequestContextBase& context
 ) {
     max_server_time = ComputeAdjustedMaxServerTime(max_server_time, context);
     if (max_server_time == operations::kNoMaxServerTime) {
@@ -241,17 +181,33 @@ WriteConcernPtr BuildWriteConcernFromBson(const bson_iter_t& write_concern_iter)
     return write_concern;
 }
 
-bool ApplyBulkWriteCommandOption(
-    bson_iter_t& iter,
-    std::string_view key,
-    mongoc_bulkwriteopts_t& bulk_opts,
-    mongoc_client_session_t* session
+bool IsWriteAcknowledged(
+    const std::optional<formats::bson::impl::BsonBuilder>& options,
+    const mongoc_collection_t* collection
 ) {
+    const mongoc_write_concern_t* write_concern = mongoc_collection_get_write_concern(collection);
+    WriteConcernPtr operation_write_concern;
+
+    const bson_t* options_bson = impl::GetNative(options);
+    bson_iter_t iter;
+    if (options_bson && bson_iter_init_find(&iter, options_bson, "writeConcern")) {
+        operation_write_concern = BuildWriteConcernFromBson(iter);
+        write_concern = operation_write_concern.get();
+    }
+
+    UASSERT(write_concern);
+    return mongoc_write_concern_is_acknowledged(write_concern);
+}
+
+bool ApplyBulkWriteCommandOption(bson_iter_t& iter, std::string_view key, mongoc_bulkwriteopts_t& bulk_opts) {
+    if (key == "sessionId") {
+        // The session is applied through mongoc_bulkwrite_set_session.
+        return true;
+    }
+
     if (key == "writeConcern") {
-        if (!session || !mongoc_client_session_in_transaction(session)) {
-            const auto write_concern = BuildWriteConcernFromBson(iter);
-            mongoc_bulkwriteopts_set_writeconcern(&bulk_opts, write_concern.get());
-        }
+        const auto write_concern = BuildWriteConcernFromBson(iter);
+        mongoc_bulkwriteopts_set_writeconcern(&bulk_opts, write_concern.get());
     } else if (key == "comment") {
         mongoc_bulkwriteopts_set_comment(&bulk_opts, bson_iter_value(&iter));
     } else if (key == "let") {
@@ -267,11 +223,42 @@ bool ApplyBulkWriteCommandOption(
 }
 
 template <typename StatementOptsPtr>
+bool ApplyBulkWriteStatementOption(bson_iter_t& iter, std::string_view key, StatementOptsPtr& statement_opts) {
+    if (key == "upsert") {
+        SetUpsert(statement_opts.get(), bson_iter_bool(&iter));
+    } else if (key == "hint") {
+        SetHint(statement_opts.get(), bson_iter_value(&iter));
+    } else if (key == "collation") {
+        bson_t collation_view;
+        InitBsonView(iter, collation_view);
+        SetCollation(statement_opts.get(), &collation_view);
+    } else if (key == "arrayFilters") {
+        if constexpr (std::is_same_v<StatementOptsPtr, ReplaceOneOptsPtr>) {
+            throw MongoException("'arrayFilters' is not supported by replace operations");
+        } else {
+            bson_t array_filters_view;
+            InitBsonView(iter, array_filters_view);
+            SetArrayFilters(statement_opts.get(), &array_filters_view);
+        }
+    } else if (key == "sort") {
+        if constexpr (std::is_same_v<StatementOptsPtr, UpdateManyOptsPtr>) {
+            throw MongoException("'sort' is not supported by multi-document updates");
+        } else {
+            bson_t sort_view;
+            InitBsonView(iter, sort_view);
+            SetSort(statement_opts.get(), &sort_view);
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+
+template <typename StatementOptsPtr>
 StatementOptsPtr MakeBulkWriteStatementOpts(
     StatementOptsPtr statement_opts,
     const std::optional<formats::bson::impl::BsonBuilder>& options,
-    mongoc_bulkwriteopts_t& bulk_opts,
-    mongoc_client_session_t* session
+    mongoc_bulkwriteopts_t& bulk_opts
 ) {
     const bson_t* options_bson = impl::GetNative(options);
     if (!options_bson) {
@@ -284,91 +271,53 @@ StatementOptsPtr MakeBulkWriteStatementOpts(
     }
     while (bson_iter_next(&iter)) {
         const std::string_view key{bson_iter_key(&iter), bson_iter_key_len(&iter)};
-        if (key == "sessionId" || ApplyBulkWriteCommandOption(iter, key, bulk_opts, session)) {
+        if (ApplyBulkWriteCommandOption(iter, key, bulk_opts) ||
+            ApplyBulkWriteStatementOption(iter, key, statement_opts))
+        {
             continue;
         }
 
-        if (key == "upsert") {
-            SetUpsert(statement_opts.get(), bson_iter_bool(&iter));
-        } else if (key == "hint") {
-            SetHint(statement_opts.get(), bson_iter_value(&iter));
-        } else if (key == "collation") {
-            bson_t collation_view;
-            InitBsonView(iter, collation_view);
-            SetCollation(statement_opts.get(), &collation_view);
-        } else if (key == "arrayFilters") {
-            if constexpr (std::is_same_v<StatementOptsPtr, ReplaceOneOptsPtr>) {
-                throw MongoException("'arrayFilters' is not supported by replace operations");
-            } else {
-                bson_t array_filters_view;
-                InitBsonView(iter, array_filters_view);
-                SetArrayFilters(statement_opts.get(), &array_filters_view);
-            }
-        } else if (key == "sort") {
-            if constexpr (std::is_same_v<StatementOptsPtr, UpdateManyOptsPtr>) {
-                throw MongoException("'sort' is not supported by multi-document updates");
-            } else {
-                bson_t sort_view;
-                InitBsonView(iter, sort_view);
-                SetSort(statement_opts.get(), &sort_view);
-            }
-        } else {
-            throw MongoException("Unexpected write operation option '") << key << '\'';
-        }
+        throw MongoException("Unexpected write operation option '") << key << '\'';
     }
     return statement_opts;
 }
 
-[[maybe_unused]] UpdateOneOptsPtr MakeUpdateOneOpts(
+UpdateOneOptsPtr MakeUpdateOneOpts(
     const std::optional<formats::bson::impl::BsonBuilder>& options,
-    mongoc_bulkwriteopts_t& bulk_opts,
-    mongoc_client_session_t* session
+    mongoc_bulkwriteopts_t& bulk_opts
 ) {
-    return MakeBulkWriteStatementOpts(
-        UpdateOneOptsPtr{mongoc_bulkwrite_updateoneopts_new()},
-        options,
-        bulk_opts,
-        session
-    );
+    return MakeBulkWriteStatementOpts(UpdateOneOptsPtr{mongoc_bulkwrite_updateoneopts_new()}, options, bulk_opts);
 }
 
-[[maybe_unused]] UpdateManyOptsPtr MakeUpdateManyOpts(
+UpdateManyOptsPtr MakeUpdateManyOpts(
     const std::optional<formats::bson::impl::BsonBuilder>& options,
-    mongoc_bulkwriteopts_t& bulk_opts,
-    mongoc_client_session_t* session
+    mongoc_bulkwriteopts_t& bulk_opts
 ) {
-    return MakeBulkWriteStatementOpts(
-        UpdateManyOptsPtr{mongoc_bulkwrite_updatemanyopts_new()},
-        options,
-        bulk_opts,
-        session
-    );
+    return MakeBulkWriteStatementOpts(UpdateManyOptsPtr{mongoc_bulkwrite_updatemanyopts_new()}, options, bulk_opts);
 }
 
-[[maybe_unused]] ReplaceOneOptsPtr MakeReplaceOneOpts(
+ReplaceOneOptsPtr MakeReplaceOneOpts(
     const std::optional<formats::bson::impl::BsonBuilder>& options,
-    mongoc_bulkwriteopts_t& bulk_opts,
-    mongoc_client_session_t* session
+    mongoc_bulkwriteopts_t& bulk_opts
 ) {
-    return MakeBulkWriteStatementOpts(
-        ReplaceOneOptsPtr{mongoc_bulkwrite_replaceoneopts_new()},
-        options,
-        bulk_opts,
-        session
-    );
+    return MakeBulkWriteStatementOpts(ReplaceOneOptsPtr{mongoc_bulkwrite_replaceoneopts_new()}, options, bulk_opts);
 }
 
 constexpr std::int32_t kDuplicateKeyErrorCode = 11000;
+
+constexpr std::uint32_t kCommandNotFoundErrorCode = 59;
+
+bool IsBulkWriteUnsupportedError(const MongoError& error) { return error.Code() == kCommandNotFoundErrorCode; }
 
 std::size_t ParseModelIndex(const bson_iter_t& iter) {
     return static_cast<std::size_t>(bson_ascii_strtoll(bson_iter_key(&iter), nullptr, 10));
 }
 
-void AppendBulkWriteUpserted(bson_t* out, const mongoc_bulkwriteresult_t* res) {
-    if (mongoc_bulkwriteresult_upsertedcount(res) == 0) {
+void AppendBulkWriteUpserted(bson_t* out, const BulkWriteResultPtr& result) {
+    if (mongoc_bulkwriteresult_upsertedcount(result.get()) == 0) {
         return;
     }
-    const bson_t* update_results = mongoc_bulkwriteresult_updateresults(res);
+    const bson_t* update_results = mongoc_bulkwriteresult_updateresults(result.get());
     if (!update_results) {
         return;
     }
@@ -411,8 +360,8 @@ void AppendErrorCodeAndMessage(bson_t* element, bson_iter_t& error_iter) {
     }
 }
 
-void AppendBulkWriteErrors(bson_t* out, const mongoc_bulkwriteexception_t* exc) {
-    const bson_t* write_errors = mongoc_bulkwriteexception_writeerrors(exc);
+void AppendBulkWriteErrors(bson_t* out, const BulkWriteExceptionPtr& exception) {
+    const bson_t* write_errors = mongoc_bulkwriteexception_writeerrors(exception.get());
     if (!write_errors || bson_empty(write_errors)) {
         return;
     }
@@ -439,8 +388,8 @@ void AppendBulkWriteErrors(bson_t* out, const mongoc_bulkwriteexception_t* exc) 
     }
 }
 
-void AppendBulkWriteConcernErrors(bson_t* out, const mongoc_bulkwriteexception_t* exc) {
-    const bson_t* wc_errors = mongoc_bulkwriteexception_writeconcernerrors(exc);
+void AppendBulkWriteConcernErrors(bson_t* out, const BulkWriteExceptionPtr& exception) {
+    const bson_t* wc_errors = mongoc_bulkwriteexception_writeconcernerrors(exception.get());
     if (!wc_errors || bson_empty(wc_errors)) {
         return;
     }
@@ -465,12 +414,12 @@ void AppendBulkWriteConcernErrors(bson_t* out, const mongoc_bulkwriteexception_t
     }
 }
 
-MongoError GetBulkWriteError(const mongoc_bulkwriteexception_t* exc) {
+MongoError GetBulkWriteError(const BulkWriteExceptionPtr& exception) {
     MongoError error;
-    if (!exc) {
+    if (!exception) {
         return error;
     }
-    if (mongoc_bulkwriteexception_error(exc, error.GetNative())) {
+    if (mongoc_bulkwriteexception_error(exception.get(), error.GetNative())) {
         return error;
     }
 
@@ -500,44 +449,41 @@ MongoError GetBulkWriteError(const mongoc_bulkwriteexception_t* exc) {
         return true;
     };
 
-    if (set_first_error(mongoc_bulkwriteexception_writeerrors(exc), MONGOC_ERROR_SERVER)) {
+    if (set_first_error(mongoc_bulkwriteexception_writeerrors(exception.get()), MONGOC_ERROR_SERVER)) {
         return error;
     }
-    set_first_error(mongoc_bulkwriteexception_writeconcernerrors(exc), MONGOC_ERROR_WRITE_CONCERN);
+    set_first_error(mongoc_bulkwriteexception_writeconcernerrors(exception.get()), MONGOC_ERROR_WRITE_CONCERN);
     return error;
 }
 
-[[maybe_unused]] WriteResult FinishBulkWrite(
-    const mongoc_bulkwriteresult_t* res,
-    const mongoc_bulkwriteexception_t* exc
-) {
+WriteResult FinishBulkWrite(const BulkWriteResultPtr& result, const BulkWriteExceptionPtr& exception) {
     formats::bson::impl::MutableBson document;
     bson_t* out = document.Get();
 
-    if (res) {
-        bson_append_int64(out, "insertedCount", -1, mongoc_bulkwriteresult_insertedcount(res));
-        bson_append_int64(out, "matchedCount", -1, mongoc_bulkwriteresult_matchedcount(res));
-        bson_append_int64(out, "modifiedCount", -1, mongoc_bulkwriteresult_modifiedcount(res));
-        bson_append_int64(out, "upsertedCount", -1, mongoc_bulkwriteresult_upsertedcount(res));
-        bson_append_int64(out, "deletedCount", -1, mongoc_bulkwriteresult_deletedcount(res));
-        AppendBulkWriteUpserted(out, res);
+    if (result) {
+        bson_append_int64(out, "insertedCount", -1, mongoc_bulkwriteresult_insertedcount(result.get()));
+        bson_append_int64(out, "matchedCount", -1, mongoc_bulkwriteresult_matchedcount(result.get()));
+        bson_append_int64(out, "modifiedCount", -1, mongoc_bulkwriteresult_modifiedcount(result.get()));
+        bson_append_int64(out, "upsertedCount", -1, mongoc_bulkwriteresult_upsertedcount(result.get()));
+        bson_append_int64(out, "deletedCount", -1, mongoc_bulkwriteresult_deletedcount(result.get()));
+        AppendBulkWriteUpserted(out, result);
     }
 
     MongoError error;
-    if (exc) {
-        AppendBulkWriteErrors(out, exc);
-        AppendBulkWriteConcernErrors(out, exc);
-        error = GetBulkWriteError(exc);
+    if (exception) {
+        AppendBulkWriteErrors(out, exception);
+        AppendBulkWriteConcernErrors(out, exception);
+        error = GetBulkWriteError(exception);
     }
 
     return WriteResult(formats::bson::Document(document.Extract()), std::move(error));
 }
 
-[[maybe_unused]] bool BulkWriteHasDuplicateKey(const mongoc_bulkwriteexception_t* exc) {
-    if (!exc) {
+[[maybe_unused]] bool BulkWriteHasDuplicateKey(const BulkWriteExceptionPtr& exception) {
+    if (!exception) {
         return false;
     }
-    const bson_t* write_errors = mongoc_bulkwriteexception_writeerrors(exc);
+    const bson_t* write_errors = mongoc_bulkwriteexception_writeerrors(exception.get());
     if (!write_errors) {
         return false;
     }
@@ -556,21 +502,197 @@ MongoError GetBulkWriteError(const mongoc_bulkwriteexception_t* exc) {
     return false;
 }
 
-#endif  // MONGOC_BULKWRITE_H
-
-std::optional<std::chrono::milliseconds> GetTimeoutOrThrow(
-    const dynamic_config::Snapshot& dynamic_config,
-    stats::OperationStatisticsItem& stats,
-    tracing::Span& span
+bool CanUseSingleBulkWrite(
+    CDriverPoolImpl& pool,
+    CollectionRequestContext& context,
+    std::chrono::milliseconds max_server_time
 ) {
-    const auto time_left = GetDeadlineTimeLeft(dynamic_config);
-    if (time_left && time_left <= std::chrono::seconds{0}) {
-        stats.Account(stats::ErrorType::kCancelled);
-        span.AddTag(kCancelledByDeadlineTag, true);
-        throw CancelledException(CancelledException::ByDeadlinePropagation{});
+    if (max_server_time == operations::kNoMaxServerTime) {
+        return false;
     }
-    return time_left;
+    pool.RecheckBulkWriteSupport(context.client.get());
+    return pool.IsBulkWriteSupported();
 }
+
+struct SingleBulkWriteParams final {
+    CDriverPoolImpl& pool;
+    CollectionRequestContext& context;
+    mongoc_client_session_t* session;
+    std::string collection_namespace;
+    std::chrono::milliseconds max_server_time;
+    utils::StringLiteral error_message;
+    bool should_throw{true};
+    bool should_retry_dupkey{false};
+};
+
+class SingleBulkWriteOperation {
+public:
+    explicit SingleBulkWriteOperation(SingleBulkWriteParams&& params)
+        : params_(std::move(params))
+    {}
+
+    std::optional<WriteResult> TryExecute(const std::optional<formats::bson::impl::BsonBuilder>& options) const {
+        const bool is_in_transaction = params_.session && mongoc_client_session_in_transaction(params_.session);
+        const bool is_acknowledged = IsWriteAcknowledged(options, params_.context.collection.get());
+
+        bool should_retry_dupkey = params_.should_retry_dupkey;
+        while (true) {
+            BulkWritePtr bulk_write{mongoc_client_bulkwrite_new(params_.context.client.get())};
+            if (params_.session) {
+                mongoc_bulkwrite_set_session(bulk_write.get(), params_.session);
+            }
+
+            BulkWriteOptsPtr bulk_opts{mongoc_bulkwriteopts_new()};
+            mongoc_bulkwriteopts_set_verboseresults(bulk_opts.get(), is_acknowledged);
+            mongoc_bulkwriteopts_set_ordered(bulk_opts.get(), is_acknowledged);
+
+            const auto
+                extra = formats::bson::MakeDoc("maxTimeMS", static_cast<std::int64_t>(params_.max_server_time.count()));
+            const bson_t* native_extra_bson_ptr = extra.GetBson().get();
+            mongoc_bulkwriteopts_set_extra(bulk_opts.get(), native_extra_bson_ptr);
+
+            AppendWithOptions(*bulk_write, params_.collection_namespace, *bulk_opts, options);
+
+            stats::OperationStopwatch stopwatch(params_.context.stats);
+            const mongoc_bulkwritereturn_t ret = mongoc_bulkwrite_execute(bulk_write.get(), bulk_opts.get());
+            const BulkWriteResultPtr result{ret.res};
+            const BulkWriteExceptionPtr exception{ret.exc};
+
+            auto write_result = FinishBulkWrite(result, exception);
+            if (!exception) {
+                stopwatch.AccountSuccess();
+                return write_result;
+            }
+
+            const MongoError& error = write_result.OperationError();
+            if (IsBulkWriteUnsupportedError(error)) {
+                params_.pool.MarkBulkWriteUnsupported();
+
+                if (is_in_transaction) {
+                    stopwatch.AccountError(error.GetKind());
+                    error.Throw(std::string{params_.error_message});
+                }
+
+                stopwatch.Discard();
+                return std::nullopt;
+            }
+
+            stopwatch.AccountError(error.GetKind());
+            if (should_retry_dupkey && BulkWriteHasDuplicateKey(exception)) {
+                should_retry_dupkey = false;
+                continue;
+            }
+            if (params_.should_throw || !error.IsServerError()) {
+                error.Throw(std::string{params_.error_message});
+            }
+            return write_result;
+        }
+    }
+
+protected:
+    virtual ~SingleBulkWriteOperation() = default;
+
+private:
+    virtual void AppendWithOptions(
+        mongoc_bulkwrite_t& bulk_write,
+        utils::zstring_view collection_namespace,
+        mongoc_bulkwriteopts_t& bulk_opts,
+        const std::optional<formats::bson::impl::BsonBuilder>& options
+    ) const = 0;
+
+    const SingleBulkWriteParams params_;
+};
+
+class ReplaceOneBulkWriteOperation final : public SingleBulkWriteOperation {
+public:
+    ReplaceOneBulkWriteOperation(SingleBulkWriteParams&& params, const bson_t* selector, const bson_t* replacement)
+        : SingleBulkWriteOperation(std::move(params)),
+          selector_(selector),
+          replacement_(replacement)
+    {
+        UASSERT(selector_);
+        UASSERT(replacement_);
+    }
+
+private:
+    void AppendWithOptions(
+        mongoc_bulkwrite_t& bulk_write,
+        utils::zstring_view collection_namespace,
+        mongoc_bulkwriteopts_t& bulk_opts,
+        const std::optional<formats::bson::impl::BsonBuilder>& options
+    ) const override {
+        MongoError append_error;
+        const auto statement_opts = MakeReplaceOneOpts(options, bulk_opts);
+        if (!mongoc_bulkwrite_append_replaceone(
+                &bulk_write,
+                collection_namespace.c_str(),
+                selector_,
+                replacement_,
+                statement_opts.get(),
+                append_error.GetNative()
+            ))
+        {
+            append_error.Throw("Error building replace operation");
+        }
+    }
+
+    const bson_t* const selector_;
+    const bson_t* const replacement_;
+};
+
+class UpdateBulkWriteOperation final : public SingleBulkWriteOperation {
+public:
+    UpdateBulkWriteOperation(SingleBulkWriteParams&& params, bool multi, const bson_t* selector, const bson_t* update)
+        : SingleBulkWriteOperation(std::move(params)),
+          multi_(multi),
+          selector_(selector),
+          update_(update)
+    {
+        UASSERT(selector_);
+        UASSERT(update_);
+    }
+
+private:
+    void AppendWithOptions(
+        mongoc_bulkwrite_t& bulk_write,
+        utils::zstring_view collection_namespace,
+        mongoc_bulkwriteopts_t& bulk_opts,
+        const std::optional<formats::bson::impl::BsonBuilder>& options
+    ) const override {
+        MongoError append_error;
+        bool appended = false;
+        if (multi_) {
+            const auto statement_opts = MakeUpdateManyOpts(options, bulk_opts);
+            appended = mongoc_bulkwrite_append_updatemany(
+                &bulk_write,
+                collection_namespace.c_str(),
+                selector_,
+                update_,
+                statement_opts.get(),
+                append_error.GetNative()
+            );
+        } else {
+            const auto statement_opts = MakeUpdateOneOpts(options, bulk_opts);
+            appended = mongoc_bulkwrite_append_updateone(
+                &bulk_write,
+                collection_namespace.c_str(),
+                selector_,
+                update_,
+                statement_opts.get(),
+                append_error.GetNative()
+            );
+        }
+        if (!appended) {
+            append_error.Throw("Error building update operation");
+        }
+    }
+
+    const bool multi_;
+    const bson_t* const selector_;
+    const bson_t* const update_;
+};
+
+#endif  // MONGOC_BULKWRITE_H
 
 }  // namespace
 
@@ -588,6 +710,7 @@ CDriverCollectionImpl::CDriverCollectionImpl(
 
 size_t CDriverCollectionImpl::Execute(const operations::Count& operation) const {
     auto context = MakeRequestContext("mongo_count", operation);
+    const auto read_prefs = MakeEffectiveReadPrefs(operation.impl_->read_prefs);
 
     auto options = operation.impl_->options;
     SetMaxServerTime(options, operation.impl_->max_server_time, context);
@@ -599,7 +722,7 @@ size_t CDriverCollectionImpl::Execute(const operations::Count& operation) const 
         context.collection.get(),
         native_filter_bson_ptr,
         impl::GetNative(operation.impl_->options),
-        operation.impl_->read_prefs.Get(),
+        read_prefs.Get(),
         nullptr,
         error.GetNative()
     );
@@ -613,6 +736,7 @@ size_t CDriverCollectionImpl::Execute(const operations::Count& operation) const 
 
 size_t CDriverCollectionImpl::Execute(const operations::CountApprox& operation) const {
     auto context = MakeRequestContext("mongo_count_approx", operation);
+    const auto read_prefs = MakeEffectiveReadPrefs(operation.impl_->read_prefs);
 
     auto options = operation.impl_->options;
     SetMaxServerTime(options, operation.impl_->max_server_time, context);
@@ -622,7 +746,7 @@ size_t CDriverCollectionImpl::Execute(const operations::CountApprox& operation) 
     auto count = mongoc_collection_estimated_document_count(
         context.collection.get(),
         impl::GetNative(operation.impl_->options),
-        operation.impl_->read_prefs.Get(),
+        read_prefs.Get(),
         nullptr,
         error.GetNative()
     );
@@ -636,20 +760,17 @@ size_t CDriverCollectionImpl::Execute(const operations::CountApprox& operation) 
 
 Cursor CDriverCollectionImpl::Execute(const operations::Find& operation) const {
     auto context = MakeRequestContext("mongo_find", operation);
+    const auto read_prefs = MakeEffectiveReadPrefs(operation.impl_->read_prefs);
 
     auto options = operation.impl_->options;
-    SetMaxServerTime(options, operation.impl_->max_server_time, context);
-    bool has_comment_option = operation.impl_->has_comment_option;
-    if (!has_comment_option) {
-        SetLinkComment(impl::EnsureBuilder(options), has_comment_option);
-    }
+    PrepareCursorOptions(options, operation.impl_->max_server_time, operation.impl_->has_comment_option, context);
 
     const bson_t* native_filter_bson_ptr = operation.impl_->filter.GetBson().get();
     impl::cdriver::CursorPtr cdriver_cursor(mongoc_collection_find_with_opts(
         context.collection.get(),
         native_filter_bson_ptr,
         impl::GetNative(options),
-        operation.impl_->read_prefs.Get()
+        read_prefs.Get()
     ));
     return Cursor(std::make_unique<impl::cdriver::CDriverCursorImpl>(
         std::move(context.client),
@@ -660,13 +781,10 @@ Cursor CDriverCollectionImpl::Execute(const operations::Find& operation) const {
 
 std::vector<formats::bson::Value> CDriverCollectionImpl::Execute(const operations::Distinct& operation) const {
     auto context = MakeRequestContext("mongo_distinct", operation);
+    const auto read_prefs = MakeEffectiveReadPrefs(operation.impl_->read_prefs);
 
     auto options = operation.impl_->options;
-    SetMaxServerTime(options, operation.impl_->max_server_time, context);
-    bool has_comment_option = operation.impl_->has_comment_option;
-    if (!has_comment_option) {
-        SetLinkComment(impl::EnsureBuilder(options), has_comment_option);
-    }
+    PrepareCursorOptions(options, operation.impl_->max_server_time, operation.impl_->has_comment_option, context);
 
     MongoError error;
     stats::OperationStopwatch stopwatch(std::move(context.stats));
@@ -686,7 +804,7 @@ std::vector<formats::bson::Value> CDriverCollectionImpl::Execute(const operation
     if (!mongoc_collection_read_command_with_opts(
             context.collection.get(),
             native_command_bson_ptr,
-            operation.impl_->read_prefs.Get(),
+            read_prefs.Get(),
             impl::GetNative(options),
             result_bson.Get(),
             error.GetNative()
@@ -787,6 +905,38 @@ WriteResult CDriverCollectionImpl::Execute(const operations::InsertMany& operati
 WriteResult CDriverCollectionImpl::Execute(const operations::ReplaceOne& operation) {
     auto context = MakeRequestContext("mongo_replace_one", operation);
 
+#ifdef MONGOC_BULKWRITE_H
+    const auto adjusted_max_server_time = ComputeAdjustedMaxServerTime(operation.impl_->max_server_time, context);
+    if (CanUseSingleBulkWrite(GetPool(), context, adjusted_max_server_time)) {
+        const bson_t* native_selector_bson_ptr = operation.impl_->selector.GetBson().get();
+        const bson_t* native_replacement_bson_ptr = operation.impl_->replacement.GetBson().get();
+        ReplaceOneBulkWriteOperation bulk_write_operation{
+            SingleBulkWriteParams{
+                .pool = GetPool(),
+                .context = context,
+                .session = GetSession(),
+                .collection_namespace = utils::StrCat(GetDatabaseName(), ".", GetCollectionName()),
+                .max_server_time = adjusted_max_server_time,
+                .error_message = kReplaceErrorMessage,
+                .should_throw = operation.impl_->should_throw,
+            },
+            native_selector_bson_ptr,
+            native_replacement_bson_ptr,
+        };
+        if (auto bulk_write_result = bulk_write_operation.TryExecute(operation.impl_->options)) {
+            return std::move(*bulk_write_result);
+        }
+    }
+#endif
+
+    WarnIfBulkWriteMaxServerTimeUnsupported("ReplaceOne", operation.impl_->max_server_time);
+    return ExecuteReplaceNative(operation, context);
+}
+
+WriteResult CDriverCollectionImpl::ExecuteReplaceNative(
+    const operations::ReplaceOne& operation,
+    CollectionRequestContext& context
+) {
     WriteResultHelper write_result;
     MongoError& error = write_result.GetError();
     stats::OperationStopwatch stopwatch(std::move(context.stats));
@@ -805,15 +955,51 @@ WriteResult CDriverCollectionImpl::Execute(const operations::ReplaceOne& operati
     } else {
         stopwatch.AccountError(error.GetKind());
         if (operation.impl_->should_throw || !error.IsServerError()) {
-            error.Throw("Error replacing document");
+            error.Throw(std::string{kReplaceErrorMessage});
         }
     }
     return write_result.Extract();
 }
 
 WriteResult CDriverCollectionImpl::Execute(const operations::Update& operation) {
+    UASSERT(!operation.impl_->should_retry_dupkey || operation.impl_->mode == operations::Update::Mode::kSingle);
+
     auto context = MakeRequestContext("mongo_update", operation);
 
+#ifdef MONGOC_BULKWRITE_H
+    const auto adjusted_max_server_time = ComputeAdjustedMaxServerTime(operation.impl_->max_server_time, context);
+    if (CanUseSingleBulkWrite(GetPool(), context, adjusted_max_server_time)) {
+        const bson_t* native_selector_bson_ptr = operation.impl_->selector.GetBson().get();
+        const bson_t* native_update_bson_ptr = operation.impl_->update.GetBson().get();
+        UpdateBulkWriteOperation bulk_write_operation{
+            SingleBulkWriteParams{
+                .pool = GetPool(),
+                .context = context,
+                .session = GetSession(),
+                .collection_namespace = utils::StrCat(GetDatabaseName(), ".", GetCollectionName()),
+                .max_server_time = adjusted_max_server_time,
+                .error_message = kUpdateErrorMessage,
+                .should_throw = operation.impl_->should_throw,
+                .should_retry_dupkey = operation.impl_->should_retry_dupkey,
+            },
+            operation.impl_->mode == operations::Update::Mode::kMulti,
+            native_selector_bson_ptr,
+            native_update_bson_ptr,
+        };
+        if (auto bulk_write_result = bulk_write_operation.TryExecute(operation.impl_->options)) {
+            return std::move(*bulk_write_result);
+        }
+    }
+#endif
+
+    WarnIfBulkWriteMaxServerTimeUnsupported("Update", operation.impl_->max_server_time);
+    return ExecuteUpdateNative(operation, context);
+}
+
+WriteResult CDriverCollectionImpl::ExecuteUpdateNative(
+    const operations::Update& operation,
+    CollectionRequestContext& context
+) {
     bool should_retry_dupkey = operation.impl_->should_retry_dupkey;
     while (true) {
         WriteResultHelper write_result;
@@ -856,7 +1042,7 @@ WriteResult CDriverCollectionImpl::Execute(const operations::Update& operation) 
                 continue;
             }
             if (operation.impl_->should_throw || !error.IsServerError()) {
-                error.Throw("Error updating documents");
+                error.Throw(std::string{kUpdateErrorMessage});
             }
         }
         return write_result.Extract();
@@ -995,13 +1181,10 @@ WriteResult CDriverCollectionImpl::Execute(operations::Bulk&& operation) {
 
 Cursor CDriverCollectionImpl::Execute(const operations::Aggregate& operation) {
     auto context = MakeRequestContext("mongo_aggregate", operation);
+    const auto read_prefs = MakeEffectiveReadPrefs(operation.impl_->read_prefs);
 
     auto options = operation.impl_->options;
-    SetMaxServerTime(options, operation.impl_->max_server_time, context);
-    bool has_comment_option = operation.impl_->has_comment_option;
-    if (!has_comment_option) {
-        SetLinkComment(impl::EnsureBuilder(options), has_comment_option);
-    }
+    PrepareCursorOptions(options, operation.impl_->max_server_time, operation.impl_->has_comment_option, context);
 
     auto pipeline_doc = operation.impl_->pipeline.GetInternalArrayDocument();
     const bson_t* native_pipeline_bson_ptr = pipeline_doc.GetBson().get();
@@ -1010,7 +1193,7 @@ Cursor CDriverCollectionImpl::Execute(const operations::Aggregate& operation) {
         MONGOC_QUERY_NONE,
         native_pipeline_bson_ptr,
         impl::GetNative(options),
-        operation.impl_->read_prefs.Get()
+        read_prefs.Get()
     ));
     return Cursor(std::make_unique<impl::cdriver::CDriverCursorImpl>(
         std::move(context.client),
@@ -1037,61 +1220,45 @@ void CDriverCollectionImpl::Execute(const operations::Drop& operation) {
     }
 }
 
-cdriver::CDriverPoolImpl::BoundClientPtr CDriverCollectionImpl::GetClient(stats::OperationStatisticsItem& stats) const {
-    try {
-        // uasserted in ctor
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        return static_cast<cdriver::CDriverPoolImpl*>(pool_impl_.get())->Acquire();
-    } catch (const CancelledException& ex) {
-        stats.Account(stats::ErrorType::kCancelled);
-        auto& span = tracing::Span::CurrentSpan();
-        if (ex.IsByDeadlinePropagation()) {
-            span.AddTag(kCancelledByDeadlineTag, true);
-        } else {
-            span.AddTag(kCancelledTag, true);
-        }
-        throw;
-    } catch (const PoolOverloadException& /*ex*/) {
-        stats.Account(stats::ErrorType::kPoolOverload);
-        throw;
-    }
+cdriver::CDriverPoolImpl& CDriverCollectionImpl::GetPool() const {
+    // uasserted in ctor
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    return *static_cast<cdriver::CDriverPoolImpl*>(pool_impl_.get());
 }
 
-RequestContext CDriverCollectionImpl::MakeRequestContext(std::string&& span_name, const stats::OperationKey& stats_key)
-    const {
-    auto span = MakeSpan(std::move(span_name));
-    auto stats = statistics_->items[stats_key];
-    auto dynamic_config = pool_impl_->GetConfig();
+cdriver::CDriverPoolImpl::BoundClientPtr CDriverCollectionImpl::GetClient(stats::OperationStatisticsItem& stats) const {
+    return AcquireClient(GetPool(), stats);
+}
 
-    // first deadline check, to make sure we dont get/wait for client if deadline is already reached.
-    auto timeout_ms = GetTimeoutOrThrow(dynamic_config, *stats, span);
-    if (timeout_ms) {
-        span.AddTag(tracing::kTimeoutMs, timeout_ms->count());
-    }
+mongoc_client_session_t* CDriverCollectionImpl::GetSession() const { return nullptr; }
 
-    auto client = GetClient(*stats);
-    cdriver::CollectionPtr
-        collection(mongoc_client_get_collection(client.get(), GetDatabaseName().c_str(), GetCollectionName().c_str()));
-
-    // The second deadline check, to make sure we did not hit deadline after waiting or creating a new client.
-    timeout_ms = timeout_ms ? GetTimeoutOrThrow(dynamic_config, *stats, span) : timeout_ms;
-    if (timeout_ms) {
-        span.AddTag(tracing::kTimeoutMs, timeout_ms->count());
-    }
-
-    return RequestContext{
-        std::move(stats),
-        std::move(dynamic_config),
-        std::move(client),
-        std::move(collection),
-        std::move(span),
-        timeout_ms,
-    };
+CollectionRequestContext CDriverCollectionImpl::MakeRequestContext(
+    std::string&& span_name,
+    const stats::OperationKey& stats_key
+) const {
+    auto base = MakeRequestContextBase(
+        MakeSpan(std::move(span_name)),
+        statistics_->items[stats_key],
+        pool_impl_->GetConfig(),
+        [this](stats::OperationStatisticsItem& stats) { return GetClient(stats); }
+    );
+    CollectionPtr collection(
+        mongoc_client_get_collection(base.client.get(), GetDatabaseName().c_str(), GetCollectionName().c_str())
+    );
+    return CollectionRequestContext{std::move(base), std::move(collection)};
 }
 
 template <typename Operation>
-RequestContext CDriverCollectionImpl::MakeRequestContext(std::string&& span_name, const Operation& operation) const {
+CollectionRequestContext CDriverCollectionImpl::MakeRequestContext(std::string&& span_name, const Operation& operation)
+    const {
     return MakeRequestContext(std::move(span_name), operation.impl_->op_key);
+}
+
+ReadPrefsPtr CDriverCollectionImpl::MakeEffectiveReadPrefs(const ReadPrefsPtr& operation_read_prefs) const {
+    // Uasserted in ctor.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    const auto& pool = static_cast<const CDriverPoolImpl&>(*pool_impl_);
+    return MakeReadPrefsWithDefaultMaxStaleness(operation_read_prefs, pool.GetMaxReplicationLag());
 }
 
 }  // namespace storages::mongo::impl::cdriver

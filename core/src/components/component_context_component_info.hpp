@@ -104,6 +104,8 @@ public:
 
     utils::ResourceScopeStorage& GetScopes();
 
+    void BeforeDestruction();
+
 private:
     bool HasComponent() const;
     std::unique_ptr<RawComponentBase> ExtractComponent();

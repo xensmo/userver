@@ -206,12 +206,7 @@ INSTANTIATE_UTEST_SUITE_P(
     ConnectionSettings,
     PostgreConnection,
     ::testing::Combine(
-        ::testing::Values(
-            kCachePreparedStatements,
-            kPipelineEnabled,
-            kOmitDescribeAndPipelineEnabled,
-            kMaxPreparedCacheSize3
-        ),
+        ::testing::Values(kCachePreparedStatements, kMaxPreparedCacheSize3),
         ::testing::Values(ConnectionMode::kDirect, ConnectionMode::kChaosProxy)
     ),
     [](const testing::TestParamInfo<PostgreConnection::ParamType>& info) {
@@ -220,20 +215,10 @@ INSTANTIATE_UTEST_SUITE_P(
         const auto& connection_params = std::get<0>(info.param);
         const auto connection_mode = std::get<1>(info.param);
 
-        if (connection_params.pipeline_mode == pg::PipelineMode::kEnabled) {
-            name = "PipelineEnabled";
-        } else {
-            name = "PipelineDisabled";
-        }
-
         if (connection_params.max_prepared_cache_size == storages::postgres::kMinPreparedStatementsCacheSize) {
-            name.append("_MinPreparedCacheSize");
-        }
-
-        if (connection_params.omit_describe_mode == pg::OmitDescribeInExecuteMode::kEnabled) {
-            name.append("_DontSendDescribe");
+            name = "MinPreparedCacheSize_";
         } else {
-            name.append("_SendDescribe");
+            name = "CachePreparedStatements";
         }
 
         if (connection_mode == ConnectionMode::kChaosProxy) {

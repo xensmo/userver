@@ -16,6 +16,7 @@
 #include <userver/server/congestion_control/sensor.hpp>
 #include <userver/utils/function_ref.hpp>
 #include <userver/utils/impl/internal_tag_fwd.hpp>
+#include <userver/utils/resource_scopes_fwd.hpp>
 #include <userver/utils/statistics/fwd.hpp>
 #include <userver/yaml_config/fwd.hpp>
 
@@ -24,10 +25,6 @@
 #include <userver/ugrpc/server/service_base.hpp>
 
 USERVER_NAMESPACE_BEGIN
-
-namespace utils {
-class ResourceScopeStorage;
-}  // namespace utils
 
 namespace ugrpc::impl {
 class CompletionQueuePoolBase;
@@ -93,8 +90,7 @@ public:
     explicit Server(
         utils::ResourceScopeStorage& scope_storage,
         ServerConfig&& config,
-        utils::statistics::Storage& statistics_storage,
-        dynamic_config::Source config_source
+        utils::statistics::Storage& statistics_storage
     );
 
     Server(Server&&) = delete;

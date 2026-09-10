@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 
 #include <mongoc/mongoc.h>
 #include <moodycamel/concurrentqueue.h>
@@ -116,6 +117,7 @@ public:
     };
 
     CDriverPoolImpl(
+        utils::ResourceScopeStorage& scopes,
         std::string id,
         const std::string& uri_string,
         const PoolConfig& config,
@@ -126,6 +128,7 @@ public:
     ~CDriverPoolImpl() override;
 
     const std::string& DefaultDatabaseName() const override;
+    const std::optional<std::chrono::seconds>& GetMaxReplicationLag() const;
 
     void Ping() override;
 
@@ -137,6 +140,12 @@ public:
 
     /// @throws CancelledException, PoolOverloadException
     BoundClientPtr Acquire();
+
+    bool IsBulkWriteSupported() const;
+
+    void RecheckBulkWriteSupport(mongoc_client_t* client);
+
+    void MarkBulkWriteUnsupported();
 
     void SetPoolSettings(const PoolSettings& pool_settings) override;
 
@@ -166,6 +175,8 @@ private:
     std::atomic<size_t> idle_limit_;
     const std::chrono::milliseconds queue_timeout_;
     std::atomic<size_t> size_;
+    enum class BulkWriteSupport { kUnknown, kSupported, kUnsupported };
+    std::atomic<BulkWriteSupport> bulk_write_support_{BulkWriteSupport::kUnknown};
     engine::Semaphore in_use_semaphore_;
     engine::Semaphore connecting_semaphore_;
     const PoolConfig pool_config_;

@@ -19,6 +19,15 @@ namespace ydb {
 
 namespace {
 
+template <typename Settings>
+void EnableAsyncExecutionMode(Settings& settings) {
+    // AsyncExecutionMode is available in newer SDK revisions, but not in the
+    // released 3.21.0 and 3.21.1 tags.
+    if constexpr (requires { settings.AsyncExecutionMode(true); }) {
+        settings.AsyncExecutionMode(true);
+    }
+}
+
 void ResetSimpleWriteSessionHandlers(NYdb::NTopic::TWriteSessionSettings::TEventHandlers& handlers) {
     // Keep this decomposition exhaustive so that adding a field in the YDB SDK
     // requires an explicit decision here.
@@ -286,8 +295,12 @@ TopicSimpleWriteSession TopicClient::CreateSimpleWriteSession(const NYdb::NTopic
     return TopicSimpleWriteSession{topic_client_->CreateWriteSession(simple_write_session_settings)};
 }
 
-TopicProducer TopicClient::CreateProducer(const NYdb::NTopic::TProducerSettings& settings) {
-    return TopicProducer{topic_client_->CreateProducer(settings)};
+TopicProducer TopicClient::CreateProducer(const TopicProducerSettings& settings, std::uint64_t max_memory_usage_bytes) {
+    auto native_settings = static_cast<const NYdb::NTopic::TProducerSettings&>(settings);
+    native_settings.MaxMemoryUsage(max_memory_usage_bytes);
+    native_settings.MaxBlockTimeout(TDuration::Zero());
+    EnableAsyncExecutionMode(native_settings);
+    return TopicProducer{topic_client_->CreateProducer(native_settings)};
 }
 
 NYdb::NTopic::TTopicClient& TopicClient::GetNativeTopicClient() USERVER_IMPL_LIFETIME_BOUND {

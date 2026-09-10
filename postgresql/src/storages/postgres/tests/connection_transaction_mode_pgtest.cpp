@@ -262,7 +262,7 @@ UTEST_F(PostgreTransactionModeConnection, DuplicatePreparedStatementDirtyConnect
 }
 
 UTEST_F(PostgreTransactionModeConnection, PipelineTransactionPoolerAutocommitAppliesTimeoutWithoutTransaction) {
-    const auto conn = MakeConn(kPipelineEnabled);
+    const auto conn = MakeConn();
 
     const DefaultCommandControlScope scope{kTransactionPoolerCmdCtl};
 
@@ -299,7 +299,7 @@ UTEST_F(PostgreTransactionModeConnection, PipelineTransactionPoolerAutocommitApp
 }
 
 UTEST_F(PostgreTransactionModeConnection, PipelineTransactionPoolerCancelledAutocommitLeavesConnectionUsable) {
-    const auto conn = MakeConn(kPipelineEnabled);
+    const auto conn = MakeConn();
 
     const DefaultCommandControlScope scope{kTransactionPoolerCmdCtl};
 
@@ -394,10 +394,8 @@ UTEST_F(PostgreTransactionModeConnection, DuplicatePreparedStatementInUserTransa
 
     const DefaultCommandControlScope scope{kTransactionPoolerDefaultCmdCtl};
 
-    const auto conn = MakeConn(kPipelineEnabled);
-    if (!conn->IsPipelineActive()) {
-        return;
-    }
+    const auto conn = MakeConn();
+    conn->AssertPipelineActive();
 
     UEXPECT_NO_THROW(conn->Execute("PREPARE " + statement_name + " AS SELECT 42", {}, kTransactionPoolerNoPrepareCmdCtl)
     );

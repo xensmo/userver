@@ -38,7 +38,7 @@ std::string_view ToStringView(IsolationLevel lvl);
 /// @brief PostgreSQL transaction options
 ///
 /// A transaction can be started using all isolation levels and modes
-/// supported by PostgreSQL server as specified in it's documentation.
+/// supported by PostgreSQL server as specified in its documentation.
 ///
 /// Default isolation level is READ COMMITTED, default mode is READ WRITE.
 /// @code
@@ -97,7 +97,7 @@ USERVER_NAMESPACE::utils::StringLiteral BeginStatement(TransactionOptions opts) 
 /// * connecting to PostgreSQL server, if there are no connections available and
 ///   connection pool still has space for new connections;
 /// * waiting for a connection to become idle if there are no idle connections
-///   and connection pool already has reached it's max size;
+///   and connection pool already has reached its max size;
 /// * preparing a statement if the statement is run for the first time on the
 ///   connection;
 /// * binding parameters and executing the statement;
@@ -181,10 +181,7 @@ inline constexpr std::size_t kDefaultPoolMaxQueueSize = 200;
 inline constexpr std::size_t kDefaultConnectingLimit = 0;
 
 /// Default minimum time between starting new connections per host in milliseconds
-inline constexpr std::size_t kDefaultConnectingIntervalMs = 0;
-
-/// Default connecting interval when pg-connecting-rate-limit experiment is enabled
-inline constexpr std::size_t kExperimentDefaultConnectingIntervalMs = 4000;
+inline constexpr std::size_t kDefaultConnectingIntervalMs = 4000;
 
 /// @brief PostgreSQL topology options
 ///
@@ -239,19 +236,11 @@ inline constexpr std::size_t kMinPreparedStatementsCacheSize = 3;
 /// Default size limit for prepared statements cache
 inline constexpr std::size_t kDefaultMaxPreparedCacheSize = 200;
 
-/// Pipeline mode configuration
-///
-/// Dynamic option @ref POSTGRES_CONNECTION_PIPELINE_EXPERIMENT
-enum class PipelineMode { kDisabled, kEnabled };
-
-/// Whether to omit excessive D(escribe) message
-/// when executing prepared statements
-///
-/// Dynamic option @ref POSTGRES_OMIT_DESCRIBE_IN_EXECUTE
-enum class OmitDescribeInExecuteMode { kDisabled, kEnabled };
-
 /// Connection pooler mode (e.g. Odyssey / PgBouncer)
-enum class PoolerMode { kSession, kTransaction };
+enum class PoolerMode {
+    kSession,      ///< One client connection maps to one server connection
+    kTransaction,  ///< Server connection is assigned for the duration of a transaction
+};
 
 /// PostgreSQL connection options
 ///
@@ -292,12 +281,6 @@ struct ConnectionSettings {
     /// Limits the size or prepared statements cache
     std::size_t max_prepared_cache_size = kDefaultMaxPreparedCacheSize;
 
-    /// Turns on connection pipeline mode
-    PipelineMode pipeline_mode = PipelineMode::kDisabled;
-
-    /// Enables protocol-level optimization when executing prepared statements
-    OmitDescribeInExecuteMode omit_describe_mode = OmitDescribeInExecuteMode::kDisabled;
-
     /// This many connection errors in 15 seconds block new connections opening
     std::size_t recent_errors_threshold = 30;
 
@@ -305,7 +288,7 @@ struct ConnectionSettings {
     std::optional<std::chrono::seconds> max_ttl{};
 
     /// Execute DISCARD ALL after establishing a new connection
-    /// Has effect only in session pooler mode (@ref PoolerMode::kSession)
+    /// Has effect only in session pooler mode (@ref storages::postgres::PoolerMode::kSession)
     DiscardOnConnectOptions discard_on_connect = kDiscardAll;
 
     /// Statement logging in span tags
@@ -328,9 +311,8 @@ struct ConnectionSettings {
         // TODO: max_prepared_cache_size check could be relaxed
         return prepared_statements != rhs.prepared_statements || user_types != rhs.user_types ||
                ignore_unused_query_params != rhs.ignore_unused_query_params ||
-               max_prepared_cache_size != rhs.max_prepared_cache_size || pipeline_mode != rhs.pipeline_mode ||
-               max_ttl != rhs.max_ttl || discard_on_connect != rhs.discard_on_connect ||
-               omit_describe_mode != rhs.omit_describe_mode || application_name != rhs.application_name ||
+               max_prepared_cache_size != rhs.max_prepared_cache_size || max_ttl != rhs.max_ttl ||
+               discard_on_connect != rhs.discard_on_connect || application_name != rhs.application_name ||
                pooler_mode != rhs.pooler_mode;
     }
 };
@@ -344,6 +326,7 @@ struct ConnectionSettingsDynamic final {
     std::optional<std::chrono::seconds> max_ttl{};
     std::optional<ConnectionSettings::DiscardOnConnectOptions> discard_on_connect{};
     std::optional<bool> deadline_propagation_enabled{};
+    std::optional<PoolerMode> pooler_mode{};
 };
 
 /// @brief PostgreSQL statements metrics options

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
+#include <optional>
 
 #include <mongoc/mongoc.h>
 
@@ -8,7 +10,9 @@ USERVER_NAMESPACE_BEGIN
 
 namespace storages::mongo::impl::cdriver {
 
-// driver cannot be reinitialized after cleanup!
+// Constructed once before main in wrappers.cpp. mongoc_init calls getenv,
+// which is not ASan-safe on a coroutine stack. The driver cannot be
+// reinitialized after cleanup.
 class GlobalInitializer {
 public:
     GlobalInitializer();
@@ -17,6 +21,9 @@ public:
     // Call when it's safe to use logger, will only log once.
     static void LogInitWarningsOnce();
 };
+
+// ODR-use from CDriverPoolImpl so the linker keeps this TU when the pool is used.
+extern const GlobalInitializer kInitMongoc;
 
 struct BulkOperationDeleter {
     void operator()(mongoc_bulk_operation_t* bulk) const noexcept { mongoc_bulk_operation_destroy(bulk); }
@@ -116,6 +123,18 @@ public:
 private:
     mongoc_read_prefs_t* read_prefs_{nullptr};
 };
+
+struct ServerDescriptionDeleter {
+    void operator()(mongoc_server_description_t* description) const noexcept {
+        mongoc_server_description_destroy(description);
+    }
+};
+using ServerDescriptionPtr = std::unique_ptr<mongoc_server_description_t, ServerDescriptionDeleter>;
+
+ReadPrefsPtr MakeReadPrefsWithDefaultMaxStaleness(
+    const ReadPrefsPtr& read_prefs,
+    const std::optional<std::chrono::seconds>& default_max_staleness
+);
 
 struct StreamDeleter {
     void operator()(mongoc_stream_t* stream) const noexcept { mongoc_stream_destroy(stream); }

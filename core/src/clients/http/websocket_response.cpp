@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <span>
 #include <string_view>
 
 #include <curl-ev/native.hpp>
@@ -72,6 +73,19 @@ void AppendFrame(
     out.append(payload);
 }
 
+template <class Easy, class MetaPtr>
+auto WorkaroundCurlWsRecv(Easy* easy, std::span<char> buffer, size_t& nread, MetaPtr& meta) {
+    if constexpr (requires { curl::native::curl_ws_recv(easy, buffer.data(), buffer.size(), &nread, &meta); }) {
+        return curl::native::curl_ws_recv(easy, buffer.data(), buffer.size(), &nread, &meta);
+    } else {
+        // old curl libraries have no `const`
+        curl::native::curl_ws_frame* meta_nonconst = nullptr;
+        const auto code = curl::native::curl_ws_recv(easy, buffer.data(), buffer.size(), &nread, &meta_nonconst);
+        meta = meta_nonconst;
+        return code;
+    }
+}
+
 // Drain post-upgrade WebSocket bytes buffered by libcurl CONNECT_ONLY=2.
 //
 // Why we cannot just return curl's buffer "as is" on libcurl 8.17:
@@ -104,8 +118,9 @@ std::string DrainCurlWebSocketPreambleImpl(curl::native::CURL* easy) {
     while (true) {
         char buffer[kWsRecvChunkSize];
         size_t nread = 0;
+
         const curl::native::curl_ws_frame* meta = nullptr;
-        const auto rc = curl::native::curl_ws_recv(easy, buffer, sizeof(buffer), &nread, &meta);
+        const auto rc = WorkaroundCurlWsRecv(easy, buffer, nread, meta);
 
         if (rc == curl::native::CURLE_AGAIN) {
             break;
@@ -191,7 +206,8 @@ std::shared_ptr<websocket::WebSocketConnection> WebSocketResponse::MakeWebSocket
     }
 
     auto socket = std::make_unique<engine::io::Socket>(socket_.GetNative());
-    auto addr = socket->Getsockname();
+    auto addr = socket->Getpeername();
+
     std::move(socket_).Release();
 
     std::unique_ptr<engine::io::RwBase> rw = std::move(socket);

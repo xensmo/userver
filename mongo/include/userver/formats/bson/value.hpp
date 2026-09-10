@@ -34,7 +34,7 @@ class ValueBuilder;
 ///
 /// ## Example usage:
 ///
-/// @snippet formats/bson/value_test.cpp  Sample formats::bson::Value usage
+/// @snippet mongo/src/formats/bson/value_test.cpp  Sample formats::bson::Value usage
 ///
 /// @see @ref scripts/docs/en/userver/formats.md
 ///
@@ -159,7 +159,7 @@ public:
     ///
     /// ## Example usage:
     ///
-    /// @snippet formats/bson/value_test.cpp  Sample formats::bson::Value::As<T>() usage
+    /// @snippet mongo/src/formats/bson/value_test.cpp  Sample formats::bson::Value::As<T>() usage
     ///
     /// @see @ref scripts/docs/en/userver/formats.md
     template <typename T>
@@ -250,10 +250,10 @@ public:
     /// @brief Returns an array as its internal representation (BSON document),
     /// internal use only
     Document GetInternalArrayDocument() const;
-    /// @endcond
 
-protected:
+    /// Native type access, internal use only
     const impl::BsonHolder& GetBson() const;
+    /// @endcond
 
 private:
     friend class ValueBuilder;

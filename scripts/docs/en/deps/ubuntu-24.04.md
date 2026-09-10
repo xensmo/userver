@@ -23,6 +23,7 @@ libcrypto++-dev
 libcurl4-openssl-dev
 libdouble-conversion-dev
 libev-dev
+liburing-dev
 libfmt-dev
 libgflags-dev
 libgmock-dev
@@ -54,8 +55,6 @@ libssl-dev
 libxxhash-dev
 libyaml-cpp-dev
 libyaml-cpp0.8
-libydb-cpp-dev
-libydb-cpp-iam-dev
 libzstd-dev
 netbase
 ninja-build

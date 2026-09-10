@@ -38,6 +38,8 @@ const auto kStatisticsName = "redis";
 
 namespace components {
 
+namespace {
+
 struct RedisPools {
     int sentinel_thread_pool_size;
     int redis_thread_pool_size;
@@ -50,6 +52,8 @@ RedisPools Parse(const yaml_config::YamlConfig& value, formats::parse::To<RedisP
     return pools;
 }
 
+}  // namespace
+
 DynamicRedis::DynamicRedis(const ComponentConfig& config, const ComponentContext& component_context)
     : ComponentBase(config, component_context),
       testsuite_redis_control_(component_context.FindComponent<components::TestsuiteSupport>().GetRedisControl()),
@@ -61,7 +65,7 @@ DynamicRedis::DynamicRedis(const ComponentConfig& config, const ComponentContext
         storages::redis::impl::ThreadPools>(redis_pools.sentinel_thread_pool_size, redis_pools.redis_thread_pool_size);
     dynamic_redis_.Init(thread_pools_, testsuite_redis_control_);
 
-    config_subscription_ = config_.UpdateAndListen(this, "dynamic-redis", &DynamicRedis::OnConfigUpdate);
+    config_.UpdateAndListen(component_context.Scopes(), this, "dynamic-redis", &DynamicRedis::OnConfigUpdate);
     utils::statistics::RegisterWriterScope(
         component_context,
         kStatisticsName,
@@ -69,7 +73,7 @@ DynamicRedis::DynamicRedis(const ComponentConfig& config, const ComponentContext
     );
 }
 
-DynamicRedis::~DynamicRedis() { config_subscription_.Unsubscribe(); }
+DynamicRedis::~DynamicRedis() = default;
 
 bool DynamicRedis::AddClient(const std::string& name, const storages::redis::DynamicSettings& dyn_settings) {
     return dynamic_redis_.AddClient(name, dyn_settings, config_);

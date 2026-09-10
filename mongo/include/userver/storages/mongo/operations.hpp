@@ -10,6 +10,10 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace storages::mongo::impl {
+class Database;
+}  // namespace storages::mongo::impl
+
 namespace storages::mongo::impl::cdriver {
 class CDriverCollectionImpl;
 class CDriverTransactionCollectionImpl;
@@ -186,13 +190,14 @@ public:
     void SetOption(options::WriteConcern::Level);
     void SetOption(const options::WriteConcern&);
     void SetOption(options::SuppressServerExceptions);
+    void SetOption(const options::MaxServerTime&);
 
 private:
     friend class storages::mongo::impl::cdriver::CDriverCollectionImpl;
     friend class storages::mongo::impl::cdriver::CDriverTransactionCollectionImpl;
 
     class Impl;
-    static constexpr size_t kSize = 96;
+    static constexpr size_t kSize = 104;
     static constexpr size_t kAlignment = 8;
     // MAC_COMPAT: std::string size differs
     utils::FastPimpl<Impl, kSize, kAlignment, false> impl_;
@@ -204,6 +209,12 @@ public:
     enum class Mode { kSingle, kMulti };
 
     Update(Mode mode, formats::bson::Document selector, formats::bson::Document update);
+
+    /// @brief Creates an update operation with an aggregation pipeline
+    /// @note `update` must be either an update document or an aggregation pipeline array
+    /// @note Available starting in MongoDB 4.2
+    Update(Mode mode, formats::bson::Document selector, formats::bson::Value update);
+
     ~Update();
 
     Update(const Update&);
@@ -217,6 +228,7 @@ public:
     void SetOption(const options::WriteConcern&);
     void SetOption(options::SuppressServerExceptions);
     void SetOption(const options::ArrayFilters&);
+    void SetOption(const options::MaxServerTime&);
 
     /// @note Available starting in MongoDB 4.2.1
     void SetOption(const options::Hint&);
@@ -226,7 +238,7 @@ private:
     friend class storages::mongo::impl::cdriver::CDriverTransactionCollectionImpl;
 
     class Impl;
-    static constexpr size_t kSize = 96;
+    static constexpr size_t kSize = 104;
     static constexpr size_t kAlignment = 8;
     // MAC_COMPAT: std::string size differs
     utils::FastPimpl<Impl, kSize, kAlignment, false> impl_;
@@ -348,6 +360,7 @@ public:
     void SetOption(const options::MaxServerTime&);
 
 private:
+    friend class storages::mongo::impl::Database;
     friend class storages::mongo::impl::cdriver::CDriverCollectionImpl;
     friend class storages::mongo::impl::cdriver::CDriverTransactionCollectionImpl;
 

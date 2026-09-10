@@ -20,6 +20,7 @@
 #include <userver/utils/algo.hpp>
 #include <userver/utils/fast_scope_guard.hpp>
 #include <userver/utils/impl/intrusive_link_mode.hpp>
+#include <userver/utils/resource_scopes.hpp>
 #include <userver/utils/task_builder.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -190,6 +191,23 @@ CacheResetRegistration CacheControl::RegisterPeriodicCache(cache::CacheUpdateTra
     return CacheResetRegistration(*this, std::move(iter));
 }
 
+CacheResetRegistration CacheControl::RegisterCache(
+    utils::impl::InternalTag,
+    std::string_view name,
+    std::function<void(cache::UpdateType)> reset
+) {
+    UASSERT(reset);
+
+    CacheInfo info{
+        .name = std::string{name},
+        .reset = std::move(reset),
+        .needs_span = true,
+    };
+
+    auto iter = DoRegisterCache(std::move(info));
+    return CacheResetRegistration(*this, std::move(iter));
+}
+
 void CacheControl::DoResetCaches(
     cache::UpdateType update_type,
     std::unordered_set<std::string>* reset_only_names,
@@ -339,6 +357,18 @@ void CacheResetRegistration::Unregister() noexcept {
         cache_control_ = nullptr;
     }
 }
+
+namespace impl {
+
+void DoRegisterCacheScope(const components::ComponentContext& context, std::function<void(cache::UpdateType)> reset) {
+    auto& cc = testsuite::FindCacheControl(context);
+    auto name = std::string{components::GetCurrentComponentName(context)};
+    context.Scopes().Register([&cc, name = std::move(name), reset = std::move(reset)]() mutable {
+        return cc.RegisterCache(utils::impl::InternalTag{}, name, std::move(reset));
+    });
+}
+
+}  // namespace impl
 
 CacheControl& FindCacheControl(const components::ComponentContext& context) {
     return context.FindComponent<components::TestsuiteSupport>().GetCacheControl();

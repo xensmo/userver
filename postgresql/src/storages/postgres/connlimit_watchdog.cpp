@@ -11,7 +11,6 @@ namespace storages::postgres {
 
 namespace {
 constexpr CommandControl kCommandControl{std::chrono::seconds(2), std::chrono::seconds(2)};
-constexpr std::size_t kTestsuiteConnlimit = 100;
 constexpr std::size_t kMinReservedConnections = 2;
 constexpr std::size_t kMaxReservedConnections = 10;
 constexpr double kReservedConnectionsPercentage = 0.05;
@@ -48,6 +47,7 @@ ConnlimitWatchdog::ConnlimitWatchdog(
     int shard_number,
     std::size_t min_fallback_connections,
     std::function<void()> on_new_connlimit,
+    std::size_t non_pool_connections_per_instance,
     std::string host_name
 )
     : cluster_(cluster),
@@ -56,6 +56,7 @@ ConnlimitWatchdog::ConnlimitWatchdog(
       testsuite_tasks_(testsuite_tasks),
       shard_number_(shard_number),
       min_fallback_connections_(std::max(min_fallback_connections, kDefaultPoolMinSize)),
+      non_pool_connections_per_instance_(non_pool_connections_per_instance),
       host_name_(std::move(host_name))
 {}
 
@@ -82,17 +83,13 @@ void ConnlimitWatchdog::Start() {
     }
 
     if (testsuite_tasks_.IsEnabled()) {
-        connlimit_ = kTestsuiteConnlimit;
         testsuite_tasks_
             .RegisterTask(fmt::format("connlimit_watchdog_{}_{}", cluster_.GetDbName(), shard_number_), [this] {
                 StepV1();
             });
     } else {
-        periodic_.Start(
-            "connlimit_watchdog",
-            {std::chrono::seconds(2), {}, {USERVER_NAMESPACE::utils::PeriodicTask::Flags::kNow}},
-            [this] { StepV2(); }
-        );
+        StepV2();
+        periodic_.Start("connlimit_watchdog", {std::chrono::seconds(2)}, [this] { StepV2(); });
     }
 }
 
@@ -188,13 +185,18 @@ void ConnlimitWatchdog::UpdateConnectionsLimit(std::size_t max_connections, std:
     }
 
     auto new_connlimit = max_connections / instances;
-    if (new_connlimit == 0) {
+    if (new_connlimit > non_pool_connections_per_instance_) {
+        new_connlimit -= non_pool_connections_per_instance_;
+    } else {
+        // ConnectionPool does not support max_size=0. Keep one pool connection
+        // even when the server limit is insufficient for all non-pool connections.
         new_connlimit = 1;
     }
     auto previous_connlimit = connlimit_.exchange(new_connlimit);
     LOG((previous_connlimit == new_connlimit) ? logging::Level::kDebug : logging::Level::kWarning
     ) << "max_connections = "
-      << max_connections << ", instances = " << instances << ", connlimit = " << new_connlimit;
+      << max_connections << ", instances = " << instances << ", non_pool_connections_per_instance = "
+      << non_pool_connections_per_instance_ << ", connlimit = " << new_connlimit;
 }
 
 }  // namespace storages::postgres

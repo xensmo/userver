@@ -1,5 +1,6 @@
 #include <userver/websocket/impl/protocol.hpp>
 
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
@@ -12,6 +13,7 @@
 #include <userver/utils/assert.hpp>
 #include <userver/utils/rand.hpp>
 #include <userver/utils/span.hpp>
+#include <userver/utils/underlying_value.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
@@ -110,12 +112,12 @@ boost::container::small_vector<char, impl::kMaxFrameHeaderSize> DataFrameHeader(
 
     if (payload_len <= 125) {
         hdr->bits.payload_len = payload_len;
-    } else if (payload_len <= INT16_MAX) {
+    } else if (payload_len <= UINT16_MAX) {
         hdr->bits.payload_len = 126;
-        PushRaw(boost::endian::native_to_big(static_cast<std::int16_t>(payload_len)), frame);
+        PushRaw(boost::endian::native_to_big(static_cast<std::uint16_t>(payload_len)), frame);
     } else {
         hdr->bits.payload_len = 127;
-        PushRaw(boost::endian::native_to_big(payload_len), frame);
+        PushRaw(boost::endian::native_to_big(static_cast<std::uint64_t>(payload_len)), frame);
     }
 
     return frame;
@@ -128,7 +130,18 @@ std::array<char, sizeof(WSHeader)> MakeControlFrame(WSOpcodes opcode, std::size_
     hdr->bytes = 0;
     hdr->bits.fin = 1;
     hdr->bits.opcode = opcode;
+
+    static constexpr std::size_t kMaxPayload = 125;
+    UASSERT_MSG(
+        payload_len <= kMaxPayload,
+        fmt::format(
+            "Violation of RFC 6455 for opcode {:x}: All control frames MUST have a payload length of 125 bytes or "
+            "less...",
+            utils::UnderlyingValue(opcode)
+        )
+    );
     hdr->bits.payload_len = payload_len;
+
     hdr->bits.mask = is_masked == Masked::kYes ? 1 : 0;
 
     return frame;

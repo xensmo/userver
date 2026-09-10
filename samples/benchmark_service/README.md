@@ -45,3 +45,21 @@ Optional HttpArena-style environment:
 
 - `DATABASE_URL` — PostgreSQL DSN
 - `DATABASE_MAX_CONN` — pool size (`min_pool_size` / `max_pool_size`)
+
+## Local benchmark (HttpArena-style)
+
+Cap all cores at 2.1 GHz for reproducible runs (needs root / `linux-tools`):
+
+```bash
+sudo cpupower frequency-set -d 2.1GHz -u 2.1GHz
+# restore later, e.g.: sudo cpupower frequency-set -d 400MHz -u 4.4GHz
+```
+
+```bash
+./bench.sh --list
+./bench.sh --out ~/out --bin ./userver-functional-test-service -- json
+./bench.sh --out ~/out --flame --bin ./userver-functional-test-service --duration 10s --conns 128 --runs 3 -- json
+```
+
+Flags are `--long` only; `--out DIR` is required (artifacts go there, not into
+the repo). Profiles after `--` (or trailing). Needs `wrk` and `curl`.

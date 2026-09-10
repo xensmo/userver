@@ -14,7 +14,6 @@
 #include <userver/storages/postgres/dsn.hpp>
 #include <userver/storages/postgres/exceptions.hpp>
 #include <userver/storages/postgres/query_queue.hpp>
-#include <userver/utils/impl/userver_experiments.hpp>
 #include <userver/utils/statistics/metrics_storage.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -41,8 +40,8 @@ std::shared_ptr<pg::detail::ConnectionPool> CreateCleanupPool(
     const pg::Dsn& dsn,
     engine::TaskProcessor& task_processor,
     pg::InitMode init_mode,
-    pg::PoolSettings pool_settings = pg::PoolSettings{1, 1, 10},
-    pg::CommandControl command_control = pg::CommandControl{std::chrono::milliseconds{100}, std::chrono::seconds{1}}
+    pg::CommandControl command_control,
+    pg::PoolSettings pool_settings = pg::PoolSettings{1, 1, 10}
 ) {
     return pg::detail::ConnectionPool::Create(
         dsn,
@@ -51,7 +50,7 @@ std::shared_ptr<pg::detail::ConnectionPool> CreateCleanupPool(
         "",
         init_mode,
         pool_settings,
-        kPipelineEnabled,
+        kCachePreparedStatements,
         {},
         storages::postgres::DefaultCommandControls(command_control, {}, {}),
         testsuite::PostgresControl{},
@@ -76,6 +75,21 @@ void WaitCleanupFinished(const std::shared_ptr<pg::detail::ConnectionPool>& pool
     }
 
     FAIL() << "Timed out waiting for cleanup task completion";
+}
+
+void WaitForPoolSize(const std::shared_ptr<pg::detail::ConnectionPool>& pool, std::size_t expected_size) {
+    constexpr auto kWaitTimeout = std::chrono::seconds{5};
+    constexpr auto kStep = std::chrono::milliseconds{20};
+
+    const auto deadline = engine::Deadline::FromDuration(kWaitTimeout);
+    while (!deadline.IsReached()) {
+        if (pool->GetStatistics().connection.open_total.Load().value >= expected_size) {
+            return;
+        }
+        engine::SleepFor(kStep);
+    }
+
+    FAIL() << "Timed out waiting for pool size " << expected_size;
 }
 
 pg::Rate TriggerCleanupWithExpiredInheritedDeadline(const std::shared_ptr<pg::detail::ConnectionPool>& pool) {
@@ -415,6 +429,67 @@ UTEST_P(PostgrePool, MinPool) {
     EXPECT_EQ(stats.connection.error_total.Load(), 0);
 }
 
+UTEST_P(PostgrePool, WarmUp) {
+    constexpr std::size_t kMinPoolSize = 3;
+    auto pool = pg::detail::ConnectionPool::Create(
+        GetDsnFromEnv(),
+        nullptr,
+        GetTaskProcessor(),
+        "",
+        pg::InitMode::kSync,
+        {kMinPoolSize, kMinPoolSize, 10},
+        kCachePreparedStatements,
+        {},
+        GetTestCmdCtls(),
+        {},
+        {},
+        {},
+        dynamic_config::GetDefaultSource(),
+        std::make_shared<utils::statistics::MetricsStorage>()
+    );
+
+    {
+        auto connection = pool->Acquire(MakeDeadline());
+        connection->Close();
+    }
+    ASSERT_EQ(pool->GetStatistics().connection.active, kMinPoolSize - 1);
+    ASSERT_EQ(pool->GetStatistics().connection.open_total.Load().value, kMinPoolSize);
+
+    pool->WarmUp(pg::InitMode::kSync);
+    EXPECT_EQ(pool->GetStatistics().connection.active, kMinPoolSize);
+    EXPECT_EQ(pool->GetStatistics().connection.open_total.Load().value, kMinPoolSize + 1);
+
+    pool->WarmUp(pg::InitMode::kSync);
+    EXPECT_EQ(pool->GetStatistics().connection.open_total.Load().value, kMinPoolSize + 1);
+}
+
+UTEST_P(PostgrePool, SetSettingsWarmsUpAfterMinSizeIncrease) {
+    constexpr std::size_t kMinPoolSize = 3;
+    auto pool = pg::detail::ConnectionPool::Create(
+        GetDsnFromEnv(),
+        nullptr,
+        GetTaskProcessor(),
+        "",
+        GetParam(),
+        {0, kMinPoolSize, 10},
+        kCachePreparedStatements,
+        {},
+        GetTestCmdCtls(),
+        {},
+        {},
+        {},
+        dynamic_config::GetDefaultSource(),
+        std::make_shared<utils::statistics::MetricsStorage>()
+    );
+
+    EXPECT_EQ(pool->GetStatistics().connection.active, 0);
+
+    pool->SetSettings({kMinPoolSize, kMinPoolSize, 10});
+    WaitForPoolSize(pool, kMinPoolSize);
+
+    EXPECT_EQ(pool->GetStatistics().connection.active, kMinPoolSize);
+}
+
 UTEST_P(PostgrePool, ConnectionCleanup) {
     auto pool = pg::detail::ConnectionPool::Create(
         GetDsnFromEnv(),
@@ -469,7 +544,14 @@ UTEST_P(PostgrePool, CleanupTaskUseBackgroundFlagAffectsInheritedDeadlinePropaga
         return;
     }
 
-    auto background_pool = CreateCleanupPool(GetDsnFromEnv(), GetTaskProcessor(), GetParam());
+    // statement_timeout must be shorter than network_timeout so pg_sleep hits
+    // QueryCancelled (server-side) rather than ConnectionTimeoutError (client).
+    auto background_pool = CreateCleanupPool(
+        GetDsnFromEnv(),
+        GetTaskProcessor(),
+        GetParam(),
+        pg::CommandControl{utest::kMaxTestWaitTime, std::chrono::milliseconds{10}}
+    );
     const auto background_behavior_errors = TriggerCleanupWithExpiredInheritedDeadline(background_pool);
     EXPECT_EQ(background_behavior_errors, 0) << "Background cleanup task should not inherit expired request deadline";
 }
@@ -714,7 +796,7 @@ UTEST_P(PostgrePool, ForQueryQueueMoveAssign) {
         "",
         GetParam(),
         {2, 2, 10},
-        kPipelineEnabled,
+        kCachePreparedStatements,
         {},
         GetTestCmdCtls(),
         {},
@@ -726,9 +808,7 @@ UTEST_P(PostgrePool, ForQueryQueueMoveAssign) {
 
     constexpr pg::CommandControl kDefaultCC{utest::kMaxTestWaitTime, utest::kMaxTestWaitTime};
     auto conn = pool->Acquire(MakeDeadline());
-    if (!conn->IsPipelineActive()) {
-        return;
-    }
+    conn->AssertPipelineActive();
 
     pg::QueryQueue query_queue{kDefaultCC, std::move(conn)};
     query_queue.Push(kDefaultCC, "SELECT 1");
@@ -756,7 +836,7 @@ UTEST_P(PostgrePool, ForQueryQueueBeingNonTransactional) {
         "",
         GetParam(),
         {1, 1, 10},
-        kOmitDescribeAndPipelineEnabled,
+        kCachePreparedStatements,
         {},
         GetTestCmdCtls(),
         {},
@@ -769,9 +849,7 @@ UTEST_P(PostgrePool, ForQueryQueueBeingNonTransactional) {
     constexpr pg::CommandControl kDefaultCC{utest::kMaxTestWaitTime, utest::kMaxTestWaitTime};
 
     auto conn = pool->Acquire(MakeDeadline());
-    if (!conn->IsPipelineActive()) {
-        return;
-    }
+    conn->AssertPipelineActive();
     // We pool the same connection, so creating a temporary table is fine
     conn->Execute("CREATE TEMP TABLE qq_non_transactional_test(id INT PRIMARY KEY)");
 
@@ -796,9 +874,6 @@ UTEST_P(PostgrePool, ForQueryQueueBeingNonTransactional) {
 
 UTEST_P(PostgrePool, ConnectionRateLimitSkipsHealthyPool) {
     constexpr std::size_t kHugeConnectingIntervalMs = 60'000;
-
-    utils::impl::UserverExperimentsScope experiments_scope;
-    experiments_scope.Set(utils::impl::kPgConnectingRateLimitExperiment, true);
 
     auto pool = pg::detail::ConnectionPool::Create(
         GetDsnFromEnv(),
@@ -842,9 +917,6 @@ UTEST_P(PostgrePool, ConnectionRateLimitSkipsHealthyPool) {
 UTEST_P(PostgrePool, ConnectionRateLimitThrottlesAfterFailedCleanup) {
     constexpr std::size_t kHugeConnectingIntervalMs = 60'000;
 
-    utils::impl::UserverExperimentsScope experiments_scope;
-    experiments_scope.Set(utils::impl::kPgConnectingRateLimitExperiment, true);
-
     // A short per-statement network timeout is what turns the statements below
     // into dirty connections (they abort with ConnectionTimeoutError while
     // `pg_sleep` is still running server-side).
@@ -863,8 +935,8 @@ UTEST_P(PostgrePool, ConnectionRateLimitThrottlesAfterFailedCleanup) {
         GetDsnFromEnv(),
         GetTaskProcessor(),
         GetParam(),
-        pg::PoolSettings{0, 3, 10, 0, kHugeConnectingIntervalMs},
-        pg::CommandControl{std::chrono::seconds{5}, std::chrono::seconds{30}}
+        pg::CommandControl{std::chrono::seconds{5}, std::chrono::seconds{30}},
+        pg::PoolSettings{0, 3, 10, 0, kHugeConnectingIntervalMs}
     );
 
     const auto errors_before = pool->GetStatistics().connection.error_total.Load();
@@ -915,9 +987,6 @@ UTEST_P(PostgrePool, ConnectionRateLimitThrottlesAfterFailedCleanup) {
 
 UTEST_P(PostgrePool, ConnectionRateLimitThrottlesUnderStress) {
     constexpr std::size_t kHugeConnectingIntervalMs = 60'000;
-
-    utils::impl::UserverExperimentsScope experiments_scope;
-    experiments_scope.Set(utils::impl::kPgConnectingRateLimitExperiment, true);
 
     auto pool = pg::detail::ConnectionPool::Create(
         GetDsnFromEnv(),

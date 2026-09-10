@@ -1,5 +1,7 @@
 #include "driver.hpp"
 
+#include <utility>
+
 #include <ydb-cpp-sdk/client/driver/driver.h>
 #include <ydb-cpp-sdk/client/extensions/solomon_stats/pull_connector.h>
 #include <ydb-cpp-sdk/client/iam/iam.h>
@@ -24,6 +26,7 @@ Driver::Driver(std::string dbname, impl::DriverSettings settings)
     NYdb::TDriverConfig driver_config;
     driver_config.SetEndpoint(settings.endpoint)
         .SetDatabase(settings.database)
+        .SetDiscoveryMode(NYdb::EDiscoveryMode::Async)
         .SetBalancingPolicy(
             settings.prefer_local_dc
                 ? NYdb::EBalancingPolicy::UsePreferableLocation

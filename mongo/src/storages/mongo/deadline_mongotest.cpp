@@ -5,11 +5,16 @@
 #include <userver/server/request/task_inherited_data.hpp>
 #include <userver/testsuite/testpoint.hpp>
 #include <userver/testsuite/testpoint_control.hpp>
+#include <userver/utest/log_capture_fixture.hpp>
 
+#include <storages/mongo/cdriver/request_helpers.hpp>
+#include <storages/mongo/features.hpp>
 #include <storages/mongo/util_mongotest.hpp>
 #include <userver/formats/bson.hpp>
 #include <userver/storages/mongo/collection.hpp>
 #include <userver/storages/mongo/exception.hpp>
+#include <userver/storages/mongo/operators.hpp>
+#include <userver/storages/mongo/options.hpp>
 #include <userver/storages/mongo/pool.hpp>
 #include <userver/tracing/span.hpp>
 
@@ -22,7 +27,7 @@ namespace mongo = storages::mongo;
 
 namespace {
 
-class DeadlinePropagation : public MongoPoolFixture {};
+using DeadlinePropagation = utest::LogCaptureFixture<MongoPoolFixture>;
 
 server::request::TaskInheritedData MakeRequestData(engine::Deadline deadline) {
     return {{}, "dummy-method", {}, deadline};
@@ -79,6 +84,88 @@ UTEST_F(DeadlinePropagation, CancelledByDeadline) {
 
     UEXPECT_THROW(coll.InsertOne(bson::MakeDoc("_id", 2)), mongo::CancelledException);
 }
+
+UTEST_F(DeadlinePropagation, ReplaceOneCancelledByDeadline) {
+    auto coll = GetDefaultPool().GetCollection("dp_replace_one");
+
+    server::request::kTaskInheritedData.Set(MakeRequestData(engine::Deadline::FromDuration(-1s)));
+
+    UEXPECT_THROW(
+        coll.ReplaceOne(bson::MakeDoc("_id", 1), bson::MakeDoc("_id", 1, "foo", 42)),
+        mongo::CancelledException
+    );
+}
+
+UTEST_F(DeadlinePropagation, BulkWriteFallbackWarnsOnlyForUserTimeout) {
+    auto& pool = GetDefaultPool();
+    mongo::impl::cdriver::GetCDriverPool(GetPoolImpl(pool)).MarkBulkWriteUnsupported();
+    auto coll = pool.GetCollection("dp_bulk_write_fallback");
+
+    server::request::kTaskInheritedData.Set(MakeRequestData(engine::Deadline::FromDuration(utest::kMaxTestWaitTime)));
+
+    UEXPECT_NO_THROW(coll.ReplaceOne(bson::MakeDoc("_id", 1), bson::MakeDoc("_id", 1, "foo", 42)));
+    UEXPECT_NO_THROW(
+        coll.UpdateOne(bson::MakeDoc("_id", 1), bson::MakeDoc(mongo::operators::kSet, bson::MakeDoc("foo", 43)))
+    );
+    EXPECT_TRUE(GetLogCapture().Filter("max_server_time for").empty());
+
+    UEXPECT_NO_THROW(coll.UpdateOne(
+        bson::MakeDoc("_id", 1),
+        bson::MakeDoc(mongo::operators::kSet, bson::MakeDoc("foo", 44)),
+        mongo::options::MaxServerTime{utest::kMaxTestWaitTime}
+    ));
+    EXPECT_EQ(GetLogCapture().Filter("max_server_time for Update").size(), 1);
+}
+
+#ifdef USERVER_FEATURE_MONGO_BULKWRITE
+UTEST_F(DeadlinePropagation, ReplaceOneDeadlineBecomesMaxServerTime) {
+    auto coll = GetDefaultPool().GetCollection("dp_replace_one_max_server_time");
+
+    UASSERT_NO_THROW(coll.InsertOne(bson::MakeDoc("_id", 1, "foo", 42)));
+
+    server::request::kTaskInheritedData.Set(MakeRequestData(engine::Deadline::FromDuration(utest::kMaxTestWaitTime)));
+    UEXPECT_NO_THROW(coll.ReplaceOne(bson::MakeDoc("_id", 1), bson::MakeDoc("_id", 1, "foo", 43)));
+
+    server::request::kTaskInheritedData.Set(MakeRequestData(engine::Deadline::FromDuration(300ms)));
+    UEXPECT_THROW(
+        coll.ReplaceOne(bson::MakeDoc("$where", "sleep(1000) || true"), bson::MakeDoc("foo", 44)),
+        mongo::ServerException
+    );
+}
+#endif
+UTEST_F(DeadlinePropagation, CancelledByDeadlineUpdate) {
+    auto coll = GetDefaultPool().GetCollection("dp_update");
+
+    static const auto kSelector = bson::MakeDoc("_id", 1);
+    static const auto kUpdate = bson::MakeDoc(mongo::operators::kSet, bson::MakeDoc("x", 1));
+
+    server::request::kTaskInheritedData.Set(MakeRequestData(engine::Deadline::FromDuration(-1s)));
+
+    UEXPECT_THROW(coll.UpdateOne(kSelector, kUpdate), mongo::CancelledException);
+    UEXPECT_THROW(coll.UpdateMany(kSelector, kUpdate), mongo::CancelledException);
+}
+
+#ifdef USERVER_FEATURE_MONGO_BULKWRITE
+UTEST_F(DeadlinePropagation, UpdateDeadlineBecomesMaxServerTime) {
+    auto coll = GetDefaultPool().GetCollection("dp_update_max_server_time");
+
+    static const auto kSelector = bson::MakeDoc("_id", 1);
+    static const auto kUpdate = bson::MakeDoc(mongo::operators::kSet, bson::MakeDoc("x", 1));
+
+    UASSERT_NO_THROW(coll.InsertOne(bson::MakeDoc("_id", 1)));
+
+    server::request::kTaskInheritedData.Set(MakeRequestData(engine::Deadline::FromDuration(utest::kMaxTestWaitTime)));
+
+    UEXPECT_NO_THROW(coll.UpdateOne(kSelector, kUpdate));
+    UEXPECT_NO_THROW(coll.UpdateMany(kSelector, kUpdate));
+
+    server::request::kTaskInheritedData.Set(MakeRequestData(engine::Deadline::FromDuration(300ms)));
+    UEXPECT_THROW(
+        coll.UpdateMany(bson::MakeDoc(mongo::operators::kWhere, "sleep(1000) || true"), kUpdate),
+        mongo::ServerException
+    );
+}
+#endif
 
 UTEST_F(DeadlinePropagation, AlreadyCancelled) {
     auto coll = GetDefaultPool().GetCollection("dp");
