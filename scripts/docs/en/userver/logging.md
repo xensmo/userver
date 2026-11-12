@@ -18,6 +18,19 @@ For information on controlling log level in unit tests see @ref scripts/docs/en/
 
 You can find a detailed manual for configuring how logs are written in @ref components::Logging.
 
+### Trace sampling in logs
+
+Logs written with an active tracing::Span include `trace_sampled`, the value of
+tracing::Span::IsSampled() at the time of logging. TSKV represents this boolean as
+`1` or `0`; JSON uses `true` or `false`. Without an active span the field is absent.
+Span completion records also include the field.
+
+The field describes the local sampling decision, not successful export or storage
+of the span. Other logging filters and delivery failures can still prevent a span
+from appearing in storage. Incoming W3C flags may differ from the local decision,
+for example when honoring the sampled flag is disabled in the service.
+Unsampled spans do not suppress application logs.
+
 ### Log level
 
 Macros are used for logging:
@@ -78,6 +91,17 @@ Use `CRITICAL` optionally for service-scale critical errors.
 Not all logs get into the log file, but only those that are not lower than the logger's log level. The logger log level
 is set in static config (see components::Logging).
 
+The `span-log-level` option of components::Logging sets the minimum log level for span completion records independently
+of application logs. When omitted, spans use the default logger's level. The option applies before components derived
+from components::ComponentBase are constructed, including when `loggers` is empty.
+
+```yaml
+components_manager:
+    components:
+        logging:
+            span-log-level: info
+```
+
 The log level can be changed in the static config for a particular handle. In this case, the log level of the logger
 is changed only for the request handling task of the handle and for all the subtasks:
 
@@ -107,6 +131,66 @@ For per-handle limiting of the request body or response data logging you can use
 (see server::handlers::HandlerBase). Or you could override the
 server::handlers::HttpHandlerBase::GetRequestBodyForLogging and
 server::handlers::HttpHandlerBase::GetResponseDataForLogging functions.
+
+The limits can be reduced at runtime for individual handlers using the
+@ref USERVER_HTTP_SERVER_LOGS dynamic config. It maps an exact handler path to request and
+response body limits in bytes:
+
+```json
+{
+  "/v1/orders/{order_id}": {
+    "request_body_size_log_limit": 1024,
+    "response_body_size_log_limit": 2048
+  }
+}
+```
+
+The key is the handler path as written in the static config, with path parameters in their raw form
+(`/v1/orders/{order_id}`, not `/v1/orders/42`); query parameters are not included. A path that matches no handler
+of the service is reported at config update via a warning in the logs and the `invalid_request_path` alert.
+
+A dynamic value of `0` disables logging of the corresponding body. Handlers not listed in the config continue using
+their static limits.
+
+### Masking JSON request and response bodies
+
+Use `json_request_body_masking` and `json_response_body_masking` in
+@ref USERVER_HTTP_SERVER_LOGS to configure rules for an exact handler path.
+Policy options:
+
+- `paths` (required): fields to select, for example `[["user", "phone"]]`.
+- `list_mode`: `blacklist` (the default) masks selected subtrees;
+  `whitelist` preserves them and masks everything else.
+- `replacement`: a single string to use in place of every masked JSON value.
+
+By default, masked scalars become `"..."`, objects `"{...}"`, and arrays `"[...]"`.
+See the config schema for wildcard and array path behavior.
+
+Generated handlers skip binary-only body formats. Setting a masking rule explicitly
+opts the body into JSON processing, including responses without a typed schema object
+and framework error responses.
+
+Custom logging hooks run first. Dynamic rules cannot restore values hidden by a hook.
+Hooks must return complete JSON when masking is enabled. Parsing failures produce
+`<error masking JSON body>`.
+
+Processing stops at the body log limit. The UTF-8-safe prefix may be incomplete JSON.
+Its `...(truncated, total N bytes)` suffix also fits within the limit; `N` is the byte size
+after custom hooks, before JSON masking. Very small limits may truncate the suffix itself.
+
+For handwritten handlers, opt in from the logging hooks using:
+
+- @ref server::handlers::MaskJsonRequestBodyForLogging
+- @ref server::handlers::MaskJsonResponseBodyForLogging
+
+Set @ref server::handlers::JsonBodyLoggingOptions::handler_name_override to select masking settings by a custom name
+instead of the handler path. This is useful for handlers that dispatch multiple logical routes internally.
+Slash-prefixed keys are validated against registered static handler paths when @ref USERVER_HTTP_SERVER_LOGS is
+updated; other custom names are not validated. The override limit is applied while masking; final limiting of unmasked
+bodies still uses the configured handler path.
+
+For custom JSON masking, use @ref formats::json::MaskJson with reusable
+@ref formats::json::MaskingRules.
 
 ### Limiting the log frequency
 

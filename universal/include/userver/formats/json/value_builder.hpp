@@ -4,19 +4,50 @@
 /// @brief @copybrief formats::json::ValueBuilder
 
 #include <chrono>
+#include <cstdint>
+#include <initializer_list>
+#include <ranges>
+#include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
+#include <variant>
 
 #include <userver/compiler/impl/nodebug.hpp>
 #include <userver/formats/common/meta.hpp>
 #include <userver/formats/common/transfer_tag.hpp>
 #include <userver/formats/json/impl/mutable_value_wrapper.hpp>
 #include <userver/formats/json/value.hpp>
+#include <userver/utils/meta.hpp>
 #include <userver/utils/strong_typedef.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace formats::json {
+
+namespace impl {
+
+template <typename T>
+concept IsNativeString =
+    std::is_convertible_v<const T&, std::string_view> &&
+    (std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view> ||
+     (!std::is_class_v<T> && !std::is_union_v<T>) || !common::impl::HasSerialize<formats::json::Value, T>);
+
+template <typename T>
+concept IsNativeArithmetic =
+    meta::IsCharacter<T> || std::is_same_v<T, bool> || meta::IsInteger<T> ||
+    std::is_same_v<std::remove_cv_t<T>, float> || std::is_same_v<std::remove_cv_t<T>, double>;
+
+template <typename T>
+concept IsWrappedValue = meta::IsOptional<T> || meta::IsInstantiationOf<T, std::variant>;
+
+template <typename T>
+concept IsNormalizedArithmetic =
+    std::is_same_v<T, bool> || std::is_same_v<T, int> || std::is_same_v<T, unsigned int> ||
+    std::is_same_v<T, std::int64_t> || std::is_same_v<T, std::uint64_t> || std::is_same_v<T, float> ||
+    std::is_same_v<T, double>;
+
+}  // namespace impl
 
 /// @ingroup userver_universal userver_containers userver_formats
 ///
@@ -56,37 +87,50 @@ public:
     ValueBuilder(common::TransferTag, ValueBuilder&&) noexcept;
 
     ValueBuilder(const ValueBuilder& other);
-    // NOLINTNEXTLINE(performance-noexcept-move-constructor)
+    // NOLINTNEXTLINE(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
     ValueBuilder(ValueBuilder&& other);
-    ValueBuilder& operator=(const ValueBuilder& other);
-    // NOLINTNEXTLINE(performance-noexcept-move-constructor)
-    ValueBuilder& operator=(ValueBuilder&& other);
 
     ValueBuilder(const formats::json::Value& other);
     ValueBuilder(formats::json::Value&& other);
 
-    /// @name Concrete type constructors
-    /// @{
-    ValueBuilder(std::nullptr_t)
-        : ValueBuilder()
+    /// @brief Constructs a number or boolean directly.
+    template <typename T>
+    requires(impl::IsNativeArithmetic<T> && !meta::IsCharacter<T>)
+    ValueBuilder(T value)
+        : value_(CreateArithmetic(NormalizeArithmetic(value)))
     {}
-    ValueBuilder(bool t);
-    ValueBuilder(const char* str);
-    ValueBuilder(char* str);
-    ValueBuilder(const std::string& str);
-    ValueBuilder(std::string_view str);
-    ValueBuilder(int t);
-    ValueBuilder(unsigned int t);
-    ValueBuilder(uint64_t t);
-    ValueBuilder(int64_t t);
-    ValueBuilder(float t);
-    ValueBuilder(double t);
+
+    /// @brief Constructs a number representing the character's code unit.
+    template <typename T>
+    requires(impl::IsNativeArithmetic<T> && meta::IsCharacter<T>)
+    [[deprecated(
+        "Characters will be converted into underlying integer type. Avoid this or wrap with static_cast<int>(...) "
+        "explicitly."
+    )]]
+    ValueBuilder(T value)
+        : value_(CreateArithmetic(NormalizeArithmetic(value)))
+    {}
+
+    /// @brief Constructs a string, copying its bytes into owned storage.
+    template <typename T>
+    requires impl::IsNativeString<T>
+    ValueBuilder(const T& value)
+        : value_(CreateString(std::string_view{value}))
+    {}
     /// @}
 
     /// Universal constructor using Serialize
     template <typename T>
-    ValueBuilder(const T& t)
-        : ValueBuilder(DoSerialize(t))
+    requires(!impl::IsNativeArithmetic<T> && !impl::IsNativeString<T>)
+    USERVER_IMPL_NODEBUG_INLINE_FUNC ValueBuilder(const T& t)
+        : value_(GetSerializedRoot(DoSerialize(t)))
+    {}
+
+    /// @name Native value constructors
+    /// @{
+    /// @brief Constructs a JSON null.
+    ValueBuilder(std::nullptr_t)
+        : ValueBuilder()
     {}
 
     /// @brief Access member by key for modification.
@@ -104,10 +148,125 @@ public:
         return (*this)[std::move(key.GetUnderlying())];
     }
 
+    ValueBuilder& operator=(const ValueBuilder& other);
+    // NOLINTNEXTLINE(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
+    ValueBuilder& operator=(ValueBuilder&& other);
+
+    /// @brief Assigns a numeric or boolean value directly, without creating a temporary builder.
+    template <typename T>
+    requires(impl::IsNativeArithmetic<T> && !meta::IsCharacter<std::remove_cv_t<T>>)
+    ValueBuilder& operator=(T value) {
+        AssignArithmetic(NormalizeArithmetic(value));
+        return *this;
+    }
+
+    /// @brief Assigns a number representing the character's code unit.
+    template <typename T>
+    requires(impl::IsNativeArithmetic<T> && meta::IsCharacter<std::remove_cv_t<T>>)
+    [[deprecated(
+        "Characters will be converted into underlying integer type. Avoid this or wrap with static_cast<int>(...) "
+        "explicitly."
+    )]]
+    ValueBuilder& operator=(T value) {
+        AssignArithmetic(NormalizeArithmetic(value));
+        return *this;
+    }
+
+    /// @brief Assigns a string, copying its bytes into owned storage.
+    /// The source remains unchanged and may be modified or destroyed afterwards.
+    template <typename T>
+    requires impl::IsNativeString<T>
+    ValueBuilder& operator=(const T& value) {
+        AssignString(std::string_view{value});
+        return *this;
+    }
+
+    /// @brief Assigns an existing JSON value without constructing a temporary builder.
+    /// Lvalues and const or shared rvalues are copied. Uniquely owned non-const rvalues are moved and become null.
+    /// Copied sources and their aliases remain unchanged.
+    /// @throw formats::json::MemberMissingException if the source value is missing.
+    template <typename T>
+    requires std::is_same_v<std::remove_cvref_t<T>, formats::json::Value>
+    ValueBuilder& operator=(T&& value) {
+        AssignValue(std::forward<T>(value));
+        return *this;
+    }
+
+    /// @brief Assigns JSON null directly, without creating a temporary builder.
+    ValueBuilder& operator=(std::nullptr_t) {
+        AssignNull();
+        return *this;
+    }
+
     /// @brief Emplaces new member w/o a check whether the key already exists.
     /// @warning May create invalid JSON with duplicate key.
     /// @throw `TypeMismatchException` if not object or null value.
     void EmplaceNocheck(std::string_view key, ValueBuilder value);
+
+    /// @brief Copies an existing JSON value directly, without constructing a temporary ValueBuilder.
+    /// @overload
+    void EmplaceNocheck(std::string_view key, const formats::json::Value& value);
+
+    /// @brief Moves a uniquely owned JSON value directly, copying shared values.
+    /// @overload
+    void EmplaceNocheck(std::string_view key, formats::json::Value&& value);
+
+    /// @overload
+    void EmplaceNocheck(std::string_view key, std::nullptr_t);
+
+    /// @overload
+    void EmplaceNocheck(std::string_view key, const std::string& value);
+
+    /// @overload
+    void EmplaceNocheck(std::string_view key, std::string_view value);
+
+    /// @overload
+    template <typename T>
+    requires std::is_convertible_v<const T&, std::string_view>
+    void EmplaceNocheck(std::string_view key, const T& value) {
+        if constexpr (impl::IsNativeString<T>) {
+            EmplaceNocheck(key, std::string_view{value});
+        } else {
+            EmplaceNocheck(key, ValueBuilder{value});
+        }
+    }
+
+    /// @brief Serializes and inserts a std::optional or std::variant without constructing a temporary builder.
+    /// Uses the same serialization customization as the universal constructor.
+    /// @overload
+    template <impl::IsWrappedValue T>
+    USERVER_IMPL_NODEBUG_INLINE_FUNC void EmplaceNocheck(std::string_view key, const T& value) {
+        EmplaceNocheck(key, DoSerialize(value));
+    }
+
+    /// @overload
+    template <typename T>
+    requires(impl::IsNativeArithmetic<T> && !meta::IsCharacter<std::remove_cv_t<T>>)
+    void EmplaceNocheck(std::string_view key, T value) {
+        EmplaceNocheckArithmetic(key, NormalizeArithmetic(value));
+    }
+
+    /// @brief Emplaces a number representing the character's code unit.
+    /// @overload
+    template <typename T>
+    requires(impl::IsNativeArithmetic<T> && meta::IsCharacter<std::remove_cv_t<T>>)
+    [[deprecated(
+        "Characters will be converted into underlying integer type. Avoid this or wrap with static_cast<int>(...) "
+        "explicitly."
+    )]]
+    void EmplaceNocheck(std::string_view key, T value) {
+        EmplaceNocheckArithmetic(key, NormalizeArithmetic(value));
+    }
+
+    /// @overload
+    template <typename T>
+    [[deprecated(
+        "Use natively passed argument instead of curly-braces wrapped. Such usage could affect the performance."
+    )]]
+    void EmplaceNocheck(std::string_view key, std::initializer_list<T> initializer) {
+        CheckSingleElementInitializerList(initializer.size());
+        EmplaceNocheck(key, *initializer.begin());
+    }
 
     /// @brief Remove key from object. If key is missing nothing happens.
     /// @throw `TypeMismatchException` if value is not an object.
@@ -172,9 +331,92 @@ public:
     /// @throw `TypeMismatchException` if not an array or null.
     void Resize(std::size_t size);
 
+    /// @brief Appends a JSON `null` directly, without constructing a temporary `ValueBuilder`, converting this builder
+    /// from null to an array if necessary.
+    /// @throw `TypeMismatchException` if the builder contains neither an array nor null.
+    void PushBack(std::nullptr_t);
+
+    /// @brief Appends a string directly, without constructing a temporary `ValueBuilder`.
+    /// @throw `TypeMismatchException` if the builder contains neither an array nor null.
+    void PushBack(const std::string& value);
+
+    /// @overload
+    void PushBack(std::string_view value);
+
+    /// @brief Appends a string-like value directly, without constructing a temporary `ValueBuilder`.
+    /// @throw `TypeMismatchException` if the builder contains neither an array nor null.
+    template <typename T>
+    requires std::is_convertible_v<const T&, std::string_view>
+    void PushBack(const T& value) {
+        if constexpr (impl::IsNativeString<T>) {
+            PushBack(std::string_view{value});
+        } else {
+            PushBack(ValueBuilder{value});
+        }
+    }
+
+    /// @brief Serializes and appends a std::optional or std::variant without constructing a temporary builder.
+    /// Uses the same serialization customization as the universal constructor.
+    /// @throw formats::json::TypeMismatchException if the builder is neither an array nor null.
+    template <impl::IsWrappedValue T>
+    USERVER_IMPL_NODEBUG_INLINE_FUNC void PushBack(const T& value) {
+        PushBack(DoSerialize(value));
+    }
+
+    /// @brief Appends an arithmetic value directly, without constructing a temporary `ValueBuilder`.
+    /// @throw `TypeMismatchException` if the builder contains neither an array nor null.
+    template <typename T>
+    requires(std::is_arithmetic_v<T> && !meta::IsCharacter<std::remove_cv_t<T>>)
+    void PushBack(T value) {
+        if constexpr (std::is_same_v<T, long double>) {
+            PushBackArithmetic(static_cast<double>(value));
+        } else {
+            PushBackArithmetic(NormalizeArithmetic(value));
+        }
+    }
+
+    /// @brief Appends a number representing the character's code unit.
+    /// @throw `TypeMismatchException` if the builder contains neither an array nor null.
+    template <typename T>
+    requires(std::is_arithmetic_v<T> && meta::IsCharacter<std::remove_cv_t<T>>)
+    [[deprecated(
+        "Characters will be converted into underlying integer type. Avoid this or wrap with static_cast<int>(...) "
+        "explicitly."
+    )]]
+    void PushBack(T value) {
+        PushBackArithmetic(NormalizeArithmetic(value));
+    }
+
+    /// @brief Appends the single element of a braced initializer.
+    /// The element is forwarded to the matching `PushBack` overload, avoiding a temporary `ValueBuilder` when a direct
+    /// overload is available.
+    /// @throw `Exception` if the initializer does not contain exactly one element.
+    /// @throw `TypeMismatchException` if the builder contains neither an array nor null.
+    template <typename T>
+    [[deprecated(
+        "Use natively passed argument instead of curly-braces wrapped. Such usage could affect the performance."
+    )]]
+    void PushBack(std::initializer_list<T> initializer) {
+        CheckSingleElementInitializerList(initializer.size());
+        if constexpr (std::is_same_v<T, ValueBuilder>) {
+            PushBack(ValueBuilder{*initializer.begin()});
+        } else {
+            PushBack(*initializer.begin());
+        }
+    }
+
     /// @brief Add element into the last position of array.
     /// @throw `TypeMismatchException` if not an array or null.
     void PushBack(ValueBuilder&& bld);
+
+    /// @brief Copy an existing JSON value into the last position of array.
+    /// @throw `TypeMismatchException` if not an array or null.
+    void PushBack(const formats::json::Value& value);
+
+    /// @brief Move an existing JSON value into the last position of array when
+    /// it is uniquely owned, otherwise copy it.
+    /// @throw `TypeMismatchException` if not an array or null.
+    void PushBack(formats::json::Value&& value);
 
     /// @brief Take out the resulting `Value` object.
     /// After calling this method the object is in unspecified
@@ -198,7 +440,65 @@ private:
     static void Copy(impl::Value& to, const ValueBuilder& from);
     static void Move(impl::Value& to, ValueBuilder&& from);
 
+    static impl::VersionedValuePtr GetSerializedRoot(Value value);
+    static impl::VersionedValuePtr GetMovedValueRoot(Value& value);
+    static impl::MutableValueWrapper GetMovedWrapper(ValueBuilder& other);
+
+    static impl::VersionedValuePtr CreateString(std::string_view value);
+
+    template <typename T>
+    requires impl::IsNormalizedArithmetic<T>
+    static impl::VersionedValuePtr CreateArithmetic(T value);
+
+    void AssignNative(impl::Value value);
+    void AssignNull();
+    void AssignString(std::string_view value);
+    void AssignValue(const Value& value);
+    void AssignValue(Value&& value);
+    template <typename T>
+    requires impl::IsNormalizedArithmetic<T>
+    void AssignArithmetic(T value);
+
+    template <typename T>
+    requires std::is_arithmetic_v<T>
+    static constexpr auto NormalizeArithmetic(T value) noexcept {
+        if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, int> || std::is_same_v<T, unsigned int> ||
+                      std::is_same_v<T, float> || std::is_same_v<T, double>)
+        {
+            return value;
+        } else {
+            static_assert(
+                std::is_integral_v<T> && sizeof(T) <= sizeof(std::int64_t),
+                "JSON arithmetic normalization requires an integer no wider than 64 bits"
+            );
+            if constexpr (std::is_signed_v<T>) {
+                return static_cast<std::int64_t>(value);
+            } else {
+                return static_cast<std::uint64_t>(value);
+            }
+        }
+    }
+
+    template <typename T>
+    requires impl::IsNormalizedArithmetic<T>
+    void EmplaceNocheckArithmetic(std::string_view key, T value);
+
+    template <typename T>
+    requires impl::IsNormalizedArithmetic<T>
+    void PushBackArithmetic(T value);
+
+    template <typename MakeValue>
+    USERVER_IMPL_NODEBUG_INLINE_FUNC inline void PushBackNative(MakeValue&& make_value);
+    static void CheckSingleElementInitializerList(std::size_t size);
+
     impl::Value& AddMember(std::string_view key, CheckMemberExists);
+
+    template <typename MakeValue>
+    USERVER_IMPL_NODEBUG_INLINE_FUNC inline impl::Value& AddMember(
+        std::string_view key,
+        CheckMemberExists,
+        MakeValue&& make_value
+    );
 
     template <typename T>
     USERVER_IMPL_NODEBUG_INLINE_FUNC static Value DoSerialize(const T& t) {
@@ -222,7 +522,7 @@ private:
 };
 
 template <typename T>
-requires(std::is_integral<T>::value && sizeof(T) <= sizeof(int64_t))
+requires(std::is_integral_v<T> && sizeof(T) <= sizeof(std::int64_t))
 Value Serialize(T value, formats::serialize::To<Value>) {
     using Type = std::conditional_t<std::is_signed<T>::value, int64_t, uint64_t>;
     return json::ValueBuilder(static_cast<Type>(value)).ExtractValue();
@@ -235,6 +535,9 @@ template <typename T>
 requires(meta::IsUniqueMap<T> && utils::IsStrongTypedefLoggable(T::key_type::kOps))
 Value Serialize(const T& value, formats::serialize::To<Value>) {
     json::ValueBuilder builder(formats::common::Type::kObject);
+    if constexpr (requires { std::ranges::size(value); }) {
+        builder.Reserve(std::ranges::size(value));
+    }
     for (const auto& [key, value] : value) {
         builder.EmplaceNocheck(key.GetUnderlying(), value);
     }
@@ -246,6 +549,9 @@ template <typename T>
 requires meta::IsUniqueMap<T> && std::is_convertible_v<typename T::key_type, std::string>
 Value Serialize(const T& value, formats::serialize::To<Value>) {
     json::ValueBuilder builder(formats::common::Type::kObject);
+    if constexpr (requires { std::ranges::size(value); }) {
+        builder.Reserve(std::ranges::size(value));
+    }
     for (const auto& [key, value] : value) {
         builder.EmplaceNocheck(key, value);
     }

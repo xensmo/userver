@@ -95,6 +95,7 @@ components_manager:
           enabled: false
     http-client:
       core-component: http-client-core
+      allow-url-userinfo: false
       middlewares:
         # http-client-middleware-override:
         #   enabled: true
@@ -255,7 +256,7 @@ TEST_F(ComponentList, ValidationWithConfigVars) {
         std::exception,
         "Error while validating static config against schema. Field "
         "'components_manager.components.system-statistics-collector.non-described-in-schema-parameter' is not declared "
-        "in schema 'system-statistics-collector' (declared: load-enabled, with-nginx, fs-task-processor)"
+        "in schema 'system-statistics-collector'"
     );
 }
 

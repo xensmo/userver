@@ -13,6 +13,7 @@
 #include <openssl/x509.h>
 
 #include <curl-ev/error_code.hpp>
+#include <curl-ev/url.hpp>
 #include <userver/baggage/baggage.hpp>
 #include <userver/clients/dns/resolver.hpp>
 #include <userver/clients/http/connect_to.hpp>
@@ -286,6 +287,7 @@ RequestState::~RequestState() {
 
 void RequestState::follow_redirects(bool follow) {
     easy().set_follow_location(follow);
+    follow_redirects_ = follow;
     easy().set_post_redir(static_cast<long>(follow));
     if (follow) {
         easy().set_max_redirs(kMaxRedirectCount);
@@ -415,6 +417,7 @@ void RequestState::SetDestinationMetricNameAuto(std::string destination) {
 
 void RequestState::SetDestinationMetricName(const std::string& destination) {
     dest_req_stats_ = dest_stats_.GetStatisticsForDestination(destination);
+    sharded_dest_req_stats_ = dest_stats_.GetShardedStatisticsForDestination(destination);
 }
 
 void RequestState::SetTestsuiteConfig(const std::shared_ptr<const TestsuiteConfig>& config) {
@@ -439,6 +442,9 @@ size_t RequestState::OnHeader(void* ptr, size_t size, size_t nmemb, void* userda
     const std::string_view header{static_cast<char*>(ptr), size * nmemb};
     if (self) {
         self->ParseHeader(header);
+        if (self->redirect_url_userinfo_rejected_) {
+            return 0;
+        }
     }
     return header.size();
 }
@@ -554,7 +560,7 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
             LOG_DEBUG() << "cURL error details: " << holder->errorbuffer_.data();
         }
 
-        holder->span_storage_.reset();
+        holder->FinishSpan();
 
         const utils::Overloaded visitor{
             [&holder, &err](FullBufferedData& buffered_data) {
@@ -591,7 +597,7 @@ void RequestState::OnCompleted(std::shared_ptr<RequestState> holder, std::error_
 
         holder->middlewares_pipeline_.HookOnCompleted(*holder, *holder->response());
 
-        holder->span_storage_.reset();
+        holder->FinishSpan();
 
         const utils::Overloaded visitor{
             [&holder](FullBufferedData& buffered_data) {
@@ -732,6 +738,15 @@ void RequestState::ParseHeader(std::string_view header) try
     // header-field   = field-name ":" OWS field-value OWS
     // OWS            = *( SP / HTAB )
     value = SkipSpaceTab(value);
+    if (follow_redirects_ && !easy().IsUrlUserinfoAllowed() &&
+        utils::StrIcaseEqual{}(key, USERVER_NAMESPACE::http::headers::kLocation))
+    {
+        const auto status = static_cast<Status>(easy().get_response_code());
+        if (status >= Status::kMultipleChoices && status < Status::kBadRequest && curl::HasUrlUserinfo(value)) {
+            redirect_url_userinfo_rejected_ = true;
+            return;
+        }
+    }
     response_->headers().emplace(key, value);
 } catch (const std::exception& e) {
     LOG_ERROR() << "Failed to parse header: " << e.what();
@@ -748,6 +763,10 @@ void RequestState::SetIncompleteTlsConnectionCloseExpected(bool expect) {
 void RequestState::SetLoggedUrl(std::string url) { log_url_ = std::move(url); }
 
 void RequestState::SetUrlTemplate(std::string url_template) { url_template_ = std::move(url_template); }
+
+void RequestState::SetExpectedStatusCodes(ExpectedStatusCodes status_codes) {
+    expected_status_codes_ = std::move(status_codes);
+}
 
 void RequestState::SetMethod(HttpMethod method) {
     switch (method) {
@@ -881,6 +900,14 @@ void RequestState::PerformRequest(curl::easy::handler_type handler) {
     UASSERT(response_);
     response_->sink_string().clear();
     response_->body().clear();
+    redirect_url_userinfo_rejected_ = false;
+
+    handler = [holder = shared_from_this(), handler = std::move(handler)](std::error_code err) mutable {
+        if (holder->redirect_url_userinfo_rejected_) {
+            err = curl::errc::EasyErrorCode::kLoginDenied;
+        }
+        handler(err);
+    };
 
     UpdateTimeoutHeader();
 
@@ -889,10 +916,17 @@ void RequestState::PerformRequest(curl::easy::handler_type handler) {
     if (resolver_ && retry_.current == 1) {
         engine::DetachUnscopedUnsafe(
             engine::AsyncNoTracing([this, holder = shared_from_this(), handler = std::move(handler)]() mutable {
-                auto exception_handler = utils::Overloaded{
-                    [](FullBufferedData& data) { data.promise.set_exception(std::current_exception()); },
-                    [](WebSocketHandshakeData& data) { data.promise.set_exception(std::current_exception()); },
-                    [](StreamData&) {},
+                const auto complete_with_exception = [this] {
+                    FinishSpan();
+                    std::visit(
+                        utils::Overloaded{
+                            [](FullBufferedData& data) { data.promise.set_exception(std::current_exception()); },
+                            [](WebSocketHandshakeData& data) { data.promise.set_exception(std::current_exception()); },
+                            [](StreamData&) {},
+                        },
+                        data_
+                    );
+                    RequestCompleted();
                 };
 
                 try {
@@ -901,12 +935,10 @@ void RequestState::PerformRequest(curl::easy::handler_type handler) {
                     return;
                 } catch (const clients::dns::ResolverException& ex) {
                     // TODO: should retry - TAXICOMMON-4932
-                    std::visit(exception_handler, data_);
+                    complete_with_exception();
                 } catch (const BaseException& ex) {
-                    std::visit(exception_handler, data_);
+                    complete_with_exception();
                 }
-                span_storage_.reset();
-                RequestCompleted();
             })
         );
     } else {
@@ -996,7 +1028,7 @@ void RequestState::HandleDeadlineAlreadyPassed() {
 
     WithRequestStats([](RequestStats& stats) { stats.AccountCancelledByDeadline(); });
 
-    span_storage_.reset();
+    FinishSpan();
 
     auto exc = PrepareDeadlinePassedException(GetLoggedOriginalUrl(), easy().get_local_stats());
 
@@ -1105,6 +1137,7 @@ void RequestState::ResetDataForNewRequest() {
     SetBaggageHeader(easy());
 
     response_ = std::make_shared<Response>();
+    response_->SetExpectedStatusCodes(expected_status_codes_);
     response_->SetStatusCode(Status::kInvalid);
 
     is_cancelled_ = false;
@@ -1230,9 +1263,17 @@ void RequestState::StartNewSpan(utils::impl::SourceLocation location) {
     span.DetachFromCoroStack();
 }
 
+void RequestState::FinishSpan() {
+    middlewares_pipeline_.HookOnRequestFinished(*this, span_storage_->Get());
+    span_storage_.reset();
+}
+
 void RequestState::StartStats() {
     if (!dest_req_stats_) {
         dest_req_stats_ = dest_stats_.GetStatisticsForDestinationAuto(destination_metric_name_);
+        if (dest_req_stats_) {
+            sharded_dest_req_stats_ = dest_stats_.GetShardedStatisticsForDestination(destination_metric_name_);
+        }
     }
 
     WithRequestStats([](RequestStats& stats) { stats.Start(); });
@@ -1244,6 +1285,9 @@ void RequestState::WithRequestStats(const Func& func) {
     func(stats_);
     if (dest_req_stats_) {
         func(*dest_req_stats_);
+    }
+    if (sharded_dest_req_stats_) {
+        func(*sharded_dest_req_stats_);
     }
 }
 

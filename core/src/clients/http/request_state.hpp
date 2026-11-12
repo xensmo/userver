@@ -7,11 +7,13 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <vector>
 
 #include <clients/http/middlewares/pipeline.hpp>
 #include <userver/clients/dns/resolver_fwd.hpp>
 #include <userver/clients/http/config.hpp>
 #include <userver/clients/http/error.hpp>
+#include <userver/clients/http/expected_status_codes.hpp>
 #include <userver/clients/http/form.hpp>
 #include <userver/clients/http/request.hpp>
 #include <userver/clients/http/response_future.hpp>
@@ -149,7 +151,11 @@ public:
     void SetIncompleteTlsConnectionCloseExpected(bool expect);
     void SetLoggedUrl(std::string url);
     void SetUrlTemplate(std::string url_template);
+    std::optional<std::string_view> GetUrlTemplate() const noexcept { return url_template_; }
+
+    void SetExpectedStatusCodes(ExpectedStatusCodes status_codes);
     void SetMethod(clients::http::HttpMethod method);
+    HttpMethod GetMethod() const noexcept { return method_; }
     void data(std::string data);
     void SetEasyTimeout(std::chrono::milliseconds timeout);
 
@@ -200,6 +206,7 @@ private:
     void ResetDataForNewRequest();
     void ApplyTestsuiteConfig();
     void StartNewSpan(utils::impl::SourceLocation location);
+    void FinishSpan();
     void StartStats();
 
     template <typename Func>
@@ -217,6 +224,7 @@ private:
     impl::EasyWrapper easy_;
     RequestStats stats_;
     std::optional<RequestStats> dest_req_stats_;
+    std::optional<RequestStats> sharded_dest_req_stats_;
     CancellationPolicy cancellation_policy_{CancellationPolicy::kCancel};
 
     DestinationStatistics& dest_stats_;
@@ -262,7 +270,10 @@ private:
     std::optional<std::string> log_url_;
 
     std::optional<std::string> url_template_;
+    ExpectedStatusCodes expected_status_codes_;
     HttpMethod method_{HttpMethod::kGet};
+    bool follow_redirects_{false};
+    bool redirect_url_userinfo_rejected_{false};
 
     std::atomic<bool> is_cancelled_{false};
     std::atomic<bool> is_incomplete_tls_connection_close_expected_{false};

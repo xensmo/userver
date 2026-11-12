@@ -247,9 +247,10 @@ void DynamicConfig::Impl::DoSetConfig(const dynamic_config::DocsMap& value) {
 
 void DynamicConfig::Impl::SetConfig(std::string_view updater, dynamic_config::DocsMap&& value) {
     LOG_DEBUG() << "Setting new dynamic config value from '" << updater << "'";
+    auto value_with_defaults = value;
+    value_with_defaults.MergeMissing(fallback_config_);
+    DoSetConfig(value_with_defaults);
     WriteFsCache(value);
-    value.MergeMissing(fallback_config_);
-    DoSetConfig(value);
 }
 
 ComponentHealth DynamicConfig::Impl::GetComponentHealth() const {
@@ -375,25 +376,14 @@ void DynamicConfig::Impl::UpdateIfHasConfigAndListen(
     std::string_view name,
     concurrent::AsyncEventSource<const dynamic_config::Diff&>::Function&& func
 ) {
-    scopes.Register([this, id, name = std::string(name), func = std::move(func)]() mutable {
+    scopes.Register([this, &scopes, id, name = std::string(name), func = std::move(func)]() mutable {
         const std::lock_guard lock{loaded_mutex_};
         if (is_loaded_) {
-            return cache_.DoUpdateAndListen(id, name, std::move(func));
+            cache_.DoUpdateAndListen(scopes, id, name, std::move(func));
+        } else {
+            GetDiffChannel().AddListener(scopes, id, name, std::move(func));
         }
-        return GetDiffChannel().AddListener(id, name, std::move(func));
     });
-}
-
-DynamicConfig::NoblockSubscriber::NoblockSubscriber(DynamicConfig& config_component) noexcept
-    : config_component_(config_component) {}
-
-void DynamicConfig::NoblockSubscriber::DoUpdateIfHasConfigAndListen(
-    utils::ResourceScopeStorage& scopes,
-    concurrent::FunctionId id,
-    std::string_view name,
-    concurrent::AsyncEventSource<const dynamic_config::Diff&>::Function&& func
-) {
-    config_component_.impl_->UpdateIfHasConfigAndListen(scopes, id, name, std::move(func));
 }
 
 DynamicConfig::DynamicConfig(const ComponentConfig& config, const ComponentContext& context)
@@ -450,5 +440,21 @@ dynamic_config::Source LocateDependency(
 /// [LocateDependency example]
 
 }  // namespace components
+
+namespace dynamic_config {
+
+NoblockSubscriber::NoblockSubscriber(components::DynamicConfig& config_component) noexcept
+    : config_component_(config_component) {}
+
+void NoblockSubscriber::DoUpdateIfHasConfigAndListen(
+    utils::ResourceScopeStorage& scopes,
+    concurrent::FunctionId id,
+    std::string_view name,
+    concurrent::AsyncEventSource<const dynamic_config::Diff&>::Function&& func
+) {
+    config_component_.impl_->UpdateIfHasConfigAndListen(scopes, id, name, std::move(func));
+}
+
+}  // namespace dynamic_config
 
 USERVER_NAMESPACE_END

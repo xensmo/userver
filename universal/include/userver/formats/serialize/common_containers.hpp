@@ -5,8 +5,12 @@
 /// @ingroup userver_universal userver_formats_serialize
 
 #include <optional>
+#include <ranges>
+#include <string>
+#include <string_view>
 #include <type_traits>
 
+#include <userver/compiler/impl/nodebug.hpp>
 #include <userver/formats/common/type.hpp>
 #include <userver/formats/serialize/to.hpp>
 #include <userver/utils/meta.hpp>
@@ -28,7 +32,7 @@ namespace impl {
 
 template <typename T>
 concept RangeNotMap =
-    meta::kIsRange<T> && !meta::kIsMap<T> && !std::is_same_v<T, boost::uuids::uuid> &&
+    meta::IsRange<T> && !meta::IsMap<T> && !std::is_same_v<T, boost::uuids::uuid> &&
     !std::is_convertible_v<T&, utils::impl::strong_typedef::StrongTypedefTag&>;
 
 }
@@ -37,6 +41,9 @@ concept RangeNotMap =
 template <impl::RangeNotMap T, typename Value>
 Value Serialize(const T& value, To<Value>) {
     typename Value::Builder builder(formats::common::Type::kArray);
+    if constexpr (requires { builder.Reserve(std::ranges::size(value)); }) {
+        builder.Reserve(std::ranges::size(value));
+    }
     for (const auto& item : value) {
         // explicit cast for vector<bool> shenanigans
         builder.PushBack(static_cast<const meta::RangeValueType<T>&>(item));
@@ -47,16 +54,26 @@ Value Serialize(const T& value, To<Value>) {
 /// Mappings serialization
 template <meta::IsUniqueMap T, typename Value>
 Value Serialize(const T& value, To<Value>) {
+    using Key = typename T::key_type;
     typename Value::Builder builder(formats::common::Type::kObject);
+    if constexpr (requires { builder.Reserve(std::ranges::size(value)); }) {
+        builder.Reserve(std::ranges::size(value));
+    }
     for (const auto& [key, value] : value) {
-        builder[key] = value;
+        if constexpr ((std::is_same_v<Key, std::string> || std::is_same_v<Key, std::string_view>) &&
+                      requires { builder.EmplaceNocheck(key, value); })
+        {
+            builder.EmplaceNocheck(key, value);
+        } else {
+            builder[key] = value;
+        }
     }
     return builder.ExtractValue();
 }
 
 /// std::optional serialization
 template <typename T, typename Value>
-Value Serialize(const std::optional<T>& value, To<Value>) {
+USERVER_IMPL_NODEBUG_INLINE_FUNC inline Value Serialize(const std::optional<T>& value, To<Value>) {
     if (!value) {
         return {};
     }

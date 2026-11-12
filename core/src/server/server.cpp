@@ -1,33 +1,45 @@
 #include <userver/server/server.hpp>
 
+#include <fmt/ranges.h>
+
 #include <atomic>
 #include <shared_mutex>
 #include <stdexcept>
 
+#include <userver/alerts/source.hpp>
+#include <userver/components/statistics_storage.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/utils/assert.hpp>
 
 #include <engine/ev/thread_pool.hpp>
 #include <engine/task/task_processor.hpp>
 #include <server/handlers/http_handler_base_statistics.hpp>
+#include <server/handlers/http_server_settings.hpp>
 #include <server/http/http_request_handler.hpp>
 #include <server/net/endpoint_info.hpp>
 #include <server/net/listener.hpp>
 #include <server/net/stats.hpp>
+#include <server/request/response_data_accounter.hpp>
 #include <server/requests_view.hpp>
 #include <server/server_config.hpp>
+#include <userver/dynamic_config/storage/component.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/sleep.hpp>
 #include <userver/fs/blocking/read.hpp>
 #include <userver/server/http/http_request.hpp>
 #include <userver/server/middlewares/configuration.hpp>
+#include <userver/utils/resource_scopes.hpp>
 #include <userver/utils/statistics/storage.hpp>
+
+#include <dynamic_config/variables/USERVER_HTTP_SERVER_LOGS.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace server {
 
 namespace {
+
+const alerts::Source kInvalidRequestPath{"invalid_request_path"};
 
 struct PortInfo final {
     void Init(
@@ -66,8 +78,7 @@ void PortInfo::Init(
             ? component_context.GetTaskProcessor(*listener_config.task_processor)
             : engine::current_task::GetTaskProcessor();
 
-    request_handler
-        .emplace(component_context, config.logger_access, config.logger_access_tskv, is_monitor, config.server_name);
+    request_handler.emplace(component_context, config, is_monitor);
 
     endpoint_info = std::make_shared<net::EndpointInfo>(listener_config, *request_handler);
 
@@ -128,6 +139,20 @@ void WriteRateAndLegacyMetrics(utils::statistics::Writer&& writer, utils::statis
     writer["v2"] = metric;
 }
 
+void CollectRequestPaths(const PortInfo& info, std::unordered_set<std::string>& paths) {
+    if (!info.request_handler) {
+        return;
+    }
+    const auto locker = info.request_handler->GetHandlerInfoIndex().GetHandlers().Lock();
+    const auto& handlers = *locker;
+    paths.reserve(paths.size() + handlers.size());
+    for (const auto& handler : handlers) {
+        if (auto* path = std::get_if<std::string>(&handler->GetConfig().path); path) {
+            paths.insert(*path);
+        }
+    }
+}
+
 }  // namespace
 
 class ServerImpl final {
@@ -161,6 +186,8 @@ public:
     std::uint64_t GetTotalRequests() const;
 
 private:
+    void OnConfigUpdate(const dynamic_config::Snapshot& snapshot);
+
     enum State : std::uint8_t { kRunning, kStoppingServing, kStoppedServing, kStopping };
 
     PortInfo main_port_info_;
@@ -176,6 +203,11 @@ private:
 
     ServerConfig config_;
     std::vector<std::string> middlewares_;
+
+    std::unordered_set<std::string> available_paths_{};
+    dynamic_config::Source dynamic_config_;
+    utils::statistics::MetricsStoragePtr metrics_storage_;
+    utils::ResourceScopeStorage& scopes_;
 };
 
 ServerImpl::ServerImpl(
@@ -183,7 +215,10 @@ ServerImpl::ServerImpl(
     const storages::secdist::SecdistConfig& secdist,
     const components::ComponentContext& component_context
 )
-    : config_(std::move(config))
+    : config_(std::move(config)),
+      dynamic_config_(component_context.FindComponent<components::DynamicConfig>().GetSource()),
+      metrics_storage_(component_context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()),
+      scopes_(component_context.Scopes())
 {
     LOG_DEBUG() << "Creating server";
 
@@ -228,6 +263,17 @@ void ServerImpl::StartPortInfo() {
     if (monitor_port_info_.request_handler) {
         monitor_port_info_.request_handler->DisableAddHandler();
     }
+
+    CollectRequestPaths(main_port_info_, available_paths_);
+    CollectRequestPaths(monitor_port_info_, available_paths_);
+
+    dynamic_config_.UpdateAndListen(
+        scopes_,
+        this,
+        "Validate USERVER_HTTP_SERVER_LOGS",
+        &ServerImpl::OnConfigUpdate,
+        ::dynamic_config::USERVER_HTTP_SERVER_LOGS
+    );
 }
 
 void ServerImpl::StartMonitorPortInfo() {
@@ -406,6 +452,10 @@ const ServerConfig& Server::GetConfig() const { return pimpl_->GetServerConfig()
 
 std::vector<std::string> Server::GetCommonMiddlewares() const { return pimpl_->GetMiddlewares(); }
 
+std::vector<std::string> Server::GetCommonMiddlewares(bool) const { return GetCommonMiddlewares(); }
+
+bool Server::GetResponseHostnameDefault(bool) const { return GetConfig().set_response_server_hostname; }
+
 void Server::WriteMonitorData(utils::statistics::Writer& writer) const {
     const auto server_stats = pimpl_->GetServerStats();
     if (auto conn_stats = writer["connections"]) {
@@ -482,6 +532,27 @@ void Server::WriteMetrics(utils::statistics::Writer& writer) const {
         WriteTotalHandlerStatistics(handler_total);
     }
 }
+
+void ServerImpl::OnConfigUpdate(const dynamic_config::Snapshot& snapshot) {
+    const auto& config = snapshot[::dynamic_config::USERVER_HTTP_SERVER_LOGS];
+    std::vector<std::string_view> missing_paths{};
+    for (const auto& [key, _] : config.extra) {
+        if (key.starts_with('/') && available_paths_.count(key) == 0) {
+            missing_paths.emplace_back(key);
+        }
+    }
+    if (missing_paths.empty()) {
+        kInvalidRequestPath.StopAlertNow(*metrics_storage_);
+    } else {
+        kInvalidRequestPath.FireAlert(*metrics_storage_, alerts::Source::kInfiniteDuration);
+        LOG_WARNING(
+            "Typo in USERVER_HTTP_SERVER_LOGS: there aren't handlers in a server: [{}].",
+            fmt::join(missing_paths, ", ")
+        );
+    }
+}
+
+const alerts::Source& handlers::GetInvalidRequestPathAlert() { return kInvalidRequestPath; }
 
 }  // namespace server
 

@@ -1,8 +1,10 @@
 #include <ugrpc/client/middlewares/log/middleware.hpp>
 
+#include <cstddef>
 #include <utility>
 
 #include <fmt/format.h>
+#include <google/protobuf/message.h>
 
 #include <userver/logging/level.hpp>
 #include <userver/logging/log.hpp>
@@ -10,7 +12,10 @@
 #include <userver/tracing/tags.hpp>
 #include <userver/ugrpc/client/impl/call_state.hpp>
 #include <userver/ugrpc/protobuf_logging.hpp>
+#include <userver/ugrpc/rpc_type.hpp>
 #include <userver/ugrpc/status_codes.hpp>
+#include <userver/utils/assert.hpp>
+#include <userver/utils/impl/internal_tag.hpp>
 
 #include <ugrpc/impl/logging.hpp>
 
@@ -20,11 +25,57 @@ namespace ugrpc::client::middlewares::log {
 
 namespace {
 
+constexpr std::string_view kTlsConfigurationHint =
+    "The gRPC client uses an insecure channel for an endpoint on port 443. "
+#ifdef ARCADIA_ROOT
+    "For Yandex-internal builds, see https://nda.ya.ru/t/1JSu04VF7sMFra for TLS configuration.";
+#else
+    "If the endpoint requires TLS, set 'auth-type: ssl' in the gRPC client factory component.";
+#endif
+
+bool HasPort443(std::string_view endpoint) {
+    if (endpoint.starts_with("unix:") || endpoint.starts_with("unix-abstract:")) {
+        return false;
+    }
+
+    const auto query_or_fragment = endpoint.find_first_of("?#");
+    endpoint = endpoint.substr(0, query_or_fragment);
+    return endpoint.ends_with(":443");
+}
+
+std::string MakeErrorDetailsForLogging(const grpc::Status& status, std::string_view endpoint, AuthType auth_type) {
+    auto error_details = ugrpc::ToUnlimitedLoggingString(status);
+    if (status.error_code() == grpc::StatusCode::UNAVAILABLE && auth_type == AuthType::kInsecure &&
+        HasPort443(endpoint))
+    {
+        error_details += fmt::format(" Hint: {}", kTlsConfigurationHint);
+    }
+    return error_details;
+}
+
 std::string GetMessageForLogging(const google::protobuf::Message& message, const Settings& settings) {
     if (settings.msg_log_level < settings.log_level || !logging::ShouldLog(settings.msg_log_level)) {
         return "";
     }
     return ugrpc::ToLimitedLoggingString(message, settings.max_msg_size);
+}
+
+std::size_t GetRequestSize(const MiddlewareCallContext& context, const google::protobuf::Message& request) {
+    if (context.GetRpcType() != RpcType::kUnary) {
+        return request.ByteSizeLong();
+    }
+    const auto request_size = context.GetLatestRequestSizeBytes();
+    UASSERT(request_size.has_value());
+    return *request_size;
+}
+
+std::size_t GetResponseSize(const MiddlewareCallContext& context, const google::protobuf::Message& response) {
+    if (context.GetRpcType() != RpcType::kUnary) {
+        return response.ByteSizeLong();
+    }
+    const auto response_size = context.GetLatestResponseSizeBytes();
+    UASSERT(response_size.has_value());
+    return *response_size;
 }
 
 class SpanLogger {
@@ -85,7 +136,7 @@ void Middleware::PreSendMessage(MiddlewareCallContext& context, const google::pr
         logging::LogExtra extra{
             {ugrpc::impl::kTypeTag, "request"},
             {ugrpc::impl::kBodyTag, GetMessageForLogging(message, settings_)},
-            {ugrpc::impl::kMessageMarshalledLenTag, message.ByteSizeLong()},
+            {ugrpc::impl::kMessageMarshalledLenTag, GetRequestSize(context, message)},
         };
         log_helper
             << (IsSingleRequestMethod(context.GetRpcType()) ? "gRPC request" : "gRPC request stream message")
@@ -99,7 +150,7 @@ void Middleware::PostRecvMessage(MiddlewareCallContext& context, const google::p
         logging::LogExtra extra{
             {ugrpc::impl::kTypeTag, "response"},
             {ugrpc::impl::kBodyTag, GetMessageForLogging(message, settings_)},
-            {ugrpc::impl::kMessageMarshalledLenTag, message.ByteSizeLong()},
+            {ugrpc::impl::kMessageMarshalledLenTag, GetResponseSize(context, message)},
         };
         log_helper
             << (IsSingleResponseMethod(context.GetRpcType()) ? "gRPC response" : "gRPC response stream message")
@@ -119,7 +170,8 @@ void Middleware::PostFinish(MiddlewareCallContext& context, const CompletionStat
                 logger.Log(settings_.msg_log_level, "gRPC response stream finished", logging::LogExtra{});
             }
         } else {
-            auto error_details = ugrpc::ToUnlimitedLoggingString(status);
+            const auto& state = context.GetState(utils::impl::InternalTag{});
+            auto error_details = MakeErrorDetailsForLogging(status, state.GetEndpoint(), state.GetAuthType());
             logging::LogExtra extra{
                 {ugrpc::impl::kTypeTag, "error_status"},
                 {ugrpc::impl::kCodeTag, ugrpc::ToStringView(status.error_code())},
@@ -139,6 +191,10 @@ void Middleware::PostFinish(MiddlewareCallContext& context, const CompletionStat
                  GetSpecialCaseCompletionTypeDescription(completion_type)
              )}
         };
+        // Present when a response arrived but could not be parsed.
+        if (const auto response_size = context.GetLatestResponseSizeBytes()) {
+            extra.Extend(ugrpc::impl::kMessageMarshalledLenTag, *response_size);
+        }
         logger.Log(logging::Level::kWarning, "gRPC error", std::move(extra));
     }
 }

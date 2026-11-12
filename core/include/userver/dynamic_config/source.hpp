@@ -15,6 +15,10 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace components {
+class DynamicConfig;
+}
+
 namespace dynamic_config {
 
 /// Owns a snapshot of a config variable. You may use operator* or operator->
@@ -122,8 +126,8 @@ public:
     /// @note Callbacks occur in full accordance with
     /// `components::DynamicConfigClientUpdater` options.
     ///
-    /// @param scopes storage that owns the subscription lifetime. In a component constructor pass `context.Scopes()`
-    /// or @ref components::GetResourceScopes.
+    /// @param scopes storage that owns the subscription lifetime.
+    /// See @ref resource_scopes_parameter "where to obtain scopes".
     /// @param obj the subscriber, which is the owner of the listener method, and
     /// is also used as the unique identifier of the subscription
     /// @param name the name of the subscriber, for diagnostic purposes
@@ -145,6 +149,7 @@ public:
         );
     }
 
+#ifndef ARCADIA_ROOT
     /// @overload
     /// @deprecated Use the overloads that take @ref utils::ResourceScopeStorage.
     ///
@@ -161,6 +166,7 @@ public:
             [obj, func](const dynamic_config::Snapshot& config) { (obj->*func)(config); }
         );
     }
+#endif
 
     /// @brief Subscribes to dynamic-config updates with information about the
     /// current and previous states.
@@ -183,8 +189,8 @@ public:
     /// Example usage:
     /// @snippet core/src/dynamic_config/config_test.cpp Custom subscription for dynamic config update
     ///
-    /// @param scopes storage that owns the subscription lifetime. In a component constructor pass `context.Scopes()`
-    /// or @ref components::GetResourceScopes.
+    /// @param scopes storage that owns the subscription lifetime.
+    /// See @ref resource_scopes_parameter "where to obtain scopes".
     /// @param obj the subscriber, which is the owner of the listener method, and
     /// is also used as the unique identifier of the subscription
     /// @param name the name of the subscriber, for diagnostic purposes
@@ -205,6 +211,7 @@ public:
         });
     }
 
+#ifndef ARCADIA_ROOT
     /// @overload
     /// @deprecated Use the overloads that take @ref utils::ResourceScopeStorage.
     ///
@@ -219,6 +226,7 @@ public:
             (obj->*func)(diff);
         });
     }
+#endif
 
     /// @brief Subscribes to updates of a subset of all configs.
     ///
@@ -236,8 +244,8 @@ public:
     ///
     /// @warning To use this function, configs must have the `operator==`.
     ///
-    /// @param scopes storage that owns the subscription lifetime. In a component constructor pass `context.Scopes()`
-    /// or @ref components::GetResourceScopes.
+    /// @param scopes storage that owns the subscription lifetime.
+    /// See @ref resource_scopes_parameter "where to obtain scopes".
     /// @param obj the subscriber, which is the owner of the listener method, and
     /// is also used as the unique identifier of the subscription
     /// @param name the name of the subscriber, for diagnostic purposes
@@ -262,6 +270,7 @@ public:
         DoUpdateAndListen(scopes, concurrent::FunctionId(obj), name, std::move(wrapper));
     }
 
+#ifndef ARCADIA_ROOT
     /// @overload
     /// @deprecated Use the overloads that take @ref utils::ResourceScopeStorage.
     ///
@@ -281,10 +290,12 @@ public:
         };
         return DoUpdateAndListen(concurrent::FunctionId(obj), name, std::move(wrapper));
     }
+#endif
 
     SnapshotEventSource& GetEventChannel();
 
 private:
+#ifndef ARCADIA_ROOT
     concurrent::AsyncEventSubscriberScope DoUpdateAndListen(
         concurrent::FunctionId id,
         std::string_view name,
@@ -296,6 +307,7 @@ private:
         std::string_view name,
         DiffEventSource::Function&& func
     );
+#endif
 
     void DoUpdateAndListen(
         utils::ResourceScopeStorage& scopes,
@@ -312,6 +324,67 @@ private:
     );
 
     impl::StorageData* storage_;
+};
+
+/// @brief Allows to subscribe to `components::DynamicConfig` updates without waiting for
+/// the first update to complete. Primarily intended for internal use.
+class NoblockSubscriber final {
+public:
+    explicit NoblockSubscriber(components::DynamicConfig& config_component) noexcept;
+
+    NoblockSubscriber(NoblockSubscriber&&) = delete;
+    NoblockSubscriber& operator=(NoblockSubscriber&&) = delete;
+
+    /// @brief Subscribes to dynamic-config updates without waiting for the first update.
+    ///
+    /// If a config snapshot is already loaded when the scope is entered, constructs
+    /// @ref dynamic_config::Diff from `std::nullopt` and the current snapshot and
+    /// invokes the listener. Otherwise only subscribes; the listener is first invoked
+    /// when a snapshot arrives.
+    ///
+    /// Further updates are delivered after @ref utils::ResourceScopeStorage::AfterConstruction.
+    /// Unsubscribe runs in @ref utils::ResourceScopeStorage::BeforeDestruction.
+    ///
+    /// @note Callbacks occur in full accordance with
+    /// @ref components::DynamicConfigClientUpdater options.
+    ///
+    /// @warning In debug mode the last notification for any subscriber will be
+    /// called with `std::nullopt` and current config snapshot.
+    ///
+    /// @param scopes storage that owns the subscription lifetime.
+    /// See @ref resource_scopes_parameter "where to obtain scopes".
+    /// @param obj the subscriber, which is the owner of the listener method, and
+    /// is also used as the unique identifier of the subscription
+    /// @param name the name of the subscriber, for diagnostic purposes
+    /// @param func the listener method, named `OnConfigUpdate` by convention.
+    ///
+    /// @see based on @ref concurrent::AsyncEventSource engine
+    ///
+    /// @see dynamic_config::Diff
+    template <typename Class>
+    void UpdateIfHasConfigAndListen(
+        utils::ResourceScopeStorage& scopes,
+        Class* obj,
+        std::string_view name,
+        void (Class::*func)(const dynamic_config::Diff& diff)
+    ) {
+        DoUpdateIfHasConfigAndListen(
+            scopes,
+            concurrent::FunctionId(obj),
+            name,
+            [obj, func](const dynamic_config::Diff& diff) { (obj->*func)(diff); }
+        );
+    }
+
+private:
+    void DoUpdateIfHasConfigAndListen(
+        utils::ResourceScopeStorage& scopes,
+        concurrent::FunctionId id,
+        std::string_view name,
+        concurrent::AsyncEventSource<const dynamic_config::Diff&>::Function&& func
+    );
+
+    components::DynamicConfig& config_component_;
 };
 
 }  // namespace dynamic_config

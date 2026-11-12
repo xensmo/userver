@@ -194,7 +194,6 @@ if(USERVER_CONAN)
 else()
     include(SetupRe2)
 endif()
-target_link_libraries(${PROJECT_NAME} PRIVATE re2::re2)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE CRYPTOPP_ENABLE_NAMESPACE_WEAK=1)
 
@@ -233,11 +232,15 @@ endif()
 target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC Threads::Threads userver-internal-sanitize-options userver-internal-compile-options
-    PRIVATE Boost::filesystem Boost::program_options OpenSSL::SSL OpenSSL::Crypto
+    PRIVATE Boost::filesystem Boost::program_options OpenSSL::SSL OpenSSL::Crypto re2::re2
 )
-if(TARGET Boost::algorithm)
+if(BOOST_CPM)
     # Boost from CPM
-    target_link_libraries(${PROJECT_NAME} PUBLIC Boost::algorithm Boost::uuid Boost::random Boost::container)
+    target_link_libraries(
+        ${PROJECT_NAME}
+        PUBLIC Boost::uuid Boost::random Boost::container
+        PRIVATE Boost::exception
+    )
 endif()
 
 if(USERVER_CONAN)
@@ -281,10 +284,6 @@ target_include_directories(
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/ ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${USERVER_THIRD_PARTY_DIRS}/rapidjson/include)
-
-include(GenGdbPrinters)
-gen_gdb_printers(${PROJECT_NAME} "formats/json")
-# gen_gdb_printers(${PROJECT_NAME} "formats/yaml") gen_gdb_printers(${PROJECT_NAME} "utils/fast_pimpl")
 
 _userver_directory_install(
     COMPONENT universal
@@ -377,9 +376,9 @@ _userver_directory_install(
           "${USERVER_ROOT_DIR}/cmake/UserverEmbedFile.cmake"
           "${USERVER_ROOT_DIR}/cmake/UserverPreferStaticLibs.cmake"
           "${USERVER_ROOT_DIR}/cmake/embedded_config.cmake"
-          "${USERVER_ROOT_DIR}/cmake/install/userver-universal-config.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/userver
 )
+_userver_install_component_config(universal)
 _userver_directory_install(
     COMPONENT universal
     FILES "${USERVER_ROOT_DIR}/cmake/modules/Findcryptopp.cmake"

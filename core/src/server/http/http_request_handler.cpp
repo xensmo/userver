@@ -7,7 +7,9 @@
 
 #include <server/handlers/http_handler_base_statistics.hpp>
 #include <server/handlers/http_server_settings.hpp>
+#include <server/http/http_response_impl.hpp>
 #include <server/request/task_inherited_request_impl.hpp>
+#include <server/server_config.hpp>
 #include <userver/components/statistics_storage.hpp>
 #include <userver/dynamic_config/storage/component.hpp>
 #include <userver/dynamic_config/value.hpp>
@@ -27,27 +29,26 @@ namespace server::http {
 
 HttpRequestHandler::HttpRequestHandler(
     const components::ComponentContext& component_context,
-    const std::optional<std::string>& logger_access_component,
-    const std::optional<std::string>& logger_access_tskv_component,
-    bool is_monitor,
-    std::string server_name
+    const ServerConfig& config,
+    bool is_monitor
 )
     : is_monitor_(is_monitor),
-      server_name_(std::move(server_name)),
+      server_name_(config.server_name),
+      allow_set_response_ratelimited_by_(config.allow_set_response_ratelimited_by),
       rate_limit_(utils::TokenBucket::MakeUnbounded()),
       metrics_(component_context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()),
       config_source_(component_context.FindComponent<components::DynamicConfig>().GetSource())
 {
     auto& logging_component = component_context.FindComponent<components::Logging>();
 
-    if (logger_access_component && !logger_access_component->empty()) {
-        logger_access_ = logging_component.GetTextLogger(*logger_access_component);
+    if (config.logger_access && !config.logger_access->empty()) {
+        logger_access_ = logging_component.GetTextLogger(*config.logger_access);
     } else {
         LOG_INFO() << "Access log is disabled";
     }
 
-    if (logger_access_tskv_component && !logger_access_tskv_component->empty()) {
-        logger_access_tskv_ = logging_component.GetTextLogger(*logger_access_tskv_component);
+    if (config.logger_access_tskv && !config.logger_access_tskv->empty()) {
+        logger_access_tskv_ = logging_component.GetTextLogger(*config.logger_access_tskv);
     } else {
         LOG_INFO() << "Access_tskv log is disabled";
     }
@@ -61,7 +62,7 @@ engine::TaskWithResult<void> HttpRequestHandler::StartFailsafeTask(std::shared_p
         if (handler) {
             handler->ReportMalformedRequest(*request);
         }
-        auto& response = request->GetHttpResponse();
+        auto& response = GetHttpResponseImpl(*request);
         response.SetHeadersEnd();
         response.SetReady();
     });
@@ -75,9 +76,64 @@ utils::statistics::MetricTag<std::atomic<size_t>> kCcStatusCodeIsCustom{
 
 }  // namespace
 
+bool HttpRequestHandler::CheckRequestAdmission(HttpRequest& http_request) const {
+    const auto* handler = http_request.GetHttpHandler();
+    UASSERT(handler);
+    auto& http_response = GetHttpResponseImpl(http_request);
+    const auto throttling_enabled = handler->GetConfig().throttling_enabled;
+
+    if (throttling_enabled && http_response.IsLimitReached()) {
+        http_response.SetThrottleReason(
+            "Too many pending responses",
+            std::string{USERVER_NAMESPACE::http::headers::ratelimit_reason::kMaxPendingResponses}
+        );
+
+        http_request.SetResponseStatus(HttpStatus::kTooManyRequests);
+        GetHttpResponseImpl(http_request).SetReady();
+        LOG_LIMITED_ERROR()
+            << "Request throttled (too many pending responses, "
+               "limit via 'server.max_response_size_in_flight')";
+        return false;
+    }
+
+    if (throttling_enabled && !rate_limit_.Obtain()) {
+        const auto config = config_source_.GetSnapshot();
+        auto config_var = config[::dynamic_config::USERVER_RPS_CCONTROL_CUSTOM_STATUS];
+        const auto& delta = config_var.max_time_ms;
+
+        auto status = HttpStatus::kTooManyRequests;
+        if (cc_enabled_tp_.load() > std::chrono::steady_clock::now() - delta) {
+            status = static_cast<http::HttpStatus>(config_var.initial_status_code);
+            metrics_->GetMetric(kCcStatusCodeIsCustom) = 1;
+        } else {
+            status = cc_status_code_.load();
+            metrics_->GetMetric(kCcStatusCodeIsCustom) = 0;
+        }
+
+        http_response.SetThrottleReason(
+            "congestion-control",
+            std::string{USERVER_NAMESPACE::http::headers::ratelimit_reason::kCC}
+        );
+
+        http_response.SetStatus(status);
+        http_response.SetReady();
+
+        LOG_LIMITED_ERROR()
+            << "Request throttled (congestion control, "
+               "limit via USERVER_RPS_CCONTROL and USERVER_RPS_CCONTROL_ENABLED), "
+            << "limit=" << rate_limit_.GetRatePs() << "/sec, "
+            << "handler=" << handler->HandlerName() << ", status_code=" << static_cast<size_t>(status);
+
+        return false;
+    }
+
+    return true;
+}
+
 engine::TaskWithResult<void> HttpRequestHandler::StartRequestTask(std::shared_ptr<http::HttpRequest> http_request
 ) const {
-    auto& http_response = http_request->GetHttpResponse();
+    auto& http_response = GetHttpResponseImpl(*http_request);
+    http_response.AllowSetResponseRatelimitedBy(allow_set_response_ratelimited_by_);
     http_response.SetHeader(USERVER_NAMESPACE::http::headers::kServer, server_name_);
     if (http_response.IsReady()) {
         // Request is broken somehow, user handler must not be called
@@ -95,54 +151,10 @@ engine::TaskWithResult<void> HttpRequestHandler::StartRequestTask(std::shared_pt
         // by HttpRequestConstructor::CheckStatus
         return StartFailsafeTask(std::move(http_request));
     }
-    auto throttling_enabled = handler->GetConfig().throttling_enabled;
-
-    if (throttling_enabled && http_response.IsLimitReached()) {
-        SetThrottleReason(
-            http_response,
-            "Too many pending responses",
-            std::string{USERVER_NAMESPACE::http::headers::ratelimit_reason::kMaxPendingResponses}
-        );
-
-        http_request->SetResponseStatus(HttpStatus::kTooManyRequests);
-        http_request->GetHttpResponse().SetReady();
-        LOG_LIMITED_ERROR()
-            << "Request throttled (too many pending responses, "
-               "limit via 'server.max_response_size_in_flight')";
+    if (!CheckRequestAdmission(*http_request)) {
         return StartFailsafeTask(std::move(http_request));
     }
-
-    if (throttling_enabled && !rate_limit_.Obtain()) {
-        const auto config = config_source_.GetSnapshot();
-        auto config_var = config[::dynamic_config::USERVER_RPS_CCONTROL_CUSTOM_STATUS];
-        const auto& delta = config_var.max_time_ms;
-
-        auto status = HttpStatus::kTooManyRequests;
-        if (cc_enabled_tp_ > std::chrono::steady_clock::now() - delta) {
-            status = static_cast<http::HttpStatus>(config_var.initial_status_code);
-            metrics_->GetMetric(kCcStatusCodeIsCustom) = 1;
-        } else {
-            status = cc_status_code_.load();
-            metrics_->GetMetric(kCcStatusCodeIsCustom) = 0;
-        }
-
-        SetThrottleReason(
-            http_response,
-            "congestion-control",
-            std::string{USERVER_NAMESPACE::http::headers::ratelimit_reason::kCC}
-        );
-
-        http_response.SetStatus(status);
-        http_response.SetReady();
-
-        LOG_LIMITED_ERROR()
-            << "Request throttled (congestion control, "
-               "limit via USERVER_RPS_CCONTROL and USERVER_RPS_CCONTROL_ENABLED), "
-            << "limit=" << rate_limit_.GetRatePs() << "/sec, "
-            << "url=" << http_request->GetUrl() << ", status_code=" << static_cast<size_t>(status);
-
-        return StartFailsafeTask(std::move(http_request));
-    }
+    const auto throttling_enabled = handler->GetConfig().throttling_enabled;
 
     auto payload = [request = std::move(http_request), handler] {
         server::request::kTaskInheritedRequest.Set(std::static_pointer_cast<HttpRequest>(request));
@@ -151,7 +163,7 @@ engine::TaskWithResult<void> HttpRequestHandler::StartRequestTask(std::shared_pt
         handler->PrepareAndHandleRequest(*request, context);
 
         const auto now = std::chrono::steady_clock::now();
-        request->GetHttpResponse().SetReady(now);
+        GetHttpResponseImpl(*request).SetReady(now);
     };
 
     if (!is_monitor_ && throttling_enabled) {
@@ -182,7 +194,7 @@ void HttpRequestHandler::SetNewRequestHook(NewRequestHook hook) { new_request_ho
 void HttpRequestHandler::SetRpsRatelimit(std::optional<size_t> rps) {
     if (rps) {
         if (rate_limit_.IsUnbounded()) {
-            cc_enabled_tp_ = std::chrono::steady_clock::now();
+            cc_enabled_tp_.store(std::chrono::steady_clock::now());
             metrics_->GetMetric(kCcStatusCodeIsCustom) = 0;
         }
 

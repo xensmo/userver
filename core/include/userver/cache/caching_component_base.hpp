@@ -159,8 +159,8 @@ public:
     /// Further updates are delivered after @ref utils::ResourceScopeStorage::AfterConstruction, including those updates
     /// that arrived before it. Unsubscribe runs in @ref utils::ResourceScopeStorage::BeforeDestruction.
     ///
-    /// @param scopes storage that owns the subscription lifetime. In a component constructor pass `context.Scopes()`
-    /// or @ref components::GetResourceScopes.
+    /// @param scopes storage that owns the subscription lifetime.
+    /// See @ref resource_scopes_parameter "where to obtain scopes".
     template <class Class>
     void UpdateAndListen(
         utils::ResourceScopeStorage& scopes,
@@ -169,6 +169,7 @@ public:
         void (Class::*func)(const std::shared_ptr<const T>&)
     );
 
+#ifndef ARCADIA_ROOT
     /// @overload
     /// @deprecated Use the overload that takes @ref utils::ResourceScopeStorage.
     ///
@@ -179,6 +180,7 @@ public:
         std::string name,
         void (Class::*func)(const std::shared_ptr<const T>&)
     );
+#endif
 
     concurrent::AsyncEventChannel<const std::shared_ptr<const T>&>& GetEventChannel();
 
@@ -282,12 +284,13 @@ void CachingComponentBase<T>::UpdateAndListen(
     std::string name,
     void (Class::*func)(const std::shared_ptr<const T>&)
 ) {
-    event_channel_.DoUpdateAndListenScoped(scopes, obj, std::move(name), func, [this, obj, func] {
+    event_channel_.DoUpdateAndListen(scopes, obj, std::move(name), func, [this, obj, func] {
         auto ptr = Get();  // TODO: extra ref
         (obj->*func)(ptr);
     });
 }
 
+#ifndef ARCADIA_ROOT
 template <typename T>
 template <typename Class>
 concurrent::AsyncEventSubscriberScope CachingComponentBase<
@@ -297,6 +300,7 @@ concurrent::AsyncEventSubscriberScope CachingComponentBase<
         (obj->*func)(ptr);
     });
 }
+#endif
 
 template <typename T>
 concurrent::AsyncEventChannel<const std::shared_ptr<const T>&>& CachingComponentBase<T>::GetEventChannel() {
@@ -358,7 +362,7 @@ void CachingComponentBase<T>::GetAndWrite(dump::Writer& writer) const {
 template <typename T>
 void CachingComponentBase<T>::ReadAndSet(dump::Reader& reader) {
     auto data = ReadContents(reader);
-    if constexpr (meta::kIsSizable<T>) {
+    if constexpr (meta::IsSizable<T>) {
         if (data) {
             SetDataSizeStatistic(std::size(*data));
         }
@@ -419,7 +423,7 @@ yaml_config::Schema CachingComponentBase<T>::GetStaticConfigSchema() {
 template <typename T>
 void CachingComponentBase<T>::PreAssignCheck(const T*, [[maybe_unused]] const T* new_value_ptr) const {
     UINVARIANT(
-        meta::kIsSizable<T>,
+        meta::IsSizable<T>,
         fmt::format(
             "{} type does not support std::size(), add implementation of "
             "the method size() for this type or "
@@ -428,7 +432,7 @@ void CachingComponentBase<T>::PreAssignCheck(const T*, [[maybe_unused]] const T*
         )
     );
 
-    if constexpr (meta::kIsSizable<T>) {
+    if constexpr (meta::IsSizable<T>) {
         if (!new_value_ptr || std::size(*new_value_ptr) == 0) {
             throw cache::EmptyDataError(Name());
         }

@@ -18,17 +18,16 @@ namespace {
 constexpr std::size_t kSubscriptionDatabaseIndex = 0;
 
 std::unique_ptr<SubscriptionStorageBase> CreateSubscriptionStorage(
-    const std::shared_ptr<ThreadPools>& thread_pools,
+    const engine::ev::ThreadControl& thread_control,
     const std::vector<std::string>& shards,
     bool is_cluster_mode
 ) {
     const auto shards_count = shards.size();
-    auto shard_names = std::make_shared<const std::vector<std::string>>(shards);
     if (is_cluster_mode) {
-        return std::make_unique<ClusterSubscriptionStorage>(thread_pools, shards_count);
+        return std::make_unique<ClusterSubscriptionStorage>(thread_control, shards_count);
     }
 
-    return std::make_unique<SubscriptionStorage>(thread_pools, shards_count, is_cluster_mode, std::move(shard_names));
+    return std::make_unique<SubscriptionStorage>(thread_control, shards);
 }
 
 }  // namespace
@@ -65,9 +64,9 @@ SubscribeSentinel::SubscribeSentinel(
           testsuite_redis_control,
           database_index
       ),
-      storage_(CreateSubscriptionStorage(thread_pools, shards, IsInClusterMode())),
       per_channel_stats_enabled_(creation_config.per_channel_stats_enabled)
 {
+    storage_ = CreateSubscriptionStorage(GetSentinelThreadControl(), shards, IsInClusterMode());
     InitStorage();
 }
 
@@ -76,7 +75,7 @@ SubscribeSentinel::~SubscribeSentinel() {
     Stop();
 }
 
-std::shared_ptr<SubscribeSentinel> SubscribeSentinel::Create(
+std::unique_ptr<SubscribeSentinel> SubscribeSentinel::Create(
     const std::shared_ptr<ThreadPools>& thread_pools,
     const secdist::RedisSettings& settings,
     std::string shard_group_name,
@@ -119,7 +118,7 @@ std::shared_ptr<SubscribeSentinel> SubscribeSentinel::Create(
             << " will be heard by a subscribers on all other databases.";
     }
 
-    auto subscribe_sentinel = std::make_shared<SubscribeSentinel>(
+    auto subscribe_sentinel = std::make_unique<SubscribeSentinel>(
         thread_pools,
         shards,
         conns,

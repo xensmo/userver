@@ -2,9 +2,9 @@
 
 #include <algorithm>
 #include <mutex>
+#include <string_view>
 
 #include <fmt/format.h>
-#include <boost/algorithm/cxx11/all_of.hpp>
 
 #include <userver/utils/encoding/tskv_parser.hpp>
 #include <userver/utils/encoding/tskv_parser_read.hpp>
@@ -110,7 +110,7 @@ LogRecord::LogRecord(utils::impl::InternalTag, logging::Level level, std::string
         on_invalid_record();
     }
 
-    const auto status = utils::encoding::TskvReadRecord(parser, [&](const std::string& key, const std::string& value) {
+    const auto status = utils::encoding::TskvReadRecord(parser, [&](std::string_view key, std::string_view value) {
         tags_.emplace_back(key, value);
         return true;
     });
@@ -184,7 +184,7 @@ std::vector<LogRecord> LogCaptureLogger::Filter(
 ) const {
     return Filter([&](const LogRecord& record) {
         return record.GetText().find(text_substring) != std::string_view::npos &&
-               boost::algorithm::all_of(tag_substrings, [&](const auto& kv) {
+               std::ranges::all_of(tag_substrings, [&](const auto& kv) {
                    const auto* tag_value = record.GetTagOrNullptr(kv.first);
                    return tag_value && tag_value->find(kv.second) != std::string_view::npos;
                });

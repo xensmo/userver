@@ -6,6 +6,9 @@
 ///
 /// @ingroup userver_universal userver_formats_parse
 
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
 #include <optional>
 #include <string_view>
 #include <type_traits>
@@ -39,14 +42,27 @@ inline T ConvertToExtractor(const Value& value) {
     return value.template ConvertTo<T>();
 }
 
+template <typename Container, typename Value>
+void ReserveForParse(Container& container, const Value& value) {
+    if constexpr (requires { container.reserve(value.GetSize()); }) {
+        auto size = value.GetSize();
+        if constexpr (requires { container.max_size(); }) {
+            size = std::min<std::size_t>(size, container.max_size());
+        }
+        container.reserve(size);
+    }
+}
+
 template <typename ArrayType, class Value, typename ExtractFunc>
 ArrayType ParseArray(const Value& value, ExtractFunc extract_func) {
     value.CheckArrayOrNull();
     ArrayType response;
+    const auto end = value.end();
+    impl::ReserveForParse(response, value);
     auto inserter = std::inserter(response, response.end());
 
-    for (const auto& subitem : value) {
-        *inserter = extract_func(subitem);
+    for (auto it = value.begin(); it != end; ++it) {
+        *inserter = extract_func(*it);
         ++inserter;
     }
 
@@ -61,6 +77,7 @@ ObjectType ParseObject(const Value& value, ExtractFunc extract_func) {
     ObjectType result;
 
     const auto end = value.end();
+    impl::ReserveForParse(result, value);
     for (auto it = value.begin(); it != end; ++it) {
         if constexpr (std::is_constructible_v<KeyType, std::string>) {
             result.emplace(it.GetName(), extract_func(*it));
@@ -74,7 +91,7 @@ ObjectType ParseObject(const Value& value, ExtractFunc extract_func) {
 
 template <typename T>
 concept RangeNotMap =
-    meta::kIsRange<T> && !meta::kIsMap<T> && !std::is_same_v<T, boost::uuids::uuid> &&
+    meta::IsRange<T> && !meta::IsMap<T> && !std::is_same_v<T, boost::uuids::uuid> &&
     !std::is_convertible_v<T&, utils::impl::strong_typedef::StrongTypedefTag&>;
 
 }  // namespace impl
@@ -84,7 +101,7 @@ T Parse(const Value& value, To<T>) {
     return impl::ParseArray<T>(value, &impl::AsExtractor<meta::RangeValueType<T>, Value>);
 }
 
-template <meta::kIsMap T, common::IsFormatValue Value>
+template <meta::IsMap T, common::IsFormatValue Value>
 T Parse(const Value& value, To<T>) {
     return impl::ParseObject<T>(value, &impl::AsExtractor<typename T::mapped_type, Value>);
 }
@@ -111,7 +128,7 @@ T Convert(const Value& value, To<T>) {
     return impl::ParseArray<T>(value, &impl::ConvertToExtractor<meta::RangeValueType<T>, Value>);
 }
 
-template <meta::kIsMap T, typename Value>
+template <meta::IsMap T, typename Value>
 T Convert(const Value& value, To<T>) {
     if (value.IsMissing()) {
         return {};

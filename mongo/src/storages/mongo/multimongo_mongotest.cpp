@@ -1,7 +1,10 @@
 #include <userver/utest/utest.hpp>
 
 #include <chrono>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <fmt/format.h>
@@ -10,7 +13,9 @@
 #include <userver/clients/dns/resolver.hpp>
 #include <userver/engine/deadline.hpp>
 #include <userver/engine/single_consumer_event.hpp>
+#include <userver/engine/sleep.hpp>
 #include <userver/engine/task/task.hpp>
+#include <userver/formats/bson/inline.hpp>
 #include <userver/fs/blocking/temp_file.hpp>
 #include <userver/fs/blocking/write.hpp>
 #include <userver/storages/mongo/collection.hpp>
@@ -46,6 +51,15 @@ UTEST(MultiMongo, DynamicSecdistUpdate) {
   )~";
 
     struct SecdistConfigStorage {
+        SecdistConfigStorage(utils::ResourceScopeStorage& scopes, storages::secdist::Secdist& secdist) {
+            secdist.UpdateAndListen(
+                scopes,
+                this,
+                "test/multimongo_update_secdist",
+                &SecdistConfigStorage::OnSecdistUpdate
+            );
+        }
+
         void OnSecdistUpdate(const storages::secdist::SecdistConfig& secdist_config_update) {
             if (updates_counter == 1) {
                 // prevents test flaps
@@ -67,7 +81,6 @@ UTEST(MultiMongo, DynamicSecdistUpdate) {
         engine::SingleConsumerEvent updated_twice{engine::SingleConsumerEvent::NoAutoReset{}};
     };
 
-    SecdistConfigStorage storage;
     auto dns_resolver = MakeDnsResolver();
 
     auto temp_file = fs::blocking::TempFile::Create();
@@ -82,8 +95,8 @@ UTEST(MultiMongo, DynamicSecdistUpdate) {
          {}}
     };
     storages::secdist::Secdist secdist{{&provider, std::chrono::milliseconds(100)}};
-    auto subscriber =
-        secdist.UpdateAndListen(&storage, "test/multimongo_update_secdist", &SecdistConfigStorage::OnSecdistUpdate);
+    utils::WithResourceScopes<SecdistConfigStorage> scoped_storage(std::in_place, secdist);
+    auto& storage = *scoped_storage;
     EXPECT_EQ(storage.updates_counter.load(), 1);
 
     const auto dynamic_config = MakeDynamicConfig();
@@ -114,6 +127,69 @@ UTEST(MultiMongo, DynamicSecdistUpdate) {
 
     EXPECT_TRUE(admin_pool->HasCollection(kSysVerCollName));
     UEXPECT_NO_THROW(admin_pool->GetCollection(std::string{kSysVerCollName}));
+}
+
+namespace {
+class MultiMongoPool : public MongoPoolFixture {};
+}  // namespace
+
+UTEST_F(MultiMongoPool, DynamicSecdistUpdateAfterPoolCreation) {
+    constexpr std::string_view k_secdist_json_format = R"({{"mongo_settings":{{"test":{{"uri":"{}"}}}}}})";
+    constexpr auto k_update_period = std::chrono::milliseconds{100};
+    constexpr auto k_poll_interval = std::chrono::milliseconds{10};
+    const std::string k_other_database = kTestDatabaseNamePrefix + "multimongo_secdist_reload";
+    const std::string k_collection = "secdist_reload";
+    auto& old_pool = GetDefaultPool();
+    auto new_pool = MakePool(k_other_database, {});
+    old_pool.GetCollection(k_collection).InsertOne(formats::bson::MakeDoc("_id", 1));
+    new_pool.GetCollection(k_collection).InsertOne(formats::bson::MakeDoc("_id", 2));
+
+    auto dns_resolver = MakeDnsResolver();
+    const auto dynamic_config = MakeDynamicConfig();
+    auto temp_file = fs::blocking::TempFile::Create();
+    fs::blocking::RewriteFileContents(
+        temp_file.GetPath(),
+        fmt::format(k_secdist_json_format, GetTestsuiteMongoUri(kTestDatabaseDefaultName))
+    );
+    storages::secdist::DefaultLoader provider{
+        {temp_file.GetPath(),
+         storages::secdist::SecdistFormat::kJson,
+         false,
+         std::nullopt,
+         &engine::current_task::GetTaskProcessor(),
+         {}}
+    };
+    storages::secdist::Secdist secdist{{&provider, k_update_period}};
+    utils::WithResourceScopes<mongo::MultiMongo> multi_mongo(
+        std::in_place,
+        "userver_multimongo_reload_test",
+        secdist,
+        MakeTestPoolConfig(),
+        &dns_resolver,
+        dynamic_config.GetSource()
+    );
+    multi_mongo->AddPool("test");
+    const auto pool = multi_mongo->GetPool("test");
+    auto collection = pool->GetCollection(k_collection);
+    ASSERT_EQ(1, collection.Count(formats::bson::MakeDoc("_id", 1)));
+    ASSERT_EQ(0, collection.Count(formats::bson::MakeDoc("_id", 2)));
+
+    fs::blocking::RewriteFileContents(
+        temp_file.GetPath(),
+        fmt::format(k_secdist_json_format, GetTestsuiteMongoUri(k_other_database))
+    );
+    const auto deadline = engine::Deadline::FromDuration(utest::kMaxTestWaitTime);
+    while (collection.Count(formats::bson::MakeDoc("_id", 2)) == 0 && !deadline.IsReached()) {
+        engine::SleepFor(k_poll_interval);
+    }
+    ASSERT_EQ(1, collection.Count(formats::bson::MakeDoc("_id", 2)));
+    EXPECT_EQ(0, collection.Count(formats::bson::MakeDoc("_id", 1)));
+    EXPECT_EQ(pool, multi_mongo->GetPool("test"));
+    EXPECT_EQ(1, pool->GetCollection(k_collection).Count(formats::bson::MakeDoc("_id", 2)));
+
+    collection.InsertOne(formats::bson::MakeDoc("_id", 3));
+    EXPECT_EQ(1, new_pool.GetCollection(k_collection).Count(formats::bson::MakeDoc("_id", 3)));
+    EXPECT_EQ(0, old_pool.GetCollection(k_collection).Count(formats::bson::MakeDoc("_id", 3)));
 }
 
 USERVER_NAMESPACE_END

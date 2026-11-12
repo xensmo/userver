@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include <google/protobuf/message.h>
@@ -22,8 +23,9 @@ USERVER_NAMESPACE_BEGIN
 namespace protobuf::json {
 
 /// @brief Converts protobuf @a message to JSON `ValueBuilder`.
-/// @throws PrintError if conversion has failed
+///
 /// The conversion is performed according to [ProtoJSON](https://protobuf.dev/programming-guides/json/) specification.
+/// @throws PrintError if conversion has failed
 /// @note If protobuf enum value has multiple aliases (`allow_alias` enum option is on) then the first alias in the
 ///       definition order is outputted.
 /// @warning Most of the legacy ProtoJSON behavior introduced for compatibility with non-conformant implementations
@@ -32,12 +34,13 @@ namespace protobuf::json {
 /// @warning The `proto2` syntax is not fully supported and tested (at least extension fields are not supported).
 [[nodiscard]] formats::json::ValueBuilder MessageToJsonBuilder(
     const ::google::protobuf::Message& message,
-    const PrintOptions& options
+    const PrintOptions& options = {}
 );
 
 /// @brief Converts protobuf @a message to JSON `Value`.
-/// @throws PrintError if conversion has failed
+///
 /// The conversion is performed according to [ProtoJSON](https://protobuf.dev/programming-guides/json/) specification.
+/// @throws PrintError if conversion has failed
 /// @note If protobuf enum value has multiple aliases (`allow_alias` enum option is on) then the first alias in the
 ///       definition order is outputted.
 /// @warning Most of the legacy ProtoJSON behavior introduced for compatibility with non-conformant implementations
@@ -46,15 +49,16 @@ namespace protobuf::json {
 /// @warning The `proto2` syntax is not fully supported and tested (at least extension fields are not supported).
 [[nodiscard]] inline formats::json::Value MessageToJson(
     const ::google::protobuf::Message& message,
-    const PrintOptions& options
+    const PrintOptions& options = {}
 ) {
     return protobuf::json::MessageToJsonBuilder(message, options).ExtractValue();
 }
 
-/// @brief Converts @a json to protobuf @a message .
-/// @throws ParseError if conversion has failed
-/// @throws MemberMissingException is @a json holds nothing
+/// @brief Converts @a json to protobuf @a message.
+///
 /// The conversion is performed according to [ProtoJSON](https://protobuf.dev/programming-guides/json/) specification.
+/// @throws ParseError if conversion has failed
+/// @throws MemberMissingException if @a json holds nothing
 /// @note If conversion fails, @a message is left in a valid but unspecified state.
 /// @warning Most of the legacy ProtoJSON behavior introduced for compatibility with non-conformant implementations
 ///          is not supported. This behavior may be disabled in the future versions of the protobuf library thus
@@ -67,19 +71,46 @@ void JsonToMessage(
 );
 
 /// @brief Converts @a json to protobuf message of type `T`.
+///
+/// The conversion is performed according to [ProtoJSON](https://protobuf.dev/programming-guides/json/) specification.
 /// @tparam T protobuf message type
 /// @throws ParseError if conversion has failed
-/// @throws MemberMissingException is @a json holds nothing
-/// The conversion is performed according to [ProtoJSON](https://protobuf.dev/programming-guides/json/) specification.
+/// @throws MemberMissingException if @a json holds nothing
 /// @warning Most of the legacy ProtoJSON behavior introduced for compatibility with non-conformant implementations
 ///          is not supported. This behavior may be disabled in the future versions of the protobuf library thus
 ///          should not be relied upon.
 /// @warning The `proto2` syntax is not fully supported and tested (at least extension fields are not supported).
 template <typename T>
-requires(std::is_base_of_v<::google::protobuf::Message, T> || !std::is_same_v<::google::protobuf::Message, T>)
+requires(std::is_base_of_v<::google::protobuf::Message, T> && !std::is_same_v<::google::protobuf::Message, T>)
 [[nodiscard]] T JsonToMessage(const formats::json::Value& json, const ParseOptions& options = {}) {
     T message;
     protobuf::json::JsonToMessage(json, message, options);
+    return message;
+}
+
+/// @brief Parses @a json_string into protobuf @a message.
+///
+/// Equivalent to calling @ref formats::json::FromString followed by @ref JsonToMessage.
+/// @throws formats::json::ParseException if @a json_string is not a valid JSON document
+/// @throws ParseError if conversion has failed
+/// @note If conversion fails, @a message is left in a valid but unspecified state.
+void JsonStringToMessage(
+    std::string_view json_string,
+    ::google::protobuf::Message& message,
+    const ParseOptions& options = {}
+);
+
+/// @brief Parses @a json_string into a protobuf message of type `T`.
+///
+/// Equivalent to calling @ref formats::json::FromString followed by @ref JsonToMessage.
+/// @tparam T protobuf message type
+/// @throws formats::json::ParseException if @a json_string is not a valid JSON document
+/// @throws ParseError if conversion has failed
+template <typename T>
+requires(std::is_base_of_v<::google::protobuf::Message, T> && !std::is_same_v<::google::protobuf::Message, T>)
+[[nodiscard]] T JsonStringToMessage(std::string_view json_string, const ParseOptions& options = {}) {
+    T message;
+    protobuf::json::JsonStringToMessage(json_string, message, options);
     return message;
 }
 
@@ -94,7 +125,7 @@ requires(std::is_base_of_v<::google::protobuf::Message, T> || !std::is_same_v<::
 /// @param options Same conversion options as for @ref MessageToJson / @ref MessageToJsonBuilder.
 /// @returns ProtoJSON representation of @a message.
 /// @throws PrintError if conversion has failed
-std::string MessageToJsonString(const ::google::protobuf::Message& message, const PrintOptions& options);
+std::string MessageToJsonString(const ::google::protobuf::Message& message, const PrintOptions& options = {});
 
 /// @brief Serializes protobuf @a message to a JSON string for debugging/logging, stopping early once @a limit bytes
 /// have been produced.
@@ -104,8 +135,11 @@ std::string MessageToJsonString(const ::google::protobuf::Message& message, cons
 ///   `.proto` definition.
 /// - Fields marked with the `[debug_redact = true]` option are hidden: their value is replaced with a `"[REDACTED]"`
 ///   marker.
-/// - `google.protobuf.Any` is expanded (like @ref MessageToJsonString with default options), but falls back to the
-///   raw representation instead of failing when the payload type can't be resolved in the descriptor pool or parsed.
+/// - `google.protobuf.Any` is expanded (like @ref MessageToJsonString with default options). Failures are replaced
+///   with a diagnostic object so the rest of the message is still serialized, and the raw value bytes are omitted:
+///   an unknown payload type becomes `{"@type":"<type_url>","@error":"unresolved_any_type"}`, and a payload that
+///   fails to parse becomes `{"@type":"<type_url>","@error":"invalid_payload"}`. A missing `type_url` still fails
+///   the conversion.
 /// - Serialization stops early once `limit` bytes have been produced instead of serializing the whole message and
 ///   only then truncating, which saves CPU on large messages. The already-open JSON containers are closed, so the
 ///   truncated part before the marker stays a well-formed JSON document.
@@ -125,13 +159,6 @@ std::string MessageToJsonString(const ::google::protobuf::Message& message, cons
 std::string MessageToDebugString(const ::google::protobuf::Message& message, std::size_t limit);
 
 }  // namespace protobuf::json
-
-/* NOTE !
-   Currently this breaks linkage because similar functions are defined in the
-   userver/grpc/include/userver/ugrpc/proto_json.hpp . When those functions are
-   removed as legacy, uncomment this code (and do not forget to uncomment tests
-   in the userver/libraries/protobuf/tests/json/complex_from_json_test.cpp and
-   taxi/uservices/userver/libraries/protobuf/tests/json/complex_to_json_test.cpp).
 
 namespace formats::serialize {
 
@@ -165,7 +192,5 @@ TMessage Parse(const json::Value& value, To<TMessage>) {
 }
 
 }  // namespace formats::parse
-
-*/
 
 USERVER_NAMESPACE_END

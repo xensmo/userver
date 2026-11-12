@@ -153,16 +153,6 @@ UriPtr MakeUri(const std::string& pool_id, const std::string& uri_string, const 
     return uri;
 }
 
-mongoc_ssl_opt_t MakeSslOpt(const mongoc_uri_t* uri) {
-    mongoc_ssl_opt_t ssl_opt = *mongoc_ssl_opt_get_default();
-    ssl_opt.pem_file = mongoc_uri_get_option_as_utf8(uri, MONGOC_URI_TLSCERTIFICATEKEYFILE, nullptr);
-    ssl_opt.pem_pwd = mongoc_uri_get_option_as_utf8(uri, MONGOC_URI_TLSCERTIFICATEKEYFILEPASSWORD, nullptr);
-    ssl_opt.ca_file = mongoc_uri_get_option_as_utf8(uri, MONGOC_URI_TLSCAFILE, nullptr);
-    ssl_opt.weak_cert_validation = mongoc_uri_get_option_as_bool(uri, MONGOC_URI_TLSALLOWINVALIDCERTIFICATES, false);
-    ssl_opt.allow_invalid_hostname = mongoc_uri_get_option_as_bool(uri, MONGOC_URI_TLSALLOWINVALIDHOSTNAMES, false);
-    return ssl_opt;
-}
-
 std::string MakeQueueDeadlineMessage(std::optional<engine::Deadline::Duration> inherited_timeout) {
     if (!inherited_timeout) {
         return {};
@@ -339,7 +329,7 @@ CDriverPoolImpl::CDriverPoolImpl(
 )
     : PoolImpl(scopes, std::move(id), config, config_source),
       app_name_(config.app_name),
-      init_data_{dns_resolver, {}, {}},
+      init_data_{dns_resolver, {}},
       max_size_(config.pool_settings.max_size),
       idle_limit_(config.pool_settings.idle_limit),
       queue_timeout_(config.queue_timeout),
@@ -354,14 +344,6 @@ CDriverPoolImpl::CDriverPoolImpl(
     GlobalInitializer::LogInitWarningsOnce();
 
     SetConnectionString(uri_string);
-    auto uri = uri_.Read();
-    const char* uri_database = mongoc_uri_get_database(&**uri);
-    if (!uri_database) {
-        throw InvalidConfigException("MongoDB uri for pool '") << Id() << "' must include database name";
-    }
-    default_database_ = uri_database;
-
-    init_data_.ssl_opt = MakeSslOpt(&**uri);
 
     std::size_t i = 0;
     try {
@@ -413,8 +395,6 @@ size_t CDriverPoolImpl::MaxSize() const { return max_size_.load(); }
 const stats::ApmStats& CDriverPoolImpl::GetApmStats() const { return apm_stats_; }
 
 void CDriverPoolImpl::SetMaxSize(size_t max_size) { max_size_ = max_size; }
-
-const std::string& CDriverPoolImpl::DefaultDatabaseName() const { return default_database_; }
 
 const std::optional<std::chrono::seconds>& CDriverPoolImpl::GetMaxReplicationLag() const {
     return pool_config_.max_replication_lag;
@@ -474,13 +454,17 @@ void CDriverPoolImpl::SetConnectionString(const std::string& connection_string) 
         // not changed
         return;
     }
+    auto uri = MakeUri(Id(), connection_string, pool_config_);
+    if (!mongoc_uri_get_database(uri.get())) {
+        throw InvalidConfigException("MongoDB uri for pool '") << Id() << "' must include database name";
+    }
     orig_connection_string_ = connection_string;
     bulk_write_support_.store(BulkWriteSupport::kUnknown, std::memory_order_relaxed);
     LOG_WARNING()
         << "New connection string for " << Id() << " found in secdist, all old sockets will be eventually closed";
 
     // sync: store uri_ before epoch_
-    uri_.Assign(MakeUri(Id(), connection_string, pool_config_));
+    uri_.Assign(std::move(uri));
     epoch_++;
 
     TESTPOINT("mongo-new-connection-string", {});
@@ -598,8 +582,11 @@ void CDriverPoolImpl::Drop(ConnPtr conn) noexcept {
 
 CDriverPoolImpl::ConnPtr CDriverPoolImpl::TryGetIdle() {
     ConnPtr conn{};
-    if (queue_.try_dequeue(conn)) {
-        return conn;
+    while (queue_.try_dequeue(conn)) {
+        if (conn->GetEpoch() == epoch_.load()) {
+            return conn;
+        }
+        Drop(std::move(conn));
     }
     return nullptr;
 }

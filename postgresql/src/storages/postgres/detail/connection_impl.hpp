@@ -186,8 +186,8 @@ private:
         tracing::Span& span,
         tracing::ScopeTime& scope
     );
+    void EvictPreparedStatementIfNeeded(engine::Deadline deadline, tracing::ScopeTime& scope);
     void DiscardOldPreparedStatements(engine::Deadline deadline);
-    void DiscardPreparedStatement(std::string_view meta_statement_name, engine::Deadline deadline);
 
     ResultSet ExecuteCommand(
         const Query& query,
@@ -224,6 +224,7 @@ private:
     );
 
     void LoadUserTypes(engine::Deadline deadline);
+    UserTypes QueryUserTypes(engine::Deadline deadline);
     void FillBufferCategories(ResultSet& res);
 
     template <typename Counter>
@@ -241,7 +242,28 @@ private:
 
     void ReportStatement(std::string_view name);
 
-    bool ShouldWrapInAutoTransaction(std::string_view statement) const noexcept;
+    bool ShouldWrapInAutoTransaction() const noexcept;
+
+    ResultSet ExecuteCommandInPipeline(
+        const Query& query,
+        const detail::QueryParameters& params,
+        OptionalCommandControl statement_cmd_ctl,
+        engine::Deadline deadline
+    );
+
+    ResultSet ExecuteCommandOutsideOfPipeline(
+        const Query& query,
+        const detail::QueryParameters& params,
+        OptionalCommandControl statement_cmd_ctl,
+        engine::Deadline deadline
+    );
+
+    ResultSet ExecuteStatement(
+        const Query& query,
+        const detail::QueryParameters& params,
+        OptionalCommandControl statement_cmd_ctl,
+        engine::Deadline deadline
+    );
 
     const std::string uuid_;
     Connection::Statistics stats_;

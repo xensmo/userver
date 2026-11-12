@@ -14,7 +14,7 @@
 #include <userver/dynamic_config/source.hpp>
 #include <userver/logging/log.hpp>
 #include <userver/testsuite/cache_control.hpp>
-#include <userver/utils/statistics/entry.hpp>
+#include <userver/utils/statistics/fwd.hpp>
 #include <userver/yaml_config/schema.hpp>
 
 USERVER_NAMESPACE_BEGIN
@@ -30,6 +30,8 @@ void RegisterOnStatisticsStorage(
 );
 
 dynamic_config::Source FindDynamicConfigSource(const components::ComponentContext& context);
+
+dynamic_config::NoblockSubscriber FindDynamicConfigNoblockSubscriber(const components::ComponentContext& context);
 
 bool IsDumpSupportEnabled(const components::ComponentConfig& config);
 
@@ -92,6 +94,8 @@ private:
 
     void OnConfigUpdate(const dynamic_config::Snapshot& cfg);
 
+    void OnConfigUpdateWithoutWaiting(const dynamic_config::Diff& diff);
+
     void UpdateConfig(const LruCacheConfig& config);
 
     static constexpr bool kCacheIsDumpable = dump::kIsDumpable<Key> && dump::kIsDumpable<Value>;
@@ -131,19 +135,28 @@ LruCacheComponent<
                "dynamic-config updates, cache="
             << name_;
 
-        impl::FindDynamicConfigSource(context).UpdateAndListen(
-            components::GetResourceScopes(context),
-            this,
-            "cache." + name_,
-            &LruCacheComponent::OnConfigUpdate
-        );
+        if (static_config_.wait_for_dynamic_configs) {
+            impl::FindDynamicConfigSource(context).UpdateAndListen(
+                components::GetResourceScopes(context),
+                this,
+                "cache." + name_,
+                &LruCacheComponent::OnConfigUpdate
+            );
+        } else {
+            impl::FindDynamicConfigNoblockSubscriber(context).UpdateIfHasConfigAndListen(
+                components::GetResourceScopes(context),
+                this,
+                "cache." + name_,
+                &LruCacheComponent::OnConfigUpdateWithoutWaiting
+            );
+        }
     } else {
         LOG_INFO() << "Dynamic LRU cache config is disabled, cache=" << name_;
     }
 
     impl::RegisterOnStatisticsStorage(context, name_, [this](utils::statistics::Writer& writer) { writer = *cache_; });
 
-    testsuite::RegisterCacheScope(context, this, &LruCacheComponent::DropCache);
+    testsuite::RegisterCacheResetter(context, this, &LruCacheComponent::DropCache);
 }
 
 template <typename Key, typename Value, typename Hash, typename Equal>
@@ -182,6 +195,11 @@ void LruCacheComponent<Key, Value, Hash, Equal>::OnConfigUpdate(const dynamic_co
         LOG_DEBUG() << "Using static config for LRU cache";
         UpdateConfig(static_config_.config);
     }
+}
+
+template <typename Key, typename Value, typename Hash, typename Equal>
+void LruCacheComponent<Key, Value, Hash, Equal>::OnConfigUpdateWithoutWaiting(const dynamic_config::Diff& diff) {
+    OnConfigUpdate(diff.current);
 }
 
 template <typename Key, typename Value, typename Hash, typename Equal>

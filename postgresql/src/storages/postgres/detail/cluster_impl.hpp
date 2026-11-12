@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -76,6 +77,8 @@ public:
     OptionalCommandControl GetTaskDataHandlersCommandControl() const;
 
     std::string GetDbName() const;
+
+    bool HasAliveHosts() const;
 
     void SetDsnList(const DsnList&);
 

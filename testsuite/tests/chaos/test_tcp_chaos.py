@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import logging
 import socket
 import time
@@ -51,7 +52,7 @@ async def _assert_connection_dead(sock: AsyncioSocket) -> None:
 class Server:
     def __init__(self, sock: AsyncioSocket):
         self._sock = sock
-        self._sockets = []
+        self._sockets: list[AsyncioSocket] = []
 
     async def accept(self) -> AsyncioSocket:
         logger.debug(f'Accepting connections on {self._sock.getsockname()}')
@@ -68,8 +69,8 @@ class Server:
             sock.close()
         self._sock.close()
 
-    def get_port(self) -> int:
-        return self._sock.getsockname()[1]
+    def get_sockname(self) -> tuple[str, int]:
+        return self._sock.getsockname()
 
 
 @pytest.fixture(name='make_client')
@@ -105,10 +106,11 @@ async def _server(asyncio_socket: AsyncioSocketsFactory):
 
 @pytest.fixture(name='gate')
 async def _gate(tcp_server):
+    host, port = tcp_server.get_sockname()
     gate_config = chaos.GateRoute(
         name='tcp proxy',
-        host_to_server='localhost',
-        port_to_server=tcp_server.get_port(),
+        host_to_server=host,
+        port_to_server=port,
     )
     async with chaos.TcpGate(gate_config) as proxy:
         yield proxy
@@ -142,6 +144,42 @@ async def test_gate(gate):
 
 async def test_server_connection(server_connection):
     pass
+
+
+@pytest.mark.skipif(not socket.has_ipv6, reason='IPv6 is not supported')
+async def test_server_address_with_ipv6_port_in_use(make_client, tcp_server, monkeypatch):
+    loop = asyncio.get_running_loop()
+    getaddrinfo = loop.getaddrinfo
+
+    async def resolve(host, port, **kwargs):
+        if host == 'localhost':
+            return await getaddrinfo('::1', port, **kwargs) + await getaddrinfo('127.0.0.1', port, **kwargs)
+        return await getaddrinfo(host, port, **kwargs)
+
+    try:
+        other_server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    except OSError as exc:
+        if exc.errno == errno.EAFNOSUPPORT:
+            pytest.skip('IPv6 is not available at runtime')
+        raise
+
+    with other_server:
+        other_server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+        try:
+            other_server.bind(('::1', tcp_server.get_sockname()[1]))
+        except OSError as exc:
+            if exc.errno == errno.EADDRNOTAVAIL:
+                pytest.skip('IPv6 loopback is not available')
+            if exc.errno == errno.EADDRINUSE:
+                pytest.skip('The matching IPv6 port is already in use')
+            raise
+        other_server.listen()
+        monkeypatch.setattr(loop, 'getaddrinfo', resolve)
+
+        client = await make_client()
+        server_connection = await tcp_server.accept()
+        await _assert_data_from_to(client, server_connection)
+        await _assert_data_from_to(server_connection, client)
 
 
 async def test_to_client_noop(tcp_client, gate, server_connection):
@@ -583,6 +621,33 @@ async def test_substitute(
     await server_connection.sendall(b'hello')
     data = await tcp_client.recv(10)
     assert data == b'die'
+
+
+def _probe_fresh_fds_are_not_registered_in_loop(count: int) -> None:
+    # A new socket reuses a just freed fd, so a registration left by the gate
+    # makes add_writer() fail with ENOENT from epoll.
+    loop = asyncio.get_running_loop()
+    sockets = [socket.socket() for _ in range(count)]
+    try:
+        for sock in sockets:
+            loop.add_writer(sock.fileno(), lambda: None)
+            loop.remove_writer(sock.fileno())
+    finally:
+        for sock in sockets:
+            sock.close()
+
+
+async def test_closed_connection_does_not_leak_fd_registration(
+    tcp_client,
+    gate,
+    server_connection,
+):
+    server_connection.close()
+    for _ in range(100):
+        await asyncio.sleep(0)
+        _probe_fresh_fds_are_not_registered_in_loop(count=4)
+
+    await _assert_connection_dead(tcp_client)
 
 
 async def test_wait_for_connections(

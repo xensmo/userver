@@ -353,9 +353,13 @@ class CompilerBase:
         name_lower = self.format_ns_name(name)
         var_type = types[f'::{namespace}::{name_lower}::VariableTypeRaw']
 
-        # types_fwd.hpp, types.{hpp,cpp}
+        types_cpp = ''
         assert len(outputs) == 1
         for file in outputs[0].files:
+            if file.ext == '.cpp':
+                assert not types_cpp, f'Several .cpp files are rendered for dynamic config variable {name}'
+                types_cpp = file.content
+                continue
             write_file(
                 os.path.join(
                     output_dir,
@@ -363,6 +367,7 @@ class CompilerBase:
                 ),
                 file.content,
             )
+        assert types_cpp, f'No .cpp file is rendered for dynamic config variable {name}'
 
         # variable.{hpp,cpp}
         schema_hash = self._schema_hashes[name]
@@ -381,6 +386,7 @@ class CompilerBase:
             'schema_hash': schema_hash,
             'namespace': namespace,
             'generate_taxi_aliases': generate_taxi_aliases,
+            'types_cpp': types_cpp,
         }
 
         tpl = self._jinja().get_template('variable.hpp.jinja')

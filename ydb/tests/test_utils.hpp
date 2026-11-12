@@ -3,10 +3,10 @@
 #include <ydb-cpp-sdk/client/table/table.h>
 #include <ydb-cpp-sdk/client/topic/client.h>
 
+#include <userver/dynamic_config/storage_mock.hpp>
 #include <userver/dynamic_config/test_helpers.hpp>
 #include <userver/utest/utest.hpp>
 #include <userver/utils/enumerate.hpp>
-#include <userver/utils/statistics/storage.hpp>
 #include <userver/utils/statistics/testing.hpp>
 
 #include <userver/ydb/coordination.hpp>
@@ -26,9 +26,17 @@ class TestClientsBase {
 public:
     std::string_view GetDatabasePath() const { return driver_->GetDbPath(); }
 
-    utils::statistics::Snapshot GetMetrics() const { return utils::statistics::Snapshot{statistics_storage_}; }
+    utils::statistics::Snapshot GetMetrics() const {
+        return utils::statistics::Snapshot{[this](utils::statistics::Writer& writer) {
+            auto ydb_writer = writer["ydb"];
+            ydb_writer = *driver_;
+            ydb_writer = *table_client_;
+        }};
+    }
 
     impl::Driver& GetDriver() { return *driver_; }
+
+    dynamic_config::StorageMock& GetConfig() { return config_; }
 
     ydb::TableClient& GetTableClient() { return *table_client_; }
 
@@ -82,31 +90,24 @@ protected:
 
         driver_ = std::make_shared<ydb::impl::Driver>(database, driver_settings);
 
-        table_client_ = std::make_shared<
-            ydb::TableClient>(table_settings, query_params, dynamic_config::GetDefaultSource(), driver_);
+        table_client_ = std::make_shared<ydb::TableClient>(table_settings, query_params, config_.GetSource(), driver_);
 
         topic_client_ = std::make_shared<ydb::TopicClient>(driver_, ydb::impl::TopicSettings{});
 
         federated_topic_client_ = std::make_shared<ydb::FederatedTopicClient>(driver_, ydb::impl::TopicSettings{});
 
         coordination_client_ = std::make_shared<ydb::CoordinationClient>(driver_);
-
-        statistics_holder_ = statistics_storage_.RegisterWriter("ydb", [this](utils::statistics::Writer& writer) {
-            writer = *driver_;
-            writer = *table_client_;
-        });
     }
 
 private:
     static constexpr auto kMaxYdbBootTimeout = std::chrono::minutes{3};
 
+    dynamic_config::StorageMock config_ = dynamic_config::MakeDefaultStorage({});
     std::shared_ptr<ydb::impl::Driver> driver_;
     std::shared_ptr<ydb::TableClient> table_client_;
     std::shared_ptr<ydb::TopicClient> topic_client_;
     std::shared_ptr<ydb::FederatedTopicClient> federated_topic_client_;
     std::shared_ptr<ydb::CoordinationClient> coordination_client_;
-    utils::statistics::Storage statistics_storage_;
-    utils::statistics::Entry statistics_holder_;
 };
 
 // NOLINTNEXTLINE(fuchsia-multiple-inheritance)

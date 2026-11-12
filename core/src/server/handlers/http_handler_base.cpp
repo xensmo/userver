@@ -1,10 +1,13 @@
 #include <userver/server/handlers/http_handler_base.hpp>
 
+#include <utility>
+
 #include <fmt/format.h>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/container/small_vector.hpp>
 
 #include <server/handlers/http_handler_base_statistics.hpp>
+#include <server/http/http_response_impl.hpp>
 #include <server/middlewares/handler_adapter.hpp>
 #include <server/request/internal_request_context.hpp>
 #include <server/server_config.hpp>
@@ -20,7 +23,7 @@
 #include <userver/http/common_headers.hpp>
 #include <userver/logging/level_serialization.hpp>
 #include <userver/logging/log.hpp>
-#include <userver/server/component.hpp>
+#include <userver/server/component_base.hpp>
 #include <userver/server/http/http_error.hpp>
 #include <userver/server/http/http_method.hpp>
 #include <userver/server/http/http_response_body_stream.hpp>
@@ -28,6 +31,7 @@
 #include <userver/server/middlewares/configuration.hpp>
 #include <userver/server/middlewares/http_middleware_base.hpp>
 #include <userver/utils/algo.hpp>
+#include <userver/utils/assert.hpp>
 #include <userver/utils/fast_scope_guard.hpp>
 #include <userver/utils/from_string.hpp>
 #include <userver/utils/graphite.hpp>
@@ -37,6 +41,8 @@
 #include <userver/utils/scope_guard.hpp>
 #include <userver/utils/text_light.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
+
+#include <dynamic_config/variables/USERVER_HTTP_SERVER_LOGS.hpp>
 
 #ifndef ARCADIA_ROOT
 #include "generated/src/server/handlers/http_handler_base.yaml.hpp"  // Y_IGNORE
@@ -122,6 +128,38 @@ void ValidateMiddlewaresConfiguration(
     }
 }
 
+enum class LogLimitFor : std::uint8_t { kRequest = 0, kResponse = 1 };
+
+std::size_t GetLoggingLimit(
+    const dynamic_config::Snapshot& config_snapshot,
+    const std::string& request_path,
+    std::size_t static_limit,
+    LogLimitFor type
+) {
+    const auto& config = config_snapshot[::dynamic_config::USERVER_HTTP_SERVER_LOGS];
+    const auto settings = utils::FindOrNullptr(config.extra, request_path);
+    if (settings) {
+        switch (type) {
+            case LogLimitFor::kRequest: {
+                if (settings->request_body_size_log_limit) {
+                    return *settings->request_body_size_log_limit;
+                }
+                break;
+            }
+            case LogLimitFor::kResponse: {
+                if (settings->response_body_size_log_limit) {
+                    return *settings->response_body_size_log_limit;
+                }
+                break;
+            }
+            default: {
+                UINVARIANT(false, fmt::format("Unsupported LogLimitFor: {}", static_cast<std::uint8_t>(type)));
+            }
+        }
+    }
+    return static_limit;
+}
+
 }  // namespace
 
 HttpHandlerBase::HttpHandlerBase(
@@ -143,7 +181,7 @@ HttpHandlerBase::HttpHandlerBase(
         LOG_WARNING() << "empty allowed methods list in " << config.Name();
     }
 
-    auto& server = context.FindComponent<components::Server>().GetServer();
+    auto& server = context.FindComponent<server::Component>().GetServer();
 
     engine::TaskProcessor& task_processor =
         GetConfig().task_processor
@@ -158,7 +196,7 @@ HttpHandlerBase::HttpHandlerBase(
             server.AddHandler(*this, task_processor);
 
             // Note: no need to call RemoveHandler on scope exit,
-            // PortInfo::Stop() automatically removes all handlers
+            // server shutdown stops dispatch before handlers are destroyed.
         } catch (const std::exception& ex) {
             throw std::runtime_error(std::string("can't add handler to server: ") + ex.what());
         }
@@ -194,7 +232,7 @@ HttpHandlerBase::HttpHandlerBase(
     }
 
     set_response_server_hostname_ =
-        GetConfig().set_response_server_hostname.value_or(server.GetConfig().set_response_server_hostname);
+        GetConfig().set_response_server_hostname.value_or(server.GetResponseHostnameDefault(IsMonitor()));
 }
 
 HttpHandlerBase::~HttpHandlerBase() = default;
@@ -202,6 +240,9 @@ HttpHandlerBase::~HttpHandlerBase() = default;
 void HttpHandlerBase::HandleMaybeStreamRequest(http::HttpRequest& request, request::RequestContext& context) const {
     auto& response = request.GetHttpResponse();
     if (IsStreamed(request, context)) {
+        // Don't hold the config snapshot for too long with streaming responses.
+        context.GetInternalContext().ResetConfigSnapshot();
+
         server::http::ResponseBodyStream response_body_stream(response);
         HandleStreamRequest(request, context, response_body_stream);
     } else {
@@ -211,10 +252,7 @@ void HttpHandlerBase::HandleMaybeStreamRequest(http::HttpRequest& request, reque
 
 void HttpHandlerBase::HandleHttpRequest(http::HttpRequest& http_request, request::RequestContext& context) const {
     auto& response = http_request.GetHttpResponse();
-    response.SetSystemHeadersEnd();
-
-    // Don't hold the config snapshot for too long, especially with streaming.
-    context.GetInternalContext().ResetConfigSnapshot();
+    GetHttpResponseImpl(response).SetSystemHeadersEnd();
 
     const auto scope_time = tracing::ScopeTime::CreateOptionalScopeTime("http_handle_request");
     HandleMaybeStreamRequest(http_request, context);
@@ -318,8 +356,7 @@ std::string HttpHandlerBase::GetRequestBodyForLogging(
     request::RequestContext&,
     const std::string& request_body
 ) const {
-    const std::size_t limit = GetConfig().request_body_size_log_limit;
-    return utils::log::ToLimitedUtf8(request_body, limit);
+    return request_body;
 }
 
 std::string HttpHandlerBase::GetResponseDataForLogging(
@@ -327,8 +364,7 @@ std::string HttpHandlerBase::GetResponseDataForLogging(
     request::RequestContext&,
     const std::string& response_data
 ) const {
-    const std::size_t limit = GetConfig().response_data_size_log_limit;
-    return utils::log::ToLimitedUtf8(response_data, limit);
+    return response_data;
 }
 
 std::string HttpHandlerBase::GetUrlForLogging(const http::HttpRequest& request, request::RequestContext&) const {
@@ -343,12 +379,17 @@ std::string HttpHandlerBase::GetRequestBodyForLoggingChecked(
     const std::string& request_body
 ) const {
     try {
-        const auto limit = GetConfig().request_body_size_log_limit;
+        const auto limit = GetLoggingLimit(
+            config_source_.GetSnapshot(),
+            GetConfig().GetLowCardinalityRequestPath(),
+            GetConfig().request_body_size_log_limit,
+            LogLimitFor::kRequest
+        );
         if (limit == 0) {
             return utils::log::ToLimitedUtf8(request_body, 0);
         }
         auto logging_request_body = GetRequestBodyForLogging(request, context, request_body);
-        return utils::log::ToLimitedUtf8(logging_request_body, limit);
+        return utils::log::ToLimitedUtf8(std::move(logging_request_body), limit);
     } catch (const std::exception& ex) {
         LOG_LIMITED_ERROR() << "failed to get request body for logging: " << ex;
         return "<error in GetRequestBodyForLogging>";
@@ -361,12 +402,17 @@ std::string HttpHandlerBase::GetResponseDataForLoggingChecked(
     const std::string& response_data
 ) const {
     try {
-        const auto limit = GetConfig().response_data_size_log_limit;
+        const auto limit = GetLoggingLimit(
+            config_source_.GetSnapshot(),
+            GetConfig().GetLowCardinalityRequestPath(),
+            GetConfig().response_data_size_log_limit,
+            LogLimitFor::kResponse
+        );
         if (limit == 0) {
             return utils::log::ToLimitedUtf8(response_data, 0);
         }
         auto logging_response_data = GetResponseDataForLogging(request, context, response_data);
-        return utils::log::ToLimitedUtf8(logging_response_data, limit);
+        return utils::log::ToLimitedUtf8(std::move(logging_response_data), limit);
     } catch (const std::exception& ex) {
         LOG_LIMITED_ERROR() << "failed to get response data for logging: " << ex;
         return "<error in GetResponseDataForLogging>";
@@ -505,7 +551,7 @@ void HttpHandlerBase::BuildMiddlewarePipeline(
                                                  .As<std::string>(middlewares::HandlerPipelineBuilder::kName));
     const auto handler_middlewares =
         handler_pipeline_builder
-            .BuildPipeline(context.FindComponent<components::Server>().GetServer().GetCommonMiddlewares());
+            .BuildPipeline(context.FindComponent<server::Component>().GetServer().GetCommonMiddlewares(IsMonitor()));
 
     ValidateMiddlewaresConfiguration(middlewares_config, handler_middlewares);
 

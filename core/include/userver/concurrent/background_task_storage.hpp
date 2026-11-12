@@ -55,6 +55,10 @@ public:
     /// will be cancelled and waited for on BTS destruction.
     /// @note After detach, Task becomes invalid
     ///
+    /// If this function throws (due to OOM), the task is cancelled and waited for before the exception
+    /// is rethrown. The task may already have started; its side effects are not rolled back.
+    /// After the exception, the task does not keep running.
+    ///
     /// Can be called from a coroutine or a non-coroutine thread.
     /// Cannot be called after @ref CancelAndWait or @ref WaitAndDisposeSlow has been called.
     void Detach(engine::Task&& task);
@@ -153,9 +157,13 @@ public:
     /// destructor.
     ///
     /// The task is started as non-Critical, it may be cancelled due to
-    /// `TaskProcessor` overload. engine::TaskInheritedVariable instances are not
-    /// inherited from the caller except baggage::Baggage. See
-    /// utils::AsyncBackground for details.
+    /// `TaskProcessor` overload. Only engine::TaskInheritedVariable instances with
+    /// engine::TaskInheritedVariablePriority::kBackground are inherited from the caller.
+    /// See utils::AsyncBackground for details.
+    ///
+    /// If this function throws (due to OOM), the launched task is cancelled and waited for before
+    /// the exception is rethrown. The task may already have started; its side effects
+    /// are not rolled back. After the exception, the task does not keep running.
     ///
     /// Can be called from a coroutine or a non-coroutine thread.
     template <typename... Args>
@@ -168,9 +176,13 @@ public:
     ///
     /// Execution of function is guaranteed to start regardless
     /// of engine::TaskProcessor load limits.
-    /// engine::TaskInheritedVariable instances are not
-    /// inherited from the caller except baggage::Baggage. See
-    /// utils::CriticalAsyncBackground for details.
+    /// Only engine::TaskInheritedVariable instances with
+    /// engine::TaskInheritedVariablePriority::kBackground are inherited from the caller.
+    /// See utils::CriticalAsyncBackground for details.
+    ///
+    /// If this function throws (due to OOM), the launched task is cancelled and waited for before
+    /// the exception is rethrown. The task may already have started; its side effects
+    /// are not rolled back. After the exception, the task does not keep running.
     ///
     /// Can be called from a coroutine or a non-coroutine thread.
     template <typename... Args>

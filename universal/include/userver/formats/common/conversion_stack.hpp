@@ -22,6 +22,15 @@ USERVER_NAMESPACE_BEGIN
 /// @brief Shared types and helpers for JSON/YAML format layers.
 namespace formats::common {
 
+namespace impl {
+
+template <class ValueBuilder>
+concept HasEmplaceNocheck = requires(ValueBuilder builder, ValueBuilder value) {
+    builder.EmplaceNocheck("key", std::move(value));
+};
+
+}  // namespace impl
+
 /// @brief Used in the implementation of functions that convert between
 /// different formats, e.g. formats::yaml::Value to formats::json::Value, etc.
 ///
@@ -110,14 +119,21 @@ public:
                     UINVARIANT(false, "Type mismatch");
                 }
             }
-            if (stack_.back().current_parsing_elem) {
-                ++*stack_.back().current_parsing_elem;
-            } else {
+            const bool is_first_item = !stack_.back().current_parsing_elem;
+            if (is_first_item) {
                 stack_.back().current_parsing_elem = stack_.back().from.begin();
+            } else {
+                ++*stack_.back().current_parsing_elem;
             }
             if (stack_.back().current_parsing_elem.value() == stack_.back().from.end()) {
                 stack_.back().is_parsed = true;
                 return;
+            }
+            if (is_first_item) {
+                auto& frame = stack_.back();
+                if constexpr (requires { frame.to->Reserve(frame.from.GetSize()); }) {
+                    frame.to->Reserve(frame.from.GetSize());
+                }
             }
             auto new_from = *stack_.back().current_parsing_elem.value();
             stack_.emplace_back(std::move(new_from));
@@ -126,7 +142,15 @@ public:
         UASSERT(stack_.size() > 1);
         auto& current_docs = stack_[stack_.size() - 2];
         if (current_docs.from.IsObject()) {
-            current_docs.to.value()[current_docs.current_parsing_elem->GetName()] = std::move(stack_.back().to.value());
+            auto& builder = current_docs.to.value();
+            auto& child = stack_.back().to.value();
+            const auto key = current_docs.current_parsing_elem->GetName();
+            UASSERT_MSG(!builder.HasMember(key), "Duplicate object key during format conversion");
+            if constexpr (impl::HasEmplaceNocheck<ValueToBuilder>) {
+                builder.EmplaceNocheck(key, std::move(child));
+            } else {
+                builder[key] = std::move(child);
+            }
         } else if (current_docs.from.IsArray()) {
             current_docs.to->PushBack(std::move(stack_.back().to.value()));
         } else {

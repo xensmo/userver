@@ -17,6 +17,7 @@
 #include <userver/utils/statistics/storage.hpp>
 
 #include <userver/ugrpc/client/client_factory.hpp>
+#include <userver/ugrpc/client/impl/completion_queue_pool.hpp>
 #include <userver/ugrpc/impl/statistics_storage.hpp>
 #include <userver/ugrpc/server/server.hpp>
 #include <userver/ugrpc/server/service_base.hpp>
@@ -95,8 +96,7 @@ private:
     server::ServiceConfig MakeServiceConfig();
 
     utils::statistics::Storage statistics_storage_;
-    utils::statistics::MetricsStorage metrics_storage_;
-    std::vector<utils::statistics::Entry> metrics_storage_registration_;
+    utils::statistics::MetricsStoragePtr metrics_storage_;
     dynamic_config::StorageMock config_storage_;
     std::optional<std::string> unix_socket_path_;
     utils::WithResourceScopes<server::Server> server_;
@@ -106,6 +106,7 @@ private:
     testsuite::GrpcControl testsuite_;
     std::optional<std::string> endpoint_;
     utils::WithResourceScopes<ugrpc::impl::StatisticsStorage> client_statistics_storage_;
+    std::optional<client::impl::CompletionQueuePool> client_completion_queues_;
     std::optional<client::ClientFactory> client_factory_;
 };
 

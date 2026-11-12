@@ -1,12 +1,22 @@
 #include "mock_server_test.hpp"
 
+#include <array>
 #include <atomic>
 #include <chrono>
+#include <memory>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
+#include <userver/engine/async.hpp>
+#include <userver/engine/deadline.hpp>
 #include <userver/engine/single_consumer_event.hpp>
+#include <userver/engine/sleep.hpp>
+#include <userver/engine/task/current_task.hpp>
 #include <userver/storages/redis/base.hpp>
 
+#include <storages/redis/impl/cmd_args.hpp>
 #include <storages/redis/impl/command.hpp>
 #include <storages/redis/impl/redis_group.hpp>
 #include <storages/redis/impl/secdist_redis.hpp>
@@ -38,6 +48,57 @@ constexpr std::size_t kDatabaseIndex = 0;
 
 const std::string kDbName = "redis_db";
 const std::string kLocalhost = "127.0.0.1";
+const std::string kPendingUnsubscribeChannel = "pending-unsubscribe";
+
+class RedisServerWithPendingUnsubscribe : public MockRedisServer {
+public:
+    RedisServerWithPendingUnsubscribe()
+        : MockRedisServer(kDbName)
+    {
+        using storages::redis::ReplyData;
+        RegisterPingHandler();
+        RegisterHandlerWithConstReply(
+            "SUBSCRIBE",
+            {kPendingUnsubscribeChannel},
+            ReplyData::Array{ReplyData("subscribe"), ReplyData(kPendingUnsubscribeChannel), ReplyData(1)}
+        );
+        const std::string ping_channel{storages::redis::impl::CmdWithArgs::kSubscriberPingChannelName};
+        RegisterHandlerWithConstReply(
+            "SUBSCRIBE",
+            {ping_channel},
+            ReplyData::Array{ReplyData("subscribe"), ReplyData(ping_channel), ReplyData(2)}
+        );
+    }
+
+    ~RedisServerWithPendingUnsubscribe() override { Stop(); }
+
+    bool WaitForUnsubscribe() { return unsubscribe_received_.WaitForEventFor(kSuccessTimeout); }
+    bool WaitForHeartbeatUnsubscribe() { return heartbeat_unsubscribe_received_.WaitForEventFor(kSuccessTimeout); }
+    bool WaitForDisconnect() { return disconnected_.WaitForEventFor(kSuccessTimeout); }
+
+protected:
+    void OnCommand(ConnectionPtr connection, const storages::redis::Reply& command) override {
+        const auto& args = command.data.GetArray();
+        if (args.front().GetString() != "UNSUBSCRIBE") {
+            MockRedisServer::OnCommand(std::move(connection), command);
+            return;
+        }
+        ASSERT_EQ(args.size(), 2);
+        if (args[1].GetString() == kPendingUnsubscribeChannel) {
+            unsubscribe_received_.Send();
+        } else {
+            EXPECT_EQ(args[1].GetString(), storages::redis::impl::CmdWithArgs::kSubscriberPingChannelName);
+            heartbeat_unsubscribe_received_.Send();
+        }
+    }
+
+    void OnDisconnected(ConnectionPtr) override { disconnected_.Send(); }
+
+private:
+    engine::SingleConsumerEvent unsubscribe_received_;
+    engine::SingleConsumerEvent heartbeat_unsubscribe_received_;
+    engine::SingleConsumerEvent disconnected_;
+};
 
 template <typename Predicate>
 void PeriodicCheck(Predicate predicate) {
@@ -134,14 +195,13 @@ struct MockSentinelServers {
         );
         subscribe_sentinel->WaitConnectedDebug(std::empty(slaves));
 
-        std::shared_ptr<storages::redis::SubscribeClient>
-            client = std::make_shared<storages::redis::SubscribeClientImpl>(std::move(subscribe_sentinel));
+        storages::redis::SubscribeClientImpl client{std::move(subscribe_sentinel)};
 
         storages::redis::SubscriptionToken::OnMessageCb callback =
             [](const std::string& channel, const std::string& message) {
                 EXPECT_TRUE(false) << "Should not be called. Channel = " << channel << ", message = " << message;
             };
-        auto subscription = client->Subscribe("channel_name", std::move(callback));
+        auto subscription = client.Subscribe("channel_name", std::move(callback), {});
 
         for (auto& handler : subscribe_handlers) {
             EXPECT_TRUE(handler->WaitForFirstReply(utest::kMaxTestWaitTime));
@@ -171,20 +231,19 @@ UTEST(Redis, CommandImmediatelyAfterConnected) {
     auto ping_handler = server.RegisterPingHandler();
     auto get_handler = server.RegisterHandlerWithConstReply("GET", std::string{"value"});
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
 
     engine::SingleConsumerEvent connected;
-    redis->signal_state_change.connect([&connected](storages::redis::RedisState state) {
+    redis.signal_state_change.connect([&connected](storages::redis::RedisState state) {
         if (state == storages::redis::RedisState::kConnected) {
             connected.Send();
         }
     });
 
-    redis->Connect(
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"", storages::redis::Password("")},
@@ -201,7 +260,7 @@ UTEST(Redis, CommandImmediatelyAfterConnected) {
             got_reply.Send();
         }
     );
-    ASSERT_TRUE(redis->AsyncCommand(command));
+    ASSERT_TRUE(redis.AsyncCommand(command));
     ASSERT_TRUE(got_reply.WaitForEventFor(kSuccessTimeout));
     EXPECT_TRUE(reply_ok.load());
     EXPECT_TRUE(get_handler->WaitForFirstReply(kSuccessTimeout));
@@ -212,12 +271,11 @@ UTEST(Redis, NoPassword) {
     MockRedisServer server{kDbName};
     auto ping_handler = server.RegisterPingHandler();
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect(
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"", storages::redis::Password("")},
@@ -227,17 +285,296 @@ UTEST(Redis, NoPassword) {
     EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
 }
 
+UTEST(Redis, PendingUnsubscribeDisconnectsOnHeartbeatFailure) {
+    RedisServerWithPendingUnsubscribe server;
+    engine::SingleConsumerEvent subscribed;
+    engine::SingleConsumerEvent subscription_finished;
+    std::atomic<storages::redis::ReplyStatus> final_status{storages::redis::ReplyStatus::kOk};
+    storages::redis::impl::ThreadPools pool{1, 1};
+    const storages::redis::RedisCreationSettings redis_settings;
+    storages::redis::impl::Statistics stats;
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
+        {kLocalhost},
+        server.GetPort(),
+        storages::redis::Credentials{"", storages::redis::Password("")},
+        kDatabaseIndex
+    );
+    ASSERT_TRUE(server.WaitForFirstPingReply(kSuccessTimeout));
+
+    auto subscribe = storages::redis::impl::PrepareCommand(
+        {"SUBSCRIBE", kPendingUnsubscribeChannel},
+        [&](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr& reply) {
+            if (reply->IsOk()) {
+                subscribed.Send();
+            } else {
+                final_status = reply->status;
+                subscription_finished.Send();
+            }
+        },
+        storages::redis::CommandControl{kSuccessTimeout, kSuccessTimeout, 1}
+    );
+    ASSERT_TRUE(redis.AsyncCommand(subscribe));
+    ASSERT_TRUE(subscribed.WaitForEventFor(kSuccessTimeout));
+
+    ASSERT_TRUE(redis.AsyncCommand(storages::redis::impl::PrepareCommand(
+        {"UNSUBSCRIBE", kPendingUnsubscribeChannel},
+        storages::redis::impl::ReplyCallback{}
+    )));
+    ASSERT_TRUE(server.WaitForUnsubscribe());
+    // The heartbeat SUBSCRIBE succeeded too: its command timeout cannot cause this disconnect.
+    ASSERT_TRUE(server.WaitForHeartbeatUnsubscribe());
+    ASSERT_TRUE(subscription_finished.WaitForEventFor(kSuccessTimeout));
+    EXPECT_EQ(final_status.load(), storages::redis::ReplyStatus::kEndOfFileError);
+    EXPECT_TRUE(server.WaitForDisconnect());
+    EXPECT_FALSE(IsConnected(redis));
+}
+
+UTEST(Redis, CommandQueuedBeforeConnect) {
+    MockRedisServer server{kDbName};
+    auto ping_handler = server.RegisterPingHandler();
+    auto set_handler = server.RegisterStatusReplyHandler("SET", "OK");
+
+    storages::redis::impl::ThreadPools pool{1, 1};
+    const storages::redis::RedisCreationSettings redis_settings;
+    storages::redis::impl::Statistics stats;
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+
+    engine::SingleConsumerEvent callback_called;
+    auto command = storages::redis::impl::PrepareCommand(
+        {"SET", "key", "value"},
+        [&callback_called](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr& reply) {
+            EXPECT_TRUE(reply->IsOk());
+            callback_called.Send();
+        }
+    );
+    ASSERT_TRUE(redis.AsyncCommand(command));
+
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
+
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
+    EXPECT_TRUE(callback_called.WaitForEventFor(kSuccessTimeout));
+    EXPECT_TRUE(set_handler->WaitForFirstReply(kSuccessTimeout));
+}
+
+UTEST(Redis, CommandsCounterHonorsStatisticsSettings) {
+    MockRedisServer server{kDbName};
+    auto ping_handler = server.RegisterPingHandler();
+    auto ignored_handler = server.RegisterStatusReplyHandler("SET", {"ignored"}, "OK");
+    auto failed_handler = server.RegisterErrorReplyHandler("SET", {"failed"}, "ERR test failure");
+    auto counted_handler = server.RegisterStatusReplyHandler("SET", {"counted"}, "OK");
+
+    storages::redis::impl::ThreadPools pool{1, 1};
+    const storages::redis::RedisCreationSettings redis_settings;
+    storages::redis::impl::Statistics stats;
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
+
+    ASSERT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
+    PeriodicWait([&] { return IsConnected(redis); });
+    EXPECT_EQ(redis.GetStatistics().commands_count.load(std::memory_order_relaxed), 0);
+
+    engine::SingleConsumerEvent ignored_callback_called;
+    storages::redis::CommandControl ignored_control;
+    ignored_control.account_in_statistics = false;
+    auto ignored_command = storages::redis::impl::PrepareCommand(
+        {"SET", "ignored", "value"},
+        [&ignored_callback_called](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr& reply) {
+            EXPECT_TRUE(reply->IsOk());
+            ignored_callback_called.Send();
+        },
+        ignored_control
+    );
+    ASSERT_TRUE(redis.AsyncCommand(ignored_command));
+    ASSERT_TRUE(ignored_callback_called.WaitForEventFor(kSuccessTimeout));
+    EXPECT_TRUE(ignored_handler->WaitForFirstReply(kSuccessTimeout));
+    EXPECT_EQ(redis.GetStatistics().commands_count.load(std::memory_order_relaxed), 0);
+
+    engine::SingleConsumerEvent failed_callback_called;
+    auto failed_command = storages::redis::impl::PrepareCommand(
+        {"SET", "failed", "value"},
+        [&failed_callback_called](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr& reply) {
+            EXPECT_FALSE(reply->IsOk());
+            failed_callback_called.Send();
+        }
+    );
+    ASSERT_TRUE(redis.AsyncCommand(failed_command));
+    ASSERT_TRUE(failed_callback_called.WaitForEventFor(kSuccessTimeout));
+    EXPECT_TRUE(failed_handler->WaitForFirstReply(kSuccessTimeout));
+    EXPECT_EQ(redis.GetStatistics().commands_count.load(std::memory_order_relaxed), 0);
+
+    engine::SingleConsumerEvent counted_callback_called;
+    auto counted_command = storages::redis::impl::PrepareCommand(
+        {"SET", "counted", "value"},
+        [&counted_callback_called](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr& reply) {
+            EXPECT_TRUE(reply->IsOk());
+            counted_callback_called.Send();
+        }
+    );
+    ASSERT_TRUE(redis.AsyncCommand(counted_command));
+    ASSERT_TRUE(counted_callback_called.WaitForEventFor(kSuccessTimeout));
+    EXPECT_TRUE(counted_handler->WaitForFirstReply(kSuccessTimeout));
+    EXPECT_EQ(redis.GetStatistics().commands_count.load(std::memory_order_relaxed), 1);
+}
+
+UTEST_MT(Redis, ConcurrentAsyncCommandPreservesProducerOrder, 8) {
+    constexpr std::size_t kProducers = 4;
+    constexpr std::size_t kCommandsPerProducer = 100;
+    constexpr std::size_t kCommandsTotal = kProducers * kCommandsPerProducer;
+
+    MockRedisServer server{kDbName};
+    auto ping_handler = server.RegisterPingHandler();
+    auto set_handler = server.RegisterStatusReplyHandler("SET", "OK");
+
+    storages::redis::impl::ThreadPools pool{1, 1};
+    const storages::redis::RedisCreationSettings redis_settings;
+    storages::redis::impl::Statistics stats;
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
+
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
+    PeriodicWait([&] { return IsConnected(redis); });
+
+    std::array<std::atomic<std::size_t>, kProducers> next_callback{};
+    std::atomic<std::size_t> callbacks_count{0};
+    engine::SingleConsumerEvent all_callbacks_called;
+    std::vector<engine::TaskWithResult<void>> producers;
+    producers.reserve(kProducers);
+
+    for (std::size_t producer_idx = 0; producer_idx < kProducers; ++producer_idx) {
+        producers.push_back(engine::AsyncNoTracing([&, producer_idx] {
+            for (std::size_t command_idx = 0; command_idx < kCommandsPerProducer; ++command_idx) {
+                storages::redis::CommandControl control;
+                control.timeout_single = kSuccessTimeout;
+                auto command = storages::redis::impl::PrepareCommand(
+                    {"SET", std::to_string(producer_idx), std::to_string(command_idx)},
+                    [&,
+                     producer_idx,
+                     command_idx](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr& reply) {
+                        EXPECT_FALSE(engine::current_task::IsTaskProcessorThread());
+                        EXPECT_TRUE(reply->IsOk());
+                        EXPECT_EQ(next_callback[producer_idx].fetch_add(1), command_idx);
+                        if (callbacks_count.fetch_add(1) + 1 == kCommandsTotal) {
+                            all_callbacks_called.Send();
+                        }
+                    },
+                    control
+                );
+                ASSERT_TRUE(redis.AsyncCommand(command));
+            }
+        }));
+    }
+
+    for (auto& producer : producers) {
+        producer.Get();
+    }
+
+    ASSERT_TRUE(all_callbacks_called.WaitForEventFor(kSuccessTimeout));
+    EXPECT_EQ(set_handler->GetReplyCount(), kCommandsTotal);
+    EXPECT_EQ(callbacks_count.load(), kCommandsTotal);
+    for (const auto& producer_callback : next_callback) {
+        EXPECT_EQ(producer_callback.load(), kCommandsPerProducer);
+    }
+}
+
+UTEST_MT(Redis, DisconnectRaceCompletesEveryAcceptedCommand, 8) {
+    constexpr std::size_t kProducers = 4;
+    constexpr std::size_t kEnqueuesBeforeDisconnect = 20;
+    constexpr std::size_t kBurstCommandsPerProducer = 10000;
+    constexpr std::chrono::milliseconds kThrottledEnqueueInterval{1};
+
+    MockRedisServer server{kDbName};
+    auto ping_handler = server.RegisterPingHandler();
+    auto disconnect_reply = server.RegisterPausedReplyHandler(
+        "GET",
+        storages::redis::ReplyData::CreateError("READONLY You can't write against a read only slave")
+    );
+    auto set_handler = server.RegisterStatusReplyHandler("SET", "OK");
+
+    storages::redis::impl::ThreadPools pool{1, 1};
+    const storages::redis::RedisCreationSettings redis_settings;
+    storages::redis::impl::Statistics stats;
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
+
+    EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
+    PeriodicWait([&] { return IsConnected(redis); });
+
+    std::atomic<std::size_t> disconnect_callbacks{0};
+    auto disconnect_command = storages::redis::impl::PrepareCommand(
+        {"GET", "disconnect"},
+        [&disconnect_callbacks](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr&) {
+            ++disconnect_callbacks;
+        }
+    );
+    ASSERT_TRUE(redis.AsyncCommand(disconnect_command));
+    ASSERT_TRUE(disconnect_reply->WaitForRequest(kSuccessTimeout));
+
+    std::atomic<std::size_t> enqueue_attempts{0};
+    std::atomic<std::size_t> accepted_commands{0};
+    std::atomic<std::size_t> rejected_commands{0};
+    std::atomic<std::size_t> command_callbacks{0};
+    std::vector<engine::TaskWithResult<void>> producers;
+    producers.reserve(kProducers);
+
+    for (std::size_t producer_idx = 0; producer_idx < kProducers; ++producer_idx) {
+        producers.push_back(engine::AsyncNoTracing([&, producer_idx] {
+            const auto deadline = engine::Deadline::FromDuration(kSuccessTimeout);
+            for (std::size_t command_idx = 0; !deadline.IsReached(); ++command_idx) {
+                storages::redis::CommandControl control;
+                control.timeout_single = kSuccessTimeout;
+                auto command = storages::redis::impl::PrepareCommand(
+                    {"SET", std::to_string(producer_idx), std::to_string(command_idx)},
+                    [&command_callbacks](const storages::redis::impl::CommandPtr&, const storages::redis::ReplyPtr&) {
+                        ++command_callbacks;
+                    },
+                    control
+                );
+                ++enqueue_attempts;
+                if (!redis.AsyncCommand(command)) {
+                    ++rejected_commands;
+                    return;
+                }
+                ++accepted_commands;
+                if (command_idx < kBurstCommandsPerProducer) {
+                    engine::Yield();
+                } else {
+                    // The ev thread processes the READONLY reply (and thus the disconnect) only after
+                    // the commands enqueued before it, so the burst may outrun the disconnect.
+                    // Keep producing, but slower, until the disconnect is processed.
+                    engine::SleepFor(kThrottledEnqueueInterval);
+                }
+            }
+            ADD_FAILURE() << "Redis did not stop accepting commands";
+        }));
+    }
+
+    while (enqueue_attempts.load() < kEnqueuesBeforeDisconnect) {
+        engine::Yield();
+    }
+    disconnect_reply->ReleaseReply();
+
+    for (auto& producer : producers) {
+        producer.Get();
+    }
+
+    PeriodicWait([&] { return command_callbacks.load() == accepted_commands.load(); });
+    EXPECT_TRUE(redis.IsDestroying());
+    EXPECT_EQ(rejected_commands.load(), kProducers);
+    EXPECT_EQ(disconnect_callbacks.load(), 1);
+    EXPECT_LE(set_handler->GetReplyCount(), accepted_commands.load());
+}
+
 UTEST(Redis, Auth) {
     MockRedisServer server{"redis_db"};
     auto ping_handler = server.RegisterPingHandler();
     auto auth_handler = server.RegisterStatusReplyHandler("AUTH", {"password"}, "OK");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect(
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"", storages::redis::Password("password")},
@@ -253,12 +590,11 @@ UTEST(Redis, AuthWithUsername) {
     auto ping_handler = server.RegisterPingHandler();
     auto auth_handler = server.RegisterStatusReplyHandler("AUTH", {"username", "password"}, "OK");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect(
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"username", storages::redis::Password("password")},
@@ -274,12 +610,11 @@ UTEST(Redis, AuthFail) {
     auto ping_handler = server.RegisterPingHandler();
     auto auth_error_handler = server.RegisterErrorReplyHandler("AUTH", "NO PASARAN");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect(
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"", storages::redis::Password("password")},
@@ -287,7 +622,7 @@ UTEST(Redis, AuthFail) {
     );
 
     EXPECT_TRUE(auth_error_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicCheck([&] { return !IsConnected(*redis); });
+    PeriodicCheck([&] { return !IsConnected(redis); });
 }
 
 UTEST(Redis, AuthTimeout) {
@@ -296,12 +631,11 @@ UTEST(Redis, AuthTimeout) {
     auto sleep_period = storages::redis::kDefaultTimeoutSingle + std::chrono::milliseconds(30);
     auto auth_error_handler = server.RegisterTimeoutHandler("AUTH", sleep_period);
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect(
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"", storages::redis::Password("password")},
@@ -309,7 +643,7 @@ UTEST(Redis, AuthTimeout) {
     );
 
     EXPECT_TRUE(auth_error_handler->WaitForFirstReply(sleep_period + kSuccessTimeout));
-    PeriodicCheck([&] { return !IsConnected(*redis); });
+    PeriodicCheck([&] { return !IsConnected(redis); });
 }
 
 UTEST(Redis, SentinelAuth) {
@@ -670,12 +1004,11 @@ UTEST(Redis, Select) {
     auto ping_handler = server.RegisterPingHandler();
     auto select_handler = server.RegisterStatusReplyHandler("SELECT", "OK");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
 
     EXPECT_TRUE(select_handler->WaitForFirstReply(kSuccessTimeout));
     EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
@@ -686,15 +1019,14 @@ UTEST(Redis, SelectFail) {
     auto ping_handler = server.RegisterPingHandler();
     auto select_error_handler = server.RegisterErrorReplyHandler("SELECT", "NO PASARAN");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
 
     EXPECT_TRUE(select_error_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicCheck([&] { return !IsConnected(*redis); });
+    PeriodicCheck([&] { return !IsConnected(redis); });
 }
 
 UTEST(Redis, SelectTimeout) {
@@ -703,15 +1035,14 @@ UTEST(Redis, SelectTimeout) {
     auto sleep_period = storages::redis::kDefaultTimeoutSingle + std::chrono::milliseconds(30);
     auto select_error_handler = server.RegisterTimeoutHandler("SELECT", sleep_period);
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kRedisDatabaseIndex);
 
     EXPECT_TRUE(select_error_handler->WaitForFirstReply(sleep_period + kSuccessTimeout));
-    PeriodicCheck([&] { return !IsConnected(*redis); });
+    PeriodicCheck([&] { return !IsConnected(redis); });
 }
 
 UTEST_MT(Redis, SlaveREADONLY, 2) {
@@ -719,16 +1050,15 @@ UTEST_MT(Redis, SlaveREADONLY, 2) {
     auto ping_handler = server.RegisterPingHandler();
     auto readonly_handler = server.RegisterStatusReplyHandler("READONLY", "OK");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     storages::redis::RedisCreationSettings redis_settings;
     redis_settings.send_readonly = true;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
 
     EXPECT_TRUE(readonly_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicWait([&] { return IsConnected(*redis); });
+    PeriodicWait([&] { return IsConnected(redis); });
 }
 
 UTEST(Redis, SlaveREADONLYFail) {
@@ -736,28 +1066,26 @@ UTEST(Redis, SlaveREADONLYFail) {
     auto ping_handler = server.RegisterPingHandler();
     auto readonly_handler = server.RegisterErrorReplyHandler("READONLY", "FAIL");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     storages::redis::RedisCreationSettings redis_settings;
     redis_settings.send_readonly = true;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
 
     EXPECT_TRUE(readonly_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicWait([&] { return !IsConnected(*redis); });
+    PeriodicWait([&] { return !IsConnected(redis); });
 }
 
 UTEST(Redis, PingFail) {
     MockRedisServer server{"redis_db"};
     auto ping_error_handler = server.RegisterErrorReplyHandler("PING", "PONG");
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect(
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"", storages::redis::Password("")},
@@ -765,7 +1093,7 @@ UTEST(Redis, PingFail) {
     );
 
     EXPECT_TRUE(ping_error_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicWait([&] { return !IsConnected(*redis); });
+    PeriodicWait([&] { return !IsConnected(redis); });
 }
 
 UTEST(Redis, TimedOutCommandReleasesCallback) {
@@ -781,15 +1109,14 @@ UTEST(Redis, TimedOutCommandReleasesCallback) {
     engine::SingleConsumerEvent lifetime_destroyed;
     engine::SingleConsumerEvent follow_up_received;
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect({kLocalhost}, server.GetPort(), {}, kDatabaseIndex);
 
     EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicWait([&] { return IsConnected(*redis); });
+    PeriodicWait([&] { return IsConnected(redis); });
 
     struct LifetimeNotifier {
         explicit LifetimeNotifier(engine::SingleConsumerEvent& destroyed)
@@ -818,7 +1145,7 @@ UTEST(Redis, TimedOutCommandReleasesCallback) {
         },
         command_control
     );
-    ASSERT_TRUE(redis->AsyncCommand(command));
+    ASSERT_TRUE(redis.AsyncCommand(command));
     command.reset();
 
     ASSERT_TRUE(get_reply->WaitForRequest(kSuccessTimeout));
@@ -841,7 +1168,7 @@ UTEST(Redis, TimedOutCommandReleasesCallback) {
         },
         follow_up_control
     );
-    ASSERT_TRUE(redis->AsyncCommand(follow_up));
+    ASSERT_TRUE(redis.AsyncCommand(follow_up));
     ASSERT_TRUE(follow_up_received.WaitForEventFor(kSuccessTimeout));
     EXPECT_TRUE(follow_up_ok.load());
     EXPECT_TRUE(set_handler->WaitForFirstReply(kSuccessTimeout));
@@ -866,12 +1193,11 @@ UTEST_P(RedisDisconnectingReplies, X) {
     auto ping_handler = server.RegisterPingHandler();
     auto get_handler = server.RegisterErrorReplyHandler("GET", GetParam());
 
-    auto pool = std::make_shared<storages::redis::impl::ThreadPools>(1, 1);
+    storages::redis::impl::ThreadPools pool{1, 1};
     const storages::redis::RedisCreationSettings redis_settings;
     storages::redis::impl::Statistics stats;
-    auto redis = std::make_shared<
-        storages::redis::impl::Redis>(pool->GetRedisThreadPool(), redis_settings, kDbName, stats);
-    redis->Connect(
+    storages::redis::impl::Redis redis{pool.GetRedisThreadPool(), redis_settings, kDbName, stats};
+    redis.Connect(
         {kLocalhost},
         server.GetPort(),
         storages::redis::Credentials{"", storages::redis::Password("")},
@@ -879,16 +1205,16 @@ UTEST_P(RedisDisconnectingReplies, X) {
     );
 
     EXPECT_TRUE(ping_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicWait([&] { return IsConnected(*redis); });
+    PeriodicWait([&] { return IsConnected(redis); });
 
     auto cmd = storages::redis::impl::PrepareCommand(
         {"GET", "123"},
         [](const storages::redis::impl::CommandPtr&, storages::redis::ReplyPtr) {}
     );
-    redis->AsyncCommand(cmd);
+    redis.AsyncCommand(cmd);
 
     EXPECT_TRUE(get_handler->WaitForFirstReply(kSuccessTimeout));
-    PeriodicWait([&] { return !IsConnected(*redis); });
+    PeriodicWait([&] { return !IsConnected(redis); });
 }
 
 USERVER_NAMESPACE_END

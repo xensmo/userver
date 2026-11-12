@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <string_view>
 
@@ -30,7 +31,7 @@ namespace ugrpc::server::impl {
 
 // Non-templated dependencies of CallProcessor. Must be movable.
 struct CallParams {
-    grpc::ServerContext& server_context;
+    grpc::ServerContextBase& server_context;
     RpcType rpc_type{};
     const std::string_view call_name;
     const std::string_view service_name;
@@ -54,6 +55,10 @@ struct CallState : CallParams {
 
     std::optional<tracing::InPlaceSpan> span;
     ugrpc::impl::RpcStatisticsScope statistics_scope;
+    // Wire size of the request message most recently received. Written only by the read side.
+    std::optional<std::size_t> latest_request_size_bytes;
+    // Wire size of the response message most recently sent. Written only by the write side.
+    std::optional<std::size_t> latest_response_size_bytes;
     std::optional<dynamic_config::Snapshot> config_snapshot;
     utils::AnyStorage<StorageContext> storage_context{};
 };

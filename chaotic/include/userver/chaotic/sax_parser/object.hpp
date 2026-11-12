@@ -146,7 +146,7 @@ public:
         using TargetType = decltype(s.extra);
         if constexpr (std::is_same_v<TargetType, MapType>) {
             s.extra = std::move(map_);
-        } else if constexpr (meta::kIsMap<TargetType>) {
+        } else if constexpr (meta::IsMap<TargetType>) {
             s.extra.clear();
             s.extra.insert(std::move_iterator(map_.begin()), std::move_iterator(map_.end()));
         } else {
@@ -213,7 +213,7 @@ public:
     void DoValidateSeen() {
         using ModeDescriptorType = typename FieldType::ModeDescriptorType;
 
-        if constexpr (meta::kIsInstantiationOf<Required, ModeDescriptorType>) {
+        if constexpr (meta::IsInstantiationOf<ModeDescriptorType, Required>) {
             static_assert(Idx < Count);
             if (!seen_[Idx]) {
                 throw formats::json::parser::InternalParseError(
@@ -221,6 +221,10 @@ public:
                 );
             }
         } else if constexpr (IsDefaulted<ModeDescriptorType>::value) {
+            if (seen_[Idx]) {
+                return;
+            }
+
             using TargetType = std::decay_t<decltype(object_.*FieldType::kField)>;
             using DefaultType = std::decay_t<decltype(ModeDescriptorType::DefaultValue)>;
             if constexpr (std::is_same_v<TargetType, DefaultType>) {
@@ -373,6 +377,33 @@ private:
     std::string key_;
 
     FieldSubparser<StructType, Unknown, Fields...> field_subparser_{result_};
+};
+
+template <typename StructType>
+class ObjectParser<StructType, UnknownFields::StoreJson> final
+    : public formats::json::parser::TypedParser<StructType>,
+      private formats::json::parser::Subscriber<formats::json::Value> {
+public:
+    ObjectParser() { json_parser_.Subscribe(*this); }
+
+    void StartObject() override {
+        json_parser_.Reset();
+        this->parser_state_->PushParser(json_parser_);
+        json_parser_.StartObject();
+    }
+
+private:
+    void OnSend(formats::json::Value&& value) override {
+        StructType result{};
+        result.extra = std::move(value);
+        this->SetResult(std::move(result));
+    }
+
+    std::string Expected() const override { return "object"; }
+
+    std::string GetPathItem() const override { return {}; }
+
+    formats::json::parser::JsonValueParser json_parser_;
 };
 
 }  // namespace chaotic::sax::impl

@@ -16,8 +16,7 @@ ServiceBase::ServiceBase()
 {}
 
 ServiceBase::ServiceBase(server::ServerConfig&& server_config)
-    : metrics_storage_(),
-      metrics_storage_registration_(metrics_storage_.RegisterIn(statistics_storage_)),
+    : metrics_storage_(utils::statistics::MakeBoundMetricsStorage(statistics_storage_, std::nullopt)),
       config_storage_(dynamic_config::MakeDefaultStorage({})),
       unix_socket_path_(server_config.unix_socket_path),
       server_(std::in_place, std::move(server_config), statistics_storage_),
@@ -51,13 +50,18 @@ void ServiceBase::StartServer(client::ClientFactorySettings&& client_factory_set
     } else {
         endpoint_ = fmt::format("localhost:{}", server_->GetPort());
     }
+    ugrpc::impl::CompletionQueuePoolBase* completion_queues = server_->GetCompletionQueues(utils::impl::InternalTag{});
+    if (!completion_queues) {
+        completion_queues = &client_completion_queues_.emplace(1);
+    }
+
     client_factory_.emplace(
         std::move(client_factory_settings),
         engine::current_task::GetTaskProcessor(),
         simple_client_middleware_pipeline_,
-        server_->GetCompletionQueues(utils::impl::InternalTag{}),
+        *completion_queues,
         *client_statistics_storage_,
-        metrics_storage_,
+        *metrics_storage_,
         testsuite_,
         config_storage_.GetSource()
     );
@@ -65,6 +69,7 @@ void ServiceBase::StartServer(client::ClientFactorySettings&& client_factory_set
 
 void ServiceBase::StopServer() noexcept {
     client_factory_.reset();
+    client_completion_queues_.reset();
     endpoint_.reset();
     server_->Stop();
 }

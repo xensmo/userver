@@ -204,6 +204,9 @@ class CppType:
     def need_stream_writer(self) -> bool:
         return False
 
+    def need_to_json_string(self) -> bool:
+        return False
+
     def need_add_hiding_args(self) -> bool:
         return False
 
@@ -338,9 +341,13 @@ class CppPrimitiveType(CppType):
                 f', USERVER_NAMESPACE::chaotic::ExclusiveMaximum<{type_name_ns}::k{type_name_decl}ExclusiveMaximum>'
             )
 
-        if self.validators.minLength is not None:
+        if self.validators.minLength is not None and self.validators.maxLength is not None:
+            validators += (
+                f', USERVER_NAMESPACE::chaotic::MinMaxLength<{self.validators.minLength}, {self.validators.maxLength}>'
+            )
+        elif self.validators.minLength is not None:
             validators += f', USERVER_NAMESPACE::chaotic::MinLength<{self.validators.minLength}>'
-        if self.validators.maxLength is not None:
+        elif self.validators.maxLength is not None:
             validators += f', USERVER_NAMESPACE::chaotic::MaxLength<{self.validators.maxLength}>'
 
         if self.validators.pattern is not None:
@@ -752,6 +759,29 @@ class CppStructField:
         optional = not self.required or self.schema.nullable
         return optional and self._default() is None
 
+    def _resolved_schema(self) -> CppType:
+        schema = self.schema
+        while isinstance(schema, CppRef):
+            schema = schema.orig_cpp_type
+        return schema
+
+    def is_required_to_parse(self) -> bool:
+        """True if parsing the object throws whenever this property is missing."""
+        if not self.required or self.schema.nullable or self._default() is not None:
+            return False
+
+        return isinstance(
+            self._resolved_schema(),
+            (CppPrimitiveType, CppStringWithFormat, CppIntEnum, CppStringEnum, CppStruct, CppArray),
+        )
+
+    def enum_type(self) -> CppType | None:
+        """The enum type of this property, or None if the property is not an enum."""
+        schema = self._resolved_schema()
+        if isinstance(schema, (CppIntEnum, CppStringEnum)):
+            return schema
+        return None
+
     def cpp_field_name(self) -> str:
         return self.name
 
@@ -945,6 +975,9 @@ class CppStruct(CppType):
     def need_stream_writer(self) -> bool:
         return True
 
+    def need_to_json_string(self) -> bool:
+        return True
+
     def need_add_hiding_args(self) -> bool:
         return True
 
@@ -1085,6 +1118,9 @@ class CppStructAllOf(CppType):
         return True
 
     def need_stream_writer(self) -> bool:
+        return True
+
+    def need_to_json_string(self) -> bool:
         return True
 
     def need_add_hiding_args(self) -> bool:

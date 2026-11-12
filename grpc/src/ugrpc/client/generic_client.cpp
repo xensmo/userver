@@ -4,8 +4,8 @@
 
 #include <grpcpp/generic/async_generic_service.h>
 
-#include <userver/utils/algo.hpp>
 #include <userver/utils/assert.hpp>
+#include <userver/utils/resource_scopes.hpp>
 
 #include <userver/ugrpc/client/impl/call_params.hpp>
 #include <userver/ugrpc/client/impl/client_data.hpp>
@@ -16,7 +16,11 @@ USERVER_NAMESPACE_BEGIN
 namespace ugrpc::client {
 
 GenericClient::GenericClient(impl::ClientInternals&& internals)
-    : client_data_(std::move(internals), impl::GenericClientTag{}, std::in_place_type<grpc::AsyncGenericService>)
+    : client_data_(
+          utils::MakeUniqueWithResourceScopes<
+              impl::
+                  ClientData>(std::move(internals), impl::GenericClientTag{}, std::in_place_type<grpc::AsyncGenericService>)
+      )
 {
     // There is no technical reason why QOS configs should be unsupported here.
     // However, it would be difficult to detect non-existent RPC names in QOS.
@@ -35,10 +39,8 @@ ResponseFuture<grpc::ByteBuffer> GenericClient::AsyncUnaryCall(
     CallOptions call_options,
     GenericOptions generic_options
 ) const {
-    auto method_name = utils::StrCat<grpc::string>("/", call_name);
     return {
         impl::CreateGenericCallParams(*client_data_, call_name, std::move(call_options), std::move(generic_options)),
-        impl::PrepareUnaryCallProxy(&grpc::GenericStub::PrepareUnaryCall, std::move(method_name)),
         request,
     };
 }
@@ -49,10 +51,8 @@ grpc::ByteBuffer GenericClient::UnaryCall(
     CallOptions call_options,
     GenericOptions generic_options
 ) const {
-    auto method_name = utils::StrCat<grpc::string>("/", call_name);
-    return impl::PerformUnaryCall(
+    return impl::PerformUnaryCall<grpc::ByteBuffer>(
         impl::CreateGenericCallParams(*client_data_, call_name, std::move(call_options), std::move(generic_options)),
-        impl::PrepareUnaryCallProxy(&grpc::GenericStub::PrepareUnaryCall, std::move(method_name)),
         request
     );
 }

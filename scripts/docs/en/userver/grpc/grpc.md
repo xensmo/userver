@@ -80,6 +80,15 @@ On errors, exceptions from @ref userver/ugrpc/client/exceptions.hpp are thrown. 
 the entire stream interaction. You can catch exceptions for
 [specific gRPC error codes](https://grpc.github.io/grpc/core/md_doc_statuscodes.html) or all at once.
 
+If a unary request cannot be serialized, the call throws @ref ugrpc::client::RpcSerializationError before sending
+the request. Userver does not retry this local failure. Previously, the serializer's failure status was reported as
+@ref ugrpc::client::ErrorWithStatus, typically @ref ugrpc::client::InternalError. Code that handles serialization
+failures must catch @ref ugrpc::client::RpcSerializationError explicitly or use the common
+@ref ugrpc::client::RpcError base class.
+
+For unary RPCs, access @ref ugrpc::client::CallContext::GetClientContext and response metadata only after the call
+completes successfully or with @ref ugrpc::client::ErrorWithStatus.
+
 ### Working with metadata
 
 gRPC metadata allows you to send additional information along with requests and responses. Metadata consists of
@@ -193,6 +202,25 @@ To register your service:
 * Call @ref ugrpc::server::ServiceComponentBase::RegisterService in the component's constructor
 * Don't forget to register your service component.
 
+### Callback API
+
+Server services use completion queues by default. Set `grpc-server.use-callback-api`
+to `true` to enable the gRPC callback/reactor API for a particular server:
+
+```yaml
+grpc-server:
+    use-callback-api: true
+```
+
+The corresponding C++ option is `ugrpc::server::ServerConfig::use_callback_api`.
+Both backends support typed and generic services. User handlers and middlewares run
+in userver coroutine tasks in either mode.
+
+With completion queues, `grpc-server.completion-queue-count` configures the server
+queues that clients can also use. With the callback API and registered services,
+clients have their own queues, configured through `grpc-client-common.completion-queue-count`.
+An empty callback server still creates fallback completion queues.
+
 ### Service method handling
 
 Each method receives:
@@ -228,7 +256,8 @@ components_manager:
 
 SSL has to be disabled in tests, because it
 requires the server to have a public domain name, which it does not in tests.
-In testsuite, SSL in gRPC server can be disabled manually using @ref SERVICE_CONFIG_HOOKS "config hooks".
+In testsuite, SSL in gRPC server can be disabled manually using
+@ref SERVICE_CONFIG_HOOKS "service config patches".
 
 
 ### Custom server credentials
@@ -251,6 +280,14 @@ By default, gRPC server uses `grpc::InsecureServerCredentials`. To pass a custom
 Main page: @ref scripts/docs/en/userver/grpc/server_middlewares.md.
 
 Use ugrpc::server::MiddlewareBase to implement new middlewares.
+
+For an uninterrupted handler, completion queues classify the RPC as finished when the final completion
+event has `ok=true`. The callback backend samples `IsCancelled()` immediately after the
+`Finish`/`WriteAndFinish` call returns. These calls initiate completion without waiting for `OnDone`.
+If cancellation is observed, the RPC is classified as interrupted, and `OnCallFinish` receives `std::nullopt`.
+Otherwise, the RPC is accounted with its final gRPC status, including error statuses.
+Cancellation concurrent with or after this snapshot may still leave the RPC classified as finished.
+Neither backend guarantees delivery of the final status to the client.
 
 #### List of standard server middlewares:
 
@@ -347,6 +384,12 @@ message Creds {
   string secret_code = 3 [debug_redact = true];
 }
 ```
+
+If a `google.protobuf.Any` cannot be expanded, the log keeps the other fields and does not write the raw `value`
+bytes: until the payload is parsed, `debug_redact` cannot be applied to them. An unknown type is written as
+`{"@type":"<type_url>","@error":"unresolved_any_type"}`, and a known type whose payload fails to parse as
+`{"@type":"<type_url>","@error":"invalid_payload"}`. This is a diagnostic representation for logs, not standard
+ProtoJSON. Link the payload type into the binary to see its fields.
 
 ### grpc-core logs
 

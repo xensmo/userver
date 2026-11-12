@@ -9,7 +9,6 @@
 #include <functional>
 #include <optional>
 #include <stdexcept>
-#include <string>
 #include <string_view>
 #include <typeindex>
 #include <vector>
@@ -129,8 +128,8 @@ public:
     /// Further updates are delivered after @ref utils::ResourceScopeStorage::AfterConstruction, including those updates
     /// that arrived before it. Unsubscribe runs in @ref utils::ResourceScopeStorage::BeforeDestruction.
     ///
-    /// @param scopes storage that owns the subscription lifetime. In a component constructor pass `context.Scopes()`
-    /// or @ref components::GetResourceScopes.
+    /// @param scopes storage that owns the subscription lifetime.
+    /// See @ref resource_scopes_parameter "where to obtain scopes".
     template <typename Class>
     void UpdateAndListen(
         utils::ResourceScopeStorage& scopes,
@@ -139,6 +138,7 @@ public:
         void (Class::*func)(const storages::secdist::SecdistConfig& secdist)
     );
 
+#ifndef ARCADIA_ROOT
     /// @overload
     /// @deprecated Use the overload that takes @ref utils::ResourceScopeStorage.
     ///
@@ -149,17 +149,20 @@ public:
         std::string_view name,
         void (Class::*func)(const storages::secdist::SecdistConfig& secdist)
     );
+#endif
 
     bool IsPeriodicUpdateEnabled() const noexcept;
 
 private:
     using EventSource = concurrent::AsyncEventSource<const SecdistConfig&>;
 
+#ifndef ARCADIA_ROOT
     concurrent::AsyncEventSubscriberScope DoUpdateAndListen(
         concurrent::FunctionId id,
         std::string_view name,
         EventSource::Function&& func
     );
+#endif
 
     void DoUpdateAndListen(
         utils::ResourceScopeStorage& scopes,
@@ -184,6 +187,7 @@ void Secdist::UpdateAndListen(
     });
 }
 
+#ifndef ARCADIA_ROOT
 template <typename Class>
 concurrent::AsyncEventSubscriberScope Secdist::UpdateAndListen(
     Class* obj,
@@ -194,6 +198,7 @@ concurrent::AsyncEventSubscriberScope Secdist::UpdateAndListen(
         (obj->*func)(config);
     });
 }
+#endif
 
 namespace detail {
 

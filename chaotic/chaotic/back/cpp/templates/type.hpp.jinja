@@ -223,7 +223,7 @@
 {% endmacro %}
 
 {% macro _generate_to_json_string_declaration(type) %}
-    {% if type.get_py_type() in ('CppStruct', 'CppStructAllOf') %}
+    {% if type.need_to_json_string() %}
         std::string ToJsonString(const {{ type.cpp_local_name() }}& value);
     {% endif %}
 {% endmacro %}
@@ -238,6 +238,20 @@
         {{ type.raw_cpp_type.in_scope(get_current_namespace()) }} Parse(
             {{ format }}::Value json,
             {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
+    {% endif %}
+{% endmacro %}
+
+{% macro _generate_may_parse_declaration(type) %}
+    {#- handle subtypes -#}
+    {% for schema in type.subtypes() %}
+        {{- _generate_may_parse_declaration(schema) }}
+    {% endfor %}
+
+    {% if type.need_dom_parser() and type.get_py_type() in ('CppStruct', 'CppIntEnum', 'CppStringEnum') %}
+        bool MayParseAs(
+            const {{ userver }}::formats::json::Value& value,
+            {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
+
     {% endif %}
 {% endmacro %}
 
@@ -331,6 +345,8 @@
     {% endfor %}
 
     {% if has_json_parse(parse_formats) %}
+        {{- _generate_may_parse_declaration(type) }}
+
         {{- _generate_from_json_string_declaration(type) }}
 
         {% if generate_serializer %}

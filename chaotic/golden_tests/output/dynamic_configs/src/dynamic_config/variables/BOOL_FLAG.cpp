@@ -4,7 +4,22 @@
 
 #include <userver/chaotic/primitive.hpp>
 
+#include "dynamic_config/variables/BOOL_FLAG.types.hpp"
+
+#include <userver/chaotic/type_bundle_cpp.hpp>
+
+#include "dynamic_config/variables/BOOL_FLAG.types_parsers.ipp"
+
+namespace dynamic_config {namespace bool_flag {
+
+}  // namespace bool_flag
+}  // namespace dynamic_config
+
 namespace dynamic_config {
+
+USERVER_NAMESPACE::dynamic_config::SchemaHash bool_flag::GetSchemaHash() {
+    return USERVER_NAMESPACE::dynamic_config::SchemaHash{"7cb541e84f226754a46c21c79f131fa2898354e1242456e6fd1c162bce319553"};
+}
 
 namespace {
 
@@ -22,7 +37,7 @@ const USERVER_NAMESPACE::dynamic_config::Key<
     USERVER_NAMESPACE::dynamic_config::DefaultAsJsonString{R"~(
         false
     )~"},
-    "7cb541e84f226754a46c21c79f131fa2898354e1242456e6fd1c162bce319553",
+    bool_flag::GetSchemaHash(),
 };
 
 }  // namespace dynamic_config

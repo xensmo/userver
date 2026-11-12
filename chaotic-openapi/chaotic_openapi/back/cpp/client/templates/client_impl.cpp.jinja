@@ -1,5 +1,6 @@
 #include <clients/{{ name }}/client_impl.hpp>
 
+#include <userver/chaotic/openapi/client/content_encoding.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/components/component_base.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
@@ -33,6 +34,10 @@ ClientImpl::ClientImpl(
       ) {
         auto r = http_client_.CreateRequest();
         r.SetUrlTemplate("{{ op.path }}");
+        {% if op.expected_status_codes is not none %}
+            r.SetExpectedStatusCodes({ {% for code in op.expected_status_codes %}static_cast<USERVER_NAMESPACE::http::StatusCode>({{ code }}){{ ', ' if not loop.last }}{% endfor %} });
+        {% endif %}
+
         {% if op.path != op.destination_metric_name() %}
             r.SetDestinationMetricName(
                 config_.base_url + "{{ op.destination_metric_name() }}"
@@ -48,6 +53,7 @@ ClientImpl::ClientImpl(
             {{ op.cpp_namespace() }}::Request request;
         {%- endif %}
         SerializeRequest(request, config_.base_url, r);
+        EncodeRequest(r, command_control);
 
         {% if op.uses_digest_security() %}
         // Apply digest auth credentials for scheme '{{ op.digest_scheme_name() }}'
@@ -82,4 +88,3 @@ ClientImpl::ClientImpl(
 {% endfor %}
 
 }  // namespace {{ namespace }}
-

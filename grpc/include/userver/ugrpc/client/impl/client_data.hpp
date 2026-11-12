@@ -40,12 +40,12 @@ struct GenericClientTag final {
 };
 
 /// The internal state of generated gRPC clients
-class ClientData final {
+class ClientData {
 public:
     ClientData() = delete;
 
     template <typename Service>
-    ClientData(ClientInternals&& internals, ugrpc::impl::StaticServiceMetadata metadata, std::in_place_type_t<Service>)
+    ClientData(utils::ResourceScopeStorage& scopes, ClientInternals&& internals, ugrpc::impl::StaticServiceMetadata metadata, std::in_place_type_t<Service>)
         : internals_(std::move(internals)),
           metadata_(metadata),
           service_statistics_(&GetServiceStatistics()),
@@ -62,31 +62,29 @@ public:
     {
         if (internals_.qos) {
             SubscribeOnConfigUpdate<Service>(
+                scopes,
                 ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED,
                 ::dynamic_config::EGRESS_NO_PROXY_TARGETS,
                 *internals_.qos
             );
         } else {
-            SubscribeOnConfigUpdate<
-                Service>(::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS);
+            SubscribeOnConfigUpdate<Service>(
+                scopes,
+                ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED,
+                ::dynamic_config::EGRESS_NO_PROXY_TARGETS
+            );
         }
-
-        // AfterConstruction() call must be the last line of the constructor.
-        config_scopes_.AfterConstruction();
     }
 
     template <typename Service>
-    ClientData(ClientInternals&& internals, GenericClientTag, std::in_place_type_t<Service>)
+    ClientData(utils::ResourceScopeStorage& scopes, ClientInternals&& internals, GenericClientTag, std::in_place_type_t<Service>)
         : internals_(std::move(internals))
     {
         SubscribeOnConfigUpdate<
-            Service>(::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS);
-
-        // AfterConstruction() call must be the last line of the constructor.
-        config_scopes_.AfterConstruction();
+            Service>(scopes, ::dynamic_config::EGRESS_GRPC_PROXY_ENABLED, ::dynamic_config::EGRESS_NO_PROXY_TARGETS);
     }
 
-    ~ClientData();
+    virtual ~ClientData();
 
     ClientData(ClientData&&) noexcept = delete;
     ClientData(const ClientData&) = delete;
@@ -138,7 +136,10 @@ private:
         auto stubs = utils::GenerateFixedArray(channels.size(), [&channels](std::size_t index) {
             return ugrpc::impl::AsyncService<Service>::NewStub(channels[index]);
         });
-        return StubArray{std::move(channels), std::move(stubs)};
+        auto generic_stubs = utils::GenerateFixedArray(channels.size(), [&channels](std::size_t index) {
+            return grpc::GenericStub(channels[index]);
+        });
+        return StubArray{std::move(channels), std::move(stubs), std::move(generic_stubs)};
     }
 
     template <typename Service>
@@ -165,14 +166,9 @@ private:
     ugrpc::impl::ServiceStatistics& GetServiceStatistics();
 
     template <typename Service, typename... Keys>
-    void SubscribeOnConfigUpdate(const Keys&... keys) {
-        internals_.config_source.UpdateAndListen(
-            config_scopes_,
-            this,
-            internals_.client_name,
-            &ClientData::OnConfigUpdate<Service>,
-            keys...
-        );
+    void SubscribeOnConfigUpdate(utils::ResourceScopeStorage& scopes, const Keys&... keys) {
+        internals_.config_source
+            .UpdateAndListen(scopes, this, internals_.client_name, &ClientData::OnConfigUpdate<Service>, keys...);
     }
 
     template <typename Service>
@@ -213,14 +209,18 @@ private:
                   )
                 : utils::FixedArray<StubArray>{};
 
-        stub_state_.Assign({client_qos, std::move(stubs), std::move(dedicated_stubs)});
+        stub_state_.Assign({
+            .client_qos = client_qos,
+            .endpoint = internals_.endpoint,
+            .auth_type = internals_.channel_factory.GetAuthType(),
+            .stubs = std::move(stubs),
+            .dedicated_stubs = std::move(dedicated_stubs),
+        });
     }
 
     ClientInternals internals_;
     std::optional<ugrpc::impl::StaticServiceMetadata> metadata_;
     ugrpc::impl::ServiceStatistics* service_statistics_{nullptr};
-    // Member instead of WithResourceScopes to simplify generated gRPC client types.
-    utils::ResourceScopeStorage config_scopes_;
 
     std::optional<compat::ChannelArgumentsBuilder> channel_arguments_builder_;
 

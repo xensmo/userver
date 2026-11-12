@@ -20,17 +20,22 @@ from typing import TypeAlias
 import pytest
 import yaml
 
+import pytest_userver.config
+from pytest_userver import fixture_markers
+
 # flake8: noqa E266
-## Fixtures and functions in USERVER_CONFIG_HOOKS used to change the
-## static config or config_vars.yaml.
+## Prefer @ref pytest_userver.config.patch "pytest_userver.config.patch" to
+## patch static config / config_vars before the service starts.
 ##
-## Functions and fixtures that are listed in the USERVER_CONFIG_HOOKS variable
-## in your pytest-plugin are run before config is written to disk, so that the
-## service, the pytest_userver.plugins.config.service_config_yaml and
-## the pytest_userver.plugins.config.service_config_vars get the modified
-## values.
+## USERVER_CONFIG_HOOKS is a legacy list of fixture (or function) names that
+## are applied the same way. Values are collected across pytest plugins and
+## initial conftest modules.
 ##
-## Example of patching config :
+## Example with the recommended decorator:
+##
+## @snippet samples/static_service/testsuite/conftest.py  static config patch
+##
+## Legacy example with USERVER_CONFIG_HOOKS:
 ##
 ## @snippet grpc/functional_tests/basic_server/tests-tls/conftest.py Prepare service config
 ##
@@ -258,8 +263,9 @@ def service_config_path_temp(
 @pytest.fixture(scope='session')
 def service_config_yaml(_service_config_hooked) -> dict:
     """
-    Returns the static config values after the USERVER_CONFIG_HOOKS were
-    applied (if any). Prefer using
+    Returns the static config values after config patches were applied
+    (@ref pytest_userver.config.patch "config.patch" and legacy
+    USERVER_CONFIG_HOOKS). Prefer using
     pytest_userver.plugins.config.service_config
 
     @ingroup userver_testsuite_fixtures
@@ -270,8 +276,9 @@ def service_config_yaml(_service_config_hooked) -> dict:
 @pytest.fixture(scope='session')
 def service_config_vars(_service_config_hooked) -> dict:
     """
-    Returns the static config variables (config_vars.yaml) values after the
-    USERVER_CONFIG_HOOKS were applied (if any). Prefer using
+    Returns the static config variables (config_vars.yaml) values after config
+    patches were applied (@ref pytest_userver.config.patch "config.patch" and
+    legacy USERVER_CONFIG_HOOKS). Prefer using
     pytest_userver.plugins.config.service_config
 
     @ingroup userver_testsuite_fixtures
@@ -363,9 +370,10 @@ def service_config(
     substitute_config_vars,
 ) -> dict:
     """
-    Returns the static config values after the USERVER_CONFIG_HOOKS were
-    applied (if any) and with all the '$', environment and fallback variables
-    substituted.
+    Returns the static config values after config patches were applied
+    (@ref pytest_userver.config.patch "config.patch" and legacy
+    USERVER_CONFIG_HOOKS) and with all the '$', environment and fallback
+    variables substituted.
 
     @ingroup userver_testsuite_fixtures
     """
@@ -406,10 +414,11 @@ def _service_config_hooked(
     config_yaml = copy.deepcopy(_original_service_config.config_yaml)
     config_vars = copy.deepcopy(_original_service_config.config_vars)
 
-    plugin = pytestconfig.pluginmanager.get_plugin('userver_config')
+    plugin_hooks = pytestconfig.pluginmanager.get_plugin('userver_config').userver_config_hooks
+    mark_hooks = fixture_markers.get_infos(request, pytest_userver.config._ConfigPatchInfo).keys()
     local_hooks = (daemon_scoped_mark or {}).get('config_hooks', ())
 
-    for hook in itertools.chain(plugin.userver_config_hooks, local_hooks):
+    for hook in itertools.chain(plugin_hooks, mark_hooks, local_hooks):
         if not callable(hook):
             hook_func = request.getfixturevalue(hook)
         else:
@@ -478,7 +487,7 @@ def userver_config_substitutions(_service_config_substitution_vars) -> ServiceCo
 
 
 @pytest.fixture(scope='session')
-def userver_config_http_server(service_port, monitor_port) -> ServiceConfigPatch:
+def userver_config_http_server(service_port, monitor_port, choose_free_port) -> ServiceConfigPatch:
     """
     Returns a function that adjusts the static configuration file for testsuite.
     Sets the `server.listener.port` to listen on
@@ -498,6 +507,12 @@ def userver_config_http_server(service_port, monitor_port) -> ServiceConfigPatch
                     ports = listener.get('ports')
                     if ports and 'port' in ports[0]:
                         ports[0]['port'] = new_port
+                        for entry in ports[1:]:
+                            if 'port' in entry and 'unix-socket' not in entry and 'listen-socket-fd' not in entry:
+                                port_hint = entry['port']
+                                if isinstance(port_hint, str) and port_hint.startswith('$'):
+                                    port_hint = config_vars.get(port_hint[1:]) or entry.get('port#fallback')
+                                entry['port'] = choose_free_port(port_hint)
                     else:
                         listener['port'] = new_port
 
@@ -691,6 +706,7 @@ def userver_config_testsuite(pytestconfig, mockserver_info) -> ServiceConfigPatc
         testsuite_support = components['testsuite-support']
         testsuite_support['testsuite-increased-timeout'] = '30s'
         testsuite_support['testsuite-grpc-is-tls-enabled'] = False
+        testsuite_support['testsuite-mysql-is-tls-enabled'] = False
         _set_postgresql_options(testsuite_support)
         _set_redis_timeout(testsuite_support)
         service_runner = pytestconfig.option.service_runner_mode

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <chrono>
 #include <optional>
 
 #include <server/http/request_handler_base.hpp>
@@ -16,22 +18,27 @@
 
 USERVER_NAMESPACE_BEGIN
 
+namespace server {
+struct ServerConfig;
+}  // namespace server
+
 namespace server::http {
 
 class HttpRequestHandler final : public RequestHandlerBase {
 public:
     HttpRequestHandler(
         const components::ComponentContext& component_context,
-        const std::optional<std::string>& logger_access_component,
-        const std::optional<std::string>& logger_access_tskv_component,
-        bool is_monitor,
-        std::string server_name
+        const ServerConfig& config,
+        bool is_monitor
     );
 
     using NewRequestHook = std::function<void(std::shared_ptr<http::HttpRequest>)>;
     void SetNewRequestHook(NewRequestHook hook);
 
     engine::TaskWithResult<void> StartRequestTask(std::shared_ptr<http::HttpRequest> request) const override;
+
+    /// Check a complete, matched request without creating a handler task.
+    bool CheckRequestAdmission(HttpRequest& request) const;
 
     void DisableAddHandler();
     void AddHandler(const handlers::HttpHandlerBase& handler, engine::TaskProcessor& task_processor);
@@ -55,10 +62,11 @@ private:
 
     const bool is_monitor_;
     const std::string server_name_;
+    const bool allow_set_response_ratelimited_by_;
     NewRequestHook new_request_hook_;
     mutable utils::TokenBucket rate_limit_;
     std::atomic<HttpStatus> cc_status_code_{HttpStatus::kTooManyRequests};
-    std::chrono::steady_clock::time_point cc_enabled_tp_;
+    std::atomic<std::chrono::steady_clock::time_point> cc_enabled_tp_{};
     utils::statistics::MetricsStoragePtr metrics_;
     dynamic_config::Source config_source_;
 };

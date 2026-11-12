@@ -13,11 +13,11 @@ if(${CMAKE_SOURCE_DIR}/.git/HEAD IS_NEWER_THAN ${BUILD_CONFIG})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build_config.hpp.in ${BUILD_CONFIG} ESCAPE_QUOTES @ONLY)
 endif()
 
-file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 )
 
-file(GLOB_RECURSE UNIT_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*_test.cpp)
+file(GLOB_RECURSE UNIT_TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*_test.cpp)
 
 list(REMOVE_ITEM SOURCES ${UNIT_TEST_SOURCES})
 
@@ -63,9 +63,6 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 # thread_local usage in Moodycamel is incompatible with userver scheduler that migrates coroutines between threads.
 target_compile_definitions(${PROJECT_NAME} PUBLIC MOODYCAMEL_NO_THREAD_LOCAL)
-
-include(GenGdbPrinters)
-gen_gdb_cmd(${PROJECT_NAME} "cmd/utask")
 
 if(USERVER_DISABLE_PHDR_CACHE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USERVER_DISABLE_PHDR_CACHE)
@@ -333,10 +330,12 @@ _userver_directory_install(
 )
 _userver_directory_install(
     COMPONENT core
-    FILES "${USERVER_ROOT_DIR}/cmake/UserverTestsuite.cmake" "${USERVER_ROOT_DIR}/cmake/TargetIteration.cmake"
-          "${USERVER_ROOT_DIR}/cmake/install/userver-core-config.cmake"
+    FILES "${USERVER_ROOT_DIR}/cmake/UserverTestsuite.cmake"
+          "${USERVER_ROOT_DIR}/cmake/UserverTestsuiteDbRegistry.cmake"
+          "${USERVER_ROOT_DIR}/cmake/UserverTestsuiteVenv.cmake" "${USERVER_ROOT_DIR}/cmake/TargetIteration.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/userver
 )
+_userver_install_component_config(core)
 _userver_directory_install(
     COMPONENT core
     FILES "${USERVER_ROOT_DIR}/cmake/modules/Findc-ares.cmake" "${USERVER_ROOT_DIR}/cmake/modules/Findlibnghttp2.cmake"

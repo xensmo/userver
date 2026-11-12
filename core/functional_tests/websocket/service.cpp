@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include <userver/clients/dns/component.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 
@@ -7,6 +9,7 @@
 #include <userver/engine/sleep.hpp>
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/server/handlers/websocket_handler.hpp>
+#include <userver/server/request/request_context.hpp>
 #include <userver/utils/async.hpp>
 #include <userver/utils/daemon_run.hpp>
 
@@ -16,6 +19,8 @@ struct HandshakeData {
     std::string origin;
 };
 
+const utils::AnyStorageDataTag<server::request::StorageContext, HandshakeData> kHandshakeData;
+
 class WebsocketsHandler final : public server::handlers::WebsocketHandlerBase {
 public:
     static constexpr std::string_view kName = "websocket-handler";
@@ -23,12 +28,13 @@ public:
     using WebsocketHandlerBase::WebsocketHandlerBase;
 
     bool HandleHandshake(server::http::HttpRequest& request, server::request::RequestContext& context) const override {
-        context.SetUserData(HandshakeData{request.GetHeader("Origin")});
+        static_cast<void>(context.GetInitialDynamicConfig());
+        context.EmplaceData(kHandshakeData, request.GetHeader("Origin"));
         return true;
     }
 
     void Handle(websocket::WebSocketConnection& chat, server::request::RequestContext& context) const override {
-        const auto& origin = context.GetUserData<HandshakeData>().origin;
+        const auto& origin = context.GetData(kHandshakeData).origin;
         if (!origin.empty()) {
             chat.Send({origin, {}, true});
         }
@@ -44,6 +50,16 @@ public:
             if (message.data == "close") {
                 chat.Close(websocket::CloseStatus::kGoingAway);
                 break;
+            }
+
+            if (message.data == "check-initial-dynamic-config") {
+                try {
+                    static_cast<void>(context.GetInitialDynamicConfig());
+                    chat.Send({"invalid", {}, true});
+                } catch (const std::logic_error&) {
+                    chat.Send({"ok", {}, true});
+                }
+                continue;
             }
 
             chat.Send(message);

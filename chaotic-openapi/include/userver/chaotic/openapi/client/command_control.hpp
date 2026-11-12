@@ -1,8 +1,10 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 
 #include <userver/chaotic/openapi/client/config.hpp>
+#include <userver/clients/http/expected_status_codes.hpp>
 #include <userver/dynamic_config/fwd.hpp>
 #include <userver/formats/json_fwd.hpp>
 #include <userver/formats/parse/to.hpp>
@@ -13,8 +15,25 @@ USERVER_NAMESPACE_BEGIN
 namespace chaotic::openapi::client {
 
 struct CommandControl {
+    enum class ContentEncoding {
+        kAuto,
+        kGzip,
+        kZstd,
+    };
+
+    enum class ContentEncodingLevel {
+        kAuto,
+        kFast,
+        kSlow,
+    };
+
     std::chrono::milliseconds timeout{};
     int attempts{};
+    ContentEncoding encoding{ContentEncoding::kAuto};
+    ContentEncodingLevel encoding_level{ContentEncodingLevel::kAuto};
+    std::optional<clients::http::ExpectedStatusCodes> expected_status_codes{};
+
+    bool operator==(const CommandControl&) const = default;
 };
 
 CommandControl Parse(const formats::json::Value& value, formats::parse::To<CommandControl>);
