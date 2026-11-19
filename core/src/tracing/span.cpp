@@ -149,7 +149,7 @@ Span::Impl::Impl(
 }
 
 Span::Impl::~Impl() {
-    if (!ShouldLog() || !is_sampled_) {
+    if (!ShouldLogDefault()) {
         return;
     }
 
@@ -206,11 +206,11 @@ void Span::Impl::LogTo(logging::impl::TagWriter writer) const {
     writer.PutLogExtra(log_extra_inheritable_);
     writer.PutTag(kTraceSampledTag, is_sampled_);
 
+    writer.PutTag(kTraceIdTag, GetTraceId());
     if (const auto span_id = GetSpanIdForChildLogs()) {
-        writer.PutTag(kTraceIdTag, GetTraceId());
         writer.PutTag(kSpanIdTag, *span_id);
-        writer.PutTag(kLinkTag, GetLink());
     }
+    writer.PutTag(kLinkTag, GetLink());
 }
 
 void Span::Impl::DetachFromCoroStack() noexcept { unlink(); }
@@ -227,7 +227,9 @@ std::string_view Span::Impl::GetParentIdForLogging(const Span::Impl* parent) {
     return parent->GetSpanIdForChildLogs().value_or(std::string_view{});
 }
 
-bool Span::Impl::ShouldLog() const {
+bool Span::Impl::ShouldLogDefault() const { return is_sampled_ && ShouldLogAtLevel(); }
+
+bool Span::Impl::ShouldLogAtLevel() const {
     /* We must honour default log level, but use span's level from ourselves,
      * not the previous spans.
      * If local_log_level is set, it overrides the global level in both
@@ -251,8 +253,8 @@ bool Span::Impl::ShouldLog() const {
 }
 
 std::optional<std::string_view> Span::Impl::GetSpanIdForChildLogs() const noexcept {
-    if (ShouldLog()) {
-        // It's still possible for chaining to break and logs to become orphaned if ShouldLog() becomes false later.
+    if (ShouldLogAtLevel()) {
+        // It's still possible for chaining to break and logs to become orphaned if the log level changes later.
         // TODO set a flag on the current span to force it to be logged in that case?
         return GetSpanId();
     }
@@ -444,7 +446,7 @@ void Span::SetLink(std::string_view link) { pimpl_->SetLink(link); }
 
 void Span::SetParentLink(std::string_view parent_link) { pimpl_->SetParentLink(parent_link); }
 
-bool Span::ShouldLogDefault() const noexcept { return pimpl_->ShouldLog(); }
+bool Span::ShouldLogDefault() const noexcept { return pimpl_->ShouldLogDefault(); }
 
 bool Span::IsSampled() const noexcept { return pimpl_->is_sampled_; }
 
@@ -473,6 +475,10 @@ std::string_view Span::GetLink() const noexcept { return pimpl_->GetLink(); }
 std::string_view Span::GetParentLink() const noexcept { return pimpl_->GetParentLink(); }
 
 std::optional<std::string_view> Span::GetSpanIdForChildLogs() const noexcept { return pimpl_->GetSpanIdForChildLogs(); }
+
+std::string_view Span::GetSpanIdForPropagation() const noexcept {
+    return pimpl_->GetSpanIdForChildLogs().value_or(pimpl_->GetSpanId());
+}
 
 std::string_view Span::GetName() const noexcept { return pimpl_->GetName(); }
 

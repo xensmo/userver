@@ -1,6 +1,6 @@
 #include <userver/utest/utest.hpp>
 
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 
 #include <userver/dump/common.hpp>
 #include <userver/dump/operations_encrypted.hpp>
@@ -10,7 +10,24 @@
 USERVER_NAMESPACE_BEGIN
 
 namespace {
+
 const dump::SecretKey kTestKey{"12345678901234567890123456789012"};
+
+}  // namespace
+
+UTEST(DumpEncFile, FactoryEmptyDump) {
+    const auto dir = fs::blocking::TempDirectory::Create();
+    const auto path = dir.GetPath() + "/file";
+    auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
+    dump::EncryptedOperationsFactory factory(dump::SecretKey{kTestKey}, std::filesystem::perms::owner_read);
+
+    auto writer = factory.CreateWriter(path, scope_time);
+    writer->Finish();
+
+    EXPECT_EQ(std::filesystem::status(path).permissions(), std::filesystem::perms::owner_read);
+    auto reader = factory.CreateReader(path);
+    EXPECT_TRUE(dump::ReadUnsafeAtMost(*reader, 1).empty());
+    UEXPECT_NO_THROW(reader->Finish());
 }
 
 UTEST(DumpEncFile, Smoke) {
@@ -18,12 +35,14 @@ UTEST(DumpEncFile, Smoke) {
     const auto path = dir.GetPath() + "/file";
 
     auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
-    dump::EncryptedWriter w(path, kTestKey, boost::filesystem::perms::owner_read, scope_time);
+    dump::EncryptedWriter w(path, kTestKey, std::filesystem::perms::owner_read, scope_time);
 
+    EXPECT_EQ(std::filesystem::status(path + ".tmp").permissions(), std::filesystem::perms::owner_read);
     w.Write(1);
     UEXPECT_NO_THROW(w.Finish());
 
-    auto size = boost::filesystem::file_size(path);
+    EXPECT_EQ(std::filesystem::status(path).permissions(), std::filesystem::perms::owner_read);
+    auto size = std::filesystem::file_size(path);
     EXPECT_EQ(size, 33);
 
     dump::EncryptedReader r(path, kTestKey);
@@ -39,12 +58,12 @@ UTEST(DumpEncFile, UnreadData) {
     const auto path = dir.GetPath() + "/file";
 
     auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
-    dump::EncryptedWriter w(path, kTestKey, boost::filesystem::perms::owner_read, scope_time);
+    dump::EncryptedWriter w(path, kTestKey, std::filesystem::perms::owner_read, scope_time);
 
     w.Write(1);
     UEXPECT_NO_THROW(w.Finish());
 
-    auto size = boost::filesystem::file_size(path);
+    auto size = std::filesystem::file_size(path);
     EXPECT_EQ(size, 33);
 
     dump::EncryptedReader r(path, kTestKey);
@@ -57,14 +76,14 @@ UTEST(DumpEncFile, Long) {
     const auto path = dir.GetPath() + "/file";
 
     auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
-    dump::EncryptedWriter w(path, kTestKey, boost::filesystem::perms::owner_read, scope_time);
+    dump::EncryptedWriter w(path, kTestKey, std::filesystem::perms::owner_read, scope_time);
 
     for (int i = 0; i < 256; i++) {
         w.Write(i);
     }
     UEXPECT_NO_THROW(w.Finish());
 
-    auto size = boost::filesystem::file_size(path);
+    auto size = std::filesystem::file_size(path);
     EXPECT_EQ(size, 416);
 
     dump::EncryptedReader r(path, kTestKey);
@@ -82,7 +101,7 @@ UTEST(DumpEncFile, ReadBackUp) {
     const auto path = dir.GetPath() + "/file";
 
     auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
-    dump::EncryptedWriter w(path, kTestKey, boost::filesystem::perms::owner_read, scope_time);
+    dump::EncryptedWriter w(path, kTestKey, std::filesystem::perms::owner_read, scope_time);
     dump::WriteStringViewUnsafe(w, "abcdefg");
     UEXPECT_NO_THROW(w.Finish());
 

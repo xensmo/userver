@@ -3,7 +3,7 @@ include("${USERVER_CMAKE_DIR}/ModuleHelpers.cmake")
 find_package(Threads REQUIRED)
 find_package(
     Boost REQUIRED CONFIG
-    COMPONENTS program_options filesystem stacktrace_basic
+    COMPONENTS program_options stacktrace_basic
     OPTIONAL_COMPONENTS stacktrace_backtrace
 )
 find_package(Iconv REQUIRED)
@@ -34,6 +34,11 @@ find_package(re2 REQUIRED)
 find_package(cryptopp REQUIRED)
 find_package(zstd REQUIRED)
 find_package(yaml-cpp REQUIRED)
+
+if(USERVER_IMPL_FEATURE_SIMD_BASE64)
+    # Not found if aklomp/base64 was downloaded and installed along with userver
+    find_package(base64 CONFIG QUIET)
+endif()
 
 if(USERVER_CONAN)
     find_package(RapidJSON REQUIRED)

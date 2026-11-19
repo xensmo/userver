@@ -161,9 +161,8 @@ Policy options:
 - `paths` (required): fields to select, for example `[["user", "phone"]]`.
 - `list_mode`: `blacklist` (the default) masks selected subtrees;
   `whitelist` preserves them and masks everything else.
-- `replacement`: a single string to use in place of every masked JSON value.
 
-By default, masked scalars become `"..."`, objects `"{...}"`, and arrays `"[...]"`.
+Masked scalars become `"..."`, objects `"{...}"`, and arrays `"[...]"`.
 See the config schema for wildcard and array path behavior.
 
 Generated handlers skip binary-only body formats. Setting a masking rule explicitly
@@ -530,6 +529,11 @@ span via the methods of the `Add*Tag*()` are not put into the logs.
 
 @note In order for `USERVER_NO_LOG_SPANS` to work, you should `Append` @ref components::LoggingConfigurator
 component or use @ref components::CommonComponentList.
+
+A span that is not logged (because of `USERVER_NO_LOG_SPANS`, `span-log-level` or its own log level) does not break
+the trace. Logs written inside it still get `trace_id` and `link`. Their `span_id` is the ID of the nearest logged
+span in the chain, or it is omitted if no such span exists. Outgoing requests and responses always carry the tracing
+headers. Their span ID is the ID of the nearest logged span, or the ID of the current span if no span is logged.
 
 For example, this is how you can disable logging of all Span for MongoDB (that is, all Span with `stopwatch_name`
 starting with `mongo`) and `Span` with `stopwatch_name=test`:

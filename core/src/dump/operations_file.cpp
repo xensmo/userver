@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <filesystem>
 #include <stdexcept>
+#include <system_error>
 #include <utility>
 
 #include <fmt/format.h>
@@ -18,17 +20,16 @@ namespace {
 constexpr std::size_t kCheckTimeAfterBytes{1 << 15};
 }
 
-FileWriter::FileWriter(std::string path, boost::filesystem::perms perms, tracing::ScopeTime& scope)
+FileWriter::FileWriter(std::string path, std::filesystem::perms perms, tracing::ScopeTime& scope)
     : final_path_(std::move(path)),
       path_(final_path_ + ".tmp"),
       perms_(perms),
       cpu_relax_(kCheckTimeAfterBytes, &scope)
 {
     constexpr fs::blocking::OpenMode mode{fs::blocking::OpenFlag::kWrite, fs::blocking::OpenFlag::kExclusiveCreate};
-    const auto tmp_perms = perms_ | boost::filesystem::perms::owner_write;
-
     try {
-        file_ = fs::blocking::CFile{path_, mode, tmp_perms};
+        // Exclusive creation returns a writable descriptor even for read-only permissions.
+        file_ = fs::blocking::CFile{path_, mode, perms_};
     } catch (const std::exception& ex) {
         throw Error(fmt::format("Failed to open the dump file for write \"{}\": {}", path_, ex.what()));
     }
@@ -50,7 +51,7 @@ void FileWriter::Finish() {
         // but truncated.
         file_.Flush();
         std::move(file_).Close();
-        fs::blocking::Chmod(path_, perms_);  // drop perms::owner_write
+        fs::blocking::Chmod(path_, perms_, std::filesystem::perm_options::replace);
         fs::blocking::Rename(path_, final_path_);
     } catch (const std::exception& ex) {
         throw Error(fmt::format("Failed to finalize dump \"{}\". Reason: {}", path_, ex.what()));
@@ -124,7 +125,7 @@ void FileReader::Finish() {
     }
 }
 
-FileOperationsFactory::FileOperationsFactory(boost::filesystem::perms perms)
+FileOperationsFactory::FileOperationsFactory(std::filesystem::perms perms)
     : perms_(perms)
 {}
 

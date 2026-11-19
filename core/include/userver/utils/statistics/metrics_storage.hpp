@@ -8,12 +8,19 @@
 #include <string>
 #include <vector>
 
+#include <userver/utils/fast_pimpl.hpp>
 #include <userver/utils/statistics/fwd.hpp>
-#include <userver/utils/statistics/metric_tag.hpp>
+#include <userver/utils/statistics/impl/metric_wrapper.hpp>
 
 USERVER_NAMESPACE_BEGIN
 
 namespace utils::statistics {
+
+namespace impl {
+
+struct MetricKey;
+
+}  // namespace impl
 
 /// @brief Storage of metrics registered with MetricTag<Metric>
 /// @note The class is thread-safe. See also the note about thread-safety
@@ -30,10 +37,16 @@ public:
     /// `std::nullopt` if all `MetricTag<Metric>` instances should be considered
     explicit MetricsStorage(const std::optional<std::vector<std::string>>& allowed_metric_paths);
 
+    MetricsStorage(const MetricsStorage&) = delete;
+    MetricsStorage(MetricsStorage&& other) noexcept;
+    MetricsStorage& operator=(const MetricsStorage&) = delete;
+    MetricsStorage& operator=(MetricsStorage&& other) noexcept;
+    ~MetricsStorage();
+
     /// Get metric data by type
     template <typename Metric>
     Metric& GetMetric(const MetricTag<Metric>& tag) {
-        return impl::GetMetric<Metric>(metrics_, tag.key_);
+        return dynamic_cast<impl::MetricWrapper<Metric>&>(GetMetricWrapper(tag.key_)).Get();
     }
 
     /// @brief Dumps all the metrics of @a storage through @a writer, each under its `MetricTag` path.
@@ -52,7 +65,10 @@ public:
     void ResetMetrics();
 
 private:
-    impl::MetricMap metrics_;
+    impl::MetricWrapperBase& GetMetricWrapper(const impl::MetricKey& key);
+
+    struct Impl;
+    utils::FastPimpl<Impl, 64, alignof(void*)> impl_;
 };
 
 using MetricsStoragePtr = std::shared_ptr<MetricsStorage>;

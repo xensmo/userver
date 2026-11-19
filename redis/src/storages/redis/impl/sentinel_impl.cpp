@@ -270,7 +270,8 @@ SentinelImpl::SentinelImpl(
                 creation_config.required_mode == storages::redis::WaitConnectedMode::kNoWait
                     ? Hysteresis::Config()
                     : Hysteresis::Config{.consecutive_failures = 3, .consecutive_ok = 5},
-                creation_config.max_disconnect_time
+                creation_config.max_disconnect_time,
+                creation_config.connection_mode
             );
         } else if (key_shard_type == ShardingStrategy::kRedisStandalone) {
             LOG_DEBUG() << log_extra_ << "Construct Standalone topology holder";
@@ -282,7 +283,8 @@ SentinelImpl::SentinelImpl(
                 shard_group_name_,
                 credentials,
                 database_index_,
-                conns.front()
+                conns.front(),
+                creation_config.connection_mode
             );
         }
 
@@ -294,7 +296,9 @@ SentinelImpl::SentinelImpl(
             database_index_,
             shards,
             conns,
-            connection_security
+            connection_security,
+            creation_config.max_disconnect_time,
+            creation_config.connection_mode
         );
     }();
 }
@@ -317,18 +321,18 @@ std::unordered_map<ServerId, size_t, ServerIdHasher> SentinelImpl::GetAvailableS
     return topology->GetAvailableServersWeighted(kUnknownShard, with_master, cc);
 }
 
-void SentinelImpl::WaitConnectedDebug(bool allow_empty_slaves) {
+void SentinelImpl::WaitConnectedDebug(bool allow_empty_slaves, ConnectionKind kind) {
     const auto mode = allow_empty_slaves ? WaitConnectedMode::kMaster : WaitConnectedMode::kMasterAndSlave;
 
     const auto config = dynamic_config_source_.GetSnapshot();
     const auto& wait_settings = config[storages::redis::kConfig].redis_wait_connected;
     const RedisWaitConnected wait_connected{mode, /*throw_on_fail=*/true, wait_settings.timeout};
-    WaitConnectedOnce(wait_connected);
+    WaitConnectedOnce(wait_connected, kind);
 }
 
-void SentinelImpl::WaitConnectedOnce(RedisWaitConnected wait_connected) {
+void SentinelImpl::WaitConnectedOnce(RedisWaitConnected wait_connected, ConnectionKind kind) {
     auto deadline = engine::Deadline::FromDuration(wait_connected.timeout);
-    if (!topology_holder_->WaitReadyOnce(deadline, wait_connected.mode)) {
+    if (!topology_holder_->WaitReadyOnce(deadline, wait_connected.mode, kind)) {
         auto topology = topology_holder_->GetTopology();
         const std::string msg = fmt::format(
             "Failed to init cluster slots for redis, shard_group_name={} in {} "
@@ -336,8 +340,8 @@ void SentinelImpl::WaitConnectedOnce(RedisWaitConnected wait_connected) {
             shard_group_name_,
             wait_connected.timeout.count(),
             ToString(wait_connected.mode),
-            topology_holder_->GetReadinessInfo(),
-            topology->GetReadinessInfo()
+            topology_holder_->GetReadinessInfo(kind),
+            topology->GetReadinessInfo(kind)
         );
         if (wait_connected.throw_on_fail) {
             throw ClientNotConnectedException(msg);
@@ -347,7 +351,9 @@ void SentinelImpl::WaitConnectedOnce(RedisWaitConnected wait_connected) {
     }
 }
 
-bool SentinelImpl::IsReady(const HealthCheckParams& params) const { return topology_holder_->IsReady(params); }
+bool SentinelImpl::IsReady(const HealthCheckParams& params, ConnectionKind kind) const {
+    return topology_holder_->IsReady(params, kind);
+}
 
 void SentinelImpl::ForceUpdateHosts() { topology_holder_->SendUpdateClusterTopology(); }
 
@@ -435,7 +441,11 @@ void SentinelImpl::AsyncCommand(const SentinelCommand& scommand, size_t prev_ins
                     if (!command->redirected || (error_ask && !command->asking)) {
                         ++retries_left;
                     }
-                    moved_to_instance = topology_holder_->GetRedisInstance(host_port);
+                    const auto kind =
+                        ccommand->args.GetCommandCount() == 1 && ccommand->args.begin()->IsSubscribesCommand()
+                            ? ConnectionKind::kSubscription
+                            : ConnectionKind::kCommand;
+                    moved_to_instance = topology_holder_->GetRedisInstance(host_port, kind);
                     if (!moved_to_instance) {
                         LOG_WARNING() << log_extra_ << "moved to unknown host " << host_port;
                         /// Can we do something else?? We don't have client for this
@@ -447,7 +457,6 @@ void SentinelImpl::AsyncCommand(const SentinelCommand& scommand, size_t prev_ins
                 if (now < until && retries_left > 0) {
                     const auto timeout_all = std::chrono::duration_cast<std::chrono::milliseconds>(until - now);
                     command->control.timeout_single = std::min(cc.timeout_single, timeout_all);
-                    command->control.timeout_all = timeout_all;
                     command->control.max_retries = retries_left;
 
                     auto new_command = PrepareCommand(

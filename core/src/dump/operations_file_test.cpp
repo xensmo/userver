@@ -1,5 +1,7 @@
 #include <userver/dump/operations_file.hpp>
 
+#include <filesystem>
+
 #include <userver/dump/unsafe.hpp>
 #include <userver/fs/blocking/read.hpp>
 #include <userver/fs/blocking/temp_directory.hpp>
@@ -25,13 +27,14 @@ UTEST(DumpOperationsFile, WriteReadRaw) {
     std::size_t total_length = 0;
 
     auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
-    dump::FileWriter writer(path, boost::filesystem::perms::owner_read, scope_time);
+    dump::FileWriter writer(path, std::filesystem::perms::owner_read, scope_time);
     for (std::size_t i = 0; i <= kMaxLength; ++i) {
         WriteStringViewUnsafe(writer, std::string(i, 'a'));
         total_length += i;
     }
     writer.Finish();
 
+    EXPECT_EQ(std::filesystem::status(path).permissions(), std::filesystem::perms::owner_read);
     EXPECT_EQ(fs::blocking::ReadFileContents(path), std::string(total_length, 'a'));
 
     dump::FileReader reader(path);
@@ -46,7 +49,7 @@ UTEST(DumpOperationsFile, EmptyDump) {
     const auto path = DumpFilePath(dir);
 
     auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
-    dump::FileWriter writer(path, boost::filesystem::perms::owner_read, scope_time);
+    dump::FileWriter writer(path, std::filesystem::perms::owner_read, scope_time);
     writer.Finish();
 
     EXPECT_EQ(fs::blocking::ReadFileContents(path), "");
@@ -60,7 +63,7 @@ UTEST(DumpOperationsFile, EmptyStringDump) {
     const auto path = DumpFilePath(dir);
 
     auto scope_time = tracing::Span::CurrentSpan().CreateScopeTime("dump");
-    dump::FileWriter writer(path, boost::filesystem::perms::owner_read, scope_time);
+    dump::FileWriter writer(path, std::filesystem::perms::owner_read, scope_time);
     WriteStringViewUnsafe(writer, {});
     writer.Finish();
 

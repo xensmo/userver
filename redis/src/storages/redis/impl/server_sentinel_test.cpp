@@ -1,9 +1,11 @@
 #include <userver/utest/utest.hpp>
 
+#include <atomic>
 #include <thread>
 
 #include <userver/engine/sleep.hpp>
 #include <userver/logging/log.hpp>
+#include <userver/storages/redis/health_check_param.hpp>
 #include <userver/storages/redis/reply.hpp>
 #include <userver/utils/scope_guard.hpp>
 
@@ -87,6 +89,58 @@ UTEST(Redis, SentinelSingleMaster) {
     auto res = MakeGetRequest(sentinel, "value").Get();
     ASSERT_TRUE(res->data.IsInt());
     EXPECT_TRUE(res->data.GetInt() == magic_value);
+}
+
+UTEST(Redis, SentinelRetriesKeepOverallTimeout) {
+    const size_t master_count = 1;
+    const size_t slave_count = 0;
+    const size_t sentinel_count = 1;
+    const auto reply_delay = kSuccessTimeout / 20;
+    std::atomic<size_t> attempts{0};
+
+    SentinelTest sentinel_test(sentinel_count, master_count, slave_count);
+    auto& sentinel = sentinel_test.SentinelClient();
+    auto& master = sentinel_test.Master();
+    master.RegisterHandlerFunc("GET", {}, [&](auto connection, const auto&) {
+        if (++attempts < 3) {
+            engine::SleepFor(reply_delay);
+            master.SendReplyError(std::move(connection), "TRYAGAIN temporary failure");
+        } else {
+            master.SendReplyOk(std::move(connection), "OK");
+        }
+    });
+
+    storages::redis::CommandControl control;
+    control.timeout_single = reply_delay * 3;
+    control.timeout_all = reply_delay * 3;
+    control.max_retries = 3;
+    control.force_request_to_master = true;
+
+    const auto reply = MakeGetRequest(sentinel, "retry-timeout", control).Get();
+    ASSERT_TRUE(reply->IsOk());
+    EXPECT_EQ(attempts.load(), 3);
+}
+
+UTEST(Redis, SentinelConfiguredDisconnectGrace) {
+    const size_t master_count = 1;
+    const size_t slave_count = 0;
+    const size_t sentinel_count = 1;
+
+    SentinelTest default_test(sentinel_count, master_count, slave_count);
+    SentinelTest sentinel_test(sentinel_count, master_count, slave_count, std::chrono::seconds::zero());
+    auto& sentinel = sentinel_test.SentinelClient();
+    const storages::redis::HealthCheckParams health{storages::redis::WaitConnectedMode::kMaster};
+    ASSERT_TRUE(sentinel.IsReady(health));
+
+    default_test.Masters().clear();
+    sentinel_test.Masters().clear();
+    const auto deadline = engine::Deadline::FromDuration(utest::kMaxTestWaitTime);
+    while (sentinel.IsReady(health) && !deadline.IsReached()) {
+        engine::SleepFor(std::chrono::milliseconds(10));
+    }
+
+    EXPECT_FALSE(sentinel.IsReady(health));
+    EXPECT_TRUE(default_test.SentinelClient().IsReady(health));
 }
 
 UTEST(Redis, SentinelMastersChanging) {

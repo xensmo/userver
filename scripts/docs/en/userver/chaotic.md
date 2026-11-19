@@ -210,10 +210,13 @@ Example:
 @snippet chaotic/golden_tests/schemas/docs/docs.yaml chaotic docs - type string uuid
 
 
-#### JSON schema Enums
+#### JSON schema enums
 
-A type with an `enum:` list is mapped to a C++ `enum class`. Chaotic generates `Parse`,
-`Serialize`, `Convert`, `TryConvert`, and `operator<<` helpers automatically.
+A string or integer schema with an `enum` list is mapped to a C++ `enum class`.
+Chaotic generates parsing, serialization, `Convert`, `TryConvert`, and
+`operator<<` helpers. Unknown values are rejected by default; `TryConvert` returns
+an empty optional instead of throwing. Serialization helpers require
+`GENERATE_SERIALIZERS`.
 
 Example:
 
@@ -230,6 +233,32 @@ enum class Status {
 ```
 
 Integer enums work the same way with `type: integer` and a numeric `enum:` list.
+
+
+##### String enums with fallback
+
+Set `x-usrv-with-fallback: true` on a non-empty string enum to parse unknown strings
+as its **first value**. Choose a first value that represents an unsupported or
+unknown case, and handle it in application code:
+
+@snippet chaotic/integration_tests/schemas/enum_fallback.yaml enum fallback schema
+
+@snippet chaotic/integration_tests/tests/render/enum_fallback.cpp enum fallback parse
+
+The generated type remains an `enum class`. The original unknown string is
+**not preserved**: serialization, formatting and logging use the first value's
+spelling. The schema's `default` controls missing fields; it does not select the
+fallback. Omitting the flag or setting it to `false` keeps strict parsing.
+
+Fallback applies to DOM parsing (JSON, YAML and YAML config), SAX parsing, string
+`Parse` and `Convert`. `MayParseAs` accepts any string; non-string input remains
+invalid. `TryConvert` still returns an empty optional for unknown strings, so it
+can check whether a value is explicitly listed.
+
+Before enabling fallback in a shared contract, verify support in every consuming
+generator and validator. Tools that ignore the flag may still enforce the standard
+`enum` constraint. Regenerate and deploy readers with fallback handling before the
+producer sends new enum values.
 
 
 #### JSON schema type: array

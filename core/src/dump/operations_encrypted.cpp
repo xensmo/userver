@@ -1,7 +1,8 @@
 #include <userver/dump/operations_encrypted.hpp>
 
+#include <filesystem>
+
 #include <fmt/format.h>
-#include <boost/filesystem/operations.hpp>
 
 #include <cryptopp/files.h>
 #include <cryptopp/gcm.h>
@@ -52,7 +53,7 @@ inline const unsigned char* GetBytes(const T& data) {
 EncryptedWriter::EncryptedWriter(
     std::string filename,
     const SecretKey& secret_key,
-    boost::filesystem::perms perms,
+    std::filesystem::perms perms,
     tracing::ScopeTime& scope
 )
     : impl_(std::move(filename), &scope)
@@ -60,12 +61,11 @@ EncryptedWriter::EncryptedWriter(
     IV iv{crypto::GenerateRandomBlock(kIvSize)};
     impl_->encryption.SetKeyWithIV(GetBytes(secret_key), secret_key.GetUnderlying().size(), GetBytes(iv), iv.size());
 
-    // Create empty file with the passed perms and reopen it
-    // because CryptoPP is not able to pass perms
+    // Open the sink before applying final permissions so read-only dumps remain writable through the open descriptor.
     const auto& temp_filename = impl_->GetTempFilename();
     fs::blocking::RewriteFileContents(temp_filename, "");
     auto sink = std::make_unique<::CryptoPP::FileSink>(temp_filename.c_str());
-    fs::blocking::Chmod(temp_filename, perms);
+    fs::blocking::Chmod(temp_filename, perms, std::filesystem::perm_options::replace);
 
     // 1. IV
     sink->Put(reinterpret_cast<unsigned char*>(iv.GetUnderlying().data()), iv.size());
@@ -181,7 +181,7 @@ void EncryptedReader::Finish() {
     throw Error(fmt::format("Unexpected extra data at the end of encrypted dump file \"{}\"", impl_->filename));
 }
 
-EncryptedOperationsFactory::EncryptedOperationsFactory(SecretKey&& secret_key, boost::filesystem::perms perms)
+EncryptedOperationsFactory::EncryptedOperationsFactory(SecretKey&& secret_key, std::filesystem::perms perms)
     : secret_key_(std::move(secret_key)),
       perms_(perms)
 {}
